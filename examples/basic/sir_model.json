@@ -1,0 +1,56 @@
+{
+  "places": {
+    "S": {
+      "initial": 990,
+      "x": 100,
+      "y": 100
+    },
+    "I": {
+      "initial": 10,
+      "x": 200,
+      "y": 100
+    },
+    "R": {
+      "initial": 0,
+      "x": 300,
+      "y": 100
+    }
+  },
+  "transitions": {
+    "infection": {
+      "x": 150,
+      "y": 100
+    },
+    "recovery": {
+      "x": 250,
+      "y": 100
+    }
+  },
+  "arcs": [
+    {
+      "source": "S",
+      "target": "infection",
+      "weight": 1
+    },
+    {
+      "source": "I",
+      "target": "infection",
+      "weight": 1
+    },
+    {
+      "source": "infection",
+      "target": "I",
+      "weight": 2
+    },
+    {
+      "source": "I",
+      "target": "recovery",
+      "weight": 1
+    },
+    {
+      "source": "recovery",
+      "target": "R",
+      "weight": 1
+    }
+  ]
+}

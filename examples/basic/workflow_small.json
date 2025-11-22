@@ -1,0 +1,97 @@
+{
+  "arcs": [
+    {
+      "source": "Stage0",
+      "target": "process1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "process1",
+      "target": "Stage1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stage1",
+      "target": "process2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "process2",
+      "target": "Stage2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stage2",
+      "target": "process3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "process3",
+      "target": "Stage3",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "places": {
+    "Stage0": {
+      "initial": [
+        10
+      ],
+      "label": "Start",
+      "x": 100,
+      "y": 100
+    },
+    "Stage1": {
+      "initial": [
+        0
+      ],
+      "label": "Stage 1",
+      "x": 200,
+      "y": 100
+    },
+    "Stage2": {
+      "initial": [
+        0
+      ],
+      "label": "Stage 2",
+      "x": 300,
+      "y": 100
+    },
+    "Stage3": {
+      "initial": [
+        0
+      ],
+      "label": "Complete",
+      "x": 400,
+      "y": 100
+    }
+  },
+  "transitions": {
+    "process1": {
+      "label": "Process Step 1",
+      "x": 150,
+      "y": 100
+    },
+    "process2": {
+      "label": "Process Step 2",
+      "x": 250,
+      "y": 100
+    },
+    "process3": {
+      "label": "Process Step 3",
+      "x": 350,
+      "y": 100
+    }
+  }
+}

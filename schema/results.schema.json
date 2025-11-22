@@ -1,0 +1,310 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PFlow Simulation Results",
+  "description": "Schema for Petri net simulation results, optimized for AI-assisted analysis",
+  "type": "object",
+  "required": ["version", "metadata", "model", "simulation", "results"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version (semver)",
+      "example": "1.0.0"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "High-level information about the simulation",
+      "required": ["timestamp", "solver", "status"],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the simulation was run"
+        },
+        "solver": {
+          "type": "string",
+          "description": "ODE solver used",
+          "enum": ["tsit5", "euler", "rk4"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Simulation completion status",
+          "enum": ["success", "error", "timeout", "unstable"]
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if status != success"
+        },
+        "computeTime": {
+          "type": "number",
+          "description": "Wall-clock time in seconds"
+        }
+      }
+    },
+    "model": {
+      "type": "object",
+      "description": "Summary of the Petri net model",
+      "required": ["places", "transitions", "arcs"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Model name or description"
+        },
+        "places": {
+          "type": "array",
+          "description": "List of place names",
+          "items": {"type": "string"}
+        },
+        "transitions": {
+          "type": "array",
+          "description": "List of transition names",
+          "items": {"type": "string"}
+        },
+        "arcs": {
+          "type": "integer",
+          "description": "Number of arcs in the model"
+        },
+        "structure": {
+          "type": "object",
+          "description": "Optional: full Petri net structure (JSON-LD format)",
+          "additionalProperties": true
+        }
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "description": "Simulation parameters",
+      "required": ["timespan", "initialState", "rates"],
+      "properties": {
+        "timespan": {
+          "type": "array",
+          "description": "[t_start, t_end]",
+          "items": {"type": "number"},
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "initialState": {
+          "type": "object",
+          "description": "Initial token counts by place",
+          "additionalProperties": {"type": "number"}
+        },
+        "rates": {
+          "type": "object",
+          "description": "Rate constants by transition",
+          "additionalProperties": {"type": "number"}
+        },
+        "options": {
+          "type": "object",
+          "description": "Solver options used",
+          "properties": {
+            "dt": {"type": "number"},
+            "abstol": {"type": "number"},
+            "reltol": {"type": "number"},
+            "adaptive": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "results": {
+      "type": "object",
+      "description": "Simulation results with multiple resolution levels",
+      "required": ["summary", "timeseries"],
+      "properties": {
+        "summary": {
+          "type": "object",
+          "description": "Quick overview of results",
+          "required": ["points", "finalState"],
+          "properties": {
+            "points": {
+              "type": "integer",
+              "description": "Number of time points computed"
+            },
+            "finalState": {
+              "type": "object",
+              "description": "Final values for each place",
+              "additionalProperties": {"type": "number"}
+            },
+            "finalTime": {
+              "type": "number",
+              "description": "Actual final time reached"
+            }
+          }
+        },
+        "timeseries": {
+          "type": "object",
+          "description": "Time series data at multiple resolutions",
+          "required": ["time", "variables"],
+          "properties": {
+            "time": {
+              "type": "object",
+              "description": "Time vectors at different resolutions",
+              "properties": {
+                "full": {
+                  "type": "array",
+                  "description": "All computed time points",
+                  "items": {"type": "number"}
+                },
+                "downsampled": {
+                  "type": "array",
+                  "description": "Downsampled to ~100-200 points for plotting",
+                  "items": {"type": "number"}
+                }
+              }
+            },
+            "variables": {
+              "type": "object",
+              "description": "Values for each place over time",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "full": {
+                    "type": "array",
+                    "description": "All computed values",
+                    "items": {"type": "number"}
+                  },
+                  "downsampled": {
+                    "type": "array",
+                    "description": "Downsampled values",
+                    "items": {"type": "number"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "description": "Automatically computed insights",
+      "properties": {
+        "peaks": {
+          "type": "array",
+          "description": "Local maxima in the timeseries",
+          "items": {
+            "type": "object",
+            "required": ["variable", "time", "value"],
+            "properties": {
+              "variable": {"type": "string"},
+              "time": {"type": "number"},
+              "value": {"type": "number"},
+              "prominence": {
+                "type": "number",
+                "description": "How significant the peak is"
+              }
+            }
+          }
+        },
+        "troughs": {
+          "type": "array",
+          "description": "Local minima in the timeseries",
+          "items": {
+            "type": "object",
+            "required": ["variable", "time", "value"],
+            "properties": {
+              "variable": {"type": "string"},
+              "time": {"type": "number"},
+              "value": {"type": "number"}
+            }
+          }
+        },
+        "crossings": {
+          "type": "array",
+          "description": "Points where two variables intersect",
+          "items": {
+            "type": "object",
+            "required": ["var1", "var2", "time", "value"],
+            "properties": {
+              "var1": {"type": "string"},
+              "var2": {"type": "string"},
+              "time": {"type": "number"},
+              "value": {"type": "number"}
+            }
+          }
+        },
+        "steadyState": {
+          "type": "object",
+          "description": "Steady state analysis",
+          "properties": {
+            "reached": {
+              "type": "boolean",
+              "description": "Whether steady state was reached"
+            },
+            "time": {
+              "type": "number",
+              "description": "When steady state was reached (if applicable)"
+            },
+            "values": {
+              "type": "object",
+              "description": "Steady state values by place",
+              "additionalProperties": {"type": "number"}
+            },
+            "tolerance": {
+              "type": "number",
+              "description": "Tolerance used to detect steady state"
+            }
+          }
+        },
+        "conservation": {
+          "type": "object",
+          "description": "Conserved quantities and mass balance",
+          "properties": {
+            "totalTokens": {
+              "type": "object",
+              "properties": {
+                "initial": {"type": "number"},
+                "final": {"type": "number"},
+                "conserved": {"type": "boolean"}
+              }
+            },
+            "invariants": {
+              "type": "array",
+              "description": "Detected P-invariants",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "places": {"type": "array", "items": {"type": "string"}},
+                  "coefficients": {"type": "array", "items": {"type": "number"}},
+                  "value": {"type": "number"}
+                }
+              }
+            }
+          }
+        },
+        "statistics": {
+          "type": "object",
+          "description": "Statistical summary by variable",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "min": {"type": "number"},
+              "max": {"type": "number"},
+              "mean": {"type": "number"},
+              "median": {"type": "number"},
+              "std": {"type": "number"}
+            }
+          }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "description": "Notable events during simulation (for engine/monitoring)",
+      "items": {
+        "type": "object",
+        "required": ["time", "type"],
+        "properties": {
+          "time": {"type": "number"},
+          "type": {
+            "type": "string",
+            "enum": ["threshold_exceeded", "threshold_below", "rate_change", "action_triggered", "warning", "error"]
+          },
+          "description": {"type": "string"},
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

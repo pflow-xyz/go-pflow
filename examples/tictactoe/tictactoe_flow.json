@@ -1,0 +1,175 @@
+{
+  "places": {
+    "Start": {
+      "initial": [1],
+      "label": "Game Start",
+      "x": 100,
+      "y": 100
+    },
+    "XTurn": {
+      "initial": [0],
+      "label": "X's Turn",
+      "x": 200,
+      "y": 50
+    },
+    "OTurn": {
+      "initial": [0],
+      "label": "O's Turn",
+      "x": 200,
+      "y": 150
+    },
+    "XWins": {
+      "initial": [0],
+      "label": "X Wins",
+      "x": 350,
+      "y": 50
+    },
+    "OWins": {
+      "initial": [0],
+      "label": "O Wins",
+      "x": 350,
+      "y": 150
+    },
+    "Draw": {
+      "initial": [0],
+      "label": "Draw",
+      "x": 350,
+      "y": 100
+    },
+    "MoveCount": {
+      "initial": [0],
+      "label": "Moves Made",
+      "x": 250,
+      "y": 200
+    }
+  },
+  "transitions": {
+    "StartGame": {
+      "label": "Initialize",
+      "x": 150,
+      "y": 100
+    },
+    "XMove": {
+      "label": "X Places Mark",
+      "x": 250,
+      "y": 50
+    },
+    "XWin": {
+      "label": "X Gets 3",
+      "x": 300,
+      "y": 50
+    },
+    "XNoWin": {
+      "label": "X No Win",
+      "x": 250,
+      "y": 100
+    },
+    "OMove": {
+      "label": "O Places Mark",
+      "x": 250,
+      "y": 150
+    },
+    "OWin": {
+      "label": "O Gets 3",
+      "x": 300,
+      "y": 150
+    },
+    "ONoWin": {
+      "label": "O No Win",
+      "x": 250,
+      "y": 100
+    },
+    "BoardFull": {
+      "label": "Board Full",
+      "x": 300,
+      "y": 100
+    }
+  },
+  "arcs": [
+    {
+      "source": "Start",
+      "target": "StartGame",
+      "weight": [1]
+    },
+    {
+      "source": "StartGame",
+      "target": "XTurn",
+      "weight": [1]
+    },
+    {
+      "source": "XTurn",
+      "target": "XMove",
+      "weight": [1]
+    },
+    {
+      "source": "XMove",
+      "target": "MoveCount",
+      "weight": [1]
+    },
+    {
+      "source": "XTurn",
+      "target": "XWin",
+      "weight": [1]
+    },
+    {
+      "source": "XWin",
+      "target": "XWins",
+      "weight": [1]
+    },
+    {
+      "source": "XTurn",
+      "target": "XNoWin",
+      "weight": [1]
+    },
+    {
+      "source": "XNoWin",
+      "target": "OTurn",
+      "weight": [1]
+    },
+    {
+      "source": "OTurn",
+      "target": "OMove",
+      "weight": [1]
+    },
+    {
+      "source": "OMove",
+      "target": "MoveCount",
+      "weight": [1]
+    },
+    {
+      "source": "OTurn",
+      "target": "OWin",
+      "weight": [1]
+    },
+    {
+      "source": "OWin",
+      "target": "OWins",
+      "weight": [1]
+    },
+    {
+      "source": "OTurn",
+      "target": "ONoWin",
+      "weight": [1]
+    },
+    {
+      "source": "ONoWin",
+      "target": "XTurn",
+      "weight": [1]
+    },
+    {
+      "source": "XTurn",
+      "target": "BoardFull",
+      "weight": [1]
+    },
+    {
+      "source": "OTurn",
+      "target": "BoardFull",
+      "weight": [1]
+    },
+    {
+      "source": "BoardFull",
+      "target": "Draw",
+      "weight": [1]
+    }
+  ]
+}

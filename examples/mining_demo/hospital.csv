@@ -1,0 +1,27 @@
+case_id,activity,timestamp,resource,cost
+P001,Registration,2024-01-15 08:00:00,Nurse_A,50
+P001,Triage,2024-01-15 08:15:00,Nurse_B,30
+P001,Doctor_Consultation,2024-01-15 08:45:00,Dr_Smith,200
+P001,Lab_Test,2024-01-15 09:30:00,Lab_Tech_1,150
+P001,Results_Review,2024-01-15 11:00:00,Dr_Smith,100
+P001,Discharge,2024-01-15 11:30:00,Nurse_A,25
+P002,Registration,2024-01-15 08:30:00,Nurse_A,50
+P002,Triage,2024-01-15 08:40:00,Nurse_C,30
+P002,Doctor_Consultation,2024-01-15 09:10:00,Dr_Jones,200
+P002,X-Ray,2024-01-15 09:45:00,Radiology_Tech,250
+P002,Results_Review,2024-01-15 10:30:00,Dr_Jones,100
+P002,Surgery,2024-01-15 12:00:00,Dr_Jones,5000
+P002,Recovery,2024-01-15 15:00:00,Nurse_D,500
+P002,Discharge,2024-01-15 17:00:00,Nurse_D,25
+P003,Registration,2024-01-15 09:00:00,Nurse_B,50
+P003,Triage,2024-01-15 09:10:00,Nurse_B,30
+P003,Doctor_Consultation,2024-01-15 09:30:00,Dr_Smith,200
+P003,Prescription,2024-01-15 09:45:00,Dr_Smith,50
+P003,Discharge,2024-01-15 10:00:00,Nurse_B,25
+P004,Registration,2024-01-15 10:00:00,Nurse_C,50
+P004,Triage,2024-01-15 10:15:00,Nurse_C,30
+P004,Doctor_Consultation,2024-01-15 10:45:00,Dr_Jones,200
+P004,Lab_Test,2024-01-15 11:15:00,Lab_Tech_2,150
+P004,Results_Review,2024-01-15 13:00:00,Dr_Jones,100
+P004,Specialist_Referral,2024-01-15 13:30:00,Dr_Jones,150
+P004,Discharge,2024-01-15 14:00:00,Nurse_C,25

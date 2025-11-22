@@ -1,0 +1,3822 @@
+{
+  "arcs": [
+    {
+      "source": "Stones_1",
+      "target": "X_take1_from_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_1",
+      "target": "Stones_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_1",
+      "target": "_X_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_1",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_1",
+      "target": "O_take1_from_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_1",
+      "target": "Stones_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_1",
+      "target": "_O_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_1",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_2",
+      "target": "X_take1_from_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_2",
+      "target": "Stones_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_2",
+      "target": "_X_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_2",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_2",
+      "target": "O_take1_from_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_2",
+      "target": "Stones_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_2",
+      "target": "_O_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_2",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_2",
+      "target": "X_take2_from_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_2",
+      "target": "Stones_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_2",
+      "target": "_X_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_2",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_2",
+      "target": "O_take2_from_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_2",
+      "target": "Stones_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_2",
+      "target": "_O_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_2",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_3",
+      "target": "X_take1_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_3",
+      "target": "Stones_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_3",
+      "target": "_X_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_3",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_3",
+      "target": "O_take1_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_3",
+      "target": "Stones_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_3",
+      "target": "_O_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_3",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_3",
+      "target": "X_take2_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_3",
+      "target": "Stones_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_3",
+      "target": "_X_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_3",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_3",
+      "target": "O_take2_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_3",
+      "target": "Stones_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_3",
+      "target": "_O_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_3",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_3",
+      "target": "X_take3_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_3",
+      "target": "Stones_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_3",
+      "target": "_X_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_3",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_3",
+      "target": "O_take3_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_3",
+      "target": "Stones_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_3",
+      "target": "_O_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_3",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_4",
+      "target": "X_take1_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_4",
+      "target": "Stones_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_4",
+      "target": "_X_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_4",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_4",
+      "target": "O_take1_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_4",
+      "target": "Stones_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_4",
+      "target": "_O_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_4",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_4",
+      "target": "X_take2_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_4",
+      "target": "Stones_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_4",
+      "target": "_X_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_4",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_4",
+      "target": "O_take2_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_4",
+      "target": "Stones_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_4",
+      "target": "_O_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_4",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_4",
+      "target": "X_take3_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_4",
+      "target": "Stones_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_4",
+      "target": "_X_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_4",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_4",
+      "target": "O_take3_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_4",
+      "target": "Stones_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_4",
+      "target": "_O_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_4",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_5",
+      "target": "X_take1_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_5",
+      "target": "Stones_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_5",
+      "target": "_X_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_5",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_5",
+      "target": "O_take1_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_5",
+      "target": "Stones_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_5",
+      "target": "_O_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_5",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_5",
+      "target": "X_take2_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_5",
+      "target": "Stones_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_5",
+      "target": "_X_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_5",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_5",
+      "target": "O_take2_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_5",
+      "target": "Stones_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_5",
+      "target": "_O_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_5",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_5",
+      "target": "X_take3_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_5",
+      "target": "Stones_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_5",
+      "target": "_X_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_5",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_5",
+      "target": "O_take3_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_5",
+      "target": "Stones_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_5",
+      "target": "_O_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_5",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_6",
+      "target": "X_take1_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_6",
+      "target": "Stones_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_6",
+      "target": "_X_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_6",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_6",
+      "target": "O_take1_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_6",
+      "target": "Stones_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_6",
+      "target": "_O_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_6",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_6",
+      "target": "X_take2_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_6",
+      "target": "Stones_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_6",
+      "target": "_X_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_6",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_6",
+      "target": "O_take2_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_6",
+      "target": "Stones_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_6",
+      "target": "_O_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_6",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_6",
+      "target": "X_take3_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_6",
+      "target": "Stones_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_6",
+      "target": "_X_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_6",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_6",
+      "target": "O_take3_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_6",
+      "target": "Stones_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_6",
+      "target": "_O_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_6",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_7",
+      "target": "X_take1_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_7",
+      "target": "Stones_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_7",
+      "target": "_X_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_7",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_7",
+      "target": "O_take1_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_7",
+      "target": "Stones_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_7",
+      "target": "_O_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_7",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_7",
+      "target": "X_take2_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_7",
+      "target": "Stones_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_7",
+      "target": "_X_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_7",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_7",
+      "target": "O_take2_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_7",
+      "target": "Stones_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_7",
+      "target": "_O_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_7",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_7",
+      "target": "X_take3_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_7",
+      "target": "Stones_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_7",
+      "target": "_X_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_7",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_7",
+      "target": "O_take3_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_7",
+      "target": "Stones_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_7",
+      "target": "_O_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_7",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_8",
+      "target": "X_take1_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_8",
+      "target": "Stones_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_8",
+      "target": "_X_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_8",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_8",
+      "target": "O_take1_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_8",
+      "target": "Stones_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_8",
+      "target": "_O_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_8",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_8",
+      "target": "X_take2_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_8",
+      "target": "Stones_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_8",
+      "target": "_X_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_8",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_8",
+      "target": "O_take2_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_8",
+      "target": "Stones_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_8",
+      "target": "_O_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_8",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_8",
+      "target": "X_take3_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_8",
+      "target": "Stones_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_8",
+      "target": "_X_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_8",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_8",
+      "target": "O_take3_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_8",
+      "target": "Stones_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_8",
+      "target": "_O_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_8",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_9",
+      "target": "X_take1_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_9",
+      "target": "Stones_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_9",
+      "target": "_X_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_9",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_9",
+      "target": "O_take1_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_9",
+      "target": "Stones_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_9",
+      "target": "_O_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_9",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_9",
+      "target": "X_take2_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_9",
+      "target": "Stones_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_9",
+      "target": "_X_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_9",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_9",
+      "target": "O_take2_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_9",
+      "target": "Stones_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_9",
+      "target": "_O_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_9",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_9",
+      "target": "X_take3_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_9",
+      "target": "Stones_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_9",
+      "target": "_X_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_9",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_9",
+      "target": "O_take3_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_9",
+      "target": "Stones_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_9",
+      "target": "_O_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_9",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_10",
+      "target": "X_take1_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_10",
+      "target": "Stones_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_10",
+      "target": "_X_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_10",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_10",
+      "target": "O_take1_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_10",
+      "target": "Stones_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_10",
+      "target": "_O_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_10",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_10",
+      "target": "X_take2_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_10",
+      "target": "Stones_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_10",
+      "target": "_X_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_10",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_10",
+      "target": "O_take2_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_10",
+      "target": "Stones_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_10",
+      "target": "_O_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_10",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_10",
+      "target": "X_take3_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_10",
+      "target": "Stones_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_10",
+      "target": "_X_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_10",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_10",
+      "target": "O_take3_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_10",
+      "target": "Stones_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_10",
+      "target": "_O_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_10",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_11",
+      "target": "X_take1_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_11",
+      "target": "Stones_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_11",
+      "target": "_X_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_11",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_11",
+      "target": "O_take1_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_11",
+      "target": "Stones_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_11",
+      "target": "_O_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_11",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_11",
+      "target": "X_take2_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_11",
+      "target": "Stones_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_11",
+      "target": "_X_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_11",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_11",
+      "target": "O_take2_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_11",
+      "target": "Stones_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_11",
+      "target": "_O_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_11",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_11",
+      "target": "X_take3_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_11",
+      "target": "Stones_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_11",
+      "target": "_X_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_11",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_11",
+      "target": "O_take3_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_11",
+      "target": "Stones_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_11",
+      "target": "_O_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_11",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_12",
+      "target": "X_take1_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_12",
+      "target": "Stones_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_12",
+      "target": "_X_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_12",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_12",
+      "target": "O_take1_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_12",
+      "target": "Stones_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_12",
+      "target": "_O_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_12",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_12",
+      "target": "X_take2_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_12",
+      "target": "Stones_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_12",
+      "target": "_X_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_12",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_12",
+      "target": "O_take2_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_12",
+      "target": "Stones_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_12",
+      "target": "_O_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_12",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_12",
+      "target": "X_take3_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_12",
+      "target": "Stones_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_12",
+      "target": "_X_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_12",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_12",
+      "target": "O_take3_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_12",
+      "target": "Stones_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_12",
+      "target": "_O_9",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_12",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_13",
+      "target": "X_take1_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_13",
+      "target": "Stones_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_13",
+      "target": "_X_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_13",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_13",
+      "target": "O_take1_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_13",
+      "target": "Stones_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_13",
+      "target": "_O_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_13",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_13",
+      "target": "X_take2_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_13",
+      "target": "Stones_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_13",
+      "target": "_X_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_13",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_13",
+      "target": "O_take2_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_13",
+      "target": "Stones_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_13",
+      "target": "_O_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_13",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_13",
+      "target": "X_take3_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_13",
+      "target": "Stones_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_13",
+      "target": "_X_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_13",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_13",
+      "target": "O_take3_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_13",
+      "target": "Stones_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_13",
+      "target": "_O_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_13",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_14",
+      "target": "X_take1_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_14",
+      "target": "Stones_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_14",
+      "target": "_X_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_14",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_14",
+      "target": "O_take1_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_14",
+      "target": "Stones_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_14",
+      "target": "_O_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_14",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_14",
+      "target": "X_take2_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_14",
+      "target": "Stones_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_14",
+      "target": "_X_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_14",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_14",
+      "target": "O_take2_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_14",
+      "target": "Stones_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_14",
+      "target": "_O_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_14",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_14",
+      "target": "X_take3_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_14",
+      "target": "Stones_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_14",
+      "target": "_X_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_14",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_14",
+      "target": "O_take3_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_14",
+      "target": "Stones_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_14",
+      "target": "_O_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_14",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_15",
+      "target": "X_take1_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take1_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_15",
+      "target": "Stones_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_15",
+      "target": "_X_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take1_from_15",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_15",
+      "target": "O_take1_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take1_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_15",
+      "target": "Stones_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_15",
+      "target": "_O_14",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take1_from_15",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_15",
+      "target": "X_take2_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take2_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_15",
+      "target": "Stones_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_15",
+      "target": "_X_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take2_from_15",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_15",
+      "target": "O_take2_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take2_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_15",
+      "target": "Stones_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_15",
+      "target": "_O_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take2_from_15",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_15",
+      "target": "X_take3_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "XTurn",
+      "target": "X_take3_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_15",
+      "target": "Stones_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_15",
+      "target": "_X_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_take3_from_15",
+      "target": "OTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Stones_15",
+      "target": "O_take3_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "OTurn",
+      "target": "O_take3_from_15",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_15",
+      "target": "Stones_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_15",
+      "target": "_O_12",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_take3_from_15",
+      "target": "XTurn",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "_X_0",
+      "target": "O_wins",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "O_wins",
+      "target": "win_o",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "_O_0",
+      "target": "X_wins",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "X_wins",
+      "target": "win_x",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "places": {
+    "OTurn": {
+      "initial": [
+        0
+      ],
+      "label": "O's Turn",
+      "x": 50,
+      "y": 350
+    },
+    "Stones_0": {
+      "initial": [
+        0
+      ],
+      "label": "0 stones",
+      "x": 0,
+      "y": 100
+    },
+    "Stones_1": {
+      "initial": [
+        0
+      ],
+      "label": "1 stones",
+      "x": 60,
+      "y": 100
+    },
+    "Stones_10": {
+      "initial": [
+        0
+      ],
+      "label": "10 stones",
+      "x": 600,
+      "y": 100
+    },
+    "Stones_11": {
+      "initial": [
+        0
+      ],
+      "label": "11 stones",
+      "x": 660,
+      "y": 100
+    },
+    "Stones_12": {
+      "initial": [
+        0
+      ],
+      "label": "12 stones",
+      "x": 720,
+      "y": 100
+    },
+    "Stones_13": {
+      "initial": [
+        0
+      ],
+      "label": "13 stones",
+      "x": 780,
+      "y": 100
+    },
+    "Stones_14": {
+      "initial": [
+        0
+      ],
+      "label": "14 stones",
+      "x": 840,
+      "y": 100
+    },
+    "Stones_15": {
+      "initial": [
+        1
+      ],
+      "label": "15 stones",
+      "x": 900,
+      "y": 100
+    },
+    "Stones_2": {
+      "initial": [
+        0
+      ],
+      "label": "2 stones",
+      "x": 120,
+      "y": 100
+    },
+    "Stones_3": {
+      "initial": [
+        0
+      ],
+      "label": "3 stones",
+      "x": 180,
+      "y": 100
+    },
+    "Stones_4": {
+      "initial": [
+        0
+      ],
+      "label": "4 stones",
+      "x": 240,
+      "y": 100
+    },
+    "Stones_5": {
+      "initial": [
+        0
+      ],
+      "label": "5 stones",
+      "x": 300,
+      "y": 100
+    },
+    "Stones_6": {
+      "initial": [
+        0
+      ],
+      "label": "6 stones",
+      "x": 360,
+      "y": 100
+    },
+    "Stones_7": {
+      "initial": [
+        0
+      ],
+      "label": "7 stones",
+      "x": 420,
+      "y": 100
+    },
+    "Stones_8": {
+      "initial": [
+        0
+      ],
+      "label": "8 stones",
+      "x": 480,
+      "y": 100
+    },
+    "Stones_9": {
+      "initial": [
+        0
+      ],
+      "label": "9 stones",
+      "x": 540,
+      "y": 100
+    },
+    "XTurn": {
+      "initial": [
+        1
+      ],
+      "label": "X's Turn",
+      "x": 50,
+      "y": 200
+    },
+    "_O_0": {
+      "initial": [
+        0
+      ],
+      "label": "O left 0",
+      "x": 0,
+      "y": 400
+    },
+    "_O_1": {
+      "initial": [
+        0
+      ],
+      "label": "O left 1",
+      "x": 60,
+      "y": 400
+    },
+    "_O_10": {
+      "initial": [
+        0
+      ],
+      "label": "O left 10",
+      "x": 600,
+      "y": 400
+    },
+    "_O_11": {
+      "initial": [
+        0
+      ],
+      "label": "O left 11",
+      "x": 660,
+      "y": 400
+    },
+    "_O_12": {
+      "initial": [
+        0
+      ],
+      "label": "O left 12",
+      "x": 720,
+      "y": 400
+    },
+    "_O_13": {
+      "initial": [
+        0
+      ],
+      "label": "O left 13",
+      "x": 780,
+      "y": 400
+    },
+    "_O_14": {
+      "initial": [
+        0
+      ],
+      "label": "O left 14",
+      "x": 840,
+      "y": 400
+    },
+    "_O_15": {
+      "initial": [
+        0
+      ],
+      "label": "O left 15",
+      "x": 900,
+      "y": 400
+    },
+    "_O_2": {
+      "initial": [
+        0
+      ],
+      "label": "O left 2",
+      "x": 120,
+      "y": 400
+    },
+    "_O_3": {
+      "initial": [
+        0
+      ],
+      "label": "O left 3",
+      "x": 180,
+      "y": 400
+    },
+    "_O_4": {
+      "initial": [
+        0
+      ],
+      "label": "O left 4",
+      "x": 240,
+      "y": 400
+    },
+    "_O_5": {
+      "initial": [
+        0
+      ],
+      "label": "O left 5",
+      "x": 300,
+      "y": 400
+    },
+    "_O_6": {
+      "initial": [
+        0
+      ],
+      "label": "O left 6",
+      "x": 360,
+      "y": 400
+    },
+    "_O_7": {
+      "initial": [
+        0
+      ],
+      "label": "O left 7",
+      "x": 420,
+      "y": 400
+    },
+    "_O_8": {
+      "initial": [
+        0
+      ],
+      "label": "O left 8",
+      "x": 480,
+      "y": 400
+    },
+    "_O_9": {
+      "initial": [
+        0
+      ],
+      "label": "O left 9",
+      "x": 540,
+      "y": 400
+    },
+    "_X_0": {
+      "initial": [
+        0
+      ],
+      "label": "X left 0",
+      "x": 0,
+      "y": 250
+    },
+    "_X_1": {
+      "initial": [
+        0
+      ],
+      "label": "X left 1",
+      "x": 60,
+      "y": 250
+    },
+    "_X_10": {
+      "initial": [
+        0
+      ],
+      "label": "X left 10",
+      "x": 600,
+      "y": 250
+    },
+    "_X_11": {
+      "initial": [
+        0
+      ],
+      "label": "X left 11",
+      "x": 660,
+      "y": 250
+    },
+    "_X_12": {
+      "initial": [
+        0
+      ],
+      "label": "X left 12",
+      "x": 720,
+      "y": 250
+    },
+    "_X_13": {
+      "initial": [
+        0
+      ],
+      "label": "X left 13",
+      "x": 780,
+      "y": 250
+    },
+    "_X_14": {
+      "initial": [
+        0
+      ],
+      "label": "X left 14",
+      "x": 840,
+      "y": 250
+    },
+    "_X_15": {
+      "initial": [
+        0
+      ],
+      "label": "X left 15",
+      "x": 900,
+      "y": 250
+    },
+    "_X_2": {
+      "initial": [
+        0
+      ],
+      "label": "X left 2",
+      "x": 120,
+      "y": 250
+    },
+    "_X_3": {
+      "initial": [
+        0
+      ],
+      "label": "X left 3",
+      "x": 180,
+      "y": 250
+    },
+    "_X_4": {
+      "initial": [
+        0
+      ],
+      "label": "X left 4",
+      "x": 240,
+      "y": 250
+    },
+    "_X_5": {
+      "initial": [
+        0
+      ],
+      "label": "X left 5",
+      "x": 300,
+      "y": 250
+    },
+    "_X_6": {
+      "initial": [
+        0
+      ],
+      "label": "X left 6",
+      "x": 360,
+      "y": 250
+    },
+    "_X_7": {
+      "initial": [
+        0
+      ],
+      "label": "X left 7",
+      "x": 420,
+      "y": 250
+    },
+    "_X_8": {
+      "initial": [
+        0
+      ],
+      "label": "X left 8",
+      "x": 480,
+      "y": 250
+    },
+    "_X_9": {
+      "initial": [
+        0
+      ],
+      "label": "X left 9",
+      "x": 540,
+      "y": 250
+    },
+    "win_o": {
+      "initial": [
+        0
+      ],
+      "label": "O Wins",
+      "x": 1000,
+      "y": 400
+    },
+    "win_x": {
+      "initial": [
+        0
+      ],
+      "label": "X Wins",
+      "x": 1000,
+      "y": 250
+    }
+  },
+  "transitions": {
+    "O_take1_from_1": {
+      "label": "O takes 1",
+      "x": 40,
+      "y": 350
+    },
+    "O_take1_from_10": {
+      "label": "O takes 1",
+      "x": 580,
+      "y": 350
+    },
+    "O_take1_from_11": {
+      "label": "O takes 1",
+      "x": 640,
+      "y": 350
+    },
+    "O_take1_from_12": {
+      "label": "O takes 1",
+      "x": 700,
+      "y": 350
+    },
+    "O_take1_from_13": {
+      "label": "O takes 1",
+      "x": 760,
+      "y": 350
+    },
+    "O_take1_from_14": {
+      "label": "O takes 1",
+      "x": 820,
+      "y": 350
+    },
+    "O_take1_from_15": {
+      "label": "O takes 1",
+      "x": 880,
+      "y": 350
+    },
+    "O_take1_from_2": {
+      "label": "O takes 1",
+      "x": 100,
+      "y": 350
+    },
+    "O_take1_from_3": {
+      "label": "O takes 1",
+      "x": 160,
+      "y": 350
+    },
+    "O_take1_from_4": {
+      "label": "O takes 1",
+      "x": 220,
+      "y": 350
+    },
+    "O_take1_from_5": {
+      "label": "O takes 1",
+      "x": 280,
+      "y": 350
+    },
+    "O_take1_from_6": {
+      "label": "O takes 1",
+      "x": 340,
+      "y": 350
+    },
+    "O_take1_from_7": {
+      "label": "O takes 1",
+      "x": 400,
+      "y": 350
+    },
+    "O_take1_from_8": {
+      "label": "O takes 1",
+      "x": 460,
+      "y": 350
+    },
+    "O_take1_from_9": {
+      "label": "O takes 1",
+      "x": 520,
+      "y": 350
+    },
+    "O_take2_from_10": {
+      "label": "O takes 2",
+      "x": 580,
+      "y": 350
+    },
+    "O_take2_from_11": {
+      "label": "O takes 2",
+      "x": 640,
+      "y": 350
+    },
+    "O_take2_from_12": {
+      "label": "O takes 2",
+      "x": 700,
+      "y": 350
+    },
+    "O_take2_from_13": {
+      "label": "O takes 2",
+      "x": 760,
+      "y": 350
+    },
+    "O_take2_from_14": {
+      "label": "O takes 2",
+      "x": 820,
+      "y": 350
+    },
+    "O_take2_from_15": {
+      "label": "O takes 2",
+      "x": 880,
+      "y": 350
+    },
+    "O_take2_from_2": {
+      "label": "O takes 2",
+      "x": 100,
+      "y": 350
+    },
+    "O_take2_from_3": {
+      "label": "O takes 2",
+      "x": 160,
+      "y": 350
+    },
+    "O_take2_from_4": {
+      "label": "O takes 2",
+      "x": 220,
+      "y": 350
+    },
+    "O_take2_from_5": {
+      "label": "O takes 2",
+      "x": 280,
+      "y": 350
+    },
+    "O_take2_from_6": {
+      "label": "O takes 2",
+      "x": 340,
+      "y": 350
+    },
+    "O_take2_from_7": {
+      "label": "O takes 2",
+      "x": 400,
+      "y": 350
+    },
+    "O_take2_from_8": {
+      "label": "O takes 2",
+      "x": 460,
+      "y": 350
+    },
+    "O_take2_from_9": {
+      "label": "O takes 2",
+      "x": 520,
+      "y": 350
+    },
+    "O_take3_from_10": {
+      "label": "O takes 3",
+      "x": 580,
+      "y": 350
+    },
+    "O_take3_from_11": {
+      "label": "O takes 3",
+      "x": 640,
+      "y": 350
+    },
+    "O_take3_from_12": {
+      "label": "O takes 3",
+      "x": 700,
+      "y": 350
+    },
+    "O_take3_from_13": {
+      "label": "O takes 3",
+      "x": 760,
+      "y": 350
+    },
+    "O_take3_from_14": {
+      "label": "O takes 3",
+      "x": 820,
+      "y": 350
+    },
+    "O_take3_from_15": {
+      "label": "O takes 3",
+      "x": 880,
+      "y": 350
+    },
+    "O_take3_from_3": {
+      "label": "O takes 3",
+      "x": 160,
+      "y": 350
+    },
+    "O_take3_from_4": {
+      "label": "O takes 3",
+      "x": 220,
+      "y": 350
+    },
+    "O_take3_from_5": {
+      "label": "O takes 3",
+      "x": 280,
+      "y": 350
+    },
+    "O_take3_from_6": {
+      "label": "O takes 3",
+      "x": 340,
+      "y": 350
+    },
+    "O_take3_from_7": {
+      "label": "O takes 3",
+      "x": 400,
+      "y": 350
+    },
+    "O_take3_from_8": {
+      "label": "O takes 3",
+      "x": 460,
+      "y": 350
+    },
+    "O_take3_from_9": {
+      "label": "O takes 3",
+      "x": 520,
+      "y": 350
+    },
+    "O_wins": {
+      "label": "O Wins!",
+      "x": 950,
+      "y": 250
+    },
+    "X_take1_from_1": {
+      "label": "O takes 1",
+      "x": 40,
+      "y": 200
+    },
+    "X_take1_from_10": {
+      "label": "O takes 1",
+      "x": 580,
+      "y": 200
+    },
+    "X_take1_from_11": {
+      "label": "O takes 1",
+      "x": 640,
+      "y": 200
+    },
+    "X_take1_from_12": {
+      "label": "O takes 1",
+      "x": 700,
+      "y": 200
+    },
+    "X_take1_from_13": {
+      "label": "O takes 1",
+      "x": 760,
+      "y": 200
+    },
+    "X_take1_from_14": {
+      "label": "O takes 1",
+      "x": 820,
+      "y": 200
+    },
+    "X_take1_from_15": {
+      "label": "O takes 1",
+      "x": 880,
+      "y": 200
+    },
+    "X_take1_from_2": {
+      "label": "O takes 1",
+      "x": 100,
+      "y": 200
+    },
+    "X_take1_from_3": {
+      "label": "O takes 1",
+      "x": 160,
+      "y": 200
+    },
+    "X_take1_from_4": {
+      "label": "O takes 1",
+      "x": 220,
+      "y": 200
+    },
+    "X_take1_from_5": {
+      "label": "O takes 1",
+      "x": 280,
+      "y": 200
+    },
+    "X_take1_from_6": {
+      "label": "O takes 1",
+      "x": 340,
+      "y": 200
+    },
+    "X_take1_from_7": {
+      "label": "O takes 1",
+      "x": 400,
+      "y": 200
+    },
+    "X_take1_from_8": {
+      "label": "O takes 1",
+      "x": 460,
+      "y": 200
+    },
+    "X_take1_from_9": {
+      "label": "O takes 1",
+      "x": 520,
+      "y": 200
+    },
+    "X_take2_from_10": {
+      "label": "O takes 2",
+      "x": 580,
+      "y": 200
+    },
+    "X_take2_from_11": {
+      "label": "O takes 2",
+      "x": 640,
+      "y": 200
+    },
+    "X_take2_from_12": {
+      "label": "O takes 2",
+      "x": 700,
+      "y": 200
+    },
+    "X_take2_from_13": {
+      "label": "O takes 2",
+      "x": 760,
+      "y": 200
+    },
+    "X_take2_from_14": {
+      "label": "O takes 2",
+      "x": 820,
+      "y": 200
+    },
+    "X_take2_from_15": {
+      "label": "O takes 2",
+      "x": 880,
+      "y": 200
+    },
+    "X_take2_from_2": {
+      "label": "O takes 2",
+      "x": 100,
+      "y": 200
+    },
+    "X_take2_from_3": {
+      "label": "O takes 2",
+      "x": 160,
+      "y": 200
+    },
+    "X_take2_from_4": {
+      "label": "O takes 2",
+      "x": 220,
+      "y": 200
+    },
+    "X_take2_from_5": {
+      "label": "O takes 2",
+      "x": 280,
+      "y": 200
+    },
+    "X_take2_from_6": {
+      "label": "O takes 2",
+      "x": 340,
+      "y": 200
+    },
+    "X_take2_from_7": {
+      "label": "O takes 2",
+      "x": 400,
+      "y": 200
+    },
+    "X_take2_from_8": {
+      "label": "O takes 2",
+      "x": 460,
+      "y": 200
+    },
+    "X_take2_from_9": {
+      "label": "O takes 2",
+      "x": 520,
+      "y": 200
+    },
+    "X_take3_from_10": {
+      "label": "O takes 3",
+      "x": 580,
+      "y": 200
+    },
+    "X_take3_from_11": {
+      "label": "O takes 3",
+      "x": 640,
+      "y": 200
+    },
+    "X_take3_from_12": {
+      "label": "O takes 3",
+      "x": 700,
+      "y": 200
+    },
+    "X_take3_from_13": {
+      "label": "O takes 3",
+      "x": 760,
+      "y": 200
+    },
+    "X_take3_from_14": {
+      "label": "O takes 3",
+      "x": 820,
+      "y": 200
+    },
+    "X_take3_from_15": {
+      "label": "O takes 3",
+      "x": 880,
+      "y": 200
+    },
+    "X_take3_from_3": {
+      "label": "O takes 3",
+      "x": 160,
+      "y": 200
+    },
+    "X_take3_from_4": {
+      "label": "O takes 3",
+      "x": 220,
+      "y": 200
+    },
+    "X_take3_from_5": {
+      "label": "O takes 3",
+      "x": 280,
+      "y": 200
+    },
+    "X_take3_from_6": {
+      "label": "O takes 3",
+      "x": 340,
+      "y": 200
+    },
+    "X_take3_from_7": {
+      "label": "O takes 3",
+      "x": 400,
+      "y": 200
+    },
+    "X_take3_from_8": {
+      "label": "O takes 3",
+      "x": 460,
+      "y": 200
+    },
+    "X_take3_from_9": {
+      "label": "O takes 3",
+      "x": 520,
+      "y": 200
+    },
+    "X_wins": {
+      "label": "X Wins!",
+      "x": 950,
+      "y": 400
+    }
+  }
+}

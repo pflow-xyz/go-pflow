@@ -1,0 +1,143 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "timestamp": "2025-11-21T03:59:42Z",
+    "solver": "tsit5",
+    "status": "success",
+    "computeTime": 0.023
+  },
+  "model": {
+    "name": "SIR Epidemic Model",
+    "places": ["S", "I", "R"],
+    "transitions": ["infection", "recovery"],
+    "arcs": 5
+  },
+  "simulation": {
+    "timespan": [0, 100],
+    "initialState": {
+      "S": 990.0,
+      "I": 10.0,
+      "R": 0.0
+    },
+    "rates": {
+      "infection": 0.0003,
+      "recovery": 0.1
+    },
+    "options": {
+      "dt": 0.01,
+      "abstol": 1e-6,
+      "reltol": 1e-3,
+      "adaptive": true
+    }
+  },
+  "results": {
+    "summary": {
+      "points": 1537,
+      "finalTime": 100.0,
+      "finalState": {
+        "S": 59.13,
+        "I": 1.55,
+        "R": 939.32
+      }
+    },
+    "timeseries": {
+      "time": {
+        "full": [0, 0.01, 0.02, "... 1537 points total ..."],
+        "downsampled": [0, 1.0, 2.0, 3.0, "... 100 points ..."]
+      },
+      "variables": {
+        "S": {
+          "full": [990.0, 989.97, 989.94, "..."],
+          "downsampled": [990.0, 987.2, 982.1, 974.3, "..."]
+        },
+        "I": {
+          "full": [10.0, 10.03, 10.06, "..."],
+          "downsampled": [10.0, 12.8, 17.9, 25.7, "..."]
+        },
+        "R": {
+          "full": [0.0, 0.0, 0.0, "..."],
+          "downsampled": [0.0, 0.0, 0.0, 0.0, "..."]
+        }
+      }
+    }
+  },
+  "analysis": {
+    "peaks": [
+      {
+        "variable": "I",
+        "time": 23.4,
+        "value": 287.5,
+        "prominence": 285.95
+      }
+    ],
+    "troughs": [
+      {
+        "variable": "S",
+        "time": 100.0,
+        "value": 59.13
+      }
+    ],
+    "crossings": [
+      {
+        "var1": "S",
+        "var2": "I",
+        "time": 15.2,
+        "value": 245.8
+      },
+      {
+        "var1": "I",
+        "var2": "R",
+        "time": 31.7,
+        "value": 203.4
+      }
+    ],
+    "steadyState": {
+      "reached": true,
+      "time": 78.5,
+      "values": {
+        "S": 59.13,
+        "I": 0.0,
+        "R": 940.87
+      },
+      "tolerance": 0.01
+    },
+    "conservation": {
+      "totalTokens": {
+        "initial": 1000.0,
+        "final": 1000.0,
+        "conserved": true
+      },
+      "invariants": [
+        {
+          "places": ["S", "I", "R"],
+          "coefficients": [1, 1, 1],
+          "value": 1000.0
+        }
+      ]
+    },
+    "statistics": {
+      "S": {
+        "min": 59.13,
+        "max": 990.0,
+        "mean": 421.5,
+        "median": 358.2,
+        "std": 285.3
+      },
+      "I": {
+        "min": 0.0,
+        "max": 287.5,
+        "mean": 98.7,
+        "median": 45.3,
+        "std": 102.4
+      },
+      "R": {
+        "min": 0.0,
+        "max": 940.87,
+        "mean": 479.8,
+        "median": 532.1,
+        "std": 315.6
+      }
+    }
+  },
+  "events": []
+}

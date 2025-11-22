@@ -1,0 +1,181 @@
+{
+  "version": "1.0.0",
+  "baseModel": "sir_model.json",
+  "objective": "minimize_peak",
+  "parameters": [
+    {
+      "name": "infection",
+      "type": "rate",
+      "values": [
+        0.0002,
+        0.00030000000000000003,
+        0.00039999999999999996,
+        0.0005,
+        0.0006
+      ],
+      "min": 0.0002,
+      "max": 0.0006
+    }
+  ],
+  "variants": [
+    {
+      "id": 4,
+      "parameters": {
+        "infection": 0.0005
+      },
+      "metrics": {
+        "maxPeak": 999.9999999999999,
+        "maxPeakVar": "I",
+        "maxPeakTime": 79.09699191796781,
+        "finalState": {
+          "I": 999.9999999999992,
+          "R": 0,
+          "S": 1.909462350523142e-17
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 999.9999999999999,
+      "rank": 1
+    },
+    {
+      "id": 5,
+      "parameters": {
+        "infection": 0.0006
+      },
+      "metrics": {
+        "maxPeak": 1000.0000000000017,
+        "maxPeakVar": "I",
+        "maxPeakTime": 66.19590517806762,
+        "finalState": {
+          "I": 1000.000000000001,
+          "R": 0,
+          "S": 8.66894567116829e-22
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 1000.0000000000017,
+      "rank": 2
+    },
+    {
+      "id": 1,
+      "parameters": {
+        "infection": 0.0002
+      },
+      "metrics": {
+        "maxPeak": 0,
+        "maxPeakVar": "",
+        "maxPeakTime": 0,
+        "finalState": {
+          "I": 999.9997959458334,
+          "R": 0,
+          "S": 0.0002040541669835298
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 1.7976931348623157e+308,
+      "rank": 3
+    },
+    {
+      "id": 2,
+      "parameters": {
+        "infection": 0.00030000000000000003
+      },
+      "metrics": {
+        "maxPeak": 0,
+        "maxPeakVar": "",
+        "maxPeakTime": 0,
+        "finalState": {
+          "I": 999.9999999907373,
+          "R": 0,
+          "S": 9.264046739209e-9
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 1.7976931348623157e+308,
+      "rank": 4
+    },
+    {
+      "id": 3,
+      "parameters": {
+        "infection": 0.00039999999999999996
+      },
+      "metrics": {
+        "maxPeak": 0,
+        "maxPeakVar": "",
+        "maxPeakTime": 0,
+        "finalState": {
+          "I": 999.9999999999932,
+          "R": 0,
+          "S": 4.205870713235393e-13
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 1.7976931348623157e+308,
+      "rank": 5
+    }
+  ],
+  "best": {
+    "id": 4,
+    "parameters": {
+      "infection": 0.0005
+    },
+    "metrics": {
+      "maxPeak": 999.9999999999999,
+      "maxPeakVar": "I",
+      "maxPeakTime": 79.09699191796781,
+      "finalState": {
+        "I": 999.9999999999992,
+        "R": 0,
+        "S": 1.909462350523142e-17
+      },
+      "steadyReached": false,
+      "conserved": false,
+      "computeTime": 0
+    },
+    "score": 999.9999999999999,
+    "rank": 1
+  },
+  "worst": {
+    "id": 3,
+    "parameters": {
+      "infection": 0.00039999999999999996
+    },
+    "metrics": {
+      "maxPeak": 0,
+      "maxPeakVar": "",
+      "maxPeakTime": 0,
+      "finalState": {
+        "I": 999.9999999999932,
+        "R": 0,
+        "S": 4.205870713235393e-13
+      },
+      "steadyReached": false,
+      "conserved": false,
+      "computeTime": 0
+    },
+    "score": 1.7976931348623157e+308,
+    "rank": 5
+  },
+  "summary": {
+    "totalVariants": 5,
+    "successCount": 5,
+    "failureCount": 0,
+    "bestScore": 999.9999999999999,
+    "worstScore": 1.7976931348623157e+308,
+    "scoreRange": 1.7976931348623157e+308
+  },
+  "recommended": {
+    "improvement": "-Inf% reduction in peak (0.00 → 1000.00)",
+    "infection": "increase by 25.0% (0.000400 → 0.000500)"
+  }
+}

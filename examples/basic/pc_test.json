@@ -1,0 +1,99 @@
+{
+  "arcs": [
+    {
+      "source": "ProducerReady",
+      "target": "produce",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "produce",
+      "target": "Buffer",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "produce",
+      "target": "ProducerReady",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Buffer",
+      "target": "consume",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "ConsumerReady",
+      "target": "consume",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "consume",
+      "target": "Consumed",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "consume",
+      "target": "ConsumerReady",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "places": {
+    "Buffer": {
+      "initial": [
+        0
+      ],
+      "label": "Buffer",
+      "x": 200,
+      "y": 100
+    },
+    "Consumed": {
+      "initial": [
+        0
+      ],
+      "label": "Consumed Items",
+      "x": 400,
+      "y": 100
+    },
+    "ConsumerReady": {
+      "initial": [
+        2
+      ],
+      "label": "Consumers Ready",
+      "x": 300,
+      "y": 50
+    },
+    "ProducerReady": {
+      "initial": [
+        2
+      ],
+      "label": "Producers Ready",
+      "x": 100,
+      "y": 50
+    }
+  },
+  "transitions": {
+    "consume": {
+      "label": "Consume",
+      "x": 250,
+      "y": 100
+    },
+    "produce": {
+      "label": "Produce",
+      "x": 150,
+      "y": 100
+    }
+  }
+}

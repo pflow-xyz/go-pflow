@@ -1,0 +1,178 @@
+{
+  "arcs": [
+    {
+      "source": "start",
+      "target": "Registration",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Registration",
+      "target": "p1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "p1",
+      "target": "Triage",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Triage",
+      "target": "p2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "p2",
+      "target": "Doctor_Consultation",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Doctor_Consultation",
+      "target": "p3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "p3",
+      "target": "Lab_Test",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Lab_Test",
+      "target": "p4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "p4",
+      "target": "Results_Review",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Results_Review",
+      "target": "p5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "p5",
+      "target": "Discharge",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "Discharge",
+      "target": "end",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "places": {
+    "end": {
+      "initial": [
+        0
+      ],
+      "label": "End",
+      "x": 1000,
+      "y": 100
+    },
+    "p1": {
+      "initial": [
+        0
+      ],
+      "label": "After Registration",
+      "x": 250,
+      "y": 100
+    },
+    "p2": {
+      "initial": [
+        0
+      ],
+      "label": "After Triage",
+      "x": 400,
+      "y": 100
+    },
+    "p3": {
+      "initial": [
+        0
+      ],
+      "label": "After Doctor_Consultation",
+      "x": 550,
+      "y": 100
+    },
+    "p4": {
+      "initial": [
+        0
+      ],
+      "label": "After Lab_Test",
+      "x": 700,
+      "y": 100
+    },
+    "p5": {
+      "initial": [
+        0
+      ],
+      "label": "After Results_Review",
+      "x": 850,
+      "y": 100
+    },
+    "start": {
+      "initial": [
+        1
+      ],
+      "label": "Start",
+      "x": 100,
+      "y": 100
+    }
+  },
+  "transitions": {
+    "Discharge": {
+      "label": "Discharge",
+      "x": 925,
+      "y": 100
+    },
+    "Doctor_Consultation": {
+      "label": "Doctor_Consultation",
+      "x": 475,
+      "y": 100
+    },
+    "Lab_Test": {
+      "label": "Lab_Test",
+      "x": 625,
+      "y": 100
+    },
+    "Registration": {
+      "label": "Registration",
+      "x": 175,
+      "y": 100
+    },
+    "Results_Review": {
+      "label": "Results_Review",
+      "x": 775,
+      "y": 100
+    },
+    "Triage": {
+      "label": "Triage",
+      "x": 325,
+      "y": 100
+    }
+  }
+}

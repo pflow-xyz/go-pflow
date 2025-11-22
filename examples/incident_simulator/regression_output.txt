@@ -1,0 +1,32 @@
+╔════════════════════════════════════════════════════════════════╗
+║     Real-Time IT Incident Response Monitoring Simulator        ║
+╚════════════════════════════════════════════════════════════════╝
+
+🧪 REGRESSION TEST MODE - Demonstrating all features in <60s
+
+📊 Step 1: Learning from historical incident data...
+
+✓ Generated 25 historical incidents (149 events)
+✓ Discovered process model with 6 places, 5 transitions
+✓ Learned transition rates:
+  • Investigation: 0.0000/sec (avg: 153722867.3 min)
+  • Ticket_Created: 0.1000/sec (avg: 0.2 min)
+  • Triage: 0.1000/sec (avg: 0.2 min)
+  • Resolve_and_Close: 0.0000/sec (avg: 153722867.3 min)
+  • Quick_Fix: 0.0000/sec (avg: 153722867.3 min)
+✓ Saved model visualization to incident_model.svg
+
+🔧 Step 2: Initializing real-time monitor...
+
+✓ Monitor initialized and started
+
+✓ Running regression test scenario
+  • Simulated duration: 5m0s
+  • Simulation speed: 200x
+  • Expected wall time: ~2 seconds
+
+
+╔════════════════════════════════════════════════════════════════╗
+║                    SIMULATION STARTED                          ║
+╚════════════════════════════════════════════════════════════════╝
+

@@ -1,0 +1,152 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "timestamp": "2025-11-21T04:05:00Z",
+    "solver": "tsit5",
+    "status": "success",
+    "computeTime": 0.156
+  },
+  "model": {
+    "name": "Production Queue with Monitoring",
+    "places": ["Queue", "Processing", "Completed", "Failed"],
+    "transitions": ["arrive", "start_processing", "complete", "fail"],
+    "arcs": 8
+  },
+  "simulation": {
+    "timespan": [0, 3600],
+    "initialState": {
+      "Queue": 0.0,
+      "Processing": 0.0,
+      "Completed": 0.0,
+      "Failed": 0.0
+    },
+    "rates": {
+      "arrive": 2.0,
+      "start_processing": 1.5,
+      "complete": 1.0,
+      "fail": 0.05
+    }
+  },
+  "results": {
+    "summary": {
+      "points": 2847,
+      "finalTime": 3600.0,
+      "finalState": {
+        "Queue": 45.2,
+        "Processing": 12.3,
+        "Completed": 5234.5,
+        "Failed": 287.0
+      }
+    },
+    "timeseries": {
+      "time": {
+        "downsampled": [0, 36, 72, 108, "... 100 points ..."]
+      },
+      "variables": {
+        "Queue": {
+          "downsampled": [0, 12.5, 28.3, 45.1, "..."]
+        },
+        "Processing": {
+          "downsampled": [0, 3.2, 8.7, 12.1, "..."]
+        },
+        "Completed": {
+          "downsampled": [0, 42, 156, 389, "..."]
+        },
+        "Failed": {
+          "downsampled": [0, 2, 8, 18, "..."]
+        }
+      }
+    }
+  },
+  "analysis": {
+    "peaks": [
+      {
+        "variable": "Queue",
+        "time": 1834.5,
+        "value": 67.8,
+        "prominence": 22.6
+      }
+    ],
+    "steadyState": {
+      "reached": false,
+      "tolerance": 0.01
+    },
+    "conservation": {
+      "totalTokens": {
+        "initial": 0.0,
+        "final": 5579.0,
+        "conserved": false
+      }
+    },
+    "statistics": {
+      "Queue": {
+        "min": 0.0,
+        "max": 67.8,
+        "mean": 38.4,
+        "median": 42.1,
+        "std": 15.2
+      },
+      "Failed": {
+        "min": 0.0,
+        "max": 287.0,
+        "mean": 143.5,
+        "median": 147.2,
+        "std": 83.1
+      }
+    }
+  },
+  "events": [
+    {
+      "time": 234.5,
+      "type": "threshold_exceeded",
+      "description": "Queue length exceeded warning threshold",
+      "data": {
+        "place": "Queue",
+        "value": 50.2,
+        "threshold": 50.0,
+        "rule": "queue_warning"
+      }
+    },
+    {
+      "time": 235.0,
+      "type": "action_triggered",
+      "description": "Alert sent to operations team",
+      "data": {
+        "action": "send_alert",
+        "recipient": "ops@example.com"
+      }
+    },
+    {
+      "time": 1834.5,
+      "type": "threshold_exceeded",
+      "description": "Queue length exceeded critical threshold",
+      "data": {
+        "place": "Queue",
+        "value": 67.8,
+        "threshold": 60.0,
+        "rule": "queue_critical"
+      }
+    },
+    {
+      "time": 1835.0,
+      "type": "rate_change",
+      "description": "Increased processing rate in response to queue buildup",
+      "data": {
+        "transition": "start_processing",
+        "oldRate": 1.5,
+        "newRate": 2.0
+      }
+    },
+    {
+      "time": 2456.3,
+      "type": "threshold_below",
+      "description": "Queue length returned to normal",
+      "data": {
+        "place": "Queue",
+        "value": 49.8,
+        "threshold": 50.0,
+        "rule": "queue_warning"
+      }
+    }
+  ]
+}
