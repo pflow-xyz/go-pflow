@@ -7,6 +7,19 @@
 bin/
 dist/
 
+# Go binaries (no extension)
+pflow
+examples/connect4/connect4
+examples/nim/nim
+examples/tictactoe/tictactoe
+examples/neural/demo
+examples/neural/main
+examples/neural/reverse
+examples/dataset_comparison/cmd/covid_seir/covid_seir
+examples/dataset_comparison/cmd/measles_sir/measles_sir
+examples/dataset_comparison/cmd/measles_sir_fixed/measles_sir_fixed
+examples/dataset_comparison/cmd/synthetic_sir/synthetic_sir
+
 # Test binary, built with `go test -c`
 *.test
 
