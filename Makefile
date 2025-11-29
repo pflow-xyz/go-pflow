@@ -105,6 +105,8 @@ examples:
 	@go build -o bin/connect4 examples/connect4/cmd/*.go
 	@echo "  - Chess problem examples"
 	@go build -o bin/chess examples/chess/cmd/*.go
+	@echo "  - Knapsack example"
+	@go build -o bin/knapsack examples/knapsack/cmd/*.go
 	@echo "Done building examples!"
 
 # Run basic example
@@ -157,6 +159,9 @@ rebuild-all-svg:
 	@cd examples/chess/cmd && go run *.go --problem=queens --size=8 --strategy=backtrack
 	@cd examples/chess/cmd && go run *.go --problem=knights --size=5
 	@cd examples/chess/cmd && go run *.go --problem=rooks --size=8
+	@echo ""
+	@echo "=== Knapsack Example ==="
+	@cd examples/knapsack/cmd && go run *.go
 	@echo ""
 	@echo "✓ All SVG files regenerated!"
 

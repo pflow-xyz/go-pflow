@@ -40,7 +40,6 @@ coverage.txt
 Thumbs.db
 
 # Build artifacts
-*.svg
 *.png
 *.pdf
 results.json

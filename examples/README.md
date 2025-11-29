@@ -8,6 +8,7 @@ This directory contains example implementations demonstrating different aspects 
 |---------|------|------------|--------------|---------------|
 | **basic** | Workflow | Simple | Sequential processes, producer-consumer patterns | [workflow](basic/workflow_small.svg), [producer-consumer](basic/pc_small.svg) |
 | **sudoku** | Puzzle | Simple | Constraint satisfaction, ODE analysis, colored nets | [4x4](sudoku/sudoku-4x4.svg) |
+| **knapsack** | Optimization | Medium | 0/1 Knapsack, mass-action kinetics, exclusion analysis | [model](knapsack/cmd/knapsack_model.svg) |
 | **tictactoe** | Game AI | Medium | Minimax, perfect play, ODE-guided decisions | [flow](tictactoe/tictactoe_flow.svg) |
 | **nim** | Game Theory | Medium | Discrete state spaces, optimal strategy, position evaluation | [10 stones](nim/nim_10.svg) |
 | **connect4** | Game AI | Complex | Pattern recognition, lookahead, multi-dimensional evaluation | [flow](connect4/connect4_flow.svg) |
@@ -98,17 +99,56 @@ go build -o sudoku ./cmd
 ./sudoku --size 9x9 --ode
 
 # Analyze colored net
-./sudoku --size 9x9 --colored
-
-# Run ODE analysis
-./sudoku --size 9x9 --ode --analyze
 ```
-
-**Documentation**: See [ODE_ANALYSIS.md](sudoku/ODE_ANALYSIS.md) for detailed ODE tracking examples.
 
 ---
 
-### 3. Tic-Tac-Toe
+### 3. Knapsack Problem
+
+**Location**: `knapsack/`
+
+**Model Type**: Combinatorial optimization via ODE
+
+**What It Demonstrates**:
+- **0/1 Knapsack**: Classic optimization problem as Petri net
+- **Mass-Action Kinetics**: Items compete for capacity based on efficiency
+- **Exclusion Analysis**: Sensitivity testing by disabling items
+- **Continuous Relaxation**: ODE approximation of discrete optimization
+- **Value/Weight Tradeoffs**: Greedy heuristics encoded in transition rates
+
+**Problem Setup**:
+| Item | Weight | Value | Efficiency (v/w) |
+|------|--------|-------|------------------|
+| item0 | 2 | 10 | 5.00 |
+| item1 | 4 | 10 | 2.50 |
+| item2 | 6 | 12 | 2.00 |
+| item3 | 9 | 18 | 2.00 |
+
+Capacity: 15
+Optimal discrete solution: items 0, 1, 3 → value=38, weight=15
+
+**Petri Net Model**:
+- Each item is a place (1 token = available)
+- Capacity place holds weight tokens
+- "Take item" transitions consume item + weight, produce value
+- Transition rates proportional to value/weight efficiency
+- Higher efficiency items "fire" faster (greedy encoding)
+
+**Key Insights**:
+1. **Mass-action kinetics naturally implements greedy heuristics**
+2. **Exclusion analysis shows item importance** (like game move evaluation)
+3. **Continuous ODE approximates discrete optimization**
+4. **Rate-based competition models resource constraints**
+
+**Run Example**:
+```bash
+cd knapsack/cmd
+go run *.go
+```
+
+---
+
+### 4. Tic-Tac-Toe
 
 **Location**: `tictactoe/`
 
@@ -170,7 +210,7 @@ go build -o ttt ./cmd
 
 ---
 
-### 4. Nim Game
+### 5. Nim Game
 
 **Location**: `nim/`
 
@@ -226,7 +266,7 @@ go build -o nim ./cmd
 
 ---
 
-### 5. Connect Four
+### 6. Connect Four
 
 **Location**: `connect4/`
 
@@ -322,7 +362,7 @@ go build -o connect4 ./cmd
 
 ---
 
-### 6. Chess Problems
+### 7. Chess Problems
 
 **Location**: `chess/`
 
@@ -409,6 +449,7 @@ The examples use three different approaches to Petri nets:
 | Example | Petri Net Usage | AI Implementation | Pattern Recognition | ODE Role |
 |---------|----------------|-------------------|---------------------|----------|
 | **basic** | Full system model | N/A | N/A | Simulate system |
+| **knapsack** | Item/capacity model | Mass-action kinetics | Via transition rates | Optimization dynamics |
 | **tictactoe** | Full board state (9 positions) | ODE simulation | Via Petri net | Evaluate moves |
 | **nim** | Full game state (stones) | Go code | Go code (mod 4) | Visualize only |
 | **connect4** | Full board state (42 positions) | Go code | Go code (69 windows) | Visualize only |
