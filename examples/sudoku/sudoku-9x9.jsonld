@@ -1,0 +1,3020 @@
+{
+  "@context": {
+    "@vocab": "https://pflow.xyz/schema#",
+    "arcs": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#arcs"
+    },
+    "capacity": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#capacity"
+    },
+    "initial": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#initial"
+    },
+    "label": "https://pflow.xyz/schema#label",
+    "places": "https://pflow.xyz/schema#places",
+    "source": "https://pflow.xyz/schema#source",
+    "target": "https://pflow.xyz/schema#target",
+    "token": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#token"
+    },
+    "transitions": "https://pflow.xyz/schema#transitions",
+    "weight": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#weight"
+    },
+    "x": "https://pflow.xyz/schema#x",
+    "y": "https://pflow.xyz/schema#y"
+  },
+  "@type": "PetriNet",
+  "@version": "1.1",
+  "arcs": [
+    {
+      "@type": "Arc",
+      "source": "cell_0_2",
+      "target": "fill_0_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_0_2",
+      "target": "cell_0_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_3",
+      "target": "fill_0_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_0_3",
+      "target": "cell_0_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_5",
+      "target": "fill_0_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_0_5",
+      "target": "cell_0_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_6",
+      "target": "fill_0_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_0_6",
+      "target": "cell_0_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_7",
+      "target": "fill_0_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_0_7",
+      "target": "cell_0_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_8",
+      "target": "fill_0_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_0_8",
+      "target": "cell_0_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_1",
+      "target": "fill_1_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_1_1",
+      "target": "cell_1_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_2",
+      "target": "fill_1_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_1_2",
+      "target": "cell_1_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_6",
+      "target": "fill_1_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_1_6",
+      "target": "cell_1_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_7",
+      "target": "fill_1_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_1_7",
+      "target": "cell_1_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_8",
+      "target": "fill_1_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_1_8",
+      "target": "cell_1_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_0",
+      "target": "fill_2_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_2_0",
+      "target": "cell_2_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_3",
+      "target": "fill_2_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_2_3",
+      "target": "cell_2_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_4",
+      "target": "fill_2_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_2_4",
+      "target": "cell_2_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_5",
+      "target": "fill_2_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_2_5",
+      "target": "cell_2_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_6",
+      "target": "fill_2_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_2_6",
+      "target": "cell_2_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_8",
+      "target": "fill_2_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_2_8",
+      "target": "cell_2_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_1",
+      "target": "fill_3_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_3_1",
+      "target": "cell_3_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_2",
+      "target": "fill_3_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_3_2",
+      "target": "cell_3_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_3",
+      "target": "fill_3_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_3_3",
+      "target": "cell_3_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_5",
+      "target": "fill_3_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_3_5",
+      "target": "cell_3_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_6",
+      "target": "fill_3_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_3_6",
+      "target": "cell_3_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_7",
+      "target": "fill_3_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_3_7",
+      "target": "cell_3_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_1",
+      "target": "fill_4_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_4_1",
+      "target": "cell_4_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_2",
+      "target": "fill_4_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_4_2",
+      "target": "cell_4_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_4",
+      "target": "fill_4_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_4_4",
+      "target": "cell_4_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_6",
+      "target": "fill_4_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_4_6",
+      "target": "cell_4_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_7",
+      "target": "fill_4_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_4_7",
+      "target": "cell_4_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_1",
+      "target": "fill_5_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_5_1",
+      "target": "cell_5_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_2",
+      "target": "fill_5_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_5_2",
+      "target": "cell_5_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_3",
+      "target": "fill_5_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_5_3",
+      "target": "cell_5_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_5",
+      "target": "fill_5_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_5_5",
+      "target": "cell_5_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_6",
+      "target": "fill_5_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_5_6",
+      "target": "cell_5_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_7",
+      "target": "fill_5_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_5_7",
+      "target": "cell_5_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_0",
+      "target": "fill_6_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_6_0",
+      "target": "cell_6_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_2",
+      "target": "fill_6_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_6_2",
+      "target": "cell_6_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_3",
+      "target": "fill_6_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_6_3",
+      "target": "cell_6_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_4",
+      "target": "fill_6_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_6_4",
+      "target": "cell_6_4",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_5",
+      "target": "fill_6_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_6_5",
+      "target": "cell_6_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_8",
+      "target": "fill_6_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_6_8",
+      "target": "cell_6_8",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_0",
+      "target": "fill_7_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_7_0",
+      "target": "cell_7_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_1",
+      "target": "fill_7_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_7_1",
+      "target": "cell_7_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_2",
+      "target": "fill_7_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_7_2",
+      "target": "cell_7_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_6",
+      "target": "fill_7_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_7_6",
+      "target": "cell_7_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_7",
+      "target": "fill_7_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_7_7",
+      "target": "cell_7_7",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_0",
+      "target": "fill_8_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_8_0",
+      "target": "cell_8_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_1",
+      "target": "fill_8_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_8_1",
+      "target": "cell_8_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_2",
+      "target": "fill_8_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_8_2",
+      "target": "cell_8_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_3",
+      "target": "fill_8_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_8_3",
+      "target": "cell_8_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_5",
+      "target": "fill_8_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_8_5",
+      "target": "cell_8_5",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_6",
+      "target": "fill_8_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_8_6",
+      "target": "cell_8_6",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_4",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_5",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_6",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_7",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_8",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_4",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_5",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_6",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_7",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_8",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_4",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_5",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_6",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_7",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_8",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_4",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_5",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_6",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_7",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_8",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_4",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_5",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_6",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_7",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_4_8",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_4",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_5",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_6",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_7",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_5_8",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_4",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_5",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_6",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_7",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_6_8",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_4",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_5",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_6",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_7",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_7_8",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_4",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_5",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_6",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_7",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_8_8",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "check_solved",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "description": "A 9x9 Sudoku puzzle modeled as a Petri net.",
+  "places": {
+    "cell_0_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(0,0)=5",
+      "x": 50,
+      "y": 50
+    },
+    "cell_0_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(0,1)=3",
+      "x": 100,
+      "y": 50
+    },
+    "cell_0_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,2)=empty",
+      "x": 150,
+      "y": 50
+    },
+    "cell_0_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,3)=empty",
+      "x": 200,
+      "y": 50
+    },
+    "cell_0_4": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(0,4)=7",
+      "x": 250,
+      "y": 50
+    },
+    "cell_0_5": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,5)=empty",
+      "x": 300,
+      "y": 50
+    },
+    "cell_0_6": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,6)=empty",
+      "x": 350,
+      "y": 50
+    },
+    "cell_0_7": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,7)=empty",
+      "x": 400,
+      "y": 50
+    },
+    "cell_0_8": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,8)=empty",
+      "x": 450,
+      "y": 50
+    },
+    "cell_1_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(1,0)=6",
+      "x": 50,
+      "y": 100
+    },
+    "cell_1_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(1,1)=empty",
+      "x": 100,
+      "y": 100
+    },
+    "cell_1_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(1,2)=empty",
+      "x": 150,
+      "y": 100
+    },
+    "cell_1_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(1,3)=1",
+      "x": 200,
+      "y": 100
+    },
+    "cell_1_4": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(1,4)=9",
+      "x": 250,
+      "y": 100
+    },
+    "cell_1_5": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(1,5)=5",
+      "x": 300,
+      "y": 100
+    },
+    "cell_1_6": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(1,6)=empty",
+      "x": 350,
+      "y": 100
+    },
+    "cell_1_7": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(1,7)=empty",
+      "x": 400,
+      "y": 100
+    },
+    "cell_1_8": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(1,8)=empty",
+      "x": 450,
+      "y": 100
+    },
+    "cell_2_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,0)=empty",
+      "x": 50,
+      "y": 150
+    },
+    "cell_2_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(2,1)=9",
+      "x": 100,
+      "y": 150
+    },
+    "cell_2_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(2,2)=8",
+      "x": 150,
+      "y": 150
+    },
+    "cell_2_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,3)=empty",
+      "x": 200,
+      "y": 150
+    },
+    "cell_2_4": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,4)=empty",
+      "x": 250,
+      "y": 150
+    },
+    "cell_2_5": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,5)=empty",
+      "x": 300,
+      "y": 150
+    },
+    "cell_2_6": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,6)=empty",
+      "x": 350,
+      "y": 150
+    },
+    "cell_2_7": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(2,7)=6",
+      "x": 400,
+      "y": 150
+    },
+    "cell_2_8": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,8)=empty",
+      "x": 450,
+      "y": 150
+    },
+    "cell_3_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(3,0)=8",
+      "x": 50,
+      "y": 200
+    },
+    "cell_3_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,1)=empty",
+      "x": 100,
+      "y": 200
+    },
+    "cell_3_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,2)=empty",
+      "x": 150,
+      "y": 200
+    },
+    "cell_3_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,3)=empty",
+      "x": 200,
+      "y": 200
+    },
+    "cell_3_4": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(3,4)=6",
+      "x": 250,
+      "y": 200
+    },
+    "cell_3_5": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,5)=empty",
+      "x": 300,
+      "y": 200
+    },
+    "cell_3_6": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,6)=empty",
+      "x": 350,
+      "y": 200
+    },
+    "cell_3_7": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,7)=empty",
+      "x": 400,
+      "y": 200
+    },
+    "cell_3_8": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(3,8)=3",
+      "x": 450,
+      "y": 200
+    },
+    "cell_4_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(4,0)=4",
+      "x": 50,
+      "y": 250
+    },
+    "cell_4_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(4,1)=empty",
+      "x": 100,
+      "y": 250
+    },
+    "cell_4_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(4,2)=empty",
+      "x": 150,
+      "y": 250
+    },
+    "cell_4_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(4,3)=8",
+      "x": 200,
+      "y": 250
+    },
+    "cell_4_4": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(4,4)=empty",
+      "x": 250,
+      "y": 250
+    },
+    "cell_4_5": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(4,5)=3",
+      "x": 300,
+      "y": 250
+    },
+    "cell_4_6": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(4,6)=empty",
+      "x": 350,
+      "y": 250
+    },
+    "cell_4_7": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(4,7)=empty",
+      "x": 400,
+      "y": 250
+    },
+    "cell_4_8": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(4,8)=1",
+      "x": 450,
+      "y": 250
+    },
+    "cell_5_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(5,0)=7",
+      "x": 50,
+      "y": 300
+    },
+    "cell_5_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(5,1)=empty",
+      "x": 100,
+      "y": 300
+    },
+    "cell_5_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(5,2)=empty",
+      "x": 150,
+      "y": 300
+    },
+    "cell_5_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(5,3)=empty",
+      "x": 200,
+      "y": 300
+    },
+    "cell_5_4": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(5,4)=2",
+      "x": 250,
+      "y": 300
+    },
+    "cell_5_5": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(5,5)=empty",
+      "x": 300,
+      "y": 300
+    },
+    "cell_5_6": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(5,6)=empty",
+      "x": 350,
+      "y": 300
+    },
+    "cell_5_7": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(5,7)=empty",
+      "x": 400,
+      "y": 300
+    },
+    "cell_5_8": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(5,8)=6",
+      "x": 450,
+      "y": 300
+    },
+    "cell_6_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(6,0)=empty",
+      "x": 50,
+      "y": 350
+    },
+    "cell_6_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(6,1)=6",
+      "x": 100,
+      "y": 350
+    },
+    "cell_6_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(6,2)=empty",
+      "x": 150,
+      "y": 350
+    },
+    "cell_6_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(6,3)=empty",
+      "x": 200,
+      "y": 350
+    },
+    "cell_6_4": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(6,4)=empty",
+      "x": 250,
+      "y": 350
+    },
+    "cell_6_5": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(6,5)=empty",
+      "x": 300,
+      "y": 350
+    },
+    "cell_6_6": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(6,6)=2",
+      "x": 350,
+      "y": 350
+    },
+    "cell_6_7": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(6,7)=8",
+      "x": 400,
+      "y": 350
+    },
+    "cell_6_8": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(6,8)=empty",
+      "x": 450,
+      "y": 350
+    },
+    "cell_7_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(7,0)=empty",
+      "x": 50,
+      "y": 400
+    },
+    "cell_7_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(7,1)=empty",
+      "x": 100,
+      "y": 400
+    },
+    "cell_7_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(7,2)=empty",
+      "x": 150,
+      "y": 400
+    },
+    "cell_7_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(7,3)=4",
+      "x": 200,
+      "y": 400
+    },
+    "cell_7_4": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(7,4)=1",
+      "x": 250,
+      "y": 400
+    },
+    "cell_7_5": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(7,5)=9",
+      "x": 300,
+      "y": 400
+    },
+    "cell_7_6": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(7,6)=empty",
+      "x": 350,
+      "y": 400
+    },
+    "cell_7_7": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(7,7)=empty",
+      "x": 400,
+      "y": 400
+    },
+    "cell_7_8": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(7,8)=5",
+      "x": 450,
+      "y": 400
+    },
+    "cell_8_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(8,0)=empty",
+      "x": 50,
+      "y": 450
+    },
+    "cell_8_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(8,1)=empty",
+      "x": 100,
+      "y": 450
+    },
+    "cell_8_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(8,2)=empty",
+      "x": 150,
+      "y": 450
+    },
+    "cell_8_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(8,3)=empty",
+      "x": 200,
+      "y": 450
+    },
+    "cell_8_4": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(8,4)=8",
+      "x": 250,
+      "y": 450
+    },
+    "cell_8_5": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(8,5)=empty",
+      "x": 300,
+      "y": 450
+    },
+    "cell_8_6": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(8,6)=empty",
+      "x": 350,
+      "y": 450
+    },
+    "cell_8_7": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(8,7)=7",
+      "x": 400,
+      "y": 450
+    },
+    "cell_8_8": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(8,8)=9",
+      "x": 450,
+      "y": 450
+    },
+    "solved": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Puzzle Solved",
+      "x": 250,
+      "y": 550
+    }
+  },
+  "puzzle": {
+    "block_size": 3,
+    "description": "9x9 Sudoku puzzle",
+    "initial_state": [
+      [
+        5,
+        3,
+        0,
+        0,
+        7,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        6,
+        0,
+        0,
+        1,
+        9,
+        5,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        9,
+        8,
+        0,
+        0,
+        0,
+        0,
+        6,
+        0
+      ],
+      [
+        8,
+        0,
+        0,
+        0,
+        6,
+        0,
+        0,
+        0,
+        3
+      ],
+      [
+        4,
+        0,
+        0,
+        8,
+        0,
+        3,
+        0,
+        0,
+        1
+      ],
+      [
+        7,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        6
+      ],
+      [
+        0,
+        6,
+        0,
+        0,
+        0,
+        0,
+        2,
+        8,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        4,
+        1,
+        9,
+        0,
+        0,
+        5
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        8,
+        0,
+        0,
+        7,
+        9
+      ]
+    ],
+    "ode_compatible": false,
+    "size": 9,
+    "solution": [
+      [
+        5,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        1,
+        2
+      ],
+      [
+        6,
+        7,
+        2,
+        1,
+        9,
+        5,
+        3,
+        4,
+        8
+      ],
+      [
+        1,
+        9,
+        8,
+        3,
+        4,
+        2,
+        5,
+        6,
+        7
+      ],
+      [
+        8,
+        5,
+        9,
+        7,
+        6,
+        1,
+        4,
+        2,
+        3
+      ],
+      [
+        4,
+        2,
+        6,
+        8,
+        5,
+        3,
+        7,
+        9,
+        1
+      ],
+      [
+        7,
+        1,
+        3,
+        9,
+        2,
+        4,
+        8,
+        5,
+        6
+      ],
+      [
+        9,
+        6,
+        1,
+        5,
+        3,
+        7,
+        2,
+        8,
+        4
+      ],
+      [
+        2,
+        8,
+        7,
+        4,
+        1,
+        9,
+        6,
+        3,
+        5
+      ],
+      [
+        3,
+        4,
+        5,
+        2,
+        8,
+        6,
+        1,
+        7,
+        9
+      ]
+    ]
+  },
+  "token": [
+    "https://pflow.xyz/tokens/black"
+  ],
+  "transitions": {
+    "check_solved": {
+      "@type": "Transition",
+      "label": "Check if Solved",
+      "x": 250,
+      "y": 500
+    },
+    "fill_0_2": {
+      "@type": "Transition",
+      "label": "Fill (0,2)",
+      "x": 175,
+      "y": 75
+    },
+    "fill_0_3": {
+      "@type": "Transition",
+      "label": "Fill (0,3)",
+      "x": 225,
+      "y": 75
+    },
+    "fill_0_5": {
+      "@type": "Transition",
+      "label": "Fill (0,5)",
+      "x": 325,
+      "y": 75
+    },
+    "fill_0_6": {
+      "@type": "Transition",
+      "label": "Fill (0,6)",
+      "x": 375,
+      "y": 75
+    },
+    "fill_0_7": {
+      "@type": "Transition",
+      "label": "Fill (0,7)",
+      "x": 425,
+      "y": 75
+    },
+    "fill_0_8": {
+      "@type": "Transition",
+      "label": "Fill (0,8)",
+      "x": 475,
+      "y": 75
+    },
+    "fill_1_1": {
+      "@type": "Transition",
+      "label": "Fill (1,1)",
+      "x": 125,
+      "y": 125
+    },
+    "fill_1_2": {
+      "@type": "Transition",
+      "label": "Fill (1,2)",
+      "x": 175,
+      "y": 125
+    },
+    "fill_1_6": {
+      "@type": "Transition",
+      "label": "Fill (1,6)",
+      "x": 375,
+      "y": 125
+    },
+    "fill_1_7": {
+      "@type": "Transition",
+      "label": "Fill (1,7)",
+      "x": 425,
+      "y": 125
+    },
+    "fill_1_8": {
+      "@type": "Transition",
+      "label": "Fill (1,8)",
+      "x": 475,
+      "y": 125
+    },
+    "fill_2_0": {
+      "@type": "Transition",
+      "label": "Fill (2,0)",
+      "x": 75,
+      "y": 175
+    },
+    "fill_2_3": {
+      "@type": "Transition",
+      "label": "Fill (2,3)",
+      "x": 225,
+      "y": 175
+    },
+    "fill_2_4": {
+      "@type": "Transition",
+      "label": "Fill (2,4)",
+      "x": 275,
+      "y": 175
+    },
+    "fill_2_5": {
+      "@type": "Transition",
+      "label": "Fill (2,5)",
+      "x": 325,
+      "y": 175
+    },
+    "fill_2_6": {
+      "@type": "Transition",
+      "label": "Fill (2,6)",
+      "x": 375,
+      "y": 175
+    },
+    "fill_2_8": {
+      "@type": "Transition",
+      "label": "Fill (2,8)",
+      "x": 475,
+      "y": 175
+    },
+    "fill_3_1": {
+      "@type": "Transition",
+      "label": "Fill (3,1)",
+      "x": 125,
+      "y": 225
+    },
+    "fill_3_2": {
+      "@type": "Transition",
+      "label": "Fill (3,2)",
+      "x": 175,
+      "y": 225
+    },
+    "fill_3_3": {
+      "@type": "Transition",
+      "label": "Fill (3,3)",
+      "x": 225,
+      "y": 225
+    },
+    "fill_3_5": {
+      "@type": "Transition",
+      "label": "Fill (3,5)",
+      "x": 325,
+      "y": 225
+    },
+    "fill_3_6": {
+      "@type": "Transition",
+      "label": "Fill (3,6)",
+      "x": 375,
+      "y": 225
+    },
+    "fill_3_7": {
+      "@type": "Transition",
+      "label": "Fill (3,7)",
+      "x": 425,
+      "y": 225
+    },
+    "fill_4_1": {
+      "@type": "Transition",
+      "label": "Fill (4,1)",
+      "x": 125,
+      "y": 275
+    },
+    "fill_4_2": {
+      "@type": "Transition",
+      "label": "Fill (4,2)",
+      "x": 175,
+      "y": 275
+    },
+    "fill_4_4": {
+      "@type": "Transition",
+      "label": "Fill (4,4)",
+      "x": 275,
+      "y": 275
+    },
+    "fill_4_6": {
+      "@type": "Transition",
+      "label": "Fill (4,6)",
+      "x": 375,
+      "y": 275
+    },
+    "fill_4_7": {
+      "@type": "Transition",
+      "label": "Fill (4,7)",
+      "x": 425,
+      "y": 275
+    },
+    "fill_5_1": {
+      "@type": "Transition",
+      "label": "Fill (5,1)",
+      "x": 125,
+      "y": 325
+    },
+    "fill_5_2": {
+      "@type": "Transition",
+      "label": "Fill (5,2)",
+      "x": 175,
+      "y": 325
+    },
+    "fill_5_3": {
+      "@type": "Transition",
+      "label": "Fill (5,3)",
+      "x": 225,
+      "y": 325
+    },
+    "fill_5_5": {
+      "@type": "Transition",
+      "label": "Fill (5,5)",
+      "x": 325,
+      "y": 325
+    },
+    "fill_5_6": {
+      "@type": "Transition",
+      "label": "Fill (5,6)",
+      "x": 375,
+      "y": 325
+    },
+    "fill_5_7": {
+      "@type": "Transition",
+      "label": "Fill (5,7)",
+      "x": 425,
+      "y": 325
+    },
+    "fill_6_0": {
+      "@type": "Transition",
+      "label": "Fill (6,0)",
+      "x": 75,
+      "y": 375
+    },
+    "fill_6_2": {
+      "@type": "Transition",
+      "label": "Fill (6,2)",
+      "x": 175,
+      "y": 375
+    },
+    "fill_6_3": {
+      "@type": "Transition",
+      "label": "Fill (6,3)",
+      "x": 225,
+      "y": 375
+    },
+    "fill_6_4": {
+      "@type": "Transition",
+      "label": "Fill (6,4)",
+      "x": 275,
+      "y": 375
+    },
+    "fill_6_5": {
+      "@type": "Transition",
+      "label": "Fill (6,5)",
+      "x": 325,
+      "y": 375
+    },
+    "fill_6_8": {
+      "@type": "Transition",
+      "label": "Fill (6,8)",
+      "x": 475,
+      "y": 375
+    },
+    "fill_7_0": {
+      "@type": "Transition",
+      "label": "Fill (7,0)",
+      "x": 75,
+      "y": 425
+    },
+    "fill_7_1": {
+      "@type": "Transition",
+      "label": "Fill (7,1)",
+      "x": 125,
+      "y": 425
+    },
+    "fill_7_2": {
+      "@type": "Transition",
+      "label": "Fill (7,2)",
+      "x": 175,
+      "y": 425
+    },
+    "fill_7_6": {
+      "@type": "Transition",
+      "label": "Fill (7,6)",
+      "x": 375,
+      "y": 425
+    },
+    "fill_7_7": {
+      "@type": "Transition",
+      "label": "Fill (7,7)",
+      "x": 425,
+      "y": 425
+    },
+    "fill_8_0": {
+      "@type": "Transition",
+      "label": "Fill (8,0)",
+      "x": 75,
+      "y": 475
+    },
+    "fill_8_1": {
+      "@type": "Transition",
+      "label": "Fill (8,1)",
+      "x": 125,
+      "y": 475
+    },
+    "fill_8_2": {
+      "@type": "Transition",
+      "label": "Fill (8,2)",
+      "x": 175,
+      "y": 475
+    },
+    "fill_8_3": {
+      "@type": "Transition",
+      "label": "Fill (8,3)",
+      "x": 225,
+      "y": 475
+    },
+    "fill_8_5": {
+      "@type": "Transition",
+      "label": "Fill (8,5)",
+      "x": 325,
+      "y": 475
+    },
+    "fill_8_6": {
+      "@type": "Transition",
+      "label": "Fill (8,6)",
+      "x": 375,
+      "y": 475
+    }
+  }
+}

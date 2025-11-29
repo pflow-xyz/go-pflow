@@ -7,7 +7,7 @@ This directory contains example implementations demonstrating different aspects 
 | Example | Type | Complexity | Key Concepts | Visualization |
 |---------|------|------------|--------------|---------------|
 | **basic** | Workflow | Simple | Sequential processes, producer-consumer patterns | [workflow](basic/workflow_small.svg), [producer-consumer](basic/pc_small.svg) |
-| **sudoku** | Puzzle | Simple | Constraint satisfaction, constraint propagation, CSP modeling | [model](sudoku/sudoku_model.svg) |
+| **sudoku** | Puzzle | Simple | Constraint satisfaction, ODE analysis, colored nets | [4x4](sudoku/sudoku-4x4.svg), [9x9-ode](sudoku/sudoku-9x9-ode.svg) |
 | **tictactoe** | Game AI | Medium | Minimax, perfect play, ODE-guided decisions | [flow](tictactoe/tictactoe_flow.svg) |
 | **nim** | Game Theory | Medium | Discrete state spaces, optimal strategy, position evaluation | [10 stones](nim/nim_10.svg) |
 | **connect4** | Game AI | Complex | Pattern recognition, lookahead, multi-dimensional evaluation | [flow](connect4/connect4_flow.svg) |
@@ -58,44 +58,52 @@ pflow simulate pc_small.json
 **What It Demonstrates**:
 - **Constraint Modeling**: Representing Sudoku rules as Petri net structure
 - **Constraint Propagation**: Using transitions to eliminate invalid possibilities
-- **CSP Solving**: Naked singles and hidden singles techniques
+- **ODE Analysis**: Using mass-action kinetics for solution detection (like tic-tac-toe)
+- **Colored Nets**: Token colors represent digits
 - **State Space**: Reachable markings represent valid partial solutions
 
+**Available Models**:
+- `sudoku-4x4.jsonld` - Simple 4×4 puzzle with 2×2 blocks
+- `sudoku-4x4-ode.jsonld` - ODE-compatible with constraint collectors
+- `sudoku-9x9.jsonld` - Classic 9×9 puzzle
+- `sudoku-9x9-colored.jsonld` - Colored Petri net (digits as colors)
+- `sudoku-9x9-ode.jsonld` - Full ODE model with 27 constraint collectors
+
 **Complexity Metrics**:
-- Places: 162 (9 cells × 9 digits × 2 types: possibility + assigned)
-- Transitions: 81 (one per cell-digit assignment in a 3×3 box model)
-- Arcs: 810 (constraint propagation connections)
-- State Space: Exponential but heavily constrained
+- Standard 9×9: 82 places, 52 transitions
+- ODE 9×9: 811 places, 756 transitions (81 cells + 729 history + 27 collectors)
 
 **Key Learning**:
 - Modeling constraint satisfaction problems with Petri nets
+- ODE-based solution detection (like tic-tac-toe win detection)
+- Colored Petri nets for elegant constraint representation
 - Constraint propagation as token flow
-- Puzzle generation and solving techniques
-- Backtracking search as state space exploration
 
 **Run Example**:
 ```bash
 cd sudoku
 go build -o sudoku ./cmd
 
+# Generate all model files (SVG and JSON-LD)
+./sudoku --generate
+
 # Run a demo puzzle
 ./sudoku
 
-# Analyze the constraint model
-./sudoku --analyze
+# Analyze 4x4 puzzle
+./sudoku --size 4x4
 
-# Generate puzzles
-./sudoku --generate --difficulty easy
-./sudoku --generate --difficulty hard
+# Analyze ODE model
+./sudoku --size 9x9 --ode
 
-# Solve a hard puzzle
-./sudoku --solve
+# Analyze colored net
+./sudoku --size 9x9 --colored
 
-# Verbose mode
-./sudoku --v
+# Run ODE analysis
+./sudoku --size 9x9 --ode --analyze
 ```
 
-**Visualization**: ![Sudoku Model](sudoku/sudoku_model.svg)
+**Documentation**: See [ODE_ANALYSIS.md](sudoku/ODE_ANALYSIS.md) for detailed ODE tracking examples.
 
 ---
 

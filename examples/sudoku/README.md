@@ -1,37 +1,18 @@
-# Sudoku Puzzle - Petri Net Edition
+# Sudoku Petri Net Example
 
-A demonstration of modeling Sudoku constraint satisfaction using Petri nets and solving puzzles with constraint propagation.
+This example demonstrates how to model Sudoku puzzles using Petri nets with the `pflow-xyz/go-pflow` library.
 
 ## Overview
 
-This example demonstrates how Petri nets can model constraint satisfaction problems like Sudoku:
-- **Constraint Representation**: Each cell's possible values as tokens
-- **Constraint Propagation**: Transitions that eliminate invalid possibilities
-- **State Space**: Reachable markings represent valid partial solutions
-- **Solution Detection**: Complete assignment with all constraints satisfied
+Sudoku is a constraint satisfaction puzzle where numbers must be placed in a grid such that:
+- Each row contains unique values
+- Each column contains unique values
+- Each sub-grid (block) contains unique values
 
-## The Model
-
-### Petri Net Representation
-
-The Sudoku constraints are modeled as a Petri net where:
-
-**Places** (for each cell):
-- `C{row}{col}_D{digit}` - Cell (row, col) can contain digit
-- `A{row}{col}_D{digit}` - Cell (row, col) is assigned digit
-
-**Transitions**:
-- `Assign_{row}{col}_{digit}` - Assign digit to cell (row, col)
-  - Consumes possibility token from that cell
-  - Produces assignment token
-  - Consumes same digit from related cells (same row/col/box)
-
-### Sudoku Rules Encoded
-
-1. **Cell Constraint**: Each cell contains exactly one digit (1-9)
-2. **Row Constraint**: Each row contains all digits 1-9 exactly once
-3. **Column Constraint**: Each column contains all digits 1-9 exactly once
-4. **Box Constraint**: Each 3×3 box contains all digits 1-9 exactly once
+This example includes both **4x4** and **9x9** Sudoku puzzles, with support for:
+- **Standard Petri Nets** - Simple representation with places for cells
+- **Colored Petri Nets** - Token colors represent digits
+- **ODE-Compatible Models** - Structured like the go-pflow tic-tac-toe example for solution detection
 
 ## Quick Start
 
@@ -39,173 +20,227 @@ The Sudoku constraints are modeled as a Petri net where:
 # Build
 go build -o sudoku ./cmd
 
-# Run a demo puzzle
+# Generate all model files (SVG and JSON-LD)
+./sudoku --generate
+
+# Analyze 9x9 standard model (default)
 ./sudoku
 
-# Analyze the constraint model
-./sudoku --analyze
+# Analyze 4x4 model
+./sudoku --size 4x4
 
-# Generate a random puzzle
-./sudoku --generate --difficulty easy
+# Analyze 9x9 colored model
+./sudoku --size 9x9 --colored
 
-# Solve a hard puzzle
-./sudoku --solve
+# Analyze ODE-compatible model
+./sudoku --size 9x9 --ode
 
-# Verbose mode
+# Run ODE analysis
+./sudoku --size 9x9 --ode --analyze
+
+# Verbose output
 ./sudoku --v
 ```
 
-## Command Line Options
+## Available Models
 
-| Flag | Description |
-|------|-------------|
-| `--analyze` | Analyze the Petri net constraint model |
-| `--solve` | Solve a built-in hard puzzle |
-| `--generate` | Generate a random puzzle |
-| `--difficulty` | Puzzle difficulty: `easy`, `medium`, `hard` |
-| `--v` | Verbose output showing solving steps |
+### Standard Petri Net Models
+
+| File | Size | Description |
+|------|------|-------------|
+| `sudoku-4x4.jsonld` | 4×4 | Simple variant with 2×2 blocks, digits 1-4 |
+| `sudoku-9x9.jsonld` | 9×9 | Classic Sudoku with 3×3 blocks, digits 1-9 |
+
+### Colored Petri Net Model
+
+| File | Size | Description |
+|------|------|-------------|
+| `sudoku-9x9-colored.jsonld` | 9×9 | Token colors represent digits 1-9 |
+
+### ODE-Compatible Models (like tic-tac-toe)
+
+| File | Size | Description |
+|------|------|-------------|
+| `sudoku-4x4-ode.jsonld` | 4×4 | Constraint collectors, 12 max tokens in `solved` |
+| `sudoku-9x9-ode.jsonld` | 9×9 | Full ODE compatibility, 27 max tokens in `solved` |
+
+## ODE Model Structure
+
+The ODE model follows the same pattern as the tic-tac-toe example in go-pflow:
+
+```
+Cell Places (P##)  ──>  Digit Transitions (D#_##)  ──>  History Places (_D#_##)
+                                                              │
+                                                              v
+                            Constraint Collectors ──> solved place
+                     (Row/Column/Block Complete)
+```
+
+### Key Components
+
+1. **Cell Places (P##)**: 81 places representing the 9×9 grid
+   - Token present = cell is empty
+   - No token = cell is filled
+
+2. **History Places (_D#_##)**: 729 places (81 cells × 9 digits)
+   - Token present = that digit is in that cell
+   - Example: `_D5_03` has a token → digit 5 is at position (0,3)
+
+3. **Digit Transitions (D#_##)**: 729 transitions for placing digits
+   - Consumes cell token (marks cell as filled)
+   - Creates history token (records which digit was placed)
+
+4. **Constraint Collectors**: 27 transitions
+   - 9 Row collectors: `Row0_Complete`, `Row1_Complete`, ..., `Row8_Complete`
+   - 9 Column collectors: `Col0_Complete`, `Col1_Complete`, ..., `Col8_Complete`
+   - 9 Block collectors: `Block00_Complete`, `Block01_Complete`, ..., `Block22_Complete`
+
+5. **Solved Place**: Accumulator showing constraint satisfaction
+   - Maximum capacity: 27 tokens
+   - Token count = number of satisfied constraints
+   - Fully solved puzzle = 27 tokens
+
+### ODE Win Detection
+
+Just like tic-tac-toe uses ODE simulation to predict win likelihood:
+
+- **Measure solution progress**: Token count in `solved` place indicates how many constraints are satisfied
+  - 4x4 Sudoku: 0-12 tokens maximum (4 rows + 4 columns + 4 blocks)
+  - 9x9 Sudoku: 0-27 tokens maximum (9 rows + 9 columns + 9 blocks)
+- **Predict solution feasibility**: ODE simulation shows if current state leads to full solution
+- **Evaluate moves**: Compare different digit placements by their effect on `solved` token accumulation
+
+See [ODE_ANALYSIS.md](./ODE_ANALYSIS.md) for detailed examples.
 
 ## Example Output
 
-### Demo Mode
 ```
-=== Sudoku Puzzle Demo ===
+Sudoku Petri Net Analyzer
+==========================
 
-Initial Puzzle:
-┌───────┬───────┬───────┐
-│ 5 3 . │ . 7 . │ . . . │
-│ 6 . . │ 1 9 5 │ . . . │
-│ . 9 8 │ . . . │ . 6 . │
-├───────┼───────┼───────┤
-│ 8 . . │ . 6 . │ . . 3 │
-│ 4 . . │ 8 . 3 │ . . 1 │
-│ 7 . . │ . 2 . │ . . 6 │
-├───────┼───────┼───────┤
-│ . 6 . │ . . . │ 2 8 . │
-│ . . . │ 4 1 9 │ . . 5 │
-│ . . . │ . 8 . │ . 7 9 │
-└───────┴───────┴───────┘
+Loading model: sudoku-9x9-ode.jsonld
 
-Solving using constraint propagation...
+Puzzle Information:
+  Size: 9x9
+  Block Size: 3x3
+  Model Type: ODE-Compatible Petri Net (like tic-tac-toe)
 
-Solution found!
-┌───────┬───────┬───────┐
-│ 5 3 4 │ 6 7 8 │ 9 1 2 │
-│ 6 7 2 │ 1 9 5 │ 3 4 8 │
-│ 1 9 8 │ 3 4 2 │ 5 6 7 │
-├───────┼───────┼───────┤
-│ 8 5 9 │ 7 6 1 │ 4 2 3 │
-│ 4 2 6 │ 8 5 3 │ 7 9 1 │
-│ 7 1 3 │ 9 2 4 │ 8 5 6 │
-├───────┼───────┼───────┤
-│ 9 6 1 │ 5 3 7 │ 2 8 4 │
-│ 2 8 7 │ 4 1 9 │ 6 3 5 │
-│ 3 4 5 │ 2 8 6 │ 1 7 9 │
-└───────┴───────┴───────┘
+Initial State:
+  +---+---+---+||+---+---+---+||+---+---+---+
+  | 5 | 3 | . ||| . | 7 | . ||| . | . | . |
+  +---+---+---+||+---+---+---+||+---+---+---+
+  | 6 | . | . ||| 1 | 9 | 5 ||| . | . | . |
+  ...
 
-Time: 45.2µs
-Cells filled: 81
+Solution Verification:
+  ✓ Solution is valid!
+  ✓ All rows contain unique values
+  ✓ All columns contain unique values
+  ✓ All 3x3 blocks contain unique values
+
+ODE Analysis (tic-tac-toe style):
+  Cell Places: 81
+  History Places: 729
+  Digit Transitions: 729
+  Constraint Collectors: 27
+  Solved Place: solved
 ```
 
-### Analysis Mode
-```
-=== Sudoku Constraint Model Analysis ===
+## Colored Petri Net
 
-Model Structure (3x3 Box Constraint):
-  Places: 162
-  Transitions: 81
-  Arcs: 810
+In the Colored Petri Net model:
 
-Reachability Analysis:
-  Reachable states: 1000
-  Terminal states: 9
-  Deadlock states: 0
-  Bounded: true
+- **Colors**: Define a color set `DIGIT` with 9 colors (d1-d9) representing digits 1-9
+  - d1 (1): `#FF6B6B` (red)
+  - d2 (2): `#4ECDC4` (teal)
+  - d3 (3): `#45B7D1` (blue)
+  - d4 (4): `#96CEB4` (green)
+  - d5 (5): `#FFEAA7` (yellow)
+  - d6 (6): `#DDA0DD` (plum)
+  - d7 (7): `#98D8C8` (mint)
+  - d8 (8): `#F7DC6F` (gold)
+  - d9 (9): `#BB8FCE` (purple)
 
-Sudoku Constraint Properties:
-  ✓ Each cell contains exactly one digit (1-9)
-  ✓ Each row contains all digits 1-9 exactly once
-  ✓ Each column contains all digits 1-9 exactly once
-  ✓ Each 3x3 box contains all digits 1-9 exactly once
+- **Places**: Each cell can hold one colored token
+- **Constraints**: Row/Column/Block uniqueness through color restrictions
 
-Petri Net Representation:
-  - Places represent possible digit placements
-  - Transitions represent digit assignments
-  - Arcs encode constraint propagation
-  - Token absence indicates eliminated possibilities
-```
+## Usage with go-pflow
 
-## Solving Techniques
+```go
+import (
+    "github.com/pflow-xyz/go-pflow/parser"
+    "github.com/pflow-xyz/go-pflow/engine"
+)
 
-The solver uses constraint propagation with two main techniques:
+// Load the model
+jsonData, _ := os.ReadFile("examples/sudoku/sudoku-9x9-ode.jsonld")
+net, _ := parser.FromJSON(jsonData)
 
-### 1. Naked Singles
-When a cell has only one possible candidate, that value must be placed there.
+// Create engine
+eng := engine.New(net)
 
-```
-Before: Cell(3,4) candidates = {7}
-Action: Place 7 in Cell(3,4)
-```
+// Run ODE simulation
+eng.RunODE(3.0)
 
-### 2. Hidden Singles
-When a digit can only go in one place within a row, column, or box.
-
-```
-Row 5: Digit 3 can only go in Cell(5,7)
-Action: Place 3 in Cell(5,7)
+// Check 'solved' place token count
+state := eng.GetState()
+solvedTokens := state["solved"]
+fmt.Printf("Constraints satisfied: %.0f/27\n", solvedTokens)
 ```
 
-## Petri Net Visualization
+## Sample Puzzles
+
+### 4x4 Puzzle
 
 ```
-For a single cell (r,c):
-
-    [C_rc_1] [C_rc_2] ... [C_rc_9]    ← Possibility places
-        │        │           │
-        ▼        ▼           ▼
-    ┌──────┐ ┌──────┐   ┌──────┐
-    │Assign│ │Assign│...│Assign│     ← Assignment transitions
-    │ _1   │ │ _2   │   │ _9   │
-    └──┬───┘ └──┬───┘   └──┬───┘
-       │        │           │
-       ▼        ▼           ▼
-    [A_rc_1] [A_rc_2] ... [A_rc_9]    ← Assigned places
+Initial:         Solution:
+1 _ _ _          1 2 4 3
+_ _ 2 _          3 4 2 1
+_ 3 _ _          2 3 1 4
+_ _ _ 4          4 1 3 2
 ```
 
-When `Assign_rc_5` fires:
-- Consumes token from `C_rc_5`
-- Produces token in `A_rc_5`
-- Consumes `5` possibility from all cells in same row/col/box
+### 9x9 Puzzle
 
-## Connection to Constraint Satisfaction
+```
+Initial:
+5 3 _ | _ 7 _ | _ _ _
+6 _ _ | 1 9 5 | _ _ _
+_ 9 8 | _ _ _ | _ 6 _
+------+-------+------
+8 _ _ | _ 6 _ | _ _ 3
+4 _ _ | 8 _ 3 | _ _ 1
+7 _ _ | _ 2 _ | _ _ 6
+------+-------+------
+_ 6 _ | _ _ _ | 2 8 _
+_ _ _ | 4 1 9 | _ _ 5
+_ _ _ | _ 8 _ | _ 7 9
 
-This model demonstrates:
-1. **CSP as Petri Net**: Variables, domains, and constraints as net structure
-2. **Arc Consistency**: Constraint propagation via transition firings
-3. **Backtracking**: Exploring reachable markings for solutions
-4. **Deadlock = Invalid**: Unsolvable states are deadlocks in the net
-
-## Complexity
-
-| Aspect | Value |
-|--------|-------|
-| Full Grid Size | 9×9 = 81 cells |
-| Digits per Cell | 9 |
-| Total Possibility Places | 81 × 9 = 729 |
-| Box Constraints | 9 |
-| Row Constraints | 9 |
-| Column Constraints | 9 |
-| State Space | Exponential (but heavily constrained) |
+Solution:
+5 3 4 | 6 7 8 | 9 1 2
+6 7 2 | 1 9 5 | 3 4 8
+1 9 8 | 3 4 2 | 5 6 7
+------+-------+------
+8 5 9 | 7 6 1 | 4 2 3
+4 2 6 | 8 5 3 | 7 9 1
+7 1 3 | 9 2 4 | 8 5 6
+------+-------+------
+9 6 1 | 5 3 7 | 2 8 4
+2 8 7 | 4 1 9 | 6 3 5
+3 4 5 | 2 8 6 | 1 7 9
+```
 
 ## Files
 
-- `cmd/main.go` - Main program and CLI interface
-- `cmd/puzzle.go` - Sudoku puzzle representation and solver
-- `sudoku_model.json` - Generated Petri net model
+- `cmd/main.go` - Main analyzer program
+- `cmd/model.go` - Petri net model constructors
+- `sudoku-*.jsonld` - Pre-generated model files
+- `sudoku-*.svg` - Model visualizations
+- `ODE_ANALYSIS.md` - Detailed ODE analysis documentation
 - `README.md` - This file
 
 ## References
 
-- [Sudoku on Wikipedia](https://en.wikipedia.org/wiki/Sudoku)
-- [Constraint Satisfaction Problems](https://en.wikipedia.org/wiki/Constraint_satisfaction_problem)
-- [Petri Nets for CSP](https://link.springer.com/chapter/10.1007/978-3-642-38088-4_4)
+- [pflow-xyz/go-pflow](https://github.com/pflow-xyz/go-pflow) - Petri net simulation library
+- [go-pflow tic-tac-toe example](https://github.com/pflow-xyz/go-pflow/tree/main/examples/tictactoe) - ODE-based AI pattern
+- [pflow.xyz](https://pflow.xyz) - Interactive Petri net editor and visualizer
