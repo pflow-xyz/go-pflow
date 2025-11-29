@@ -140,14 +140,15 @@ Evaluation: Simulate each possible move, compare final states
 **Go code** (from tic-tac-toe):
 ```go
 func evaluateMove(game *Game, move int) float64 {
-    // Create hypothetical state using solver.CopyState
-    hypState := solver.CopyState(game.engine.GetState())
-    hypState[fmt.Sprintf("pos%d", move)] = 0
-    hypState[fmt.Sprintf("_X%d", move)] = 1
+    // Create hypothetical state using stateutil.Apply
+    hypState := stateutil.Apply(game.engine.GetState(), map[string]float64{
+        fmt.Sprintf("pos%d", move): 0,  // Clear position
+        fmt.Sprintf("_X%d", move):  1,  // Mark X played here
+    })
 
-    // Run ODE simulation
+    // Run ODE simulation with FastOptions for game AI
     prob := solver.NewProblem(game.net, hypState, [2]float64{0, 5.0}, rates)
-    sol := solver.Solve(prob, solver.Tsit5(), solver.DefaultOptions())
+    sol := solver.Solve(prob, solver.Tsit5(), solver.FastOptions())
 
     // Score: prefer states with high X_wins, low O_wins
     final := sol.GetFinalState()
@@ -342,19 +343,44 @@ If your Go simulation produces different values than pflow.xyz:
 
 ## Common Patterns and Idioms
 
-### State Manipulation with solver.CopyState
+### State Manipulation with stateutil
 
-The `solver.CopyState()` function creates a deep copy of state maps. Use it whenever you need
-to test hypothetical states without modifying the original:
+The `stateutil` package provides utilities for manipulating state maps:
 
 ```go
-import "github.com/pflow-xyz/go-pflow/solver"
+import "github.com/pflow-xyz/go-pflow/stateutil"
 
-// Copy current state for hypothesis testing
-hypState := solver.CopyState(currentState)
-hypState["position"] = 0  // Modify copy, original unchanged
+// Copy state (also available as solver.CopyState)
+hypState := stateutil.Copy(currentState)
 
-// Useful for move evaluation, sensitivity analysis, what-if scenarios
+// Apply updates to create hypothetical state (copy + modify in one step)
+hypState := stateutil.Apply(currentState, map[string]float64{
+    "pos5": 0,   // Clear position
+    "_X5":  1,   // Mark X played here
+})
+
+// Merge multiple state sources
+combined := stateutil.Merge(baseState, playerMoves, environment)
+
+// Compare states
+if stateutil.Equal(state1, state2) { /* identical */ }
+if stateutil.EqualTol(state1, state2, 1e-6) { /* within tolerance */ }
+
+// Analyze state
+total := stateutil.Sum(state)                    // Total tokens (conservation check)
+infected := stateutil.SumKeys(state, "I", "E")   // Partial sum
+active := stateutil.NonZero(state)               // Keys with non-zero values
+changes := stateutil.Diff(before, after)         // What changed?
+
+// Transform state
+normalized := stateutil.Scale(state, 1.0/total)  // Normalize to proportions
+history := stateutil.Filter(state, func(k string) bool {
+    return strings.HasPrefix(k, "_")             // Extract history places
+})
+
+// Find extremes
+maxPlace, maxVal := stateutil.Max(state)
+minPlace, minVal := stateutil.Min(state)
 ```
 
 ### Pattern 1: Exclusion Analysis
@@ -376,8 +402,8 @@ for _, option := range options {
 ```go
 bestMove, bestScore := -1, -math.MaxFloat64
 for _, move := range legalMoves {
-    hypState := solver.CopyState(currentState)
-    applyMove(hypState, move)
+    // Use stateutil.Apply for clean hypothesis creation
+    hypState := stateutil.Apply(currentState, moveToUpdates(move))
     sol := simulate(net, hypState, rates)
     score := evaluate(sol.GetFinalState())
     if score > bestScore {
