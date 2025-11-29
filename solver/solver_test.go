@@ -370,3 +370,81 @@ func TestBuildODEFunction(t *testing.T) {
 		t.Errorf("Expected zero derivatives when A=0, got dA=%f, dB=%f", du["A"], du["B"])
 	}
 }
+
+func TestOptionsPresets(t *testing.T) {
+	tests := []struct {
+		name     string
+		opts     *Options
+		wantDt   float64
+		wantFast bool // true if Maxiters < 10000
+	}{
+		{"Default", DefaultOptions(), 0.01, false},
+		{"JSParity", JSParityOptions(), 0.01, false},
+		{"Fast", FastOptions(), 0.1, true},
+		{"Accurate", AccurateOptions(), 0.001, false},
+		{"Stiff", StiffOptions(), 0.001, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.opts.Dt != tt.wantDt {
+				t.Errorf("%s: Dt = %v, want %v", tt.name, tt.opts.Dt, tt.wantDt)
+			}
+			if !tt.opts.Adaptive {
+				t.Errorf("%s: Adaptive should be true", tt.name)
+			}
+			isFast := tt.opts.Maxiters < 10000
+			if isFast != tt.wantFast {
+				t.Errorf("%s: fast=%v, want %v (Maxiters=%d)", tt.name, isFast, tt.wantFast, tt.opts.Maxiters)
+			}
+		})
+	}
+}
+
+func TestFastOptionsSpeed(t *testing.T) {
+	// Verify FastOptions takes fewer steps than AccurateOptions
+	// Note: FastOptions trades accuracy for speed, so results may differ
+	net := petri.NewPetriNet()
+	net.AddPlace("S", 999.0, nil, 0, 0, nil)
+	net.AddPlace("I", 1.0, nil, 0, 0, nil)
+	net.AddPlace("R", 0.0, nil, 0, 0, nil)
+	net.AddTransition("infect", "default", 0, 0, nil)
+	net.AddTransition("recover", "default", 0, 0, nil)
+	net.AddArc("S", "infect", 1.0, false)
+	net.AddArc("I", "infect", 1.0, false)
+	net.AddArc("infect", "I", 2.0, false)
+	net.AddArc("I", "recover", 1.0, false)
+	net.AddArc("recover", "R", 1.0, false)
+
+	state := map[string]float64{"S": 999, "I": 1, "R": 0}
+	rates := map[string]float64{"infect": 0.001, "recover": 0.1}
+	tspan := [2]float64{0, 50}
+
+	// Solve with FastOptions - should have fewer steps
+	probFast := NewProblem(net, state, tspan, rates)
+	solFast := Solve(probFast, Tsit5(), FastOptions())
+
+	// Solve with AccurateOptions - should have more steps
+	probAcc := NewProblem(net, state, tspan, rates)
+	solAcc := Solve(probAcc, Tsit5(), AccurateOptions())
+
+	// Fast should have fewer time points (larger steps)
+	t.Logf("FastOptions steps: %d, AccurateOptions steps: %d", len(solFast.T), len(solAcc.T))
+	if len(solFast.T) >= len(solAcc.T) {
+		t.Errorf("FastOptions should take fewer steps than AccurateOptions")
+	}
+
+	// Both should conserve total population (S + I + R = 1000)
+	finalFast := solFast.GetFinalState()
+	finalAcc := solAcc.GetFinalState()
+
+	totalFast := finalFast["S"] + finalFast["I"] + finalFast["R"]
+	totalAcc := finalAcc["S"] + finalAcc["I"] + finalAcc["R"]
+
+	if math.Abs(totalFast-1000) > 10 {
+		t.Errorf("FastOptions: conservation violated, total=%.1f", totalFast)
+	}
+	if math.Abs(totalAcc-1000) > 1 {
+		t.Errorf("AccurateOptions: conservation violated, total=%.1f", totalAcc)
+	}
+}

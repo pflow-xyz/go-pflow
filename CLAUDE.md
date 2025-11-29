@@ -258,10 +258,55 @@ rates["recover"] = 0.1  // γ (recovery rate)
 
 ## Solver Options Guide
 
-### Default Options (good starting point)
+### Solver Option Presets
+
+The solver package provides preset configurations for common use cases:
+
+```go
+import "github.com/pflow-xyz/go-pflow/solver"
+
+// Default - balanced settings for most problems
+opts := solver.DefaultOptions()
+
+// Match pflow.xyz JavaScript solver exactly
+opts := solver.JSParityOptions()
+
+// Fast - for game AI, move evaluation, interactive apps (~10x faster)
+opts := solver.FastOptions()
+
+// Accurate - for publishing, epidemics, when precision matters
+opts := solver.AccurateOptions()
+
+// Stiff - for systems with widely varying time scales
+opts := solver.StiffOptions()
+```
+
+### Preset Comparison
+
+| Preset | Dt | Reltol | Maxiters | Use Case |
+|--------|-----|--------|----------|----------|
+| `DefaultOptions()` | 0.01 | 1e-3 | 100k | General purpose |
+| `JSParityOptions()` | 0.01 | 1e-3 | 100k | Match web simulator |
+| `FastOptions()` | 0.1 | 1e-2 | 1k | Game AI, interactivity |
+| `AccurateOptions()` | 0.001 | 1e-6 | 1M | Publishing, research |
+| `StiffOptions()` | 0.001 | 1e-5 | 500k | Stiff systems |
+
+### Critical: Initial Step Size (Dt)
+
+**The `Dt` parameter is crucial for accurate results.** Using too large a value can cause
+the solver to miss fast dynamics and produce incorrect equilibrium values.
+
+**Common mistake**: Using `Dt=0.1` instead of `Dt=0.01` can cause values to be off by
+10x or more, especially for systems with fast exponential dynamics (like the knapsack
+example where items compete for limited capacity).
+
+### Manual Configuration
+
+If presets don't fit your needs, configure manually:
+
 ```go
 opts := &solver.Options{
-    Dt:       0.01,     // Initial time step (CRITICAL - see note below)
+    Dt:       0.01,     // Initial time step
     Dtmin:    1e-6,     // Minimum step (for stiff systems)
     Dtmax:    1.0,      // Maximum step
     Abstol:   1e-6,     // Absolute tolerance
@@ -270,38 +315,6 @@ opts := &solver.Options{
     Adaptive: true,     // Enable adaptive stepping
 }
 ```
-
-### Critical: Initial Step Size (Dt)
-
-**The `Dt` parameter is crucial for accurate results.** Using too large a value can cause
-the solver to miss fast dynamics and produce incorrect equilibrium values.
-
-To match the pflow.xyz JavaScript solver exactly, use:
-```go
-opts := &solver.Options{
-    Dt:       0.01,     // Match JS solver
-    Dtmin:    1e-6,
-    Dtmax:    1.0,
-    Abstol:   1e-6,
-    Reltol:   1e-3,     // Match JS solver
-    Maxiters: 100000,
-    Adaptive: true,
-}
-```
-
-**Common mistake**: Using `Dt=0.1` instead of `Dt=0.01` can cause values to be off by
-10x or more, especially for systems with fast exponential dynamics (like the knapsack
-example where items compete for limited capacity).
-
-### For Different Problem Types
-
-| Problem Type | Recommended Options |
-|--------------|---------------------|
-| **Match JS solver** | `Dt=0.01`, `Reltol=1e-3`, `Abstol=1e-6` |
-| **Smooth dynamics** (epidemics) | `Dt=0.01`, `Abstol=1e-6` |
-| **Game evaluation** (fast) | `Dt=0.1`, `Abstol=1e-2`, `Maxiters=1000` |
-| **Optimization** (knapsack) | `Dt=0.01`, `tspan=[0,10]`, `Abstol=1e-6` |
-| **Stiff systems** | `Dt=0.001`, `Dtmin=1e-8`, tighter tolerances |
 
 ### Choosing Time Span
 

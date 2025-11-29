@@ -150,6 +150,7 @@ type Options struct {
 }
 
 // DefaultOptions returns default solver options.
+// These are balanced settings suitable for most problems.
 func DefaultOptions() *Options {
 	return &Options{
 		Dt:       0.01,
@@ -158,6 +159,67 @@ func DefaultOptions() *Options {
 		Abstol:   1e-6,
 		Reltol:   1e-3,
 		Maxiters: 100000,
+		Adaptive: true,
+	}
+}
+
+// JSParityOptions returns options that match the pflow.xyz JavaScript solver.
+// Use these when you need results to match the web-based simulator exactly.
+// Critical settings: Dt=0.01, Reltol=1e-3 (not 1e-6).
+func JSParityOptions() *Options {
+	return &Options{
+		Dt:       0.01,
+		Dtmin:    1e-6,
+		Dtmax:    1.0,
+		Abstol:   1e-6,
+		Reltol:   1e-3,
+		Maxiters: 100000,
+		Adaptive: true,
+	}
+}
+
+// FastOptions returns options optimized for speed over accuracy.
+// Use these for game AI move evaluation, interactive applications,
+// or when you need many simulations quickly.
+// Trades precision for ~10x speedup.
+func FastOptions() *Options {
+	return &Options{
+		Dt:       0.1,
+		Dtmin:    1e-4,
+		Dtmax:    1.0,
+		Abstol:   1e-2,
+		Reltol:   1e-2,
+		Maxiters: 1000,
+		Adaptive: true,
+	}
+}
+
+// AccurateOptions returns options for high-precision simulations.
+// Use these for epidemic modeling, publishing results, or when
+// numerical accuracy is critical.
+func AccurateOptions() *Options {
+	return &Options{
+		Dt:       0.001,
+		Dtmin:    1e-8,
+		Dtmax:    0.1,
+		Abstol:   1e-9,
+		Reltol:   1e-6,
+		Maxiters: 1000000,
+		Adaptive: true,
+	}
+}
+
+// StiffOptions returns options for stiff ODE systems.
+// Use these when the system has widely varying time scales,
+// or when the default solver struggles with stability.
+func StiffOptions() *Options {
+	return &Options{
+		Dt:       0.001,
+		Dtmin:    1e-10,
+		Dtmax:    0.01,
+		Abstol:   1e-8,
+		Reltol:   1e-5,
+		Maxiters: 500000,
 		Adaptive: true,
 	}
 }
