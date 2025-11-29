@@ -141,7 +141,15 @@ rebuild-all-svg:
 	@cd examples/eventlog_demo && go run main.go
 	@cd examples/mining_demo && go run main.go
 	@cd examples/monitoring_demo && go run main.go
-	@cd examples/incident_simulator && go run main.go
+	@cd examples/incident_simulator && go run main.go --regression-test
+	@echo ""
+	@echo "=== Game AI Examples ==="
+	@cd examples/tictactoe/cmd && go run *.go
+	@cd examples/nim/cmd && go run *.go --player-x=ode --player-o=optimal
+	@cd examples/connect4/cmd && go run *.go --player-x=ode --player-o=random
+	@echo ""
+	@echo "=== Sudoku Example ==="
+	@cd examples/sudoku/cmd && go run *.go
 	@echo ""
 	@echo "✓ All SVG files regenerated!"
 

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"strings"
@@ -499,9 +500,12 @@ func selectSeverity(mix map[Severity]float64) Severity {
 
 func randomDuration(avg time.Duration) time.Duration {
 	// Exponential distribution for realistic variation
-	lambda := 1.0 / float64(avg)
-	sample := -1.0 / lambda * float64(time.Second) *
-		(rand.Float64() * float64(avg/time.Second))
+	// Sample = -avg * ln(U) where U is uniform(0,1]
+	u := rand.Float64()
+	if u == 0 {
+		u = 1e-10 // Avoid log(0)
+	}
+	sample := -float64(avg) * math.Log(u)
 	return time.Duration(sample)
 }
 
