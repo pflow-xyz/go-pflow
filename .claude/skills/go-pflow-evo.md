@@ -10,6 +10,26 @@ Use this skill when building applications using **go-pflow** - a Go library for 
 
 ---
 
+## Package Overview
+
+| Package | Purpose |
+|---------|---------|
+| `petri` | Core Petri net types, fluent Builder API |
+| `solver` | ODE solvers (Tsit5, RK45, implicit), equilibrium detection |
+| `stateutil` | State manipulation utilities |
+| `hypothesis` | Move evaluation for game AI |
+| `sensitivity` | Parameter sensitivity analysis |
+| `cache` | Memoization for ODE simulations |
+| `reachability` | Discrete state space analysis, invariants |
+| `eventlog` | Parse event logs (CSV) |
+| `mining` | Process discovery (Alpha, Heuristic Miner) |
+| `monitoring` | Real-time case tracking, SLA alerts |
+| `learn` | Neural ODE-ish learnable parameters |
+| `parser` | JSON serialization (pflow.xyz compatible) |
+| `plotter` | SVG visualization |
+
+---
+
 ## Development Philosophy
 
 The Petri net captures domain structure, timing behavior, conservation laws, and testable invariants. User features are built on top of this validated foundation.
@@ -54,8 +74,54 @@ import (
     "github.com/pflow-xyz/go-pflow/mining"
 )
 
-log, _ := eventlog.LoadFromCSV("events.csv")
-net, _ := mining.DiscoverProcess(log, mining.CommonPathMethod)
+// Parse event log
+config := eventlog.DefaultCSVConfig()
+log, _ := eventlog.ParseCSV("events.csv", config)
+
+// Discover process model (choose algorithm based on data quality)
+result, _ := mining.Discover(log, "heuristic")  // Best for noisy real-world logs
+// result, _ := mining.Discover(log, "alpha")   // Discovers concurrency, sensitive to noise
+// result, _ := mining.Discover(log, "common-path")  // Simple happy path
+net := result.Net
+```
+
+### Discovery Algorithm Selection
+
+| Method | Best For | Handles Noise | Handles Loops |
+|--------|----------|---------------|---------------|
+| `heuristic` | Noisy real-world logs | Yes | Yes |
+| `alpha` | Clean logs with concurrency | No | Length >2 only |
+| `common-path` | Simple happy path | No | No |
+| `sequential` | Linear processes | No | No |
+
+### Footprint Analysis
+
+```go
+// Analyze activity relations before discovery
+fp := mining.NewFootprintMatrix(log)
+fp.Print()
+
+// Check specific relations
+fp.IsCausal("A", "B")   // A -> B (causality)
+fp.IsParallel("B", "C") // B || C (either order)
+fp.IsChoice("X", "Y")   // X # Y (exclusive)
+```
+
+### Heuristic Miner Configuration
+
+```go
+// Fine-tune for noisy logs
+opts := &mining.HeuristicMinerOptions{
+    DependencyThreshold: 0.5, // Min score to include edge (0-1)
+    AndThreshold:        0.1, // For detecting parallelism
+    LoopThreshold:       0.5, // For detecting loops
+}
+result, _ := mining.DiscoverHeuristicWithOptions(log, opts)
+
+// Inspect dependency scores
+miner := mining.NewHeuristicMiner(log)
+miner.PrintDependencyMatrix()
+topEdges := miner.GetTopEdges(10)
 ```
 
 ---
@@ -63,8 +129,12 @@ net, _ := mining.DiscoverProcess(log, mining.CommonPathMethod)
 ## Step 3: Learn Transition Rates
 
 ```go
-timings := eventlog.ExtractTimings(log)
-rates := mining.LearnRates(net, timings)
+// Extract timing statistics
+stats := mining.ExtractTiming(log)
+stats.Print()  // Mean, std, estimated rate per activity
+
+// Learn rates for the discovered net
+rates := mining.LearnRatesFromLog(log, net)
 // rates: {"validate_payment": 0.4, "pick_items": 0.08, ...}
 ```
 
@@ -75,12 +145,48 @@ rates := mining.LearnRates(net, timings)
 ```go
 import "github.com/pflow-xyz/go-pflow/solver"
 
-initial := map[string]float64{"received": 100.0}
+initial := net.SetState(nil)  // Use net's initial marking
 prob := solver.NewProblem(net, initial, [2]float64{0, 24}, rates)
 sol := solver.Solve(prob, solver.Tsit5(), solver.DefaultOptions())
 
 // Validate conservation (total tokens preserved)
 final := sol.GetFinalState()
+```
+
+### Solver Options
+
+```go
+// Use presets for common scenarios
+opts := solver.DefaultOptions()    // General purpose
+opts := solver.FastOptions()       // Game AI, interactive apps
+opts := solver.AccurateOptions()   // Publishing, research
+opts := solver.StiffOptions()      // Stiff systems
+
+// Available solver methods
+sol := solver.Solve(prob, solver.Tsit5(), opts)  // Default, high-order adaptive
+sol := solver.Solve(prob, solver.RK45(), opts)   // Dormand-Prince 5(4)
+sol := solver.Solve(prob, solver.RK4(), opts)    // Classic RK4, fixed-step
+sol := solver.ImplicitEuler(prob, opts)          // Stiff systems
+sol := solver.TRBDF2(prob, opts)                 // Stiff systems, 2nd order
+```
+
+### Equilibrium Detection
+
+```go
+// Stop early when system reaches steady state
+sol, result := solver.SolveUntilEquilibrium(prob, nil, nil, nil)
+if result.Reached {
+    fmt.Printf("Equilibrium at t=%.2f\n", result.Time)
+}
+
+// Quick equilibrium finding
+finalState, reached := solver.FindEquilibrium(prob)
+finalState, reached := solver.FindEquilibriumFast(prob)
+
+// Check if state is at equilibrium
+if solver.IsEquilibrium(prob, state, 1e-6) {
+    fmt.Println("System at rest")
+}
 ```
 
 ---
@@ -90,10 +196,92 @@ final := sol.GetFinalState()
 ```go
 import "github.com/pflow-xyz/go-pflow/monitoring"
 
-monitor := monitoring.NewMonitor(net, rates)
-monitor.AddSLARule("same-day", 8*time.Hour, alertHandler)
-monitor.ProcessEvent(event)
-predictions := monitor.GetPredictions()
+monitor := monitoring.NewMonitor(net, rates, monitoring.MonitorConfig{
+    SLAThreshold:      4 * time.Hour,
+    EnablePredictions: true,
+    EnableAlerts:      true,
+})
+
+// Alert handler
+monitor.AddAlertHandler(func(alert monitoring.Alert) {
+    fmt.Printf("[%s] %s: %s\n", alert.Severity, alert.Type, alert.Message)
+})
+
+// Track cases
+monitor.StartCase("INC-001", time.Now())
+monitor.RecordEvent("INC-001", "Created", time.Now(), "system")
+
+// Get predictions
+pred, _ := monitor.PredictCompletion("INC-001")
+fmt.Printf("Expected: %s, Risk: %.0f%%\n",
+    pred.ExpectedCompletion.Format("15:04"), pred.RiskScore*100)
+```
+
+---
+
+## Game AI and Move Evaluation
+
+```go
+import (
+    "github.com/pflow-xyz/go-pflow/hypothesis"
+    "github.com/pflow-xyz/go-pflow/cache"
+)
+
+// Create evaluator with scoring function
+eval := hypothesis.NewEvaluator(net, rates, func(final map[string]float64) float64 {
+    return final["my_wins"] - final["opponent_wins"]
+}).WithOptions(solver.FastOptions())
+
+// Evaluate candidate moves
+moves := []map[string]float64{
+    {"pos0": 0, "_X0": 1},
+    {"pos1": 0, "_X1": 1},
+}
+bestIdx, bestScore := eval.FindBestParallel(currentState, moves)
+
+// Sensitivity analysis: which transitions matter?
+impact := eval.SensitivityImpact(currentState)
+for trans, delta := range impact {
+    fmt.Printf("%s: %+.2f impact\n", trans, delta)
+}
+
+// Cache repeated evaluations
+scoreCache := cache.NewScoreCache(10000)
+score := scoreCache.GetOrCompute(state, func() float64 {
+    return expensiveEvaluation(state)
+})
+```
+
+---
+
+## Reachability and Verification
+
+```go
+import "github.com/pflow-xyz/go-pflow/reachability"
+
+// Analyze state space
+analyzer := reachability.NewAnalyzer(net).
+    WithMaxStates(10000).
+    WithMaxTokens(1000)
+
+result := analyzer.Analyze()
+fmt.Printf("States: %d, Bounded: %v, Live: %v\n",
+    result.StateCount, result.Bounded, result.Live)
+fmt.Printf("Deadlocks: %d, Dead transitions: %v\n",
+    len(result.Deadlocks), result.DeadTrans)
+
+// Check reachability
+target := reachability.Marking{"complete": 10}
+if analyzer.IsReachable(target) {
+    path := analyzer.PathTo(target)
+    fmt.Printf("Path: %v\n", path)
+}
+
+// Token conservation invariants
+invAnalyzer := reachability.NewInvariantAnalyzer(net)
+if invAnalyzer.CheckConservation(initial) {
+    fmt.Println("Net conserves tokens")
+}
 ```
 
 ---
@@ -153,14 +341,18 @@ func TestOrderFlow(t *testing.T) {
 
 | Package | Purpose |
 |---------|---------|
-| `petri` | Core Petri net data structures |
-| `parser` | JSON serialization (pflow.xyz compatible) |
-| `solver` | ODE construction and Tsit5 integration |
+| `petri` | Core Petri net types, fluent Builder API |
+| `solver` | ODE solvers (Tsit5, RK45, implicit), equilibrium detection |
+| `stateutil` | State manipulation utilities |
+| `hypothesis` | Move evaluation for game AI |
+| `sensitivity` | Parameter sensitivity analysis |
+| `cache` | Memoization for ODE simulations |
+| `reachability` | Discrete state space analysis, invariants |
+| `eventlog` | Parse event logs (CSV) |
+| `mining` | Process discovery (Alpha, Heuristic Miner) |
+| `monitoring` | Real-time case tracking, SLA alerts |
 | `learn` | Neural ODE-ish learnable parameters |
-| `eventlog` | Event log parsing and analysis |
-| `mining` | Process discovery and rate learning |
-| `monitoring` | Real-time case tracking and prediction |
-| `engine` | Continuous state machine with triggers |
+| `parser` | JSON serialization (pflow.xyz compatible) |
 | `plotter` | SVG visualization |
 
 ---
