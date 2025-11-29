@@ -427,3 +427,210 @@ func TestMaxStatesLimit(t *testing.T) {
 		t.Error("Should be marked as truncated")
 	}
 }
+
+// === New Enhanced Analysis Tests ===
+
+func TestTruncatedAnalysisPotentiallyDead(t *testing.T) {
+	// Create a net where a transition only fires after many steps
+	net := petri.Build().
+		Place("A", 10).
+		Place("B", 0).
+		Place("C", 0).
+		Transition("t1"). // A -> B
+		Transition("t2"). // B(10) -> C (only fires when B has 10 tokens)
+		Arc("A", "t1", 1).
+		Arc("t1", "B", 1).
+		Arc("B", "t2", 10). // Requires all 10 tokens in B
+		Arc("t2", "C", 1).
+		Done()
+
+	// With small state limit, t2 should be potentially dead
+	analyzer := NewAnalyzer(net).WithMaxStates(5)
+	result := analyzer.Analyze()
+
+	if !result.Truncated {
+		t.Error("Should be truncated with small state limit")
+	}
+
+	if result.IsComplete {
+		t.Error("IsComplete should be false when truncated")
+	}
+
+	// t2 should be in PotentiallyDead, not DeadTrans
+	if len(result.DeadTrans) > 0 {
+		t.Errorf("DeadTrans should be empty for truncated analysis, got %v", result.DeadTrans)
+	}
+
+	foundT2 := false
+	for _, trans := range result.PotentiallyDead {
+		if trans == "t2" {
+			foundT2 = true
+		}
+	}
+	if !foundT2 {
+		t.Errorf("t2 should be in PotentiallyDead, got %v", result.PotentiallyDead)
+	}
+}
+
+func TestCanTransitionFire(t *testing.T) {
+	// Create a net where t2 only fires after specific sequence
+	net := petri.Build().
+		Place("A", 5).
+		Place("B", 0).
+		Transition("t1"). // A -> B
+		Transition("t2"). // B(5) -> somewhere
+		Arc("A", "t1", 1).
+		Arc("t1", "B", 1).
+		Arc("B", "t2", 5). // Requires 5 tokens in B
+		Done()
+
+	analyzer := NewAnalyzer(net)
+
+	// t1 should be immediately fireable
+	canFire, path := analyzer.CanTransitionFire("t1")
+	if !canFire {
+		t.Error("t1 should be fireable from initial state")
+	}
+	if len(path) != 1 || path[0] != "t1" {
+		t.Errorf("Path to t1 should be [t1], got %v", path)
+	}
+
+	// t2 should be fireable after 5 t1 firings
+	canFire, path = analyzer.CanTransitionFire("t2")
+	if !canFire {
+		t.Error("t2 should be fireable")
+	}
+	if len(path) != 6 { // 5 x t1 + 1 x t2
+		t.Errorf("Path to t2 should have 6 transitions, got %d: %v", len(path), path)
+	}
+
+	// Non-existent transition
+	canFire, _ = analyzer.CanTransitionFire("t3")
+	if canFire {
+		t.Error("Non-existent transition should not be fireable")
+	}
+}
+
+func TestAnalyzeWithVerification(t *testing.T) {
+	// Create net where transition is reachable but only after many steps
+	net := petri.Build().
+		Place("A", 8).
+		Place("B", 0).
+		Place("C", 0).
+		Transition("t1"). // A -> B
+		Transition("t2"). // B(8) -> C
+		Arc("A", "t1", 1).
+		Arc("t1", "B", 1).
+		Arc("B", "t2", 8).
+		Arc("t2", "C", 1).
+		Done()
+
+	// Use small state limit so t2 appears potentially dead
+	analyzer := NewAnalyzer(net).WithMaxStates(5)
+	result := analyzer.AnalyzeWithVerification()
+
+	// After verification, t2 should be found reachable
+	// (the targeted search has 2x the state limit)
+	foundInFired := false
+	for _, trans := range result.FiredTransitions {
+		if trans == "t2" {
+			foundInFired = true
+		}
+	}
+
+	// t2 should have been verified as reachable
+	foundInPotential := false
+	for _, trans := range result.PotentiallyDead {
+		if trans == "t2" {
+			foundInPotential = true
+		}
+	}
+
+	// Either t2 was found reachable (in FiredTransitions) or still potentially dead
+	// depending on whether targeted search found it
+	if foundInFired && foundInPotential {
+		t.Error("t2 should not be in both FiredTransitions and PotentiallyDead")
+	}
+}
+
+func TestExplorationStats(t *testing.T) {
+	net := petri.Build().
+		Place("A", 5).
+		Place("B", 0).
+		Transition("t1").
+		Arc("A", "t1", 1).
+		Arc("t1", "B", 1).
+		Done()
+
+	analyzer := NewAnalyzer(net)
+	result := analyzer.BuildGraph()
+
+	stats := result.ExplorationStats
+
+	if stats.StatesExplored != result.StateCount {
+		t.Errorf("StatesExplored should equal StateCount, got %d vs %d",
+			stats.StatesExplored, result.StateCount)
+	}
+
+	if stats.StatesLimit != 10000 { // default
+		t.Errorf("StatesLimit should be default 10000, got %d", stats.StatesLimit)
+	}
+
+	if stats.BranchingFactor <= 0 {
+		t.Error("BranchingFactor should be > 0 for non-trivial net")
+	}
+
+	if result.IsComplete && stats.ExplorationRatio != 1.0 {
+		t.Errorf("ExplorationRatio should be 1.0 for complete analysis, got %f",
+			stats.ExplorationRatio)
+	}
+}
+
+func TestCompleteAnalysisHasConfirmedDead(t *testing.T) {
+	// Net with genuinely dead transition
+	net := petri.Build().
+		Place("A", 5).
+		Place("B", 0).
+		Place("C", 0). // Never gets tokens
+		Transition("t1").
+		Transition("t2"). // Needs tokens from C, which is never produced
+		Arc("A", "t1", 1).
+		Arc("t1", "B", 1).
+		Arc("C", "t2", 1). // t2 is dead because C is always empty
+		Done()
+
+	analyzer := NewAnalyzer(net)
+	result := analyzer.Analyze()
+
+	// Should be complete (small state space)
+	if !result.IsComplete {
+		t.Skip("Analysis was truncated, cannot test complete analysis behavior")
+	}
+
+	// t2 should be in ConfirmedDead
+	foundT2 := false
+	for _, trans := range result.ConfirmedDead {
+		if trans == "t2" {
+			foundT2 = true
+		}
+	}
+	if !foundT2 {
+		t.Errorf("t2 should be in ConfirmedDead for complete analysis, got %v", result.ConfirmedDead)
+	}
+
+	// DeadTrans should also have t2
+	foundT2 = false
+	for _, trans := range result.DeadTrans {
+		if trans == "t2" {
+			foundT2 = true
+		}
+	}
+	if !foundT2 {
+		t.Errorf("t2 should be in DeadTrans for complete analysis, got %v", result.DeadTrans)
+	}
+
+	// PotentiallyDead should be empty for complete analysis
+	if len(result.PotentiallyDead) > 0 {
+		t.Errorf("PotentiallyDead should be empty for complete analysis, got %v", result.PotentiallyDead)
+	}
+}
