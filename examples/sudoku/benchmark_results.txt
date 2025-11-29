@@ -1,0 +1,7 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/pflow-xyz/go-pflow/examples/sudoku
+cpu: Apple M4 Max
+BenchmarkSudoku4x4ODESingleEvaluation-14        	       3	  67231361 ns/op	14618114 B/op	   20879 allocs/op
+BenchmarkSudoku9x9ODESingleEvaluation-14        	       3	4583258805 ns/op	109448045 B/op	   27797 allocs/op
+BenchmarkSudoku4x4ODEWithTighterTolerance-14    	       3	14795397722 ns/op	3054217880 B/op	 4354153 allocs/op
