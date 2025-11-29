@@ -1028,11 +1028,34 @@ The `workflow` package provides a comprehensive workflow management framework wi
 ```go
 import "github.com/pflow-xyz/go-pflow/workflow"
 
-// Document approval workflow
+// Concise style using syntactic sugar
+wf := workflow.New("order_processing").
+    Name("Order Processing").
+    WithSLA(4 * time.Hour).
+    Workers("warehouse", 10).
+
+    // Quick task creation
+    ManualTask("receive", "Receive Order", 2*time.Minute).
+    AutoTask("validate", "Validate", 30*time.Second).
+    ManualTask("pick", "Pick Items", 15*time.Minute).
+    ManualTask("pack", "Pack Order", 10*time.Minute).
+    AutoTask("ship", "Ship", 5*time.Minute).
+
+    // Arrow syntax for flow
+    From("receive").Then("validate").Then("pick").Then("pack").To("ship").
+
+    Start("receive").
+    End("ship").
+    Build()
+```
+
+Or with the verbose style for full control:
+
+```go
 wf := workflow.New("approval").
     Name("Document Approval").
 
-    // Define tasks
+    // Define tasks with full options
     Task("submit").
         Name("Submit Document").
         Type(workflow.TaskTypeManual).
@@ -1040,31 +1063,28 @@ wf := workflow.New("approval").
         Done().
     Task("review").
         Name("Review Document").
-        Duration(30 * time.Minute).
-        RequireResource("reviewers", 1).
+        Takes(30 * time.Minute).       // Alias for Duration
+        Needs("reviewers").             // Requires 1 unit
+        MustCompleteIn(1 * time.Hour). // SLA with escalation
         Done().
     Task("approve").
-        Name("Final Approval").
-        Type(workflow.TaskTypeDecision).
+        Decision().                     // TaskTypeDecision
+        TriggerOne().                   // XOR-split
         Done().
     Task("archive").
-        Type(workflow.TaskTypeAutomatic).
+        Automatic().                    // TaskTypeAutomatic
         Done().
 
-    // Define dependencies (Finish-to-Start by default)
+    // Define dependencies
     Connect("submit", "review").
     Connect("review", "approve").
     Connect("approve", "archive").
 
-    // Define start/end points
     Start("submit").
     End("archive").
 
-    // Define resources
-    Resource("reviewers").
-        Capacity(3).
-        Done().
-
+    // Resource pool
+    Workers("reviewers", 3).
     Build()
 ```
 
@@ -1094,23 +1114,37 @@ wf.Parallel("A", "B", "C", "D")
 ### Join and Split Types
 
 ```go
-// AND-join: All predecessors must complete (default)
+// Using sugar (readable names)
+Task("merge").WaitForAll().Done()    // AND-join (default)
+Task("any_done").WaitForAny().Done() // OR-join
+Task("quorum").WaitForN(2).Done()    // N-of-M join
+
+Task("fork").TriggerAll().Done()     // AND-split (default)
+Task("decision").TriggerOne().Done() // XOR-split
+Task("options").TriggerSome().Done() // OR-split
+
+// Or using explicit types
 Task("merge").JoinType(workflow.JoinAll).Done()
+Task("fork").SplitType(workflow.SplitExclusive).Done()
+```
 
-// OR-join: Any predecessor completing enables task
-Task("any_done").JoinType(workflow.JoinAny).Done()
+### Workflow Patterns
 
-// N-of-M join: N predecessors must complete
-Task("quorum").JoinType(workflow.JoinN).JoinNOf(2).Done()
+```go
+// Pipeline: Linear sequence with auto start/end
+wf.Pipeline("A", "B", "C", "D")
 
-// AND-split: All successors triggered (parallel, default)
-Task("fork").SplitType(workflow.SplitAll).Done()
+// Fork-Join: Parallel execution
+wf.ForkJoin("start", "end", "task1", "task2", "task3")
 
-// XOR-split: Exactly one successor (exclusive choice)
-Task("decision").SplitType(workflow.SplitExclusive).Done()
+// Choice: Exclusive decision branches
+wf.Choice("decision", "approve", "reject", "defer")
 
-// OR-split: One or more successors (inclusive)
-Task("options").SplitType(workflow.SplitInclusive).Done()
+// Review cycle with loop
+wf.ReviewCycle("work", "review", "done")
+
+// Approval workflow template
+wf.ApprovalWorkflow("doc")  // Creates doc_submit, doc_review, doc_approve, doc_reject, doc_notify
 ```
 
 ### Running Workflows
@@ -1163,21 +1197,23 @@ avail := engine.GetResourceAvailability()
 ### SLA Management
 
 ```go
-// Workflow-level SLA
+// Workflow-level SLA (sugar)
+wf.WithSLA(4 * time.Hour)  // Simple: default 80%/95% warning/critical
+wf.WithPrioritySLA(1*time.Hour, 4*time.Hour, 8*time.Hour, 24*time.Hour)  // By priority
+
+// Task-level SLA (sugar)
+Task("urgent").MustCompleteIn(30 * time.Minute).Done()  // Escalate on breach
+Task("normal").ShouldCompleteIn(1 * time.Hour).Done()   // Alert on breach
+
+// Or verbose style
 wf.SLA(&workflow.WorkflowSLA{
     ByPriority: map[workflow.Priority]time.Duration{
         workflow.PriorityCritical: 1 * time.Hour,
         workflow.PriorityHigh:     4 * time.Hour,
-        workflow.PriorityMedium:   8 * time.Hour,
     },
-    WarningAt:  0.8,  // 80% of time elapsed
-    CriticalAt: 0.95, // 95% of time elapsed
+    WarningAt:  0.8,
+    CriticalAt: 0.95,
 })
-
-// Task-level SLA
-Task("urgent").
-    TaskSLA(30*time.Minute, 0.8, 0.95, workflow.SLAActionEscalate).
-    Done()
 
 // Check for SLA violations
 alerts := engine.CheckSLAs()
@@ -1186,10 +1222,19 @@ alerts := engine.CheckSLAs()
 ### Conditional Execution
 
 ```go
+// Using condition helpers
 Task("manual_review").
+    If(workflow.WhenVar("amount", ">=", 10000.0)).
+    Done()
+
+Task("notify").If(workflow.WhenTrue("send_notification")).Done()
+Task("skip").If(workflow.WhenFalse("is_test")).Done()
+Task("always").If(workflow.Always()).Done()
+
+// Or custom condition
+Task("custom").
     Condition(func(ctx *workflow.ExecutionContext) bool {
-        amount, _ := ctx.Variables["amount"].(float64)
-        return amount >= 10000  // Only for large amounts
+        return ctx.Variables["approved"].(bool)
     }).
     Done()
 ```
@@ -1197,9 +1242,19 @@ Task("manual_review").
 ### Retry and Failure Handling
 
 ```go
+// Sugar
+Task("api_call").
+    RetryOnFailure(3).     // 3 retries with 1 min delay
+    Done()
+
+Task("critical").AbortOnFailure().Done()
+Task("optional").SkipOnFailure().Done()
+Task("important").EscalateOnFailure().Done()
+
+// Or verbose
 Task("api_call").
     MaxRetries(3).
-    Retry(3, 5*time.Minute).  // 3 retries, 5 min delay
+    Retry(3, 5*time.Minute).
     FailureAction(workflow.FailureEscalate).
     Done()
 ```
