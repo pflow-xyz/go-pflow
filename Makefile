@@ -153,6 +153,11 @@ rebuild-all-svg:
 	@echo "=== Sudoku Example ==="
 	@cd examples/sudoku/cmd && go run *.go
 	@echo ""
+	@echo "=== Chess Problem Examples ==="
+	@cd examples/chess/cmd && go run *.go --problem=queens --size=8 --strategy=backtrack
+	@cd examples/chess/cmd && go run *.go --problem=knights --size=5
+	@cd examples/chess/cmd && go run *.go --problem=rooks --size=8
+	@echo ""
 	@echo "✓ All SVG files regenerated!"
 
 # Quick check before publishing
