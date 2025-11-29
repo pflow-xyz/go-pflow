@@ -1,445 +1,547 @@
-# Process Mining Directions for go-pflow
+# Process Mining with go-pflow
 
-## Current Foundation (What You Have)
-
-✅ **Core Infrastructure:**
-- Petri net data structures (places, transitions, arcs)
-- JSON import/export
-- Workflow templates
-- Reachability analysis (state space exploration)
-- Live engine with condition/action rules
-- Structured results with event tracking
-- Visualization (SVG plots)
-
-✅ **Advanced Features:**
-- Continuous (ODE) simulation
-- Parameter learning and optimization
-- Real-time state monitoring
-
-This is actually an **excellent foundation** for process mining! Most process mining tools build on Petri nets but lack your continuous simulation and learning capabilities.
+A practical guide to using go-pflow for process mining tasks.
 
 ---
 
-## Direction 1: Event Log Processing & Discovery 📊
+## Quick Start
 
-**Core process mining workflow**
-
-### What to Build:
-1. **Event Log Parser**
-   - Parse XES format (industry standard)
-   - Parse CSV event logs
-   - Handle case ID, activity, timestamp, attributes
-
-2. **Process Discovery Algorithms**
-   - Alpha algorithm (classic, simple)
-   - Heuristic Miner (noise-tolerant)
-   - Inductive Miner (guarantees sound models)
-   - Directly From Follows (DFG) graphs
-
-3. **Example Event Logs**
-   - Hospital patient flow
-   - Order-to-cash process
-   - Incident management
-   - Software deployment pipelines
-
-### Value Proposition:
-- Discover Petri net models **from real business data**
-- Combine discovered topology with learned rate functions
-- **Unique:** Use your `learn` package to fit timing parameters from event logs
-
-### Example Use Case:
 ```go
-// Discover process model from event logs
-log := eventlog.Parse("hospital_events.xes")
-net := discovery.AlphaMiner(log)
-
-// Learn transition timing from timestamps
-timing := learn.FitTimingFromLog(net, log)
-
-// Simulate with learned parameters
-sol := solver.Solve(net, timing)
+import (
+    "github.com/pflow-xyz/go-pflow/eventlog"
+    "github.com/pflow-xyz/go-pflow/mining"
+    "github.com/pflow-xyz/go-pflow/monitoring"
+    "github.com/pflow-xyz/go-pflow/solver"
+    "github.com/pflow-xyz/go-pflow/visualization"
+)
 ```
 
-**Complexity:** Medium
-**Impact:** High - this is core process mining
-**Differentiator:** Integration with continuous simulation
-
 ---
 
-## Direction 2: Conformance Checking 🔍
+## Step 1: Parse Event Logs
 
-**Check if event logs match your process model**
+go-pflow parses CSV event logs with flexible column mapping.
 
-### What to Build:
-1. **Token Replay**
-   - Replay event log on Petri net
-   - Track: successful replays, missing tokens, remaining tokens
-   - Fitness score (% of traces that replay correctly)
+### Basic CSV Parsing
 
-2. **Alignment-Based Conformance**
-   - Compute optimal alignment between log and model
-   - Find deviations (skipped steps, extra steps, wrong order)
-   - Generate deviation reports
-
-3. **Conformance Dashboard**
-   - Visualize fitness metrics
-   - Highlight problematic traces
-   - Show bottleneck analysis
-
-### Value Proposition:
-- **Quality assurance:** Does actual process follow designed model?
-- **Compliance:** Audit trails for regulated industries
-- **Process improvement:** Find where reality diverges from design
-
-### Example Use Case:
 ```go
-// Check if hospital actually follows clinical pathway
-model := parser.LoadPetriNet("clinical_pathway.json")
-log := eventlog.Parse("actual_patient_cases.xes")
-
-conf := conformance.TokenReplay(model, log)
-fmt.Printf("Fitness: %.2f%%\n", conf.Fitness * 100)
-fmt.Printf("Deviations found: %d\n", len(conf.Deviations))
-```
-
-**Complexity:** Medium-High
-**Impact:** High - critical for process governance
-**Differentiator:** Your reachability analysis can enhance conformance checking
-
----
-
-## Direction 3: Performance Mining ⚡
-
-**Extract timing and resource usage from event logs**
-
-### What to Build:
-1. **Timing Analysis**
-   - Case duration (total cycle time)
-   - Activity duration (how long each step takes)
-   - Waiting time between activities
-   - Bottleneck identification
-
-2. **Resource Analysis**
-   - Resource utilization (who does what, when)
-   - Workload distribution
-   - Multi-tasking patterns
-   - Handover patterns
-
-3. **Enhanced Visualization**
-   - Petri net with frequency annotations
-   - Heat maps for bottlenecks
-   - Resource swim lanes
-
-### Value Proposition:
-- **Process optimization:** Find and fix bottlenecks
-- **Resource planning:** Right-size teams
-- **SLA monitoring:** Track performance metrics
-
-### Your Unique Angle:
-Use your **results package** to compute performance analytics automatically:
-- Peak detection → find bottlenecks
-- Statistics → compute percentiles, variance
-- Events → track violations
-
-**Complexity:** Low-Medium
-**Impact:** High - everyone wants to know "where are the bottlenecks?"
-**Differentiator:** Combine discrete events with continuous performance metrics
-
----
-
-## Direction 4: Predictive Process Monitoring 🔮
-
-**Use ML to predict process outcomes**
-
-### What to Build:
-1. **Remaining Time Prediction**
-   - Given partial trace, predict completion time
-   - Use learned rate functions + current state
-
-2. **Next Activity Prediction**
-   - Predict which transition will fire next
-   - Probability distribution over enabled transitions
-
-3. **Risk Prediction**
-   - Predict SLA violations
-   - Predict quality issues
-   - Early warning system
-
-### Your Unique Angle:
-This is where your **learn + engine** packages shine:
-- Learn process dynamics from historical data
-- Use engine's condition/action rules for real-time alerting
-- Continuous simulation provides probabilistic forecasts
-
-### Example Use Case:
-```go
-// Real-time monitoring of order fulfillment
-engine := engine.NewEngine(orderNet, currentState, learnedRates)
-
-// Alert if predicted completion exceeds deadline
-engine.AddRule("sla_violation",
-    engine.PredictCompletionTime() > deadline,
-    func(state) { alertOps("SLA at risk!") })
-
-engine.Run()
-```
-
-**Complexity:** High
-**Impact:** Very High - this is cutting edge
-**Differentiator:** **No other process mining tool does this!**
-
----
-
-## Direction 5: Hybrid Discrete-Continuous Models 🔄
-
-**Combine discrete events with continuous flows**
-
-### What to Build:
-1. **Hybrid Petri Nets**
-   - Some transitions are discrete (events)
-   - Some transitions are continuous (rates)
-   - Mixed token types
-
-2. **Use Cases:**
-   - **Manufacturing:** Discrete orders + continuous material flow
-   - **Healthcare:** Discrete admissions + continuous bed occupancy
-   - **Supply chain:** Discrete shipments + continuous inventory
-   - **DevOps:** Discrete deployments + continuous resource usage
-
-### Your Unique Angle:
-You **already have the foundation**:
-- ODE solver for continuous dynamics
-- Discrete event engine
-- Just need to combine them!
-
-**Complexity:** High
-**Impact:** Very High - novel research area
-**Differentiator:** **Unique in process mining space**
-
----
-
-## Direction 6: Process Mining as a Service 🌐
-
-**Make it accessible**
-
-### What to Build:
-1. **Web API**
-   - Upload event logs (XES/CSV)
-   - Discover process models
-   - Run conformance checks
-   - Get performance analytics
-
-2. **Dashboard**
-   - Interactive process visualization
-   - Drill-down on deviations
-   - Real-time monitoring views
-
-3. **CLI Tool**
-   - `pflow discover events.xes`
-   - `pflow check-conformance model.json events.xes`
-   - `pflow analyze-performance events.xes`
-
-### Value Proposition:
-- Lower barrier to entry
-- SaaS business model
-- Integration with existing tools (Celonis, Disco, ProM)
-
-**Complexity:** Medium
-**Impact:** High - expands user base
-**Differentiator:** Open source + modern Go stack
-
----
-
-## Recommended Roadmap
-
-### Phase 1: Core Process Mining (2-3 months)
-1. ✅ Event log parser (XES + CSV)
-2. ✅ Alpha algorithm (process discovery)
-3. ✅ Token replay (conformance checking)
-4. ✅ Performance metrics from event logs
-5. ✅ Example datasets + tutorials
-
-**Why:** Establishes credibility in process mining community
-
-### Phase 2: Integration (1-2 months)
-1. ✅ Fit rate functions from event log timestamps
-2. ✅ Combine discovered models with learned parameters
-3. ✅ Performance prediction using simulation
-
-**Why:** Leverages your existing strengths
-
-### Phase 3: Innovation (3-4 months)
-1. ✅ Real-time predictive monitoring (engine + learn)
-2. ✅ Hybrid discrete-continuous models
-3. ✅ Research paper + case studies
-
-**Why:** Differentiates from existing tools
-
-### Phase 4: Polish (1-2 months)
-1. ✅ CLI commands for common workflows
-2. ✅ Documentation + video tutorials
-3. ✅ Integration with process mining tools
-
-**Why:** Adoption and community building
-
----
-
-## Quick Wins (Start Here) 🎯
-
-### 1. Event Log Parser (1-2 days)
-```go
-// package eventlog
-type Event struct {
-    CaseID    string
-    Activity  string
-    Timestamp time.Time
-    Resource  string
-    Attributes map[string]string
-}
-
-type EventLog struct {
-    Cases map[string][]Event
-}
-
-func ParseXES(filename string) (*EventLog, error)
-func ParseCSV(filename string) (*EventLog, error)
-```
-
-### 2. Alpha Algorithm (2-3 days)
-Classic process discovery - well-documented algorithm
-
-### 3. Performance Metrics (1 day)
-Leverage your existing `results` package:
-```go
-func ComputePerformance(log *EventLog) *PerformanceMetrics {
-    // Case duration, activity duration, waiting time
+// Use default column names: case_id, activity, timestamp
+config := eventlog.DefaultCSVConfig()
+log, err := eventlog.ParseCSV("events.csv", config)
+if err != nil {
+    panic(err)
 }
 ```
 
-### 4. Demo: Hospital Patient Flow (1 day)
-- Parse real hospital event log
-- Discover patient pathway
-- Find bottlenecks
-- Predict waiting times
+### Custom Column Names
+
+```go
+config := eventlog.CSVConfig{
+    CaseIDColumn:    "incident_id",
+    ActivityColumn:  "action",
+    TimestampColumn: "time",
+    ResourceColumn:  "user",           // optional
+    TimestampFormats: []string{
+        "2006-01-02 15:04:05",
+        "2006-01-02T15:04:05Z",
+    },
+    Delimiter: ',',
+}
+log, err := eventlog.ParseCSV("incidents.csv", config)
+```
+
+### Event Log Summary
+
+```go
+summary := log.Summarize()
+summary.Print()
+
+// Output:
+// === Event Log Summary ===
+// Cases: 150
+// Events: 1247
+// Activities: 8
+// Resources: 12
+// Process variants: 23
+// Avg events per case: 8.3
+// Avg case duration: 2h15m
+```
+
+### Access Log Data
+
+```go
+// Get all unique activities
+activities := log.GetActivities()
+
+// Get all traces
+for _, trace := range log.GetTraces() {
+    fmt.Printf("Case %s: %v (duration: %v)\n",
+        trace.CaseID,
+        trace.GetActivityVariant(),
+        trace.Duration())
+}
+
+// Filter traces by variant
+for _, trace := range log.GetTraces() {
+    variant := trace.GetActivityVariant()
+    if variant[0] == "Create" && variant[len(variant)-1] == "Close" {
+        // This is a complete case
+    }
+}
+```
 
 ---
 
-## Datasets to Use
+## Step 2: Discover Process Models
 
-### Public Process Mining Datasets:
-1. **BPI Challenge datasets** (annual competition)
-   - Hospital logs
-   - Loan applications
-   - IT incident management
+Convert event logs into Petri net models.
 
-2. **4TU.ResearchData**
-   - Manufacturing processes
-   - Road traffic fines
-   - Sepsis cases
+### Common Path Discovery
 
-3. **Synthetic Logs**
-   - Generate from your workflow templates
-   - Controlled experiments
+Discovers the most frequent process variant:
 
----
+```go
+result, err := mining.Discover(log, "common-path")
+if err != nil {
+    panic(err)
+}
 
-## Differentiators vs. Existing Tools
+net := result.Net
 
-| Feature | Celonis | Disco | ProM | go-pflow |
-|---------|---------|-------|------|----------|
-| Event log parsing | ✅ | ✅ | ✅ | 🎯 |
-| Process discovery | ✅ | ✅ | ✅ | 🎯 |
-| Conformance | ✅ | ✅ | ✅ | 🎯 |
-| Performance analysis | ✅ | ✅ | ✅ | 🎯 |
-| **Continuous simulation** | ❌ | ❌ | ❌ | ✅ |
-| **Parameter learning** | ❌ | ❌ | ❌ | ✅ |
-| **Predictive monitoring** | 💰 | ❌ | ⚠️ | ✅ |
-| **Hybrid models** | ❌ | ❌ | ⚠️ | ✅ |
-| **Real-time engine** | 💰 | ❌ | ❌ | ✅ |
-| Open source | ❌ | ❌ | ✅ | ✅ |
+fmt.Printf("Discovered %d variants\n", result.NumVariants)
+fmt.Printf("Most common variant: %d cases (%.1f%% coverage)\n",
+    result.MostCommonCount, result.CoveragePercent)
+```
 
-Legend: ✅ = Yes, ❌ = No, ⚠️ = Limited, 💰 = Premium only, 🎯 = Planned
+### Sequential Discovery
 
----
+Creates a model covering all observed activities:
 
-## Technical Considerations
+```go
+result, err := mining.Discover(log, "sequential")
+net := result.Net
+```
 
-### Discrete vs. Continuous
-- **Current:** Continuous ODE simulation
-- **Process mining:** Discrete event logs
-- **Solution:** Support both paradigms
-  - Keep ODE for resource flow modeling
-  - Add discrete event simulation for event replay
-  - Hybrid mode for advanced cases
+### Visualize Discovered Model
 
-### Performance at Scale
-- Event logs can be **millions of events**
-- Reachability analysis can explode
-- **Solutions:**
-  - Stream processing for large logs
-  - Sampling for conformance checking
-  - Bounded reachability with limits
-
-### Integration
-- Export to PNML (Petri Net Markup Language)
-- Import from existing tools
-- API for embedding in other systems
+```go
+// Save as SVG
+visualization.SaveSVG(net, "discovered_process.svg")
+```
 
 ---
 
-## Next Steps - Choose Your Adventure
+## Step 3: Extract Timing Statistics
 
-### Option A: Quick Win (Event Log Parser + Alpha)
-**Time:** 1 week
-**Impact:** Immediate - can discover models from real data
-**Path:** Build `eventlog` package + `discovery` package
+Learn transition rates from event timestamps.
 
-### Option B: Performance Mining
-**Time:** 2 weeks
-**Impact:** High - everyone wants bottleneck analysis
-**Path:** Extend `results` package with performance metrics
+### Extract Timing
 
-### Option C: Predictive Monitoring (Bold!)
-**Time:** 1 month
-**Impact:** Huge - novel capability
-**Path:** Combine `learn` + `engine` for real-time prediction
+```go
+stats := mining.ExtractTiming(log)
+stats.Print()
 
-### Option D: All of the Above (Comprehensive)
-**Time:** 3 months
-**Impact:** Establishes go-pflow as serious process mining tool
-**Path:** Phase 1 roadmap above
+// Output:
+// === Timing Statistics ===
+// Activity Durations (seconds):
+//   Triage:
+//     Mean: 180.0 sec (3.0 min)
+//     Std:  45.2 sec
+//     Count: 147
+//     Est. rate: 0.005556 /sec
+//   Diagnose:
+//     Mean: 600.0 sec (10.0 min)
+//     ...
+```
 
----
+### Access Statistics Programmatically
 
-## Questions to Consider
+```go
+// Get mean duration for an activity
+meanTriage := stats.GetMeanDuration("Triage")
 
-1. **Target audience:** Academic researchers? Industry practitioners? Both?
-2. **Scale:** Small logs (thousands of events) or big data (millions)?
-3. **Focus:** Analysis (offline) or monitoring (real-time)?
-4. **Deployment:** Library? CLI? Web service?
-5. **Business model:** Pure open source? Commercial support? SaaS?
+// Get standard deviation
+stdTriage := stats.GetStdDuration("Triage")
 
----
+// Estimate rate (1/mean for exponential distribution)
+rate := stats.EstimateRate("Triage")
+```
 
-## My Recommendation 🏆
+### Learn Rates for a Petri Net
 
-**Start with Option A (Quick Win)** to validate interest, then move to **Option C (Predictive Monitoring)** to differentiate.
+```go
+// Automatically map activities to transitions
+rates := mining.LearnRatesFromLog(log, net)
 
-**Why:**
-1. Event log parsing is **table stakes** - need it anyway
-2. Predictive monitoring is your **killer feature** - no one else has it
-3. Leverages your existing `learn` + `engine` packages
-4. Potential research paper / conference demo
-5. Strong commercial value proposition
-
-**What I'd build first:**
-1. Event log parser (XES + CSV) - 2 days
-2. Basic performance metrics - 1 day
-3. Demo with hospital dataset - 1 day
-4. Then: Predictive monitoring using learned rates - 2 weeks
-
-This gives you a **working demo in 1 week**, and a **unique capability in 3 weeks**.
+// rates is map[string]float64 ready for simulation
+// e.g., {"Triage": 0.00556, "Diagnose": 0.00167, ...}
+```
 
 ---
 
-Want me to start building any of these?
+## Step 4: Simulate with Learned Parameters
+
+Run ODE simulations using discovered models and learned rates.
+
+### Basic Simulation
+
+```go
+// Get initial state from the model
+initialState := net.SetState(nil)
+
+// Learn rates from event log
+rates := mining.LearnRatesFromLog(log, net)
+
+// Create and solve ODE problem
+// Time span in same units as your timestamps (seconds)
+tspan := [2]float64{0, 3600} // 1 hour
+
+prob := solver.NewProblem(net, initialState, tspan, rates)
+opts := &solver.Options{
+    Dt:       0.01,   // Initial step size
+    Dtmin:    1e-6,
+    Dtmax:    60.0,   // Max 1 minute step
+    Abstol:   1e-6,
+    Reltol:   1e-3,
+    Maxiters: 100000,
+    Adaptive: true,
+}
+
+sol := solver.Solve(prob, solver.Tsit5(), opts)
+```
+
+### Analyze Results
+
+```go
+// Get final state
+final := sol.GetFinalState()
+fmt.Printf("Tokens in 'end' place: %.2f\n", final["end"])
+
+// Get time series for a place
+endTokens := sol.GetVariable("end")
+times := sol.T
+
+// Find when process completes (token reaches end)
+for i, tokens := range endTokens {
+    if tokens > 0.5 {
+        fmt.Printf("Process completes at t=%.1f\n", times[i])
+        break
+    }
+}
+```
+
+### Plot Results
+
+```go
+import "github.com/pflow-xyz/go-pflow/plotter"
+
+places := []string{"start", "in_progress", "end"}
+plotData, _ := plotter.PlotSolution(sol, places, 800, 400,
+    "Process Simulation", "Time (seconds)", "Tokens")
+
+os.WriteFile("simulation.svg", []byte(plotData.SVG), 0644)
+```
+
+---
+
+## Step 5: Real-Time Monitoring
+
+Track active cases and predict outcomes.
+
+### Create Monitor
+
+```go
+// Use discovered model and learned rates
+monitor := monitoring.NewMonitor(net, rates, monitoring.MonitorConfig{
+    SLAThreshold:       4 * time.Hour,
+    StuckThreshold:     30 * time.Minute,
+    PredictionInterval: 1 * time.Minute,
+    EnablePredictions:  true,
+    EnableAlerts:       true,
+})
+```
+
+### Register Alert Handler
+
+```go
+monitor.AddAlertHandler(func(alert monitoring.Alert) {
+    fmt.Printf("[%s] %s: %s\n",
+        alert.Severity, alert.Type, alert.Message)
+
+    // Send to Slack, PagerDuty, etc.
+    if alert.Severity == monitoring.SeverityCritical {
+        notifyOncall(alert)
+    }
+})
+```
+
+### Track Cases
+
+```go
+// Start a new case
+monitor.StartCase("CASE-001", time.Now())
+
+// Record events as they happen
+monitor.RecordEvent("CASE-001", "Triage", time.Now(), "nurse1")
+// ... later ...
+monitor.RecordEvent("CASE-001", "Diagnose", time.Now(), "doctor1")
+
+// Get prediction for a case
+pred, _ := monitor.PredictCompletion("CASE-001")
+fmt.Printf("Expected completion: %s (confidence: %.0f%%)\n",
+    pred.ExpectedCompletion.Format("15:04"),
+    pred.Confidence*100)
+fmt.Printf("Risk score: %.1f%%\n", pred.RiskScore*100)
+
+// Complete a case
+monitor.CompleteCase("CASE-001", time.Now())
+```
+
+### Continuous Monitoring
+
+```go
+// Start background prediction updates
+monitor.Start()
+
+// ... your application runs ...
+
+// View current status
+monitor.PrintStatus()
+
+// Stop when done
+monitor.Stop()
+```
+
+---
+
+## Complete Example: IT Incident Management
+
+```go
+package main
+
+import (
+    "fmt"
+    "time"
+
+    "github.com/pflow-xyz/go-pflow/eventlog"
+    "github.com/pflow-xyz/go-pflow/mining"
+    "github.com/pflow-xyz/go-pflow/monitoring"
+    "github.com/pflow-xyz/go-pflow/solver"
+    "github.com/pflow-xyz/go-pflow/visualization"
+)
+
+func main() {
+    // 1. Parse historical incident data
+    config := eventlog.CSVConfig{
+        CaseIDColumn:    "incident_id",
+        ActivityColumn:  "status",
+        TimestampColumn: "timestamp",
+        ResourceColumn:  "assignee",
+    }
+    log, _ := eventlog.ParseCSV("incidents.csv", config)
+
+    // 2. Summarize the data
+    summary := log.Summarize()
+    fmt.Printf("Loaded %d incidents with %d events\n",
+        summary.NumCases, summary.NumEvents)
+
+    // 3. Discover process model
+    result, _ := mining.Discover(log, "common-path")
+    net := result.Net
+    visualization.SaveSVG(net, "incident_process.svg")
+
+    // 4. Learn timing from history
+    stats := mining.ExtractTiming(log)
+    rates := mining.LearnRatesFromLog(log, net)
+
+    fmt.Println("\nLearned transition rates:")
+    for trans, rate := range rates {
+        fmt.Printf("  %s: %.6f /sec (mean %.1f min)\n",
+            trans, rate, 1.0/rate/60)
+    }
+
+    // 5. Simulate expected behavior
+    initialState := net.SetState(nil)
+    prob := solver.NewProblem(net, initialState, [2]float64{0, 14400}, rates)
+    sol := solver.Solve(prob, solver.Tsit5(), &solver.Options{
+        Dt: 0.01, Dtmin: 1e-6, Dtmax: 60.0,
+        Abstol: 1e-6, Reltol: 1e-3, Adaptive: true,
+    })
+
+    final := sol.GetFinalState()
+    fmt.Printf("\nSimulation: %.1f%% cases complete in 4 hours\n",
+        final["end"]*100)
+
+    // 6. Set up monitoring for new incidents
+    monitor := monitoring.NewMonitor(net, rates, monitoring.MonitorConfig{
+        SLAThreshold:      4 * time.Hour,
+        EnablePredictions: true,
+        EnableAlerts:      true,
+    })
+
+    monitor.AddAlertHandler(func(alert monitoring.Alert) {
+        fmt.Printf("ALERT: %s\n", alert.String())
+    })
+
+    // 7. Track a new incident
+    monitor.StartCase("INC-12345", time.Now())
+    monitor.RecordEvent("INC-12345", "Created", time.Now(), "system")
+
+    pred, _ := monitor.PredictCompletion("INC-12345")
+    fmt.Printf("\nNew incident INC-12345:\n")
+    fmt.Printf("  Predicted resolution: %s\n",
+        pred.ExpectedCompletion.Format("15:04"))
+    fmt.Printf("  SLA risk: %.1f%%\n", pred.RiskScore*100)
+}
+```
+
+---
+
+## CSV Format Requirements
+
+Your CSV file should have at minimum:
+
+| Column | Description | Example |
+|--------|-------------|---------|
+| case_id | Unique identifier for each process instance | "INC-001" |
+| activity | Name of the activity/event | "Triage" |
+| timestamp | When the event occurred | "2024-01-15 09:30:00" |
+
+Optional columns:
+- **resource**: Who performed the activity
+- **lifecycle**: Event type (start, complete)
+- Additional attributes are captured automatically
+
+### Example CSV
+
+```csv
+case_id,activity,timestamp,resource
+INC-001,Created,2024-01-15 09:00:00,system
+INC-001,Assigned,2024-01-15 09:05:00,dispatcher
+INC-001,Investigating,2024-01-15 09:30:00,tech1
+INC-001,Resolved,2024-01-15 10:45:00,tech1
+INC-002,Created,2024-01-15 09:10:00,system
+INC-002,Assigned,2024-01-15 09:12:00,dispatcher
+...
+```
+
+---
+
+## Key Concepts
+
+### Mass-Action Kinetics
+
+go-pflow models processes using mass-action kinetics from chemistry:
+
+```
+transition_flux = rate × product(input_place_tokens)
+```
+
+This means:
+- Transitions fire faster when their input places have more tokens
+- The `rate` parameter controls baseline speed
+- Rates learned from logs are `1 / mean_duration` (exponential assumption)
+
+### Continuous vs Discrete
+
+Traditional Petri nets are discrete (integer tokens). go-pflow uses continuous tokens:
+- Tokens can be fractional (0.75 tokens)
+- Dynamics are smooth ODEs
+- Better for modeling aggregate behavior
+- Natural for learning rates from timing data
+
+### State Estimation
+
+When monitoring live cases, the system estimates current Petri net state by:
+1. Starting with tokens in `start` place
+2. Replaying observed events through the model
+3. Updating token counts as transitions fire
+
+---
+
+## Working Examples
+
+See these examples in the `examples/` directory:
+
+| Example | Description |
+|---------|-------------|
+| `eventlog_demo/` | CSV parsing and summarization |
+| `mining_demo/` | Full discovery → simulation pipeline |
+| `monitoring_demo/` | Real-time prediction and alerting |
+| `incident_simulator/` | Complete IT incident workflow |
+
+Run an example:
+```bash
+cd examples/mining_demo/cmd
+go run main.go
+```
+
+---
+
+## API Reference
+
+### eventlog Package
+
+| Type/Function | Description |
+|---------------|-------------|
+| `EventLog` | Container for all traces |
+| `Trace` | Single case with event sequence |
+| `Event` | Single event with timestamp |
+| `ParseCSV(filename, config)` | Parse CSV file |
+| `log.Summarize()` | Get statistics |
+| `log.GetTraces()` | Get all traces |
+| `log.GetActivities()` | Get unique activities |
+| `trace.Duration()` | Time from first to last event |
+| `trace.GetActivityVariant()` | Activity sequence as []string |
+
+### mining Package
+
+| Type/Function | Description |
+|---------------|-------------|
+| `Discover(log, method)` | Discover Petri net from log |
+| `ExtractTiming(log)` | Extract timing statistics |
+| `LearnRatesFromLog(log, net)` | Learn rates for transitions |
+| `stats.GetMeanDuration(activity)` | Mean duration for activity |
+| `stats.EstimateRate(activity)` | Rate = 1/mean |
+
+### monitoring Package
+
+| Type/Function | Description |
+|---------------|-------------|
+| `NewMonitor(net, rates, config)` | Create monitor |
+| `monitor.StartCase(id, time)` | Begin tracking case |
+| `monitor.RecordEvent(id, activity, time, resource)` | Record event |
+| `monitor.PredictCompletion(id)` | Get prediction |
+| `monitor.CompleteCase(id, time)` | End tracking |
+| `monitor.AddAlertHandler(fn)` | Register alert callback |
+| `monitor.PrintStatus()` | Display current state |
+
+---
+
+## Solver Parameters
+
+Critical parameters for accurate simulation:
+
+```go
+opts := &solver.Options{
+    Dt:       0.01,    // Initial step - smaller = more accurate
+    Dtmin:    1e-6,    // Minimum step size
+    Dtmax:    60.0,    // Maximum step size
+    Abstol:   1e-6,    // Absolute error tolerance
+    Reltol:   1e-3,    // Relative error tolerance
+    Maxiters: 100000,  // Maximum iterations
+    Adaptive: true,    // Enable adaptive stepping
+}
+```
+
+**Important**: If results don't match expectations, try `Dt: 0.01` instead of larger values like `0.1`. The initial step size significantly affects accuracy, especially for fast dynamics.
+
+---
+
+## Next Steps
+
+1. **Start simple**: Parse a CSV, run `Summarize()`, see your data
+2. **Discover model**: Use `mining.Discover()` to see process structure
+3. **Validate timing**: Check if `ExtractTiming()` gives reasonable durations
+4. **Simulate**: Run ODE with learned rates, compare to actual data
+5. **Monitor**: Set up real-time tracking with SLA thresholds

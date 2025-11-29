@@ -550,6 +550,117 @@ func (g *Game) evaluateMove(move int) float64 {
 
 ---
 
+## Process Mining Quick Reference
+
+go-pflow includes a complete process mining pipeline: parse event logs, discover models, learn rates, simulate, and monitor.
+
+### Parse Event Logs
+
+```go
+import "github.com/pflow-xyz/go-pflow/eventlog"
+
+// Default column names: case_id, activity, timestamp
+config := eventlog.DefaultCSVConfig()
+log, err := eventlog.ParseCSV("events.csv", config)
+
+// Custom columns
+config := eventlog.CSVConfig{
+    CaseIDColumn:    "incident_id",
+    ActivityColumn:  "status",
+    TimestampColumn: "time",
+    ResourceColumn:  "assignee",
+}
+log, _ := eventlog.ParseCSV("incidents.csv", config)
+
+// Summarize
+summary := log.Summarize()
+summary.Print()  // Cases, events, activities, variants, durations
+```
+
+### Discover Process Models
+
+```go
+import "github.com/pflow-xyz/go-pflow/mining"
+
+// Discover from most common path
+result, _ := mining.Discover(log, "common-path")
+net := result.Net
+
+// Or sequential (all activities)
+result, _ := mining.Discover(log, "sequential")
+```
+
+### Learn Transition Rates
+
+```go
+// Extract timing statistics
+stats := mining.ExtractTiming(log)
+stats.Print()  // Mean, std, estimated rate per activity
+
+// Learn rates for a Petri net (maps activities to transitions)
+rates := mining.LearnRatesFromLog(log, net)
+// rates["Triage"] = 0.00556 (i.e., 1/mean_duration)
+```
+
+### Simulate with Learned Parameters
+
+```go
+import "github.com/pflow-xyz/go-pflow/solver"
+
+initialState := net.SetState(nil)
+rates := mining.LearnRatesFromLog(log, net)
+
+prob := solver.NewProblem(net, initialState, [2]float64{0, 3600}, rates)
+opts := &solver.Options{
+    Dt: 0.01, Dtmin: 1e-6, Dtmax: 60.0,
+    Abstol: 1e-6, Reltol: 1e-3, Adaptive: true,
+}
+sol := solver.Solve(prob, solver.Tsit5(), opts)
+
+final := sol.GetFinalState()
+fmt.Printf("Completed: %.1f%%\n", final["end"]*100)
+```
+
+### Real-Time Monitoring
+
+```go
+import "github.com/pflow-xyz/go-pflow/monitoring"
+
+monitor := monitoring.NewMonitor(net, rates, monitoring.MonitorConfig{
+    SLAThreshold:      4 * time.Hour,
+    EnablePredictions: true,
+    EnableAlerts:      true,
+})
+
+// Alert handler
+monitor.AddAlertHandler(func(alert monitoring.Alert) {
+    fmt.Printf("[%s] %s: %s\n", alert.Severity, alert.Type, alert.Message)
+})
+
+// Track cases
+monitor.StartCase("INC-001", time.Now())
+monitor.RecordEvent("INC-001", "Created", time.Now(), "system")
+
+// Get prediction
+pred, _ := monitor.PredictCompletion("INC-001")
+fmt.Printf("Expected: %s, Risk: %.0f%%\n",
+    pred.ExpectedCompletion.Format("15:04"), pred.RiskScore*100)
+
+monitor.CompleteCase("INC-001", time.Now())
+```
+
+### Process Mining Packages
+
+| Package | Purpose |
+|---------|---------|
+| `eventlog` | Parse CSV, manage traces, summarize logs |
+| `mining` | Discover models, extract timing, learn rates |
+| `monitoring` | Track cases, predict completion, alert on SLA |
+
+See `PROCESS_MINING_DIRECTIONS.md` for complete documentation.
+
+---
+
 ## When NOT to Use Petri Nets
 
 Petri nets are not the best choice for:
