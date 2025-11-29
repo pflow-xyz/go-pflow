@@ -29,7 +29,8 @@ The sudo authorization workflow is modeled as a Petri net where:
   - `deny_access`: Authorization denied
   - `timeout`: Session expires
   - `drop_privileges`: User returns to normal session
-  - `log_event`: Event logging
+  - `retry_from_denied`: Return from denied state
+  - `session_restart`: Return from expired state
 
 ## Quick Start
 

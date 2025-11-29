@@ -7,6 +7,17 @@ import (
 	"github.com/pflow-xyz/go-pflow/petri"
 )
 
+// Simulation probability constants
+const (
+	// AuthSuccessThreshold is the probability threshold for authentication success
+	// Values above this threshold result in denied access (30% denial rate)
+	AuthSuccessThreshold = 0.3
+
+	// TimeoutThreshold is the probability threshold for session timeout
+	// Values above this threshold result in session timeout (30% timeout rate)
+	TimeoutThreshold = 0.7
+)
+
 // AuthState represents the current authorization state
 type AuthState int
 
@@ -84,12 +95,12 @@ func (a *AuthWorkflow) RunScenario(scenario string, verbose bool) SimulationResu
 		authWillSucceed = true
 		willTimeout = true
 	case "random":
-		// Random outcome
-		authWillSucceed = rand.Float32() > 0.3  // 70% success rate
-		willTimeout = rand.Float32() > 0.7       // 30% timeout rate if successful
+		// Random outcome using defined probability thresholds
+		authWillSucceed = rand.Float32() > AuthSuccessThreshold  // 70% success rate
+		willTimeout = rand.Float32() > TimeoutThreshold           // 30% timeout rate if successful
 	default:
-		authWillSucceed = rand.Float32() > 0.3
-		willTimeout = rand.Float32() > 0.7
+		authWillSucceed = rand.Float32() > AuthSuccessThreshold
+		willTimeout = rand.Float32() > TimeoutThreshold
 	}
 
 	// Run the workflow
