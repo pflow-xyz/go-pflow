@@ -54,8 +54,9 @@ func buildODEFunction(net *petri.PetriNet, rates map[string]float64) ODEFunc {
 			rate := rates[transLabel]
 			flux := rate
 
-			// Compute flux using mass-action kinetics
-			// Multiply by input place concentrations
+			// Compute flux using simplified mass-action kinetics
+			// flux = rate * product(concentration)
+			// Arc weights affect consumption/production amounts, not rate calculation
 			for _, arc := range net.Arcs {
 				if arc.Target == transLabel {
 					if _, isPlace := net.Places[arc.Source]; isPlace {
@@ -64,7 +65,7 @@ func buildODEFunction(net *petri.PetriNet, rates map[string]float64) ODEFunc {
 							flux = 0
 							break
 						}
-						// Mass action: flux is proportional to reactant concentration
+						// Simplified mass action: flux *= concentration
 						flux *= placeState
 					}
 				}

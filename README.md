@@ -106,6 +106,13 @@ Detailed API and implementation documentation:
   - Structured JSON output optimized for machine consumption
   - Full simulation, analysis, and visualization pipeline
 
+### 🤖 AI Assistant Guide
+- **[CLAUDE_GUIDE](CLAUDE_GUIDE.md)** - Comprehensive guide for AI assistants (Claude, etc.)
+  - When to use Petri nets for different problem types
+  - Problem-specific patterns (games, optimization, constraints, epidemics)
+  - Solver tuning and performance optimization
+  - Code templates and idioms
+
 ### 📊 Project Documentation
 - **[ROADMAP](ROADMAP.md)** - Development status, completed features, and future plans
 - **[ACCOMPLISHMENTS](ACCOMPLISHMENTS.md)** - Key achievements and milestones
@@ -208,6 +215,16 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - See [examples/chess/README.md](examples/chess/README.md)
 - **Run**: `cd examples/chess/cmd && go run *.go --problem=queens`
 
+### Optimization Examples
+
+**[examples/knapsack/](examples/knapsack/)** - Combinatorial optimization
+- 0/1 knapsack problem as Petri net with mass-action kinetics
+- Transition rates encode value/weight efficiency preferences
+- Exclusion analysis: disable items to measure sensitivity
+- Continuous relaxation of discrete optimization
+- Same pattern as game move evaluation (disable → observe)
+- **Run**: `cd examples/knapsack/cmd && go run *.go`
+
 ### Visualizations & Model Analysis
 
 - **[examples/VISUALIZATIONS.md](examples/VISUALIZATIONS.md)** - Gallery of visualization examples
@@ -230,6 +247,7 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 | **connect4** | Game AI | Complex | Pattern recognition, lookahead | Advanced AI techniques |
 | **sudoku** | Puzzle | Medium | Constraint satisfaction, colored nets | CSP modeling |
 | **chess** | Puzzle/AI | Complex | N-Queens, Knight's Tour, ODE heuristics | Classic algorithms ⭐ |
+| **knapsack** | Optimization | Medium | Mass-action kinetics, exclusion analysis | Combinatorial optimization |
 
 ## Package Structure
 
