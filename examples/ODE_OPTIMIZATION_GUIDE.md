@@ -613,6 +613,8 @@ With additional optimization (reduced model), we could achieve **296,400× total
 ---
 
 **See Also**:
+- [PRACTICAL_GUIDE.md](PRACTICAL_GUIDE.md) - **START HERE** for workflows and implementation guides
+- [STIFFNESS_EXPLAINER.md](STIFFNESS_EXPLAINER.md) - Understanding ODE stiffness (undergrad-friendly)
 - [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) - Empirical measurements
 - [EARLY_TERMINATION_RESULTS.md](EARLY_TERMINATION_RESULTS.md) - Smart move selection (9.6× speedup)
 - [CACHING_RESULTS.md](CACHING_RESULTS.md) - Memoization implementation (8.3× speedup)
