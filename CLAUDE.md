@@ -140,14 +140,14 @@ Evaluation: Simulate each possible move, compare final states
 **Go code** (from tic-tac-toe):
 ```go
 func evaluateMove(game *Game, move int) float64 {
-    // Create hypothetical state
-    hypState := copyState(game.engine.GetState())
+    // Create hypothetical state using solver.CopyState
+    hypState := solver.CopyState(game.engine.GetState())
     hypState[fmt.Sprintf("pos%d", move)] = 0
     hypState[fmt.Sprintf("_X%d", move)] = 1
 
     // Run ODE simulation
     prob := solver.NewProblem(game.net, hypState, [2]float64{0, 5.0}, rates)
-    sol := solver.Solve(prob, solver.Tsit5(), defaultOpts())
+    sol := solver.Solve(prob, solver.Tsit5(), solver.DefaultOptions())
 
     // Score: prefer states with high X_wins, low O_wins
     final := sol.GetFinalState()
@@ -329,6 +329,21 @@ If your Go simulation produces different values than pflow.xyz:
 
 ## Common Patterns and Idioms
 
+### State Manipulation with solver.CopyState
+
+The `solver.CopyState()` function creates a deep copy of state maps. Use it whenever you need
+to test hypothetical states without modifying the original:
+
+```go
+import "github.com/pflow-xyz/go-pflow/solver"
+
+// Copy current state for hypothesis testing
+hypState := solver.CopyState(currentState)
+hypState["position"] = 0  // Modify copy, original unchanged
+
+// Useful for move evaluation, sensitivity analysis, what-if scenarios
+```
+
 ### Pattern 1: Exclusion Analysis
 "What happens if we disable option X?"
 
@@ -348,7 +363,8 @@ for _, option := range options {
 ```go
 bestMove, bestScore := -1, -math.MaxFloat64
 for _, move := range legalMoves {
-    hypState := applyMove(currentState, move)
+    hypState := solver.CopyState(currentState)
+    applyMove(hypState, move)
     sol := simulate(net, hypState, rates)
     score := evaluate(sol.GetFinalState())
     if score > bestScore {

@@ -196,9 +196,9 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 	stateLabels := prob.stateLabels
 
 	t := []float64{t0}
-	u := []map[string]float64{copyState(u0)}
+	u := []map[string]float64{CopyState(u0)}
 	tcur := t0
-	ucur := copyState(u0)
+	ucur := CopyState(u0)
 	dtcur := dt
 	nsteps := 0
 
@@ -214,7 +214,7 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 
 		for stage := 1; stage < len(solver.C); stage++ {
 			tstage := tcur + solver.C[stage]*dtcur
-			ustage := copyState(ucur)
+			ustage := CopyState(ucur)
 			for _, key := range stateLabels {
 				for j := 0; j < stage; j++ {
 					aj := 0.0
@@ -228,7 +228,7 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 		}
 
 		// Compute solution at next step
-		unext := copyState(ucur)
+		unext := CopyState(ucur)
 		for _, key := range stateLabels {
 			for j := 0; j < len(solver.B); j++ {
 				unext[key] += dtcur * solver.B[j] * K[j][key]
@@ -260,7 +260,7 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 			tcur += dtcur
 			ucur = unext
 			t = append(t, tcur)
-			u = append(u, copyState(ucur))
+			u = append(u, CopyState(ucur))
 			nsteps++
 
 			// Adapt step size for next iteration
@@ -284,8 +284,10 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 	}
 }
 
-// copyState creates a deep copy of a state map.
-func copyState(s map[string]float64) map[string]float64 {
+// CopyState creates a deep copy of a state map.
+// This is useful for hypothesis evaluation, move testing, and any scenario
+// where you need to modify state without affecting the original.
+func CopyState(s map[string]float64) map[string]float64 {
 	out := make(map[string]float64, len(s))
 	for k, v := range s {
 		out[k] = v

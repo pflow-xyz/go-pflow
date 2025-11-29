@@ -325,7 +325,7 @@ func TestSolveCatalysis(t *testing.T) {
 
 func TestCopyState(t *testing.T) {
 	original := map[string]float64{"A": 1.0, "B": 2.0}
-	copied := copyState(original)
+	copied := CopyState(original)
 
 	// Check values match
 	if copied["A"] != 1.0 || copied["B"] != 2.0 {
