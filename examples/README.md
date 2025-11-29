@@ -7,6 +7,7 @@ This directory contains example implementations demonstrating different aspects 
 | Example | Type | Complexity | Key Concepts | Visualization |
 |---------|------|------------|--------------|---------------|
 | **basic** | Workflow | Simple | Sequential processes, producer-consumer patterns | [workflow](basic/workflow_small.svg), [producer-consumer](basic/pc_small.svg) |
+| **sudo** | Security | Simple | Authorization workflow, privilege escalation, session management | [model](sudo/sudo_model.svg) |
 | **tictactoe** | Game AI | Medium | Minimax, perfect play, ODE-guided decisions | [flow](tictactoe/tictactoe_flow.svg) |
 | **nim** | Game Theory | Medium | Discrete state spaces, optimal strategy, position evaluation | [10 stones](nim/nim_10.svg) |
 | **connect4** | Game AI | Complex | Pattern recognition, lookahead, multi-dimensional evaluation | [flow](connect4/connect4_flow.svg) |
@@ -48,7 +49,59 @@ pflow simulate pc_small.json
 
 ---
 
-### 2. Tic-Tac-Toe
+### 2. Sudo Authorization Workflow
+
+**Location**: `sudo/`
+
+**Model Type**: Authorization state machine
+
+**What It Demonstrates**:
+- **Security Workflows**: Modeling privilege escalation as state transitions
+- **Decision Points**: Authorization granted/denied branching
+- **Session Management**: Timeout and expiration handling
+- **Audit Trail**: Event logging for security compliance
+- **State Recovery**: Graceful return from denied/expired states
+
+**Complexity Metrics**:
+- Places: 7 (UserSession, SudoRequest, AuthCheck, AdminSession, Denied, Expired, AuditLog)
+- Transitions: 8 (request, authenticate, grant, deny, timeout, drop, retry, restart)
+- Arcs: 22
+- State Space: Bounded cyclic (sessions can repeat)
+
+**Key Learning**:
+- Modeling security workflows with Petri nets
+- State machines for authorization decisions
+- How tokens track audit events
+- Privilege escalation and de-escalation patterns
+
+**Run Example**:
+```bash
+cd sudo
+go build -o sudo ./cmd
+
+# Run a single demo
+./sudo
+
+# Analyze the model
+./sudo --analyze
+
+# Simulate different scenarios
+./sudo --scenario success      # Successful auth
+./sudo --scenario auth-fail    # Authentication failure
+./sudo --scenario timeout      # Session timeout
+
+# Run multiple simulations
+./sudo --simulate --count 100
+
+# Verbose mode
+./sudo --v
+```
+
+**Visualization**: ![Sudo Model](sudo/sudo_model.svg)
+
+---
+
+### 3. Tic-Tac-Toe
 
 **Location**: `tictactoe/`
 
@@ -110,7 +163,7 @@ go build -o ttt ./cmd
 
 ---
 
-### 3. Nim Game
+### 4. Nim Game
 
 **Location**: `nim/`
 
@@ -166,7 +219,7 @@ go build -o nim ./cmd
 
 ---
 
-### 4. Connect Four
+### 5. Connect Four
 
 **Location**: `connect4/`
 
@@ -372,28 +425,35 @@ connect4
 - Producer-consumer: Tokens cycle through system
 - **Takeaway**: Tokens = resources, state, or work items
 
-### 2. State Space Exploration (nim)
+### 2. Security Workflows (sudo)
+**Learn**: Authorization as state machine
+- States represent security contexts (user, admin, denied)
+- Transitions model access control decisions
+- Audit logging tracks all state changes
+- **Takeaway**: Petri nets model security policies naturally
+
+### 3. State Space Exploration (nim)
 **Learn**: Complete reachability analysis
 - Every stone count is reachable
 - Linear progression (no cycles)
 - Bounded (game terminates)
 - **Takeaway**: Petri nets can model game trees
 
-### 3. Position Evaluation (nim)
+### 4. Position Evaluation (nim)
 **Learn**: Continuous functions guide discrete choices
 - ODE scoring: `score = distance_to_losing_position`
 - Maps continuous values to discrete moves
 - Approximates optimal without explicit game theory
 - **Takeaway**: ODEs can solve discrete decision problems
 
-### 4. Pattern Recognition (connect4)
+### 5. Pattern Recognition (connect4)
 **Learn**: Complex feature extraction
 - 69 patterns checked per position
 - Weighted combination of features
 - Hierarchical importance (win > threat > potential)
 - **Takeaway**: Rich pattern spaces enable intelligent behavior
 
-### 5. Lookahead Search (connect4)
+### 6. Lookahead Search (connect4)
 **Learn**: Anticipating opponent response
 - 1-ply minimax: simulate opponent's best move
 - Adjust our evaluation based on their response
@@ -411,6 +471,12 @@ connect4
 2. Observe token flow through stages
 3. Try `pc_small.json` to see cyclic behavior
 4. **Learn**: Places, transitions, arcs, tokens
+
+**Beginner+** → Try `sudo/`
+1. Run `./sudo --v` to see authorization flow
+2. Analyze the model: `./sudo --analyze`
+3. Try different scenarios: `./sudo --scenario auth-fail`
+4. **Learn**: State machines, decision points, security modeling
 
 **Intermediate** → Move to `nim/`
 1. Build and play: `./nim --player-x human --player-o ode`
@@ -436,6 +502,12 @@ connect4
 - **Decision Making**: None (deterministic)
 - **Best For**: Learning Petri net fundamentals
 
+**Sudo** (Authorization):
+- **Purpose**: Security workflow modeling
+- **Complexity**: 7 places, 8 transitions
+- **Decision Making**: Authorization decision points
+- **Best For**: Understanding security state machines and audit trails
+
 **Nim**:
 - **Purpose**: Game theory with optimal strategy
 - **Complexity**: 16 places, 39 transitions (15 stones)
@@ -453,6 +525,7 @@ connect4
 | Concept | Best Example | Why |
 |---------|--------------|-----|
 | Petri net basics | **basic/** | Simple, visual, deterministic |
+| Security workflows | **sudo** | Authorization, session management, audit |
 | State space analysis | **nim** | Complete reachability, clear terminal states |
 | Game theory | **nim** | Optimal strategy is provable |
 | ODE-based decisions | **nim** | Clean mapping: continuous score → discrete move |
