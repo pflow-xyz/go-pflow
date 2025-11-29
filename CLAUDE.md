@@ -72,20 +72,24 @@ Transitions: One per step (StartWork, FinishWork)
 Arcs: Sequential flow (Received→StartWork→InProgress→FinishWork→Complete)
 ```
 
-**Go code**:
+**Go code** (using fluent Builder):
 ```go
-net := petri.NewPetriNet()
-net.AddPlace("received", 10.0, nil, 100, 100, nil)  // 10 items waiting
-net.AddPlace("in_progress", 0.0, nil, 200, 100, nil)
-net.AddPlace("complete", 0.0, nil, 300, 100, nil)
+net, rates := petri.Build().
+    Chain(10, "received", "start", "in_progress", "finish", "complete").
+    WithRates(0.5)  // 0.5 items/time unit
+```
 
-net.AddTransition("start", "default", 150, 100, nil)
-net.AddTransition("finish", "default", 250, 100, nil)
-
-net.AddArc("received", "start", 1.0, false)
-net.AddArc("start", "in_progress", 1.0, false)
-net.AddArc("in_progress", "finish", 1.0, false)
-net.AddArc("finish", "complete", 1.0, false)
+Or with explicit construction:
+```go
+net := petri.Build().
+    Place("received", 10).
+    Place("in_progress", 0).
+    Place("complete", 0).
+    Transition("start").
+    Transition("finish").
+    Flow("received", "start", "in_progress", 1).
+    Flow("in_progress", "finish", "complete", 1).
+    Done()
 ```
 
 **Rates**: Set based on processing speed (e.g., `rates["start"] = 0.5` means 0.5 items/time unit)
@@ -493,6 +497,112 @@ score := finalState["goal_achieved"]
 
 ---
 
+## Fluent Builder API
+
+The `petri.Build()` function provides a fluent API for constructing nets:
+
+```go
+import "github.com/pflow-xyz/go-pflow/petri"
+
+// Simple SIR model
+net, rates := petri.Build().
+    SIR(999, 1, 0).
+    WithCustomRates(map[string]float64{"infect": 0.3, "recover": 0.1})
+
+// Workflow with chain helper
+net := petri.Build().
+    Chain(100, "pending", "start", "active", "complete", "done").
+    Done()
+
+// Full control
+net := petri.Build().
+    Place("input", 10).
+    PlaceWithCapacity("buffer", 0, 5).
+    Transition("process").
+    Arc("input", "process", 1).
+    Arc("process", "buffer", 1).
+    InhibitorArc("buffer", "process", 5).  // Stop when buffer full
+    Done()
+```
+
+---
+
+## Sensitivity Analysis
+
+The `sensitivity` package provides tools for analyzing parameter impact:
+
+```go
+import "github.com/pflow-xyz/go-pflow/sensitivity"
+
+// Create analyzer with a scoring function
+scorer := sensitivity.DiffScorer("wins", "losses")
+analyzer := sensitivity.NewAnalyzer(net, state, rates, scorer).
+    WithTimeSpan(0, 10)
+
+// Analyze impact of disabling each transition
+result := analyzer.AnalyzeRatesParallel()
+fmt.Printf("Baseline score: %f\n", result.Baseline)
+for _, r := range result.Ranking {
+    fmt.Printf("%s: %+.2f impact\n", r.Name, r.Impact)
+}
+
+// Sweep a parameter range
+sweep := analyzer.SweepRateRange("infect", 0.1, 0.5, 10)
+fmt.Printf("Best rate: %f (score: %f)\n", sweep.Best.Value, sweep.Best.Score)
+
+// Compute gradients
+gradients := analyzer.AllGradientsParallel(0.01)
+
+// Grid search over multiple parameters
+grid := sensitivity.NewGridSearch(analyzer).
+    AddParameterRange("infect", 0.1, 0.5, 5).
+    AddParameterRange("recover", 0.05, 0.2, 5)
+result := grid.Run()
+fmt.Printf("Best: infect=%f, recover=%f\n",
+    result.Best.Parameters["infect"],
+    result.Best.Parameters["recover"])
+```
+
+---
+
+## Caching for Performance
+
+The `cache` package provides memoization for repeated simulations:
+
+```go
+import "github.com/pflow-xyz/go-pflow/cache"
+
+// StateCache - caches full solutions
+stateCache := cache.NewStateCache(1000)  // Max 1000 entries
+
+sol := stateCache.GetOrCompute(state, func() *solver.Solution {
+    prob := solver.NewProblem(net, state, tspan, rates)
+    return solver.Solve(prob, solver.Tsit5(), opts)
+})
+
+// Check hit rate
+stats := stateCache.Stats()
+fmt.Printf("Hit rate: %.1f%%\n", stats.HitRate*100)
+
+// CachedEvaluator - convenient wrapper
+eval := cache.NewCachedEvaluator(net, rates, 1000).
+    WithTimeSpan(0, 5).
+    WithOptions(solver.FastOptions())
+
+score := eval.Evaluate(state, func(final map[string]float64) float64 {
+    return final["wins"]
+})
+
+// ScoreCache - lighter weight, caches only scores
+scoreCache := cache.NewScoreCache(10000)
+score := scoreCache.GetOrCompute(state, func() float64 {
+    // expensive computation
+    return computeScore(state)
+})
+```
+
+---
+
 ## Performance Tips
 
 ### 1. Reduce State Space
@@ -500,45 +610,35 @@ score := finalState["goal_achieved"]
 - Combine equivalent states
 - Use symmetry to reduce places
 
-### 2. Tune Solver for Speed
+### 2. Use Solver Presets
 ```go
-// Fast but less accurate (for game AI)
-opts := &solver.Options{
-    Dt:       0.5,
-    Abstol:   1e-2,
-    Reltol:   1e-2,
-    Maxiters: 100,
-    Adaptive: true,
-}
+// For game AI - fast evaluation
+opts := solver.FastOptions()
+
+// For publishing - high accuracy
+opts := solver.AccurateOptions()
 ```
 
-### 3. Parallelize Evaluations
+### 3. Use Built-in Parallelization
 ```go
-var wg sync.WaitGroup
-scores := make([]float64, len(moves))
-for i, move := range moves {
-    wg.Add(1)
-    go func(i int, move Move) {
-        defer wg.Done()
-        scores[i] = evaluateMove(move)
-    }(i, move)
-}
-wg.Wait()
+// hypothesis package
+bestIdx, _ := eval.FindBestParallel(state, moves)
+
+// sensitivity package
+result := analyzer.AnalyzeRatesParallel()
+gradients := analyzer.AllGradientsParallel(0.01)
 ```
 
-### 4. Cache Common States
+### 4. Use the Cache Package
 ```go
-var stateCache = make(map[string]float64)
+// Use cache.ScoreCache for game AI
+scoreCache := cache.NewScoreCache(10000)
+score := scoreCache.GetOrCompute(state, func() float64 {
+    return expensiveEvaluation(state)
+})
 
-func evaluateCached(state map[string]float64) float64 {
-    key := stateKey(state)
-    if score, ok := stateCache[key]; ok {
-        return score
-    }
-    score := evaluate(state)
-    stateCache[key] = score
-    return score
-}
+// Or cache.CachedEvaluator for full integration
+eval := cache.NewCachedEvaluator(net, rates, 1000)
 ```
 
 ---
