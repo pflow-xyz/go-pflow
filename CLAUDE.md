@@ -137,23 +137,24 @@ Evaluation: Simulate each possible move, compare final states
 3. Score based on desirable place token counts
 4. Choose move with best score
 
-**Go code** (from tic-tac-toe):
+**Go code** (using hypothesis.Evaluator):
 ```go
-func evaluateMove(game *Game, move int) float64 {
-    // Create hypothetical state using stateutil.Apply
-    hypState := stateutil.Apply(game.engine.GetState(), map[string]float64{
-        fmt.Sprintf("pos%d", move): 0,  // Clear position
-        fmt.Sprintf("_X%d", move):  1,  // Mark X played here
-    })
-
-    // Run ODE simulation with FastOptions for game AI
-    prob := solver.NewProblem(game.net, hypState, [2]float64{0, 5.0}, rates)
-    sol := solver.Solve(prob, solver.Tsit5(), solver.FastOptions())
-
-    // Score: prefer states with high X_wins, low O_wins
-    final := sol.GetFinalState()
+// Create evaluator once, reuse for all moves
+eval := hypothesis.NewEvaluator(game.net, rates, func(final map[string]float64) float64 {
     return final["X_wins"] - final["O_wins"]
+})
+
+// Find best move from available positions
+var moves []map[string]float64
+for _, pos := range availablePositions {
+    moves = append(moves, map[string]float64{
+        fmt.Sprintf("pos%d", pos): 0,
+        fmt.Sprintf("_X%d", pos):  1,
+    })
 }
+
+bestIdx, _ := eval.FindBestParallel(game.engine.GetState(), moves)
+bestMove := availablePositions[bestIdx]
 ```
 
 ---
@@ -383,33 +384,80 @@ maxPlace, maxVal := stateutil.Max(state)
 minPlace, minVal := stateutil.Min(state)
 ```
 
-### Pattern 1: Exclusion Analysis
+### Hypothesis Evaluation with hypothesis.Evaluator
+
+The `hypothesis` package provides a high-level API for move evaluation, game AI,
+and sensitivity analysis:
+
+```go
+import "github.com/pflow-xyz/go-pflow/hypothesis"
+
+// Create an evaluator with a scoring function
+eval := hypothesis.NewEvaluator(net, rates, func(final map[string]float64) float64 {
+    return final["my_wins"] - final["opponent_wins"]
+})
+
+// Configure options (optional - defaults to FastOptions)
+eval.WithTimeSpan(0, 5.0).
+    WithOptions(solver.FastOptions()).
+    WithEarlyTermination(func(state map[string]float64) bool {
+        // Skip infeasible states
+        for _, v := range state {
+            if v < 0 { return true }
+        }
+        return false
+    })
+
+// Evaluate a single hypothesis
+score := eval.Evaluate(currentState, map[string]float64{"pos5": 0, "_X5": 1})
+
+// Find the best move from candidates
+moves := []map[string]float64{
+    {"pos0": 0, "_X0": 1},
+    {"pos1": 0, "_X1": 1},
+    {"pos2": 0, "_X2": 1},
+}
+bestIdx, bestScore := eval.FindBest(currentState, moves)
+
+// Or evaluate in parallel for speed
+bestIdx, bestScore = eval.FindBestParallel(currentState, moves)
+
+// Sensitivity analysis: which transitions matter most?
+impact := eval.SensitivityImpact(currentState)
+// impact["to_win"] = -5.2  (disabling hurts score by 5.2)
+// impact["to_lose"] = 3.1  (disabling helps score by 3.1)
+```
+
+### Pattern 1: Exclusion Analysis (using hypothesis.Evaluator)
 "What happens if we disable option X?"
 
 ```go
-for _, option := range options {
-    rates[option] = 0  // Disable
-    sol := simulate(net, state, rates)
-    score := evaluate(sol.GetFinalState())
-    results[option] = score
-    rates[option] = originalRate  // Restore
+// Automatic sensitivity analysis
+eval := hypothesis.NewEvaluator(net, rates, scorer)
+impact := eval.SensitivityImpact(currentState)
+
+for trans, delta := range impact {
+    fmt.Printf("%s: %+.2f impact\n", trans, delta)
 }
 ```
 
-### Pattern 2: Move Evaluation
+### Pattern 2: Move Evaluation (using hypothesis.Evaluator)
 "Which move leads to the best outcome?"
 
 ```go
-bestMove, bestScore := -1, -math.MaxFloat64
+eval := hypothesis.NewEvaluator(net, rates, func(final map[string]float64) float64 {
+    return final["score"]
+})
+
+// Convert moves to state updates
+var updates []map[string]float64
 for _, move := range legalMoves {
-    // Use stateutil.Apply for clean hypothesis creation
-    hypState := stateutil.Apply(currentState, moveToUpdates(move))
-    sol := simulate(net, hypState, rates)
-    score := evaluate(sol.GetFinalState())
-    if score > bestScore {
-        bestMove, bestScore = move, score
-    }
+    updates = append(updates, moveToUpdates(move))
 }
+
+// Find best move (parallel for many candidates)
+bestIdx, bestScore := eval.FindBestParallel(currentState, updates)
+bestMove := legalMoves[bestIdx]
 ```
 
 ### Pattern 3: History Tracking
