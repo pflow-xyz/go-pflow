@@ -160,19 +160,31 @@ type DiscoveryResult struct {
 
 // Discover performs process discovery on an event log.
 // Returns a Petri net model of the process.
+//
+// Available methods:
+//   - "sequential": Simple linear process model
+//   - "common-path": Model based on most frequent variant
+//   - "alpha": Alpha Miner algorithm (discovers concurrency, sensitive to noise)
+//   - "heuristic": Heuristic Miner (robust to noise, handles loops)
 func Discover(log *eventlog.EventLog, method string) (*DiscoveryResult, error) {
-	var net *petri.PetriNet
-
 	switch method {
 	case "sequential":
-		net = DiscoverSequentialNet(log)
+		net := DiscoverSequentialNet(log)
+		return buildResult(log, net, method), nil
 	case "common-path":
-		net = DiscoverCommonPath(log)
+		net := DiscoverCommonPath(log)
+		return buildResult(log, net, method), nil
+	case "alpha":
+		return DiscoverAlpha(log)
+	case "heuristic":
+		return DiscoverHeuristic(log)
 	default:
-		return nil, fmt.Errorf("unknown discovery method: %s", method)
+		return nil, fmt.Errorf("unknown discovery method: %s (available: sequential, common-path, alpha, heuristic)", method)
 	}
+}
 
-	// Compute metadata
+// buildResult creates a DiscoveryResult with computed metadata.
+func buildResult(log *eventlog.EventLog, net *petri.PetriNet, method string) *DiscoveryResult {
 	variantCounts := make(map[string]int)
 	for _, trace := range log.GetTraces() {
 		variant := fmt.Sprintf("%v", trace.GetActivityVariant())
@@ -186,7 +198,10 @@ func Discover(log *eventlog.EventLog, method string) (*DiscoveryResult, error) {
 		}
 	}
 
-	coverage := float64(maxCount) / float64(log.NumCases()) * 100
+	coverage := 0.0
+	if log.NumCases() > 0 {
+		coverage = float64(maxCount) / float64(log.NumCases()) * 100
+	}
 
 	return &DiscoveryResult{
 		Net:             net,
@@ -194,5 +209,5 @@ func Discover(log *eventlog.EventLog, method string) (*DiscoveryResult, error) {
 		NumVariants:     len(variantCounts),
 		MostCommonCount: maxCount,
 		CoveragePercent: coverage,
-	}, nil
+	}
 }

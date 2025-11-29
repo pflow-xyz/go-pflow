@@ -947,12 +947,63 @@ summary.Print()  // Cases, events, activities, variants, durations
 ```go
 import "github.com/pflow-xyz/go-pflow/mining"
 
-// Discover from most common path
-result, _ := mining.Discover(log, "common-path")
-net := result.Net
+// Simple methods
+result, _ := mining.Discover(log, "common-path")  // Most frequent variant
+result, _ := mining.Discover(log, "sequential")   // Linear process
 
-// Or sequential (all activities)
-result, _ := mining.Discover(log, "sequential")
+// Alpha Miner - discovers concurrency (sensitive to noise)
+result, _ := mining.Discover(log, "alpha")
+
+// Heuristic Miner - robust to noise, handles loops
+result, _ := mining.Discover(log, "heuristic")
+
+net := result.Net
+fmt.Printf("Discovered %d places, %d transitions\n",
+    len(net.Places), len(net.Transitions))
+```
+
+### Process Discovery Algorithms
+
+| Method | Best For | Handles Noise | Handles Loops |
+|--------|----------|---------------|---------------|
+| `common-path` | Simple happy path | No | No |
+| `sequential` | Linear processes | No | No |
+| `alpha` | Concurrent processes | No | Length >2 only |
+| `heuristic` | Noisy real-world logs | Yes | Yes |
+
+### Footprint Analysis
+
+```go
+// Build footprint matrix (directly-follows relations)
+fp := mining.NewFootprintMatrix(log)
+fp.Print()
+
+// Check activity relations
+fp.IsCausal("A", "B")   // A -> B (causality)
+fp.IsParallel("B", "C") // B || C (can occur in either order)
+fp.IsChoice("X", "Y")   // X # Y (exclusive choice)
+
+// Get start/end activities
+starts := fp.GetStartActivities()
+ends := fp.GetEndActivities()
+```
+
+### Heuristic Miner Configuration
+
+```go
+// Custom thresholds for noisy logs
+opts := &mining.HeuristicMinerOptions{
+    DependencyThreshold: 0.5, // Min score to include edge (0-1)
+    AndThreshold:        0.1, // For detecting parallelism
+    LoopThreshold:       0.5, // For detecting loops
+}
+result, _ := mining.DiscoverHeuristicWithOptions(log, opts)
+
+// Access dependency scores
+miner := mining.NewHeuristicMiner(log)
+score := miner.DependencyScore("A", "B")  // 0.9 = strong A->B
+topEdges := miner.GetTopEdges(10)         // Top 10 causal relations
+miner.PrintDependencyMatrix()             // Full matrix
 ```
 
 ### Learn Transition Rates
