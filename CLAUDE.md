@@ -603,6 +603,76 @@ score := scoreCache.GetOrCompute(state, func() float64 {
 
 ---
 
+## Reachability Analysis
+
+The `reachability` package provides discrete state space analysis for Petri nets:
+
+```go
+import "github.com/pflow-xyz/go-pflow/reachability"
+
+// Create analyzer
+analyzer := reachability.NewAnalyzer(net).
+    WithMaxStates(10000).   // Limit state space exploration
+    WithMaxTokens(1000)     // Detect unbounded nets
+
+// Full analysis: graph, cycles, liveness, deadlocks
+result := analyzer.Analyze()
+
+fmt.Printf("States: %d, Edges: %d\n", result.StateCount, result.EdgeCount)
+fmt.Printf("Bounded: %v, Has cycles: %v\n", result.Bounded, result.HasCycle)
+fmt.Printf("Live: %v, Deadlocks: %d\n", result.Live, len(result.Deadlocks))
+
+// Check if a specific marking is reachable
+target := reachability.Marking{"A": 0, "B": 10}
+if analyzer.IsReachable(target) {
+    path := analyzer.PathTo(target)
+    fmt.Printf("Path to target: %v\n", path)
+}
+
+// Check if a transition sequence is valid
+ok, finalMarking := analyzer.CanFire([]string{"t1", "t2", "t1"})
+
+// Dead transitions (can never fire)
+for _, trans := range result.DeadTrans {
+    fmt.Printf("Dead transition: %s\n", trans)
+}
+```
+
+### Invariant Analysis
+
+```go
+// Check token conservation
+invAnalyzer := reachability.NewInvariantAnalyzer(net)
+initial := reachability.Marking{"S": 100, "I": 1, "R": 0}
+
+if invAnalyzer.CheckConservation(initial) {
+    fmt.Println("Net conserves total tokens")
+}
+
+// Find P-invariants (place invariants)
+invariants := invAnalyzer.FindPInvariants(initial)
+for _, inv := range invariants {
+    fmt.Printf("Invariant: %v = %d\n", inv.Places, inv.Value)
+}
+
+// Get incidence matrix for advanced analysis
+matrix, places, transitions := invAnalyzer.IncidenceMatrix()
+```
+
+### When to Use Reachability vs ODE
+
+| Analysis | Use Reachability | Use ODE |
+|----------|------------------|---------|
+| Deadlock detection | ✓ | |
+| Liveness analysis | ✓ | |
+| State space size | ✓ | |
+| Token conservation | ✓ | ✓ |
+| Continuous dynamics | | ✓ |
+| Large populations | | ✓ |
+| Parameter optimization | | ✓ |
+
+---
+
 ## Performance Tips
 
 ### 1. Reduce State Space
