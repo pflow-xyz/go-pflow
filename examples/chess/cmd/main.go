@@ -11,6 +11,12 @@ import (
 	"github.com/pflow-xyz/go-pflow/visualization"
 )
 
+// Position represents a board position (shared by all chess problems)
+type Position struct {
+	Row int
+	Col int
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -312,8 +318,13 @@ func analyzeNQueensModel(n int) {
 	fmt.Printf("Model saved to: %s\n\n", filename)
 
 	fmt.Println("Problem Complexity:")
-	fmt.Printf("  Possible placements: %d! / (%d! × %d!) = C(%d,%d)\n", n*n, n, n*n-n, n*n, n)
-	fmt.Printf("  Known solutions for N=%d: varies by N\n", n)
+	fmt.Printf("  Naive placement count: C(%d,%d) ways to place %d pieces on %d squares\n", n*n, n, n, n*n)
+	nQueensSolutions := map[int]int{1: 1, 2: 0, 3: 0, 4: 2, 5: 10, 6: 4, 7: 40, 8: 92, 9: 352, 10: 724}
+	if sols, ok := nQueensSolutions[n]; ok {
+		fmt.Printf("  Valid solutions for N=%d: %d\n", n, sols)
+	} else {
+		fmt.Printf("  Valid solutions for N=%d: (lookup table not available)\n", n)
+	}
 	fmt.Println("\nODE Strategy:")
 	fmt.Println("  - Each queen placement is modeled as a transition")
 	fmt.Println("  - Attack constraints are encoded as inhibitor arcs")

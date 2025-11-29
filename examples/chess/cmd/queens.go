@@ -9,12 +9,6 @@ import (
 	"github.com/pflow-xyz/go-pflow/solver"
 )
 
-// Position represents a board position
-type Position struct {
-	Row int
-	Col int
-}
-
 // ================= N-Queens Game =================
 
 // NQueensGame represents the N-Queens puzzle state

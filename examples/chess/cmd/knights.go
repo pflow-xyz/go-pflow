@@ -302,10 +302,7 @@ func (g *KnightsTourGame) countOnwardMoves(pos Position) int {
 		toCol := pos.Col + delta.Col
 
 		if toRow >= 0 && toRow < g.n && toCol >= 0 && toCol < g.n && !g.visited[toRow][toCol] {
-			// Don't count current position (it will be visited)
-			if toRow != g.currentPos.Row || toCol != g.currentPos.Col {
-				count++
-			}
+			count++
 		}
 	}
 	return count
