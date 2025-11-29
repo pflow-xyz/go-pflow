@@ -30,7 +30,7 @@ func main() {
 	fmt.Println("problem as a Petri net with mass-action kinetics.")
 	fmt.Println()
 
-	// Define the knapsack problem (matches your Julia example)
+	// Define the knapsack problem
 	problem := KnapsackProblem{
 		Items: []Item{
 			{Name: "item0", Weight: 2, Value: 10},
@@ -56,16 +56,16 @@ func main() {
 	// Create the Petri net model
 	net := createKnapsackNet(problem)
 
-	// Save model visualization
-	if err := visualization.SaveSVG(net, "knapsack_model.svg"); err != nil {
+	// Save model visualization to parent directory
+	if err := visualization.SaveSVG(net, "../knapsack_model.svg"); err != nil {
 		fmt.Printf("Warning: Could not save model SVG: %v\n", err)
 	} else {
 		fmt.Println("Saved Petri net model to knapsack_model.svg")
 	}
 
-	// Run simulation
-	fmt.Println("\n=== ODE Simulation ===")
-	fmt.Println("Running mass-action kinetics with rates proportional to value/weight...")
+	// Run simulation with uniform rates
+	fmt.Println("\n=== ODE Simulation (rates=1.0) ===")
+	fmt.Println("Running mass-action kinetics with uniform rates...")
 	fmt.Println()
 
 	sol := runSimulation(problem, "none")
@@ -77,24 +77,21 @@ func main() {
 	fmt.Printf("  Capacity remaining:   %.2f\n", finalState["capacity"])
 	fmt.Println()
 
-	// Show item consumption
-	fmt.Println("Item consumption (1.0 = fully taken):")
+	// Show item consumption (0/1 - each item can only be taken once)
+	fmt.Println("Item consumption (fraction taken):")
 	for _, item := range problem.Items {
 		taken := 1.0 - finalState[item.Name]
 		fmt.Printf("  %s: %.1f%% taken\n", item.Name, taken*100)
 	}
 
-	// Generate dynamics plot
-	svg, err := plotter.PlotSolution(sol, []string{"value", "weight", "capacity"}, 800, 400,
-		"Knapsack Value Accumulation (ODE)", "Time", "Tokens")
-	if err != nil {
-		fmt.Printf("Error generating plot: %v\n", err)
+	// Generate dynamics plot - show all places
+	places := []string{"value", "weight", "capacity", "item0", "item1", "item2", "item3"}
+	svg, _ := plotter.PlotSolution(sol, places, 800, 400,
+		"Knapsack ODE Dynamics", "Time", "Tokens")
+	if err := os.WriteFile("../knapsack_dynamics.svg", []byte(svg), 0644); err != nil {
+		fmt.Printf("Error saving plot: %v\n", err)
 	} else {
-		if err := os.WriteFile("knapsack_dynamics.svg", []byte(svg), 0644); err != nil {
-			fmt.Printf("Error saving plot: %v\n", err)
-		} else {
-			fmt.Println("\nSaved dynamics plot to knapsack_dynamics.svg")
-		}
+		fmt.Println("\nSaved dynamics plot to knapsack_dynamics.svg")
 	}
 
 	// Exclusion analysis
@@ -118,9 +115,6 @@ func main() {
 		fmt.Printf("  %-8s   %11.2f   %6.1f%%\n", exclude, values[exclude], pct)
 	}
 
-	// Generate exclusion comparison bar chart
-	generateBarChart(exclusions, values)
-
 	// Key insights
 	fmt.Println("\n=== Key Insights ===")
 	fmt.Println()
@@ -131,27 +125,29 @@ func main() {
 	fmt.Println("   - Taking an item produces: value tokens + weight tracker tokens")
 	fmt.Println()
 	fmt.Println("2. MASS-ACTION KINETICS:")
-	fmt.Println("   - Transition rate = k × [item] × [capacity]^weight")
-	fmt.Println("   - Higher k (value/weight) → item taken faster")
-	fmt.Println("   - As capacity drops, all rates decrease (competition)")
+	fmt.Println("   - Transition rate = k × [item] × [capacity]")
+	fmt.Println("   - Arc weights affect consumption amounts, not rate exponents")
+	fmt.Println("   - Items with higher weight require more capacity per firing")
 	fmt.Println()
-	fmt.Println("3. ODE BEHAVIOR:")
-	fmt.Println("   - Continuous relaxation of discrete problem")
-	fmt.Println("   - Items with better efficiency dominate early")
-	fmt.Println("   - Capacity constraint emerges from token depletion")
+	fmt.Println("3. EXCLUSION ANALYSIS:")
+	fmt.Println("   - Disabling a transition (rate=0) shows its contribution")
+	fmt.Println("   - Most valuable items cause biggest drop when excluded")
+	fmt.Printf("   - item3 most valuable: excluding drops value to %.1f%%\n",
+		(values["item3"]/baseValue)*100)
 	fmt.Println()
 	fmt.Println("4. COMPARISON TO DISCRETE OPTIMAL:")
-	fmt.Println("   - Discrete: Take items 0,1,3 → value=38, weight=15")
-	fmt.Printf("   - ODE: Continuous approximation → value≈%.1f\n", baseValue)
-	fmt.Println("   - The ODE shows the 'flow' toward optimal, not exact solution")
+	fmt.Println("   - Discrete optimal: items 0,1,3 → value=38, weight=15")
+	fmt.Printf("   - ODE approximation: value≈%.2f (continuous relaxation)\n", baseValue)
+	fmt.Println("   - The ODE reveals relative item contributions")
 }
 
 // createKnapsackNet builds a Petri net for the knapsack problem
+// Each item has exactly 1 token (0/1 knapsack constraint)
 func createKnapsackNet(problem KnapsackProblem) *petri.PetriNet {
 	net := petri.NewPetriNet()
 	strPtr := func(s string) *string { return &s }
 
-	// Create item availability places (1 token = item available)
+	// Create item availability places (1 token = item available, 0/1 constraint)
 	yOffset := 50.0
 	for i, item := range problem.Items {
 		x := 100.0 + float64(i)*150
@@ -165,22 +161,24 @@ func createKnapsackNet(problem KnapsackProblem) *petri.PetriNet {
 	net.AddPlace("capacity", problem.Capacity, nil, 400, 200, strPtr("Remaining Capacity"))
 
 	// Create "take item" transitions
+	// go-pflow uses simplified kinetics: flux = rate * product(placeState)
+	// Arc weights affect consumption/production, not rate calculation
 	for i, item := range problem.Items {
 		transID := fmt.Sprintf("take_%s", item.Name)
 		x := 100.0 + float64(i)*150
 		label := fmt.Sprintf("Take %s", item.Name)
 		net.AddTransition(transID, "default", x, 125, &label)
 
-		// Input: item must be available
+		// Input: item availability (1 token = available)
 		net.AddArc(item.Name, transID, 1.0, false)
 
-		// Input: need enough capacity (consume weight tokens from capacity)
+		// Input: capacity constraint (consume weight tokens)
 		net.AddArc("capacity", transID, item.Weight, false)
 
-		// Output: add to weight tracker
+		// Output: track weight used
 		net.AddArc(transID, "weight", item.Weight, false)
 
-		// Output: add to value tracker
+		// Output: accumulate value
 		net.AddArc(transID, "value", item.Value, false)
 	}
 
@@ -194,113 +192,33 @@ func runSimulation(problem KnapsackProblem, exclude string) *solver.Solution {
 	// Set up initial state
 	initialState := net.SetState(nil)
 
-	// If excluding an item, set its availability to 0
+	// If excluding an item, set its availability to 0 (disables the transition)
 	if exclude != "none" {
 		initialState[exclude] = 0
 	}
 
-	// Set up rates based on value efficiency
-	// Higher value/weight = more "eager" to take that item
+	// Set up rates - all items compete equally
 	rates := make(map[string]float64)
 	for _, item := range problem.Items {
 		transID := fmt.Sprintf("take_%s", item.Name)
 		if item.Name == exclude {
 			rates[transID] = 0
 		} else {
-			// Rate proportional to efficiency, scaled up for visibility
-			rates[transID] = (item.Value / item.Weight) * 0.1
+			rates[transID] = 1.0
 		}
 	}
 
 	// Create and solve ODE problem
-	prob := solver.NewProblem(net, initialState, [2]float64{0, 20.0}, rates)
+	prob := solver.NewProblem(net, initialState, [2]float64{0, 10.0}, rates)
 	opts := &solver.Options{
 		Dt:       0.01,
-		Dtmin:    1e-8,
-		Dtmax:    0.5,
+		Dtmin:    1e-6,
+		Dtmax:    1.0,
 		Abstol:   1e-6,
-		Reltol:   1e-6,
+		Reltol:   1e-3,
 		Maxiters: 100000,
 		Adaptive: true,
 	}
 
 	return solver.Solve(prob, solver.Tsit5(), opts)
-}
-
-// generateBarChart creates an SVG bar chart comparing final values
-func generateBarChart(exclusions []string, values map[string]float64) {
-	width := 600
-	height := 400
-	margin := 60
-	barWidth := 60
-	spacing := 30
-
-	svg := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d">
-<rect width="100%%" height="100%%" fill="white"/>
-<text x="%d" y="30" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle">Knapsack Value by Item Exclusion</text>
-`, width, height, width/2)
-
-	// Find max value for scaling
-	maxVal := 0.0
-	for _, v := range values {
-		if v > maxVal {
-			maxVal = v
-		}
-	}
-	if maxVal == 0 {
-		maxVal = 1
-	}
-
-	// Draw bars
-	colors := []string{"#4CAF50", "#2196F3", "#FF9800", "#9C27B0", "#F44336"}
-	chartHeight := float64(height - 2*margin - 40)
-	chartBottom := height - margin
-
-	for i, exclude := range exclusions {
-		value := values[exclude]
-		barHeight := (value / maxVal) * chartHeight
-		x := margin + i*(barWidth+spacing)
-		y := float64(chartBottom) - barHeight
-
-		// Bar
-		svg += fmt.Sprintf(`<rect x="%d" y="%.1f" width="%d" height="%.1f" fill="%s" opacity="0.8"/>
-`, x, y, barWidth, barHeight, colors[i%len(colors)])
-
-		// Value label
-		svg += fmt.Sprintf(`<text x="%d" y="%.1f" font-family="Arial" font-size="12" text-anchor="middle">%.1f</text>
-`, x+barWidth/2, y-5, value)
-
-		// X-axis label
-		label := exclude
-		if exclude == "none" {
-			label = "all"
-		}
-		svg += fmt.Sprintf(`<text x="%d" y="%d" font-family="Arial" font-size="11" text-anchor="middle">%s</text>
-`, x+barWidth/2, chartBottom+20, label)
-	}
-
-	// Y-axis
-	svg += fmt.Sprintf(`<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="black" stroke-width="1"/>
-`, margin-10, margin, margin-10, chartBottom)
-
-	// X-axis
-	svg += fmt.Sprintf(`<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="black" stroke-width="1"/>
-`, margin-10, chartBottom, width-margin, chartBottom)
-
-	// Y-axis label
-	svg += fmt.Sprintf(`<text x="15" y="%d" font-family="Arial" font-size="12" text-anchor="middle" transform="rotate(-90, 15, %d)">Value</text>
-`, height/2, height/2)
-
-	// X-axis label
-	svg += fmt.Sprintf(`<text x="%d" y="%d" font-family="Arial" font-size="12" text-anchor="middle">Excluded Item</text>
-`, width/2, height-10)
-
-	svg += "</svg>"
-
-	if err := os.WriteFile("knapsack_exclusion.svg", []byte(svg), 0644); err != nil {
-		fmt.Printf("Error saving bar chart: %v\n", err)
-	} else {
-		fmt.Println("Saved exclusion comparison to knapsack_exclusion.svg")
-	}
 }
