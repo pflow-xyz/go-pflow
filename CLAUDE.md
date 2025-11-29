@@ -297,6 +297,98 @@ opts := solver.StiffOptions()
 | `AccurateOptions()` | 0.001 | 1e-6 | 1M | Publishing, research |
 | `StiffOptions()` | 0.001 | 1e-5 | 500k | Stiff systems |
 
+### Solver Methods
+
+Multiple Runge-Kutta methods are available for different needs:
+
+```go
+// High-order adaptive methods (recommended for most uses)
+sol := solver.Solve(prob, solver.Tsit5(), opts)  // Default: Tsitouras 5(4)
+sol := solver.Solve(prob, solver.RK45(), opts)   // Dormand-Prince 5(4)
+sol := solver.Solve(prob, solver.BS32(), opts)   // Bogacki-Shampine 3(2)
+
+// Fixed-step methods (use with Adaptive=false)
+sol := solver.Solve(prob, solver.RK4(), opts)    // Classic RK4
+sol := solver.Solve(prob, solver.Heun(), opts)   // Heun's method (RK2)
+sol := solver.Solve(prob, solver.Euler(), opts)  // Forward Euler
+
+// Implicit methods for stiff systems
+sol := solver.ImplicitEuler(prob, opts)          // Backward Euler
+sol := solver.TRBDF2(prob, opts)                 // TR-BDF2 (2nd order)
+```
+
+| Method | Order | Adaptive | Best For |
+|--------|-------|----------|----------|
+| `Tsit5()` | 5 | Yes | Default choice, most problems |
+| `RK45()` | 5 | Yes | Classic MATLAB-style ode45 |
+| `BS32()` | 3 | Yes | Simpler problems, faster |
+| `RK4()` | 4 | No | Fixed step, teaching |
+| `Euler()` | 1 | No | Debugging, teaching |
+| `ImplicitEuler()` | 1 | No | Stiff systems |
+| `TRBDF2()` | 2 | No | Stiff systems, better accuracy |
+
+### Equilibrium Detection
+
+Stop early when the system reaches steady state:
+
+```go
+// Solve until equilibrium or time exhausted
+sol, result := solver.SolveUntilEquilibrium(prob, nil, nil, nil)
+
+if result.Reached {
+    fmt.Printf("Equilibrium at t=%.2f\n", result.Time)
+    fmt.Printf("Final state: %v\n", result.State)
+} else {
+    fmt.Printf("Did not reach equilibrium: %s\n", result.Reason)
+}
+
+// Convenience functions
+finalState, reached := solver.FindEquilibrium(prob)
+finalState, reached := solver.FindEquilibriumFast(prob)  // Aggressive settings
+
+// Check if a state is at equilibrium
+if solver.IsEquilibrium(prob, state, 1e-6) {
+    fmt.Println("System is at rest")
+}
+```
+
+Equilibrium options:
+
+```go
+// Default settings
+eqOpts := solver.DefaultEquilibriumOptions()
+
+// Fast detection (less strict)
+eqOpts := solver.FastEquilibriumOptions()
+
+// Strict detection (high confidence)
+eqOpts := solver.StrictEquilibriumOptions()
+
+// Custom settings
+eqOpts := &solver.EquilibriumOptions{
+    Tolerance:        1e-6,   // Max derivative magnitude
+    ConsecutiveSteps: 5,      // Steps below tolerance required
+    MinTime:          0.1,    // Don't check before this time
+    CheckInterval:    10,     // Check every N steps
+}
+```
+
+### Choosing Between Explicit and Implicit Methods
+
+| Scenario | Recommended Method |
+|----------|-------------------|
+| General purpose | `Tsit5()` (default) |
+| Need MATLAB compatibility | `RK45()` |
+| Stiff system (stability issues) | `ImplicitEuler()` or `TRBDF2()` |
+| Fixed step size needed | `RK4()` with `Adaptive=false` |
+| Teaching/debugging | `Euler()` |
+| Only care about equilibrium | `FindEquilibriumFast()` |
+
+Signs your system may be stiff:
+- Solver takes extremely small steps
+- Explicit methods become unstable
+- System has fast and slow dynamics together
+
 ### Critical: Initial Step Size (Dt)
 
 **The `Dt` parameter is crucial for accurate results.** Using too large a value can cause

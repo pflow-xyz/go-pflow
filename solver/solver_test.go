@@ -448,3 +448,423 @@ func TestFastOptionsSpeed(t *testing.T) {
 		t.Errorf("AccurateOptions: conservation violated, total=%.1f", totalAcc)
 	}
 }
+
+// === Tests for additional solver methods ===
+
+func TestRK45(t *testing.T) {
+	solver := RK45()
+
+	if solver.Name != "RK45" {
+		t.Errorf("Expected name 'RK45', got '%s'", solver.Name)
+	}
+	if solver.Order != 5 {
+		t.Errorf("Expected order 5, got %d", solver.Order)
+	}
+	if len(solver.C) != 7 {
+		t.Errorf("Expected 7 nodes, got %d", len(solver.C))
+	}
+}
+
+func TestRK4(t *testing.T) {
+	solver := RK4()
+
+	if solver.Name != "RK4" {
+		t.Errorf("Expected name 'RK4', got '%s'", solver.Name)
+	}
+	if solver.Order != 4 {
+		t.Errorf("Expected order 4, got %d", solver.Order)
+	}
+	if len(solver.C) != 4 {
+		t.Errorf("Expected 4 nodes, got %d", len(solver.C))
+	}
+}
+
+func TestEuler(t *testing.T) {
+	solver := Euler()
+
+	if solver.Name != "Euler" {
+		t.Errorf("Expected name 'Euler', got '%s'", solver.Name)
+	}
+	if solver.Order != 1 {
+		t.Errorf("Expected order 1, got %d", solver.Order)
+	}
+}
+
+func TestBS32(t *testing.T) {
+	solver := BS32()
+
+	if solver.Name != "BS32" {
+		t.Errorf("Expected name 'BS32', got '%s'", solver.Name)
+	}
+	if solver.Order != 3 {
+		t.Errorf("Expected order 3, got %d", solver.Order)
+	}
+}
+
+func TestSolverMethodsProduceSimilarResults(t *testing.T) {
+	// All methods should produce similar results for a simple problem
+	net := petri.NewPetriNet()
+	net.AddPlace("A", 100.0, nil, 0, 0, nil)
+	net.AddPlace("B", 0.0, nil, 0, 0, nil)
+	net.AddTransition("t", "default", 0, 0, nil)
+	net.AddArc("A", "t", 1.0, false)
+	net.AddArc("t", "B", 1.0, false)
+
+	state := map[string]float64{"A": 100.0, "B": 0.0}
+	rates := map[string]float64{"t": 0.1}
+	tspan := [2]float64{0, 10}
+
+	methods := []*Solver{Tsit5(), RK45(), BS32()}
+	opts := DefaultOptions()
+
+	var results []float64
+	for _, method := range methods {
+		prob := NewProblem(net, state, tspan, rates)
+		sol := Solve(prob, method, opts)
+		results = append(results, sol.GetFinalState()["A"])
+	}
+
+	// All methods should give similar final A values (within 5%)
+	baseline := results[0]
+	for i, val := range results {
+		relErr := math.Abs(val-baseline) / baseline
+		if relErr > 0.05 {
+			t.Errorf("Method %d differs from baseline by %.1f%%", i, relErr*100)
+		}
+	}
+}
+
+func TestRK4FixedStep(t *testing.T) {
+	// RK4 with fixed step should work correctly
+	net := petri.NewPetriNet()
+	net.AddPlace("A", 10.0, nil, 0, 0, nil)
+	net.AddTransition("t", "default", 0, 0, nil)
+	net.AddArc("A", "t", 1.0, false)
+
+	state := map[string]float64{"A": 10.0}
+	rates := map[string]float64{"t": 0.1}
+	tspan := [2]float64{0, 1}
+
+	prob := NewProblem(net, state, tspan, rates)
+	opts := &Options{
+		Dt:       0.1,
+		Adaptive: false,
+		Maxiters: 100,
+	}
+
+	sol := Solve(prob, RK4(), opts)
+
+	// Should have ~11 time points
+	if len(sol.T) < 10 || len(sol.T) > 12 {
+		t.Errorf("Expected ~11 time points, got %d", len(sol.T))
+	}
+
+	// Final value should be reasonable
+	final := sol.GetFinalState()["A"]
+	expected := 10.0 * math.Exp(-0.1*10*1) // Approximate
+	if final < 0 || final > 10 {
+		t.Errorf("Final value out of range: %f", final)
+	}
+	t.Logf("RK4 final A: %.4f (expected ~%.4f)", final, expected)
+}
+
+// === Tests for equilibrium detection ===
+
+func TestSolveUntilEquilibrium(t *testing.T) {
+	// Simple decay should reach equilibrium (A -> 0)
+	net := petri.NewPetriNet()
+	net.AddPlace("A", 100.0, nil, 0, 0, nil)
+	net.AddTransition("decay", "default", 0, 0, nil)
+	net.AddArc("A", "decay", 1.0, false)
+
+	state := map[string]float64{"A": 100.0}
+	rates := map[string]float64{"decay": 1.0}
+	tspan := [2]float64{0, 100}
+
+	prob := NewProblem(net, state, tspan, rates)
+	eqOpts := &EquilibriumOptions{
+		Tolerance:        1e-4,
+		ConsecutiveSteps: 3,
+		MinTime:          0.1,
+		CheckInterval:    5,
+	}
+
+	sol, result := SolveUntilEquilibrium(prob, nil, nil, eqOpts)
+
+	if !result.Reached {
+		t.Errorf("Should reach equilibrium, reason: %s", result.Reason)
+	}
+
+	// Should reach equilibrium before the end of tspan
+	if result.Time >= 100 {
+		t.Errorf("Should reach equilibrium before t=100, reached at t=%f", result.Time)
+	}
+
+	// Final A should be near zero
+	if result.State["A"] > 1 {
+		t.Errorf("Expected A near 0 at equilibrium, got %f", result.State["A"])
+	}
+
+	t.Logf("Equilibrium reached at t=%.2f, A=%.6f, steps=%d",
+		result.Time, result.State["A"], result.Steps)
+	t.Logf("Solution has %d time points", len(sol.T))
+}
+
+func TestFindEquilibrium(t *testing.T) {
+	net := petri.NewPetriNet()
+	net.AddPlace("A", 50.0, nil, 0, 0, nil)
+	net.AddPlace("B", 50.0, nil, 0, 0, nil)
+	net.AddTransition("t", "default", 0, 0, nil)
+	net.AddArc("A", "t", 1.0, false)
+	net.AddArc("t", "B", 1.0, false)
+
+	state := map[string]float64{"A": 50.0, "B": 50.0}
+	rates := map[string]float64{"t": 0.5}
+	tspan := [2]float64{0, 100}
+
+	prob := NewProblem(net, state, tspan, rates)
+	finalState, reached := FindEquilibrium(prob)
+
+	if !reached {
+		t.Log("Equilibrium not formally reached, but continuing...")
+	}
+
+	// At equilibrium, A should be depleted
+	if finalState["A"] > 5 {
+		t.Errorf("Expected A depleted at equilibrium, got %f", finalState["A"])
+	}
+
+	// Conservation: A + B should equal 100
+	total := finalState["A"] + finalState["B"]
+	if math.Abs(total-100) > 1 {
+		t.Errorf("Conservation violated: total=%f", total)
+	}
+}
+
+func TestIsEquilibrium(t *testing.T) {
+	net := petri.NewPetriNet()
+	net.AddPlace("A", 0.0, nil, 0, 0, nil)
+	net.AddTransition("t", "default", 0, 0, nil)
+	net.AddArc("A", "t", 1.0, false)
+
+	rates := map[string]float64{"t": 1.0}
+	tspan := [2]float64{0, 10}
+
+	// State with A=0 should be equilibrium (no flux)
+	probZero := NewProblem(net, map[string]float64{"A": 0.0}, tspan, rates)
+	if !IsEquilibrium(probZero, map[string]float64{"A": 0.0}, 1e-6) {
+		t.Error("A=0 should be equilibrium")
+	}
+
+	// State with A=10 should not be equilibrium
+	probNonZero := NewProblem(net, map[string]float64{"A": 10.0}, tspan, rates)
+	if IsEquilibrium(probNonZero, map[string]float64{"A": 10.0}, 1e-6) {
+		t.Error("A=10 should not be equilibrium")
+	}
+}
+
+func TestEquilibriumOptionsPresets(t *testing.T) {
+	defaultOpts := DefaultEquilibriumOptions()
+	fastOpts := FastEquilibriumOptions()
+	strictOpts := StrictEquilibriumOptions()
+
+	// Fast should be less strict
+	if fastOpts.Tolerance <= defaultOpts.Tolerance {
+		t.Error("Fast tolerance should be larger than default")
+	}
+	if fastOpts.ConsecutiveSteps >= defaultOpts.ConsecutiveSteps {
+		t.Error("Fast should require fewer consecutive steps")
+	}
+
+	// Strict should be more strict
+	if strictOpts.Tolerance >= defaultOpts.Tolerance {
+		t.Error("Strict tolerance should be smaller than default")
+	}
+	if strictOpts.ConsecutiveSteps <= defaultOpts.ConsecutiveSteps {
+		t.Error("Strict should require more consecutive steps")
+	}
+}
+
+// === Tests for implicit methods ===
+
+func TestImplicitEuler(t *testing.T) {
+	// Simple decay test
+	net := petri.NewPetriNet()
+	net.AddPlace("A", 100.0, nil, 0, 0, nil)
+	net.AddTransition("decay", "default", 0, 0, nil)
+	net.AddArc("A", "decay", 1.0, false)
+
+	state := map[string]float64{"A": 100.0}
+	rates := map[string]float64{"decay": 0.1}
+	tspan := [2]float64{0, 10}
+
+	prob := NewProblem(net, state, tspan, rates)
+	sol := ImplicitEuler(prob, nil)
+
+	// Should produce a solution
+	if len(sol.T) == 0 {
+		t.Fatal("No solution produced")
+	}
+
+	// A should decrease
+	final := sol.GetFinalState()["A"]
+	if final >= 100 {
+		t.Errorf("A should decrease, got final=%f", final)
+	}
+
+	// Should be approximately correct (within 20% due to method error)
+	expected := 100.0 * math.Exp(-1.0)
+	relErr := math.Abs(final-expected) / expected
+	if relErr > 0.2 {
+		t.Errorf("Implicit Euler result too far from expected: got %f, want ~%f (err=%.1f%%)",
+			final, expected, relErr*100)
+	}
+
+	t.Logf("Implicit Euler: final A=%f, expected ~%f, steps=%d", final, expected, len(sol.T))
+}
+
+func TestTRBDF2(t *testing.T) {
+	// Simple decay test
+	net := petri.NewPetriNet()
+	net.AddPlace("A", 100.0, nil, 0, 0, nil)
+	net.AddTransition("decay", "default", 0, 0, nil)
+	net.AddArc("A", "decay", 1.0, false)
+
+	state := map[string]float64{"A": 100.0}
+	rates := map[string]float64{"decay": 0.1}
+	tspan := [2]float64{0, 10}
+
+	prob := NewProblem(net, state, tspan, rates)
+	sol := TRBDF2(prob, nil)
+
+	// Should produce a solution
+	if len(sol.T) == 0 {
+		t.Fatal("No solution produced")
+	}
+
+	// A should decrease
+	final := sol.GetFinalState()["A"]
+	if final >= 100 {
+		t.Errorf("A should decrease, got final=%f", final)
+	}
+
+	// TR-BDF2 should be more accurate than implicit Euler
+	expected := 100.0 * math.Exp(-1.0)
+	relErr := math.Abs(final-expected) / expected
+	if relErr > 0.1 {
+		t.Errorf("TR-BDF2 result too far from expected: got %f, want ~%f (err=%.1f%%)",
+			final, expected, relErr*100)
+	}
+
+	t.Logf("TR-BDF2: final A=%f, expected ~%f, steps=%d", final, expected, len(sol.T))
+}
+
+func TestImplicitVsExplicit(t *testing.T) {
+	// Both should give similar results for non-stiff problems
+	net := petri.NewPetriNet()
+	net.AddPlace("A", 100.0, nil, 0, 0, nil)
+	net.AddPlace("B", 0.0, nil, 0, 0, nil)
+	net.AddTransition("t", "default", 0, 0, nil)
+	net.AddArc("A", "t", 1.0, false)
+	net.AddArc("t", "B", 1.0, false)
+
+	state := map[string]float64{"A": 100.0, "B": 0.0}
+	rates := map[string]float64{"t": 0.1}
+	tspan := [2]float64{0, 10}
+
+	prob := NewProblem(net, state, tspan, rates)
+
+	solExplicit := Solve(prob, Tsit5(), DefaultOptions())
+	solImplicit := ImplicitEuler(prob, StiffOptions())
+
+	finalExplicit := solExplicit.GetFinalState()["A"]
+	finalImplicit := solImplicit.GetFinalState()["A"]
+
+	// Should be within 20% of each other
+	relDiff := math.Abs(finalExplicit-finalImplicit) / finalExplicit
+	if relDiff > 0.2 {
+		t.Errorf("Explicit and implicit differ too much: explicit=%f, implicit=%f",
+			finalExplicit, finalImplicit)
+	}
+
+	t.Logf("Explicit: %f, Implicit: %f, diff=%.1f%%",
+		finalExplicit, finalImplicit, relDiff*100)
+}
+
+// === Benchmarks ===
+
+func BenchmarkTsit5(b *testing.B) {
+	net := createBenchmarkNet()
+	state := map[string]float64{"A": 100.0, "B": 0.0}
+	rates := map[string]float64{"t": 0.1}
+	tspan := [2]float64{0, 10}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		prob := NewProblem(net, state, tspan, rates)
+		Solve(prob, Tsit5(), DefaultOptions())
+	}
+}
+
+func BenchmarkRK45(b *testing.B) {
+	net := createBenchmarkNet()
+	state := map[string]float64{"A": 100.0, "B": 0.0}
+	rates := map[string]float64{"t": 0.1}
+	tspan := [2]float64{0, 10}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		prob := NewProblem(net, state, tspan, rates)
+		Solve(prob, RK45(), DefaultOptions())
+	}
+}
+
+func BenchmarkRK4(b *testing.B) {
+	net := createBenchmarkNet()
+	state := map[string]float64{"A": 100.0, "B": 0.0}
+	rates := map[string]float64{"t": 0.1}
+	tspan := [2]float64{0, 10}
+	opts := &Options{Dt: 0.01, Adaptive: false, Maxiters: 10000}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		prob := NewProblem(net, state, tspan, rates)
+		Solve(prob, RK4(), opts)
+	}
+}
+
+func BenchmarkImplicitEuler(b *testing.B) {
+	net := createBenchmarkNet()
+	state := map[string]float64{"A": 100.0, "B": 0.0}
+	rates := map[string]float64{"t": 0.1}
+	tspan := [2]float64{0, 10}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		prob := NewProblem(net, state, tspan, rates)
+		ImplicitEuler(prob, StiffOptions())
+	}
+}
+
+func BenchmarkEquilibriumDetection(b *testing.B) {
+	net := createBenchmarkNet()
+	state := map[string]float64{"A": 100.0, "B": 0.0}
+	rates := map[string]float64{"t": 1.0} // Fast rate for quick equilibrium
+	tspan := [2]float64{0, 100}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		prob := NewProblem(net, state, tspan, rates)
+		SolveUntilEquilibrium(prob, nil, nil, FastEquilibriumOptions())
+	}
+}
+
+func createBenchmarkNet() *petri.PetriNet {
+	net := petri.NewPetriNet()
+	net.AddPlace("A", 100.0, nil, 0, 0, nil)
+	net.AddPlace("B", 0.0, nil, 0, 0, nil)
+	net.AddTransition("t", "default", 0, 0, nil)
+	net.AddArc("A", "t", 1.0, false)
+	net.AddArc("t", "B", 1.0, false)
+	return net
+}
