@@ -103,6 +103,8 @@ examples:
 	@go build -o bin/tictactoe examples/tictactoe/cmd/*.go
 	@go build -o bin/nim examples/nim/cmd/*.go
 	@go build -o bin/connect4 examples/connect4/cmd/*.go
+	@echo "  - Chess problem examples"
+	@go build -o bin/chess examples/chess/cmd/*.go
 	@echo "Done building examples!"
 
 # Run basic example
