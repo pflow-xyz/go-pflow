@@ -1,0 +1,712 @@
+{
+  "@context": {
+    "@vocab": "https://pflow.xyz/schema#",
+    "arcs": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#arcs"
+    },
+    "capacity": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#capacity"
+    },
+    "initial": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#initial"
+    },
+    "label": "https://pflow.xyz/schema#label",
+    "places": "https://pflow.xyz/schema#places",
+    "source": "https://pflow.xyz/schema#source",
+    "target": "https://pflow.xyz/schema#target",
+    "token": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#token"
+    },
+    "transitions": "https://pflow.xyz/schema#transitions",
+    "weight": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#weight"
+    },
+    "x": "https://pflow.xyz/schema#x",
+    "y": "https://pflow.xyz/schema#y"
+  },
+  "@type": "PetriNet",
+  "@version": "1.1",
+  "arcs": [
+    {
+      "@type": "Arc",
+      "source": "cell_0_1",
+      "target": "fill_0_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_0_1",
+      "target": "cell_0_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_2",
+      "target": "fill_0_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_0_2",
+      "target": "cell_0_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_3",
+      "target": "fill_0_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_0_3",
+      "target": "cell_0_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_0",
+      "target": "fill_1_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_1_0",
+      "target": "cell_1_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_1",
+      "target": "fill_1_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_1_1",
+      "target": "cell_1_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_3",
+      "target": "fill_1_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_1_3",
+      "target": "cell_1_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_0",
+      "target": "fill_2_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_2_0",
+      "target": "cell_2_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_2",
+      "target": "fill_2_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_2_2",
+      "target": "cell_2_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_3",
+      "target": "fill_2_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_2_3",
+      "target": "cell_2_3",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_0",
+      "target": "fill_3_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_3_0",
+      "target": "cell_3_0",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_1",
+      "target": "fill_3_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_3_1",
+      "target": "cell_3_1",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_2",
+      "target": "fill_3_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "fill_3_2",
+      "target": "cell_3_2",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_0_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_1_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_2_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_0",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_1",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_2",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "cell_3_3",
+      "target": "check_solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "check_solved",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "description": "A 4x4 Sudoku puzzle modeled as a Petri net.",
+  "places": {
+    "cell_0_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(0,0)=1",
+      "x": 50,
+      "y": 50
+    },
+    "cell_0_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,1)=empty",
+      "x": 100,
+      "y": 50
+    },
+    "cell_0_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,2)=empty",
+      "x": 150,
+      "y": 50
+    },
+    "cell_0_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,3)=empty",
+      "x": 200,
+      "y": 50
+    },
+    "cell_1_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(1,0)=empty",
+      "x": 50,
+      "y": 100
+    },
+    "cell_1_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(1,1)=empty",
+      "x": 100,
+      "y": 100
+    },
+    "cell_1_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(1,2)=2",
+      "x": 150,
+      "y": 100
+    },
+    "cell_1_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(1,3)=empty",
+      "x": 200,
+      "y": 100
+    },
+    "cell_2_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,0)=empty",
+      "x": 50,
+      "y": 150
+    },
+    "cell_2_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(2,1)=3",
+      "x": 100,
+      "y": 150
+    },
+    "cell_2_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,2)=empty",
+      "x": 150,
+      "y": 150
+    },
+    "cell_2_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,3)=empty",
+      "x": 200,
+      "y": 150
+    },
+    "cell_3_0": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,0)=empty",
+      "x": 50,
+      "y": 200
+    },
+    "cell_3_1": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,1)=empty",
+      "x": 100,
+      "y": 200
+    },
+    "cell_3_2": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,2)=empty",
+      "x": 150,
+      "y": 200
+    },
+    "cell_3_3": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(3,3)=4",
+      "x": 200,
+      "y": 200
+    },
+    "solved": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Puzzle Solved",
+      "x": 125,
+      "y": 300
+    }
+  },
+  "puzzle": {
+    "block_size": 2,
+    "description": "4x4 Sudoku puzzle",
+    "initial_state": [
+      [
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        3,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        4
+      ]
+    ],
+    "ode_compatible": false,
+    "size": 4,
+    "solution": [
+      [
+        1,
+        2,
+        4,
+        3
+      ],
+      [
+        3,
+        4,
+        2,
+        1
+      ],
+      [
+        2,
+        3,
+        1,
+        4
+      ],
+      [
+        4,
+        1,
+        3,
+        2
+      ]
+    ]
+  },
+  "token": [
+    "https://pflow.xyz/tokens/black"
+  ],
+  "transitions": {
+    "check_solved": {
+      "@type": "Transition",
+      "label": "Check if Solved",
+      "x": 125,
+      "y": 250
+    },
+    "fill_0_1": {
+      "@type": "Transition",
+      "label": "Fill (0,1)",
+      "x": 125,
+      "y": 75
+    },
+    "fill_0_2": {
+      "@type": "Transition",
+      "label": "Fill (0,2)",
+      "x": 175,
+      "y": 75
+    },
+    "fill_0_3": {
+      "@type": "Transition",
+      "label": "Fill (0,3)",
+      "x": 225,
+      "y": 75
+    },
+    "fill_1_0": {
+      "@type": "Transition",
+      "label": "Fill (1,0)",
+      "x": 75,
+      "y": 125
+    },
+    "fill_1_1": {
+      "@type": "Transition",
+      "label": "Fill (1,1)",
+      "x": 125,
+      "y": 125
+    },
+    "fill_1_3": {
+      "@type": "Transition",
+      "label": "Fill (1,3)",
+      "x": 225,
+      "y": 125
+    },
+    "fill_2_0": {
+      "@type": "Transition",
+      "label": "Fill (2,0)",
+      "x": 75,
+      "y": 175
+    },
+    "fill_2_2": {
+      "@type": "Transition",
+      "label": "Fill (2,2)",
+      "x": 175,
+      "y": 175
+    },
+    "fill_2_3": {
+      "@type": "Transition",
+      "label": "Fill (2,3)",
+      "x": 225,
+      "y": 175
+    },
+    "fill_3_0": {
+      "@type": "Transition",
+      "label": "Fill (3,0)",
+      "x": 75,
+      "y": 225
+    },
+    "fill_3_1": {
+      "@type": "Transition",
+      "label": "Fill (3,1)",
+      "x": 125,
+      "y": 225
+    },
+    "fill_3_2": {
+      "@type": "Transition",
+      "label": "Fill (3,2)",
+      "x": 175,
+      "y": 225
+    }
+  }
+}

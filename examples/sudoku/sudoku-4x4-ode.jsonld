@@ -1,0 +1,3702 @@
+{
+  "@context": {
+    "@vocab": "https://pflow.xyz/schema#",
+    "arcs": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#arcs"
+    },
+    "capacity": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#capacity"
+    },
+    "initial": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#initial"
+    },
+    "label": "https://pflow.xyz/schema#label",
+    "places": "https://pflow.xyz/schema#places",
+    "source": "https://pflow.xyz/schema#source",
+    "target": "https://pflow.xyz/schema#target",
+    "token": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#token"
+    },
+    "transitions": "https://pflow.xyz/schema#transitions",
+    "weight": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#weight"
+    },
+    "x": "https://pflow.xyz/schema#x",
+    "y": "https://pflow.xyz/schema#y"
+  },
+  "@type": "PetriNet",
+  "@version": "1.1",
+  "arcs": [
+    {
+      "@type": "Arc",
+      "source": "P01",
+      "target": "D1_01",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_01",
+      "target": "_D1_01",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P01",
+      "target": "D2_01",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_01",
+      "target": "_D2_01",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P01",
+      "target": "D3_01",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_01",
+      "target": "_D3_01",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P01",
+      "target": "D4_01",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_01",
+      "target": "_D4_01",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P02",
+      "target": "D1_02",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_02",
+      "target": "_D1_02",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P02",
+      "target": "D2_02",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_02",
+      "target": "_D2_02",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P02",
+      "target": "D3_02",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_02",
+      "target": "_D3_02",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P02",
+      "target": "D4_02",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_02",
+      "target": "_D4_02",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P03",
+      "target": "D1_03",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_03",
+      "target": "_D1_03",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P03",
+      "target": "D2_03",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_03",
+      "target": "_D2_03",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P03",
+      "target": "D3_03",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_03",
+      "target": "_D3_03",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P03",
+      "target": "D4_03",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_03",
+      "target": "_D4_03",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P10",
+      "target": "D1_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_10",
+      "target": "_D1_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P10",
+      "target": "D2_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_10",
+      "target": "_D2_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P10",
+      "target": "D3_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_10",
+      "target": "_D3_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P10",
+      "target": "D4_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_10",
+      "target": "_D4_10",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P11",
+      "target": "D1_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_11",
+      "target": "_D1_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P11",
+      "target": "D2_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_11",
+      "target": "_D2_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P11",
+      "target": "D3_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_11",
+      "target": "_D3_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P11",
+      "target": "D4_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_11",
+      "target": "_D4_11",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P13",
+      "target": "D1_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_13",
+      "target": "_D1_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P13",
+      "target": "D2_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_13",
+      "target": "_D2_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P13",
+      "target": "D3_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_13",
+      "target": "_D3_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P13",
+      "target": "D4_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_13",
+      "target": "_D4_13",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P20",
+      "target": "D1_20",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_20",
+      "target": "_D1_20",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P20",
+      "target": "D2_20",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_20",
+      "target": "_D2_20",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P20",
+      "target": "D3_20",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_20",
+      "target": "_D3_20",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P20",
+      "target": "D4_20",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_20",
+      "target": "_D4_20",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P22",
+      "target": "D1_22",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_22",
+      "target": "_D1_22",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P22",
+      "target": "D2_22",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_22",
+      "target": "_D2_22",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P22",
+      "target": "D3_22",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_22",
+      "target": "_D3_22",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P22",
+      "target": "D4_22",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_22",
+      "target": "_D4_22",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P23",
+      "target": "D1_23",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_23",
+      "target": "_D1_23",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P23",
+      "target": "D2_23",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_23",
+      "target": "_D2_23",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P23",
+      "target": "D3_23",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_23",
+      "target": "_D3_23",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P23",
+      "target": "D4_23",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_23",
+      "target": "_D4_23",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P30",
+      "target": "D1_30",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_30",
+      "target": "_D1_30",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P30",
+      "target": "D2_30",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_30",
+      "target": "_D2_30",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P30",
+      "target": "D3_30",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_30",
+      "target": "_D3_30",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P30",
+      "target": "D4_30",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_30",
+      "target": "_D4_30",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P31",
+      "target": "D1_31",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_31",
+      "target": "_D1_31",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P31",
+      "target": "D2_31",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_31",
+      "target": "_D2_31",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P31",
+      "target": "D3_31",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_31",
+      "target": "_D3_31",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P31",
+      "target": "D4_31",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_31",
+      "target": "_D4_31",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P32",
+      "target": "D1_32",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D1_32",
+      "target": "_D1_32",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P32",
+      "target": "D2_32",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D2_32",
+      "target": "_D2_32",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P32",
+      "target": "D3_32",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D3_32",
+      "target": "_D3_32",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "P32",
+      "target": "D4_32",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "D4_32",
+      "target": "_D4_32",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_00",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_00",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_00",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_00",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_01",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_01",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_01",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_01",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_02",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_02",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_02",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_02",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_03",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_03",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_03",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_03",
+      "target": "Row0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_10",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_10",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_10",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_10",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_11",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_11",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_11",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_11",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_12",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_12",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_12",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_12",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_13",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_13",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_13",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_13",
+      "target": "Row1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_20",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_20",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_20",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_20",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_21",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_21",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_21",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_21",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_22",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_22",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_22",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_22",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_23",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_23",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_23",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_23",
+      "target": "Row2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_30",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_30",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_30",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_30",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_31",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_31",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_31",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_31",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_32",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_32",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_32",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_32",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_33",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_33",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_33",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_33",
+      "target": "Row3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_00",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_00",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_00",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_00",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_10",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_10",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_10",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_10",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_20",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_20",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_20",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_20",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_30",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_30",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_30",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_30",
+      "target": "Col0_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_01",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_01",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_01",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_01",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_11",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_11",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_11",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_11",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_21",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_21",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_21",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_21",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_31",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_31",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_31",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_31",
+      "target": "Col1_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_02",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_02",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_02",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_02",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_12",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_12",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_12",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_12",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_22",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_22",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_22",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_22",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_32",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_32",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_32",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_32",
+      "target": "Col2_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_03",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_03",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_03",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_03",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_13",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_13",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_13",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_13",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_23",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_23",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_23",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_23",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_33",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_33",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_33",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_33",
+      "target": "Col3_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_00",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_00",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_00",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_00",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_01",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_01",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_01",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_01",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_10",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_10",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_10",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_10",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_11",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_11",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_11",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_11",
+      "target": "Block00_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_02",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_02",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_02",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_02",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_03",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_03",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_03",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_03",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_12",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_12",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_12",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_12",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_13",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_13",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_13",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_13",
+      "target": "Block01_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_20",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_20",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_20",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_20",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_21",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_21",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_21",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_21",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_30",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_30",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_30",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_30",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_31",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_31",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_31",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_31",
+      "target": "Block10_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_22",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_22",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_22",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_22",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_23",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_23",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_23",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_23",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_32",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_32",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_32",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_32",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D1_33",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D2_33",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D3_33",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "_D4_33",
+      "target": "Block11_Complete",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Row0_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Row1_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Row2_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Row3_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Col0_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Col1_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Col2_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Col3_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Block00_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Block01_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Block10_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "@type": "Arc",
+      "source": "Block11_Complete",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "description": "A 4x4 Sudoku puzzle modeled as an ODE-compatible Petri Net with constraint collectors like tic-tac-toe.",
+  "places": {
+    "P00": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(0,0)",
+      "x": 30,
+      "y": 30
+    },
+    "P01": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(0,1)",
+      "x": 60,
+      "y": 30
+    },
+    "P02": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(0,2)",
+      "x": 90,
+      "y": 30
+    },
+    "P03": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(0,3)",
+      "x": 120,
+      "y": 30
+    },
+    "P10": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(1,0)",
+      "x": 30,
+      "y": 60
+    },
+    "P11": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(1,1)",
+      "x": 60,
+      "y": 60
+    },
+    "P12": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(1,2)",
+      "x": 90,
+      "y": 60
+    },
+    "P13": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(1,3)",
+      "x": 120,
+      "y": 60
+    },
+    "P20": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(2,0)",
+      "x": 30,
+      "y": 90
+    },
+    "P21": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(2,1)",
+      "x": 60,
+      "y": 90
+    },
+    "P22": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(2,2)",
+      "x": 90,
+      "y": 90
+    },
+    "P23": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(2,3)",
+      "x": 120,
+      "y": 90
+    },
+    "P30": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(3,0)",
+      "x": 30,
+      "y": 120
+    },
+    "P31": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(3,1)",
+      "x": 60,
+      "y": 120
+    },
+    "P32": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        1
+      ],
+      "label": "Cell(3,2)",
+      "x": 90,
+      "y": 120
+    },
+    "P33": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Cell(3,3)",
+      "x": 120,
+      "y": 120
+    },
+    "_D1_00": {
+      "@type": "Place",
+      "initial": [
+        1
+      ],
+      "label": "History: 1 at (0,0)",
+      "x": 10,
+      "y": 180
+    },
+    "_D1_01": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (0,1)",
+      "x": 50,
+      "y": 180
+    },
+    "_D1_02": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (0,2)",
+      "x": 90,
+      "y": 180
+    },
+    "_D1_03": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (0,3)",
+      "x": 130,
+      "y": 180
+    },
+    "_D1_10": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (1,0)",
+      "x": 10,
+      "y": 195
+    },
+    "_D1_11": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (1,1)",
+      "x": 50,
+      "y": 195
+    },
+    "_D1_12": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (1,2)",
+      "x": 90,
+      "y": 195
+    },
+    "_D1_13": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (1,3)",
+      "x": 130,
+      "y": 195
+    },
+    "_D1_20": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (2,0)",
+      "x": 10,
+      "y": 210
+    },
+    "_D1_21": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (2,1)",
+      "x": 50,
+      "y": 210
+    },
+    "_D1_22": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (2,2)",
+      "x": 90,
+      "y": 210
+    },
+    "_D1_23": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (2,3)",
+      "x": 130,
+      "y": 210
+    },
+    "_D1_30": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (3,0)",
+      "x": 10,
+      "y": 225
+    },
+    "_D1_31": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (3,1)",
+      "x": 50,
+      "y": 225
+    },
+    "_D1_32": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (3,2)",
+      "x": 90,
+      "y": 225
+    },
+    "_D1_33": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 1 at (3,3)",
+      "x": 130,
+      "y": 225
+    },
+    "_D2_00": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (0,0)",
+      "x": 20,
+      "y": 180
+    },
+    "_D2_01": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (0,1)",
+      "x": 60,
+      "y": 180
+    },
+    "_D2_02": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (0,2)",
+      "x": 100,
+      "y": 180
+    },
+    "_D2_03": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (0,3)",
+      "x": 140,
+      "y": 180
+    },
+    "_D2_10": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (1,0)",
+      "x": 20,
+      "y": 195
+    },
+    "_D2_11": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (1,1)",
+      "x": 60,
+      "y": 195
+    },
+    "_D2_12": {
+      "@type": "Place",
+      "initial": [
+        1
+      ],
+      "label": "History: 2 at (1,2)",
+      "x": 100,
+      "y": 195
+    },
+    "_D2_13": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (1,3)",
+      "x": 140,
+      "y": 195
+    },
+    "_D2_20": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (2,0)",
+      "x": 20,
+      "y": 210
+    },
+    "_D2_21": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (2,1)",
+      "x": 60,
+      "y": 210
+    },
+    "_D2_22": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (2,2)",
+      "x": 100,
+      "y": 210
+    },
+    "_D2_23": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (2,3)",
+      "x": 140,
+      "y": 210
+    },
+    "_D2_30": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (3,0)",
+      "x": 20,
+      "y": 225
+    },
+    "_D2_31": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (3,1)",
+      "x": 60,
+      "y": 225
+    },
+    "_D2_32": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (3,2)",
+      "x": 100,
+      "y": 225
+    },
+    "_D2_33": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 2 at (3,3)",
+      "x": 140,
+      "y": 225
+    },
+    "_D3_00": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (0,0)",
+      "x": 30,
+      "y": 180
+    },
+    "_D3_01": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (0,1)",
+      "x": 70,
+      "y": 180
+    },
+    "_D3_02": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (0,2)",
+      "x": 110,
+      "y": 180
+    },
+    "_D3_03": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (0,3)",
+      "x": 150,
+      "y": 180
+    },
+    "_D3_10": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (1,0)",
+      "x": 30,
+      "y": 195
+    },
+    "_D3_11": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (1,1)",
+      "x": 70,
+      "y": 195
+    },
+    "_D3_12": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (1,2)",
+      "x": 110,
+      "y": 195
+    },
+    "_D3_13": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (1,3)",
+      "x": 150,
+      "y": 195
+    },
+    "_D3_20": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (2,0)",
+      "x": 30,
+      "y": 210
+    },
+    "_D3_21": {
+      "@type": "Place",
+      "initial": [
+        1
+      ],
+      "label": "History: 3 at (2,1)",
+      "x": 70,
+      "y": 210
+    },
+    "_D3_22": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (2,2)",
+      "x": 110,
+      "y": 210
+    },
+    "_D3_23": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (2,3)",
+      "x": 150,
+      "y": 210
+    },
+    "_D3_30": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (3,0)",
+      "x": 30,
+      "y": 225
+    },
+    "_D3_31": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (3,1)",
+      "x": 70,
+      "y": 225
+    },
+    "_D3_32": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (3,2)",
+      "x": 110,
+      "y": 225
+    },
+    "_D3_33": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 3 at (3,3)",
+      "x": 150,
+      "y": 225
+    },
+    "_D4_00": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (0,0)",
+      "x": 40,
+      "y": 180
+    },
+    "_D4_01": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (0,1)",
+      "x": 80,
+      "y": 180
+    },
+    "_D4_02": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (0,2)",
+      "x": 120,
+      "y": 180
+    },
+    "_D4_03": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (0,3)",
+      "x": 160,
+      "y": 180
+    },
+    "_D4_10": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (1,0)",
+      "x": 40,
+      "y": 195
+    },
+    "_D4_11": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (1,1)",
+      "x": 80,
+      "y": 195
+    },
+    "_D4_12": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (1,2)",
+      "x": 120,
+      "y": 195
+    },
+    "_D4_13": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (1,3)",
+      "x": 160,
+      "y": 195
+    },
+    "_D4_20": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (2,0)",
+      "x": 40,
+      "y": 210
+    },
+    "_D4_21": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (2,1)",
+      "x": 80,
+      "y": 210
+    },
+    "_D4_22": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (2,2)",
+      "x": 120,
+      "y": 210
+    },
+    "_D4_23": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (2,3)",
+      "x": 160,
+      "y": 210
+    },
+    "_D4_30": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (3,0)",
+      "x": 40,
+      "y": 225
+    },
+    "_D4_31": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (3,1)",
+      "x": 80,
+      "y": 225
+    },
+    "_D4_32": {
+      "@type": "Place",
+      "initial": [
+        0
+      ],
+      "label": "History: 4 at (3,2)",
+      "x": 120,
+      "y": 225
+    },
+    "_D4_33": {
+      "@type": "Place",
+      "initial": [
+        1
+      ],
+      "label": "History: 4 at (3,3)",
+      "x": 160,
+      "y": 225
+    },
+    "solved": {
+      "@type": "Place",
+      "capacity": [
+        12
+      ],
+      "initial": [
+        0
+      ],
+      "label": "Puzzle Solved",
+      "x": 270,
+      "y": 330
+    }
+  },
+  "puzzle": {
+    "block_size": 2,
+    "description": "4x4 Sudoku puzzle",
+    "initial_state": [
+      [
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        3,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        4
+      ]
+    ],
+    "ode_compatible": true,
+    "size": 4,
+    "solution": [
+      [
+        1,
+        2,
+        4,
+        3
+      ],
+      [
+        3,
+        4,
+        2,
+        1
+      ],
+      [
+        2,
+        3,
+        1,
+        4
+      ],
+      [
+        4,
+        1,
+        3,
+        2
+      ]
+    ]
+  },
+  "token": [
+    "https://pflow.xyz/tokens/black"
+  ],
+  "transitions": {
+    "Block00_Complete": {
+      "@type": "Transition",
+      "label": "Block (0,0) Complete",
+      "role": "constraint",
+      "x": 240,
+      "y": 330
+    },
+    "Block01_Complete": {
+      "@type": "Transition",
+      "label": "Block (0,1) Complete",
+      "role": "constraint",
+      "x": 240,
+      "y": 345
+    },
+    "Block10_Complete": {
+      "@type": "Transition",
+      "label": "Block (1,0) Complete",
+      "role": "constraint",
+      "x": 240,
+      "y": 360
+    },
+    "Block11_Complete": {
+      "@type": "Transition",
+      "label": "Block (1,1) Complete",
+      "role": "constraint",
+      "x": 240,
+      "y": 375
+    },
+    "Col0_Complete": {
+      "@type": "Transition",
+      "label": "Column 0 Complete",
+      "role": "constraint",
+      "x": 210,
+      "y": 330
+    },
+    "Col1_Complete": {
+      "@type": "Transition",
+      "label": "Column 1 Complete",
+      "role": "constraint",
+      "x": 210,
+      "y": 345
+    },
+    "Col2_Complete": {
+      "@type": "Transition",
+      "label": "Column 2 Complete",
+      "role": "constraint",
+      "x": 210,
+      "y": 360
+    },
+    "Col3_Complete": {
+      "@type": "Transition",
+      "label": "Column 3 Complete",
+      "role": "constraint",
+      "x": 210,
+      "y": 375
+    },
+    "D1_01": {
+      "@type": "Transition",
+      "label": "Place 1 at (0,1)",
+      "role": "d1",
+      "x": 50,
+      "y": 150
+    },
+    "D1_02": {
+      "@type": "Transition",
+      "label": "Place 1 at (0,2)",
+      "role": "d1",
+      "x": 90,
+      "y": 150
+    },
+    "D1_03": {
+      "@type": "Transition",
+      "label": "Place 1 at (0,3)",
+      "role": "d1",
+      "x": 130,
+      "y": 150
+    },
+    "D1_10": {
+      "@type": "Transition",
+      "label": "Place 1 at (1,0)",
+      "role": "d1",
+      "x": 10,
+      "y": 150
+    },
+    "D1_11": {
+      "@type": "Transition",
+      "label": "Place 1 at (1,1)",
+      "role": "d1",
+      "x": 50,
+      "y": 150
+    },
+    "D1_13": {
+      "@type": "Transition",
+      "label": "Place 1 at (1,3)",
+      "role": "d1",
+      "x": 130,
+      "y": 150
+    },
+    "D1_20": {
+      "@type": "Transition",
+      "label": "Place 1 at (2,0)",
+      "role": "d1",
+      "x": 10,
+      "y": 150
+    },
+    "D1_22": {
+      "@type": "Transition",
+      "label": "Place 1 at (2,2)",
+      "role": "d1",
+      "x": 90,
+      "y": 150
+    },
+    "D1_23": {
+      "@type": "Transition",
+      "label": "Place 1 at (2,3)",
+      "role": "d1",
+      "x": 130,
+      "y": 150
+    },
+    "D1_30": {
+      "@type": "Transition",
+      "label": "Place 1 at (3,0)",
+      "role": "d1",
+      "x": 10,
+      "y": 150
+    },
+    "D1_31": {
+      "@type": "Transition",
+      "label": "Place 1 at (3,1)",
+      "role": "d1",
+      "x": 50,
+      "y": 150
+    },
+    "D1_32": {
+      "@type": "Transition",
+      "label": "Place 1 at (3,2)",
+      "role": "d1",
+      "x": 90,
+      "y": 150
+    },
+    "D2_01": {
+      "@type": "Transition",
+      "label": "Place 2 at (0,1)",
+      "role": "d2",
+      "x": 60,
+      "y": 150
+    },
+    "D2_02": {
+      "@type": "Transition",
+      "label": "Place 2 at (0,2)",
+      "role": "d2",
+      "x": 100,
+      "y": 150
+    },
+    "D2_03": {
+      "@type": "Transition",
+      "label": "Place 2 at (0,3)",
+      "role": "d2",
+      "x": 140,
+      "y": 150
+    },
+    "D2_10": {
+      "@type": "Transition",
+      "label": "Place 2 at (1,0)",
+      "role": "d2",
+      "x": 20,
+      "y": 150
+    },
+    "D2_11": {
+      "@type": "Transition",
+      "label": "Place 2 at (1,1)",
+      "role": "d2",
+      "x": 60,
+      "y": 150
+    },
+    "D2_13": {
+      "@type": "Transition",
+      "label": "Place 2 at (1,3)",
+      "role": "d2",
+      "x": 140,
+      "y": 150
+    },
+    "D2_20": {
+      "@type": "Transition",
+      "label": "Place 2 at (2,0)",
+      "role": "d2",
+      "x": 20,
+      "y": 150
+    },
+    "D2_22": {
+      "@type": "Transition",
+      "label": "Place 2 at (2,2)",
+      "role": "d2",
+      "x": 100,
+      "y": 150
+    },
+    "D2_23": {
+      "@type": "Transition",
+      "label": "Place 2 at (2,3)",
+      "role": "d2",
+      "x": 140,
+      "y": 150
+    },
+    "D2_30": {
+      "@type": "Transition",
+      "label": "Place 2 at (3,0)",
+      "role": "d2",
+      "x": 20,
+      "y": 150
+    },
+    "D2_31": {
+      "@type": "Transition",
+      "label": "Place 2 at (3,1)",
+      "role": "d2",
+      "x": 60,
+      "y": 150
+    },
+    "D2_32": {
+      "@type": "Transition",
+      "label": "Place 2 at (3,2)",
+      "role": "d2",
+      "x": 100,
+      "y": 150
+    },
+    "D3_01": {
+      "@type": "Transition",
+      "label": "Place 3 at (0,1)",
+      "role": "d3",
+      "x": 70,
+      "y": 150
+    },
+    "D3_02": {
+      "@type": "Transition",
+      "label": "Place 3 at (0,2)",
+      "role": "d3",
+      "x": 110,
+      "y": 150
+    },
+    "D3_03": {
+      "@type": "Transition",
+      "label": "Place 3 at (0,3)",
+      "role": "d3",
+      "x": 150,
+      "y": 150
+    },
+    "D3_10": {
+      "@type": "Transition",
+      "label": "Place 3 at (1,0)",
+      "role": "d3",
+      "x": 30,
+      "y": 150
+    },
+    "D3_11": {
+      "@type": "Transition",
+      "label": "Place 3 at (1,1)",
+      "role": "d3",
+      "x": 70,
+      "y": 150
+    },
+    "D3_13": {
+      "@type": "Transition",
+      "label": "Place 3 at (1,3)",
+      "role": "d3",
+      "x": 150,
+      "y": 150
+    },
+    "D3_20": {
+      "@type": "Transition",
+      "label": "Place 3 at (2,0)",
+      "role": "d3",
+      "x": 30,
+      "y": 150
+    },
+    "D3_22": {
+      "@type": "Transition",
+      "label": "Place 3 at (2,2)",
+      "role": "d3",
+      "x": 110,
+      "y": 150
+    },
+    "D3_23": {
+      "@type": "Transition",
+      "label": "Place 3 at (2,3)",
+      "role": "d3",
+      "x": 150,
+      "y": 150
+    },
+    "D3_30": {
+      "@type": "Transition",
+      "label": "Place 3 at (3,0)",
+      "role": "d3",
+      "x": 30,
+      "y": 150
+    },
+    "D3_31": {
+      "@type": "Transition",
+      "label": "Place 3 at (3,1)",
+      "role": "d3",
+      "x": 70,
+      "y": 150
+    },
+    "D3_32": {
+      "@type": "Transition",
+      "label": "Place 3 at (3,2)",
+      "role": "d3",
+      "x": 110,
+      "y": 150
+    },
+    "D4_01": {
+      "@type": "Transition",
+      "label": "Place 4 at (0,1)",
+      "role": "d4",
+      "x": 80,
+      "y": 150
+    },
+    "D4_02": {
+      "@type": "Transition",
+      "label": "Place 4 at (0,2)",
+      "role": "d4",
+      "x": 120,
+      "y": 150
+    },
+    "D4_03": {
+      "@type": "Transition",
+      "label": "Place 4 at (0,3)",
+      "role": "d4",
+      "x": 160,
+      "y": 150
+    },
+    "D4_10": {
+      "@type": "Transition",
+      "label": "Place 4 at (1,0)",
+      "role": "d4",
+      "x": 40,
+      "y": 150
+    },
+    "D4_11": {
+      "@type": "Transition",
+      "label": "Place 4 at (1,1)",
+      "role": "d4",
+      "x": 80,
+      "y": 150
+    },
+    "D4_13": {
+      "@type": "Transition",
+      "label": "Place 4 at (1,3)",
+      "role": "d4",
+      "x": 160,
+      "y": 150
+    },
+    "D4_20": {
+      "@type": "Transition",
+      "label": "Place 4 at (2,0)",
+      "role": "d4",
+      "x": 40,
+      "y": 150
+    },
+    "D4_22": {
+      "@type": "Transition",
+      "label": "Place 4 at (2,2)",
+      "role": "d4",
+      "x": 120,
+      "y": 150
+    },
+    "D4_23": {
+      "@type": "Transition",
+      "label": "Place 4 at (2,3)",
+      "role": "d4",
+      "x": 160,
+      "y": 150
+    },
+    "D4_30": {
+      "@type": "Transition",
+      "label": "Place 4 at (3,0)",
+      "role": "d4",
+      "x": 40,
+      "y": 150
+    },
+    "D4_31": {
+      "@type": "Transition",
+      "label": "Place 4 at (3,1)",
+      "role": "d4",
+      "x": 80,
+      "y": 150
+    },
+    "D4_32": {
+      "@type": "Transition",
+      "label": "Place 4 at (3,2)",
+      "role": "d4",
+      "x": 120,
+      "y": 150
+    },
+    "Row0_Complete": {
+      "@type": "Transition",
+      "label": "Row 0 Complete",
+      "role": "constraint",
+      "x": 180,
+      "y": 330
+    },
+    "Row1_Complete": {
+      "@type": "Transition",
+      "label": "Row 1 Complete",
+      "role": "constraint",
+      "x": 180,
+      "y": 345
+    },
+    "Row2_Complete": {
+      "@type": "Transition",
+      "label": "Row 2 Complete",
+      "role": "constraint",
+      "x": 180,
+      "y": 360
+    },
+    "Row3_Complete": {
+      "@type": "Transition",
+      "label": "Row 3 Complete",
+      "role": "constraint",
+      "x": 180,
+      "y": 375
+    }
+  }
+}

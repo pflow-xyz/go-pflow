@@ -1,0 +1,2787 @@
+{
+  "@context": {
+    "@vocab": "https://pflow.xyz/schema#",
+    "arcs": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#arcs"
+    },
+    "capacity": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#capacity"
+    },
+    "initial": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#initial"
+    },
+    "label": "https://pflow.xyz/schema#label",
+    "places": "https://pflow.xyz/schema#places",
+    "source": "https://pflow.xyz/schema#source",
+    "target": "https://pflow.xyz/schema#target",
+    "token": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#token"
+    },
+    "transitions": "https://pflow.xyz/schema#transitions",
+    "weight": {
+      "@container": "@list",
+      "@id": "https://pflow.xyz/schema#weight"
+    },
+    "x": "https://pflow.xyz/schema#x",
+    "y": "https://pflow.xyz/schema#y"
+  },
+  "@type": "ColoredPetriNet",
+  "@version": "1.1",
+  "arcs": [
+    {
+      "@type": "Arc",
+      "source": "place_digit",
+      "target": "solved",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "colors": {
+    "colorSet": "DIGIT",
+    "description": "Colors represent Sudoku digits 1-9",
+    "values": [
+      {
+        "hex": "#FF6B6B",
+        "id": "d1",
+        "label": "1",
+        "value": 1
+      },
+      {
+        "hex": "#4ECDC4",
+        "id": "d2",
+        "label": "2",
+        "value": 2
+      },
+      {
+        "hex": "#45B7D1",
+        "id": "d3",
+        "label": "3",
+        "value": 3
+      },
+      {
+        "hex": "#96CEB4",
+        "id": "d4",
+        "label": "4",
+        "value": 4
+      },
+      {
+        "hex": "#FFEAA7",
+        "id": "d5",
+        "label": "5",
+        "value": 5
+      },
+      {
+        "hex": "#DDA0DD",
+        "id": "d6",
+        "label": "6",
+        "value": 6
+      },
+      {
+        "hex": "#98D8C8",
+        "id": "d7",
+        "label": "7",
+        "value": 7
+      },
+      {
+        "hex": "#F7DC6F",
+        "id": "d8",
+        "label": "8",
+        "value": 8
+      },
+      {
+        "hex": "#BB8FCE",
+        "id": "d9",
+        "label": "9",
+        "value": 9
+      }
+    ]
+  },
+  "constraints": {
+    "block_constraint": "Each 3x3 block can have at most one token of each color",
+    "column_constraint": "Each column can have at most one token of each color",
+    "description": "Sudoku constraints enforced through color restrictions",
+    "row_constraint": "Each row can have at most one token of each color"
+  },
+  "description": "A 9x9 Sudoku puzzle modeled as a Colored Petri Net. Token colors represent digits 1-9.",
+  "places": {
+    "cell_0_0": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(0,0)",
+      "x": 50,
+      "y": 50
+    },
+    "cell_0_1": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(0,1)",
+      "x": 100,
+      "y": 50
+    },
+    "cell_0_2": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(0,2)",
+      "x": 150,
+      "y": 50
+    },
+    "cell_0_3": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(0,3)",
+      "x": 200,
+      "y": 50
+    },
+    "cell_0_4": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "label": "Cell(0,4)",
+      "x": 250,
+      "y": 50
+    },
+    "cell_0_5": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(0,5)",
+      "x": 300,
+      "y": 50
+    },
+    "cell_0_6": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(0,6)",
+      "x": 350,
+      "y": 50
+    },
+    "cell_0_7": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(0,7)",
+      "x": 400,
+      "y": 50
+    },
+    "cell_0_8": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(0,8)",
+      "x": 450,
+      "y": 50
+    },
+    "cell_1_0": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(1,0)",
+      "x": 50,
+      "y": 100
+    },
+    "cell_1_1": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(1,1)",
+      "x": 100,
+      "y": 100
+    },
+    "cell_1_2": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(1,2)",
+      "x": 150,
+      "y": 100
+    },
+    "cell_1_3": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(1,3)",
+      "x": 200,
+      "y": 100
+    },
+    "cell_1_4": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "label": "Cell(1,4)",
+      "x": 250,
+      "y": 100
+    },
+    "cell_1_5": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(1,5)",
+      "x": 300,
+      "y": 100
+    },
+    "cell_1_6": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(1,6)",
+      "x": 350,
+      "y": 100
+    },
+    "cell_1_7": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(1,7)",
+      "x": 400,
+      "y": 100
+    },
+    "cell_1_8": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(1,8)",
+      "x": 450,
+      "y": 100
+    },
+    "cell_2_0": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(2,0)",
+      "x": 50,
+      "y": 150
+    },
+    "cell_2_1": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "label": "Cell(2,1)",
+      "x": 100,
+      "y": 150
+    },
+    "cell_2_2": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "label": "Cell(2,2)",
+      "x": 150,
+      "y": 150
+    },
+    "cell_2_3": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(2,3)",
+      "x": 200,
+      "y": 150
+    },
+    "cell_2_4": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(2,4)",
+      "x": 250,
+      "y": 150
+    },
+    "cell_2_5": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(2,5)",
+      "x": 300,
+      "y": 150
+    },
+    "cell_2_6": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(2,6)",
+      "x": 350,
+      "y": 150
+    },
+    "cell_2_7": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(2,7)",
+      "x": 400,
+      "y": 150
+    },
+    "cell_2_8": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(2,8)",
+      "x": 450,
+      "y": 150
+    },
+    "cell_3_0": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "label": "Cell(3,0)",
+      "x": 50,
+      "y": 200
+    },
+    "cell_3_1": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(3,1)",
+      "x": 100,
+      "y": 200
+    },
+    "cell_3_2": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(3,2)",
+      "x": 150,
+      "y": 200
+    },
+    "cell_3_3": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(3,3)",
+      "x": 200,
+      "y": 200
+    },
+    "cell_3_4": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(3,4)",
+      "x": 250,
+      "y": 200
+    },
+    "cell_3_5": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(3,5)",
+      "x": 300,
+      "y": 200
+    },
+    "cell_3_6": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(3,6)",
+      "x": 350,
+      "y": 200
+    },
+    "cell_3_7": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(3,7)",
+      "x": 400,
+      "y": 200
+    },
+    "cell_3_8": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(3,8)",
+      "x": 450,
+      "y": 200
+    },
+    "cell_4_0": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(4,0)",
+      "x": 50,
+      "y": 250
+    },
+    "cell_4_1": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(4,1)",
+      "x": 100,
+      "y": 250
+    },
+    "cell_4_2": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(4,2)",
+      "x": 150,
+      "y": 250
+    },
+    "cell_4_3": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "label": "Cell(4,3)",
+      "x": 200,
+      "y": 250
+    },
+    "cell_4_4": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(4,4)",
+      "x": 250,
+      "y": 250
+    },
+    "cell_4_5": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(4,5)",
+      "x": 300,
+      "y": 250
+    },
+    "cell_4_6": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(4,6)",
+      "x": 350,
+      "y": 250
+    },
+    "cell_4_7": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(4,7)",
+      "x": 400,
+      "y": 250
+    },
+    "cell_4_8": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(4,8)",
+      "x": 450,
+      "y": 250
+    },
+    "cell_5_0": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "label": "Cell(5,0)",
+      "x": 50,
+      "y": 300
+    },
+    "cell_5_1": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(5,1)",
+      "x": 100,
+      "y": 300
+    },
+    "cell_5_2": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(5,2)",
+      "x": 150,
+      "y": 300
+    },
+    "cell_5_3": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(5,3)",
+      "x": 200,
+      "y": 300
+    },
+    "cell_5_4": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(5,4)",
+      "x": 250,
+      "y": 300
+    },
+    "cell_5_5": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(5,5)",
+      "x": 300,
+      "y": 300
+    },
+    "cell_5_6": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(5,6)",
+      "x": 350,
+      "y": 300
+    },
+    "cell_5_7": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(5,7)",
+      "x": 400,
+      "y": 300
+    },
+    "cell_5_8": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(5,8)",
+      "x": 450,
+      "y": 300
+    },
+    "cell_6_0": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(6,0)",
+      "x": 50,
+      "y": 350
+    },
+    "cell_6_1": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(6,1)",
+      "x": 100,
+      "y": 350
+    },
+    "cell_6_2": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(6,2)",
+      "x": 150,
+      "y": 350
+    },
+    "cell_6_3": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(6,3)",
+      "x": 200,
+      "y": 350
+    },
+    "cell_6_4": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(6,4)",
+      "x": 250,
+      "y": 350
+    },
+    "cell_6_5": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(6,5)",
+      "x": 300,
+      "y": 350
+    },
+    "cell_6_6": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(6,6)",
+      "x": 350,
+      "y": 350
+    },
+    "cell_6_7": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "label": "Cell(6,7)",
+      "x": 400,
+      "y": 350
+    },
+    "cell_6_8": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(6,8)",
+      "x": 450,
+      "y": 350
+    },
+    "cell_7_0": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(7,0)",
+      "x": 50,
+      "y": 400
+    },
+    "cell_7_1": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(7,1)",
+      "x": 100,
+      "y": 400
+    },
+    "cell_7_2": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(7,2)",
+      "x": 150,
+      "y": 400
+    },
+    "cell_7_3": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(7,3)",
+      "x": 200,
+      "y": 400
+    },
+    "cell_7_4": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(7,4)",
+      "x": 250,
+      "y": 400
+    },
+    "cell_7_5": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "label": "Cell(7,5)",
+      "x": 300,
+      "y": 400
+    },
+    "cell_7_6": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(7,6)",
+      "x": 350,
+      "y": 400
+    },
+    "cell_7_7": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(7,7)",
+      "x": 400,
+      "y": 400
+    },
+    "cell_7_8": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(7,8)",
+      "x": 450,
+      "y": 400
+    },
+    "cell_8_0": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(8,0)",
+      "x": 50,
+      "y": 450
+    },
+    "cell_8_1": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(8,1)",
+      "x": 100,
+      "y": 450
+    },
+    "cell_8_2": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(8,2)",
+      "x": 150,
+      "y": 450
+    },
+    "cell_8_3": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(8,3)",
+      "x": 200,
+      "y": 450
+    },
+    "cell_8_4": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "label": "Cell(8,4)",
+      "x": 250,
+      "y": 450
+    },
+    "cell_8_5": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(8,5)",
+      "x": 300,
+      "y": 450
+    },
+    "cell_8_6": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Cell(8,6)",
+      "x": 350,
+      "y": 450
+    },
+    "cell_8_7": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "label": "Cell(8,7)",
+      "x": 400,
+      "y": 450
+    },
+    "cell_8_8": {
+      "@type": "Place",
+      "capacity": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "label": "Cell(8,8)",
+      "x": 450,
+      "y": 450
+    },
+    "row_0_available": {
+      "@type": "Place",
+      "initial": [
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1
+      ],
+      "label": "Row 0 Available Colors",
+      "x": 550,
+      "y": 50
+    },
+    "row_1_available": {
+      "@type": "Place",
+      "initial": [
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0
+      ],
+      "label": "Row 1 Available Colors",
+      "x": 550,
+      "y": 100
+    },
+    "row_2_available": {
+      "@type": "Place",
+      "initial": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0
+      ],
+      "label": "Row 2 Available Colors",
+      "x": 550,
+      "y": 150
+    },
+    "row_3_available": {
+      "@type": "Place",
+      "initial": [
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "label": "Row 3 Available Colors",
+      "x": 550,
+      "y": 200
+    },
+    "row_4_available": {
+      "@type": "Place",
+      "initial": [
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1
+      ],
+      "label": "Row 4 Available Colors",
+      "x": 550,
+      "y": 250
+    },
+    "row_5_available": {
+      "@type": "Place",
+      "initial": [
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1
+      ],
+      "label": "Row 5 Available Colors",
+      "x": 550,
+      "y": 300
+    },
+    "row_6_available": {
+      "@type": "Place",
+      "initial": [
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "label": "Row 6 Available Colors",
+      "x": 550,
+      "y": 350
+    },
+    "row_7_available": {
+      "@type": "Place",
+      "initial": [
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0
+      ],
+      "label": "Row 7 Available Colors",
+      "x": 550,
+      "y": 400
+    },
+    "row_8_available": {
+      "@type": "Place",
+      "initial": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "label": "Row 8 Available Colors",
+      "x": 550,
+      "y": 450
+    },
+    "solved": {
+      "@type": "Place",
+      "capacity": [
+        1
+      ],
+      "initial": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "label": "Puzzle Solved",
+      "x": 250,
+      "y": 600
+    }
+  },
+  "puzzle": {
+    "block_size": 3,
+    "description": "9x9 Sudoku puzzle",
+    "initial_state": [
+      [
+        5,
+        3,
+        0,
+        0,
+        7,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        6,
+        0,
+        0,
+        1,
+        9,
+        5,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        9,
+        8,
+        0,
+        0,
+        0,
+        0,
+        6,
+        0
+      ],
+      [
+        8,
+        0,
+        0,
+        0,
+        6,
+        0,
+        0,
+        0,
+        3
+      ],
+      [
+        4,
+        0,
+        0,
+        8,
+        0,
+        3,
+        0,
+        0,
+        1
+      ],
+      [
+        7,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        6
+      ],
+      [
+        0,
+        6,
+        0,
+        0,
+        0,
+        0,
+        2,
+        8,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        4,
+        1,
+        9,
+        0,
+        0,
+        5
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        8,
+        0,
+        0,
+        7,
+        9
+      ]
+    ],
+    "ode_compatible": false,
+    "size": 9,
+    "solution": [
+      [
+        5,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        1,
+        2
+      ],
+      [
+        6,
+        7,
+        2,
+        1,
+        9,
+        5,
+        3,
+        4,
+        8
+      ],
+      [
+        1,
+        9,
+        8,
+        3,
+        4,
+        2,
+        5,
+        6,
+        7
+      ],
+      [
+        8,
+        5,
+        9,
+        7,
+        6,
+        1,
+        4,
+        2,
+        3
+      ],
+      [
+        4,
+        2,
+        6,
+        8,
+        5,
+        3,
+        7,
+        9,
+        1
+      ],
+      [
+        7,
+        1,
+        3,
+        9,
+        2,
+        4,
+        8,
+        5,
+        6
+      ],
+      [
+        9,
+        6,
+        1,
+        5,
+        3,
+        7,
+        2,
+        8,
+        4
+      ],
+      [
+        2,
+        8,
+        7,
+        4,
+        1,
+        9,
+        6,
+        3,
+        5
+      ],
+      [
+        3,
+        4,
+        5,
+        2,
+        8,
+        6,
+        1,
+        7,
+        9
+      ]
+    ]
+  },
+  "token": [
+    "https://pflow.xyz/tokens/digit_1",
+    "https://pflow.xyz/tokens/digit_2",
+    "https://pflow.xyz/tokens/digit_3",
+    "https://pflow.xyz/tokens/digit_4",
+    "https://pflow.xyz/tokens/digit_5",
+    "https://pflow.xyz/tokens/digit_6",
+    "https://pflow.xyz/tokens/digit_7",
+    "https://pflow.xyz/tokens/digit_8",
+    "https://pflow.xyz/tokens/digit_9"
+  ],
+  "transitions": {
+    "check_solved": {
+      "@type": "Transition",
+      "label": "Check if puzzle is solved",
+      "x": 250,
+      "y": 575
+    },
+    "place_digit": {
+      "@type": "Transition",
+      "label": "Place a digit in empty cell",
+      "x": 250,
+      "y": 550
+    }
+  }
+}

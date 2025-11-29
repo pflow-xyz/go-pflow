@@ -7,6 +7,7 @@ This directory contains example implementations demonstrating different aspects 
 | Example | Type | Complexity | Key Concepts | Visualization |
 |---------|------|------------|--------------|---------------|
 | **basic** | Workflow | Simple | Sequential processes, producer-consumer patterns | [workflow](basic/workflow_small.svg), [producer-consumer](basic/pc_small.svg) |
+| **sudoku** | Puzzle | Simple | Constraint satisfaction, ODE analysis, colored nets | [4x4](sudoku/sudoku-4x4.svg), [9x9-ode](sudoku/sudoku-9x9-ode.svg) |
 | **tictactoe** | Game AI | Medium | Minimax, perfect play, ODE-guided decisions | [flow](tictactoe/tictactoe_flow.svg) |
 | **nim** | Game Theory | Medium | Discrete state spaces, optimal strategy, position evaluation | [10 stones](nim/nim_10.svg) |
 | **connect4** | Game AI | Complex | Pattern recognition, lookahead, multi-dimensional evaluation | [flow](connect4/connect4_flow.svg) |
@@ -48,7 +49,65 @@ pflow simulate pc_small.json
 
 ---
 
-### 2. Tic-Tac-Toe
+### 2. Sudoku Puzzle
+
+**Location**: `sudoku/`
+
+**Model Type**: Constraint satisfaction problem
+
+**What It Demonstrates**:
+- **Constraint Modeling**: Representing Sudoku rules as Petri net structure
+- **Constraint Propagation**: Using transitions to eliminate invalid possibilities
+- **ODE Analysis**: Using mass-action kinetics for solution detection (like tic-tac-toe)
+- **Colored Nets**: Token colors represent digits
+- **State Space**: Reachable markings represent valid partial solutions
+
+**Available Models**:
+- `sudoku-4x4.jsonld` - Simple 4×4 puzzle with 2×2 blocks
+- `sudoku-4x4-ode.jsonld` - ODE-compatible with constraint collectors
+- `sudoku-9x9.jsonld` - Classic 9×9 puzzle
+- `sudoku-9x9-colored.jsonld` - Colored Petri net (digits as colors)
+- `sudoku-9x9-ode.jsonld` - Full ODE model with 27 constraint collectors
+
+**Complexity Metrics**:
+- Standard 9×9: 82 places, 52 transitions
+- ODE 9×9: 811 places, 756 transitions (81 cells + 729 history + 27 collectors)
+
+**Key Learning**:
+- Modeling constraint satisfaction problems with Petri nets
+- ODE-based solution detection (like tic-tac-toe win detection)
+- Colored Petri nets for elegant constraint representation
+- Constraint propagation as token flow
+
+**Run Example**:
+```bash
+cd sudoku
+go build -o sudoku ./cmd
+
+# Generate all model files (SVG and JSON-LD)
+./sudoku --generate
+
+# Run a demo puzzle
+./sudoku
+
+# Analyze 4x4 puzzle
+./sudoku --size 4x4
+
+# Analyze ODE model
+./sudoku --size 9x9 --ode
+
+# Analyze colored net
+./sudoku --size 9x9 --colored
+
+# Run ODE analysis
+./sudoku --size 9x9 --ode --analyze
+```
+
+**Documentation**: See [ODE_ANALYSIS.md](sudoku/ODE_ANALYSIS.md) for detailed ODE tracking examples.
+
+---
+
+### 3. Tic-Tac-Toe
 
 **Location**: `tictactoe/`
 
@@ -110,7 +169,7 @@ go build -o ttt ./cmd
 
 ---
 
-### 3. Nim Game
+### 4. Nim Game
 
 **Location**: `nim/`
 
@@ -166,7 +225,7 @@ go build -o nim ./cmd
 
 ---
 
-### 4. Connect Four
+### 5. Connect Four
 
 **Location**: `connect4/`
 
@@ -372,28 +431,35 @@ connect4
 - Producer-consumer: Tokens cycle through system
 - **Takeaway**: Tokens = resources, state, or work items
 
-### 2. State Space Exploration (nim)
+### 2. Constraint Satisfaction (sudoku)
+**Learn**: CSP as Petri nets
+- Places represent possible values for each cell
+- Transitions model value assignments
+- Constraint propagation eliminates invalid options
+- **Takeaway**: Petri nets model constraint problems naturally
+
+### 3. State Space Exploration (nim)
 **Learn**: Complete reachability analysis
 - Every stone count is reachable
 - Linear progression (no cycles)
 - Bounded (game terminates)
 - **Takeaway**: Petri nets can model game trees
 
-### 3. Position Evaluation (nim)
+### 4. Position Evaluation (nim)
 **Learn**: Continuous functions guide discrete choices
 - ODE scoring: `score = distance_to_losing_position`
 - Maps continuous values to discrete moves
 - Approximates optimal without explicit game theory
 - **Takeaway**: ODEs can solve discrete decision problems
 
-### 4. Pattern Recognition (connect4)
+### 5. Pattern Recognition (connect4)
 **Learn**: Complex feature extraction
 - 69 patterns checked per position
 - Weighted combination of features
 - Hierarchical importance (win > threat > potential)
 - **Takeaway**: Rich pattern spaces enable intelligent behavior
 
-### 5. Lookahead Search (connect4)
+### 6. Lookahead Search (connect4)
 **Learn**: Anticipating opponent response
 - 1-ply minimax: simulate opponent's best move
 - Adjust our evaluation based on their response
@@ -411,6 +477,12 @@ connect4
 2. Observe token flow through stages
 3. Try `pc_small.json` to see cyclic behavior
 4. **Learn**: Places, transitions, arcs, tokens
+
+**Beginner+** → Try `sudoku/`
+1. Run `./sudoku --v` to see constraint propagation
+2. Analyze the model: `./sudoku --analyze`
+3. Try different puzzles: `./sudoku --generate --difficulty hard`
+4. **Learn**: Constraint satisfaction, puzzle solving
 
 **Intermediate** → Move to `nim/`
 1. Build and play: `./nim --player-x human --player-o ode`
@@ -436,6 +508,12 @@ connect4
 - **Decision Making**: None (deterministic)
 - **Best For**: Learning Petri net fundamentals
 
+**Sudoku** (Puzzle):
+- **Purpose**: Constraint satisfaction modeling
+- **Complexity**: 162 places, 81 transitions (3×3 box model)
+- **Decision Making**: Constraint propagation
+- **Best For**: Understanding CSP and puzzle solving
+
 **Nim**:
 - **Purpose**: Game theory with optimal strategy
 - **Complexity**: 16 places, 39 transitions (15 stones)
@@ -453,6 +531,7 @@ connect4
 | Concept | Best Example | Why |
 |---------|--------------|-----|
 | Petri net basics | **basic/** | Simple, visual, deterministic |
+| Constraint satisfaction | **sudoku** | CSP modeling, constraint propagation |
 | State space analysis | **nim** | Complete reachability, clear terminal states |
 | Game theory | **nim** | Optimal strategy is provable |
 | ODE-based decisions | **nim** | Clean mapping: continuous score → discrete move |

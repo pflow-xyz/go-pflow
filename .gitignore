@@ -12,6 +12,7 @@ pflow
 examples/connect4/connect4
 examples/nim/nim
 examples/tictactoe/tictactoe
+examples/sudoku/sudoku
 examples/neural/demo
 examples/neural/main
 examples/neural/reverse
