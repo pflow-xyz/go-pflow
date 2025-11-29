@@ -2,6 +2,21 @@
 
 This guide helps AI assistants (Claude, etc.) understand when and how to use the go-pflow library for modeling problems as Petri nets with ODE simulation.
 
+## Package Overview
+
+| Package | Purpose |
+|---------|---------|
+| `petri` | Core Petri net types, fluent Builder API |
+| `solver` | ODE solvers (Tsit5, RK45, implicit), equilibrium detection |
+| `stateutil` | State manipulation utilities |
+| `hypothesis` | Move evaluation for game AI |
+| `sensitivity` | Parameter sensitivity analysis |
+| `cache` | Memoization for ODE simulations |
+| `reachability` | Discrete state space analysis, invariants |
+| `eventlog` | Parse event logs (CSV) |
+| `mining` | Process discovery (Alpha, Heuristic Miner) |
+| `monitoring` | Real-time case tracking, SLA alerts |
+
 ## Quick Decision Tree
 
 ```
@@ -849,67 +864,73 @@ func isEnabled(net *petri.PetriNet, state map[string]float64, transID string) bo
 
 ## Example: Complete Game AI
 
-Here's a template for building a game AI:
+Here's a template for building a game AI using the modern packages:
 
 ```go
 package main
 
 import (
     "github.com/pflow-xyz/go-pflow/petri"
+    "github.com/pflow-xyz/go-pflow/hypothesis"
     "github.com/pflow-xyz/go-pflow/solver"
+    "github.com/pflow-xyz/go-pflow/cache"
 )
 
 type Game struct {
-    net    *petri.PetriNet
-    state  map[string]float64
-    rates  map[string]float64
+    net   *petri.PetriNet
+    state map[string]float64
+    rates map[string]float64
+    eval  *hypothesis.Evaluator
+    cache *cache.ScoreCache
 }
 
 func NewGame() *Game {
-    net := petri.NewPetriNet()
-    // ... build net for your game ...
+    // Build net using fluent API
+    net, rates := petri.Build().
+        Place("pos0", 1).Place("pos1", 1).Place("pos2", 1).
+        Place("_X0", 0).Place("_X1", 0).Place("_X2", 0).
+        Place("X_wins", 0).Place("O_wins", 0).
+        Transition("play_X0").Transition("play_X1").Transition("play_X2").
+        // ... rest of game setup ...
+        WithRates(1.0)
 
     state := net.SetState(nil)
-    rates := make(map[string]float64)
-    for t := range net.Transitions {
-        rates[t] = 1.0
-    }
 
-    return &Game{net: net, state: state, rates: rates}
+    // Create evaluator with scoring function
+    eval := hypothesis.NewEvaluator(net, rates, func(final map[string]float64) float64 {
+        return final["X_wins"] - final["O_wins"]
+    }).WithOptions(solver.FastOptions())
+
+    return &Game{
+        net:   net,
+        state: state,
+        rates: rates,
+        eval:  eval,
+        cache: cache.NewScoreCache(10000),
+    }
 }
 
-func (g *Game) GetBestMove() int {
-    moves := g.getLegalMoves()
-    bestMove, bestScore := moves[0], -1e9
-
-    for _, move := range moves {
-        score := g.evaluateMove(move)
-        if score > bestScore {
-            bestMove, bestScore = move, score
-        }
+func (g *Game) GetBestMove(legalMoves []int) int {
+    // Convert moves to state updates
+    var updates []map[string]float64
+    for _, pos := range legalMoves {
+        updates = append(updates, map[string]float64{
+            fmt.Sprintf("pos%d", pos): 0,
+            fmt.Sprintf("_X%d", pos):  1,
+        })
     }
-    return bestMove
+
+    // Find best move (parallel evaluation)
+    bestIdx, _ := g.eval.FindBestParallel(g.state, updates)
+    return legalMoves[bestIdx]
 }
 
-func (g *Game) evaluateMove(move int) float64 {
-    // Create hypothetical state
-    hypState := make(map[string]float64)
-    for k, v := range g.state {
-        hypState[k] = v
+func (g *Game) AnalyzePosition() {
+    // Which transitions matter most?
+    impact := g.eval.SensitivityImpact(g.state)
+    for trans, delta := range impact {
+        fmt.Printf("%s: %+.2f\n", trans, delta)
     }
-    g.applyMove(hypState, move)
-
-    // Simulate forward
-    prob := solver.NewProblem(g.net, hypState, [2]float64{0, 5.0}, g.rates)
-    opts := &solver.Options{
-        Dt: 0.5, Abstol: 1e-2, Reltol: 1e-2,
-        Maxiters: 100, Adaptive: true,
-    }
-    sol := solver.Solve(prob, solver.Tsit5(), opts)
-
-    // Score based on final state
-    final := sol.GetFinalState()
-    return final["my_wins"] - final["opponent_wins"]
 }
 ```
 
@@ -1089,14 +1110,50 @@ Petri nets are not the best choice for:
 
 ---
 
+## Fluent Builder Quick Reference
+
+```go
+import "github.com/pflow-xyz/go-pflow/petri"
+
+// Basic building
+net := petri.Build().
+    Place("A", 10).              // Place with 10 initial tokens
+    Place("B", 0).               // Place with 0 tokens
+    Transition("t1").            // Transition
+    Arc("A", "t1", 1).           // Arc with weight 1
+    Arc("t1", "B", 1).
+    Done()                       // Returns *PetriNet
+
+// Convenience methods
+net := petri.Build().
+    Flow("A", "t1", "B", 1).     // Place -> Transition -> Place in one call
+    Chain(10, "start", "t1", "middle", "t2", "end").  // Linear sequence
+    Done()
+
+// With rates
+net, rates := petri.Build().
+    Place("S", 100).Place("I", 1).Place("R", 0).
+    Transition("infect").Transition("recover").
+    Arc("S", "infect", 1).Arc("I", "infect", 1).Arc("infect", "I", 2).
+    Arc("I", "recover", 1).Arc("recover", "R", 1).
+    WithRates(1.0)               // Returns (*PetriNet, map[string]float64)
+
+// SIR model shortcut
+net, rates := petri.Build().SIR(999, 1, 0).WithRates(1.0)
+```
+
+---
+
 ## Summary
 
-| Problem Type | Model Pattern | ODE Usage | Key Insight |
-|--------------|---------------|-----------|-------------|
-| Workflows | Sequential places | Simulate flow | Tokens = work items |
-| Games | State + history | Evaluate moves | Disable & observe |
-| Constraints | Resources as tokens | Check feasibility | 0 tokens = used |
-| Optimization | Choices as transitions | Greedy heuristics | Rates = preferences |
-| Epidemics | Compartments | Simulate dynamics | Mass-action kinetics |
+| Problem Type | Model Pattern | Key Package | Key Insight |
+|--------------|---------------|-------------|-------------|
+| Workflows | Sequential places | `petri`, `solver` | Tokens = work items |
+| Games | State + history | `hypothesis`, `cache` | Evaluate moves in parallel |
+| Constraints | Resources as tokens | `solver` | 0 tokens = constraint used |
+| Optimization | Choices as transitions | `sensitivity` | Rates = preferences |
+| Epidemics | Compartments | `solver` | Mass-action kinetics |
+| Process Mining | Event logs | `mining`, `eventlog` | Discover from logs |
+| Verification | State space | `reachability` | Deadlock/liveness analysis |
 
-The power of this approach is **unification**: the same solver handles workflows, games, optimization, and epidemiology. The Petri net structure encodes the problem; the ODE dynamics reveal the solution.
+**The power of this approach is unification**: the same core abstractions handle workflows, games, optimization, epidemiology, and process mining. The Petri net structure encodes the problem; the solver dynamics reveal the solution.
