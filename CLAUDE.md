@@ -13,6 +13,8 @@ This guide helps AI assistants (Claude, etc.) understand when and how to use the
 | `sensitivity` | Parameter sensitivity analysis |
 | `cache` | Memoization for ODE simulations |
 | `reachability` | Discrete state space analysis, invariants |
+| `statemachine` | Statechart builder with Petri net backend |
+| `workflow` | Full workflow framework with task dependencies, resources, SLA |
 | `eventlog` | Parse event logs (CSV) |
 | `mining` | Process discovery (Alpha, Heuristic Miner) |
 | `monitoring` | Real-time case tracking, SLA alerts |
@@ -932,6 +934,314 @@ func (g *Game) AnalyzePosition() {
         fmt.Printf("%s: %+.2f\n", trans, delta)
     }
 }
+```
+
+---
+
+## State Machine Package
+
+The `statemachine` package provides a fluent API for building hierarchical state machines (statecharts) that compile to Petri nets.
+
+### Building a State Machine
+
+```go
+import "github.com/pflow-xyz/go-pflow/statemachine"
+
+// Simple traffic light with timer events
+chart := statemachine.NewChart("traffic_light").
+    Region("light").
+        State("red").Initial().
+        State("green").
+        State("yellow").
+    EndRegion().
+    When("timer").In("light:red").GoTo("light:green").
+    When("timer").In("light:green").GoTo("light:yellow").
+    When("timer").In("light:yellow").GoTo("light:red").
+    Build()
+
+// Create and run the machine
+m := statemachine.NewMachine(chart)
+
+m.State("light")        // Returns "red" (initial state)
+m.SendEvent("timer")    // Transitions to green
+m.State("light")        // Returns "green"
+m.IsIn("light:green")   // Returns true
+```
+
+### Parallel Regions
+
+```go
+// Watch with independent mode and light regions
+chart := statemachine.NewChart("watch").
+    Region("mode").
+        State("time").Initial().
+        State("alarm").
+    EndRegion().
+    Region("light").
+        State("off").Initial().
+        State("on").
+    EndRegion().
+    When("c_press").In("mode:time").GoTo("mode:alarm").
+    When("c_press").In("mode:alarm").GoTo("mode:time").
+    When("l_down").In("light:off").GoTo("light:on").
+    When("l_up").In("light:on").GoTo("light:off").
+    Build()
+```
+
+### Actions and Guards
+
+```go
+chart := statemachine.NewChart("counter").
+    Region("state").
+        State("counting").Initial().
+    EndRegion().
+    Counter("count").
+    When("increment").In("state:counting").GoTo("state:counting").
+        Do(statemachine.Increment("count")).
+    When("reset").In("state:counting").GoTo("state:counting").
+        If(func(state map[string]float64) bool {
+            return state["count"] >= 10
+        }).
+        Do(statemachine.Set("count", 0)).
+    Build()
+
+m := statemachine.NewMachine(chart)
+m.SendEvent("increment")
+m.Counter("count")  // Returns 1
+```
+
+### Converting to Petri Net
+
+```go
+// Get the underlying Petri net for simulation
+net := chart.ToPetriNet()
+```
+
+---
+
+## Workflow Framework
+
+The `workflow` package provides a comprehensive workflow management framework with task dependencies, resources, SLA tracking, and real-time monitoring.
+
+### Building a Workflow
+
+```go
+import "github.com/pflow-xyz/go-pflow/workflow"
+
+// Document approval workflow
+wf := workflow.New("approval").
+    Name("Document Approval").
+
+    // Define tasks
+    Task("submit").
+        Name("Submit Document").
+        Type(workflow.TaskTypeManual).
+        Duration(5 * time.Minute).
+        Done().
+    Task("review").
+        Name("Review Document").
+        Duration(30 * time.Minute).
+        RequireResource("reviewers", 1).
+        Done().
+    Task("approve").
+        Name("Final Approval").
+        Type(workflow.TaskTypeDecision).
+        Done().
+    Task("archive").
+        Type(workflow.TaskTypeAutomatic).
+        Done().
+
+    // Define dependencies (Finish-to-Start by default)
+    Connect("submit", "review").
+    Connect("review", "approve").
+    Connect("approve", "archive").
+
+    // Define start/end points
+    Start("submit").
+    End("archive").
+
+    // Define resources
+    Resource("reviewers").
+        Capacity(3).
+        Done().
+
+    Build()
+```
+
+### Dependency Types
+
+```go
+// Finish-to-Start (default): B starts after A finishes
+wf.Connect("A", "B")
+wf.ConnectFS("A", "B")  // Explicit alias
+
+// Start-to-Start: B starts when A starts
+wf.ConnectSS("A", "B")
+
+// Finish-to-Finish: B finishes when A finishes
+wf.ConnectFF("A", "B")
+
+// Start-to-Finish: B finishes when A starts (rare)
+wf.ConnectSF("A", "B")
+
+// Sequence helper: A -> B -> C -> D
+wf.Sequence("A", "B", "C", "D")
+
+// Parallel helper: A -> (B, C, D) simultaneously
+wf.Parallel("A", "B", "C", "D")
+```
+
+### Join and Split Types
+
+```go
+// AND-join: All predecessors must complete (default)
+Task("merge").JoinType(workflow.JoinAll).Done()
+
+// OR-join: Any predecessor completing enables task
+Task("any_done").JoinType(workflow.JoinAny).Done()
+
+// N-of-M join: N predecessors must complete
+Task("quorum").JoinType(workflow.JoinN).JoinNOf(2).Done()
+
+// AND-split: All successors triggered (parallel, default)
+Task("fork").SplitType(workflow.SplitAll).Done()
+
+// XOR-split: Exactly one successor (exclusive choice)
+Task("decision").SplitType(workflow.SplitExclusive).Done()
+
+// OR-split: One or more successors (inclusive)
+Task("options").SplitType(workflow.SplitInclusive).Done()
+```
+
+### Running Workflows
+
+```go
+// Create engine
+engine := workflow.NewEngine(wf)
+
+// Register event handlers
+engine.OnTaskReady(func(c *workflow.Case, t *workflow.TaskInstance) {
+    fmt.Printf("Task %s is ready for case %s\n", t.TaskID, c.ID)
+})
+
+engine.OnCaseComplete(func(c *workflow.Case) {
+    fmt.Printf("Case %s completed\n", c.ID)
+})
+
+// Start a case
+input := map[string]any{"document_id": "DOC-123"}
+c, err := engine.StartCase("case-001", input, workflow.PriorityMedium)
+
+// Execute tasks
+engine.StartTask("case-001", "submit")
+engine.CompleteTask("case-001", "submit", map[string]any{"submitted": true})
+
+// Check which tasks are ready
+readyTasks := engine.GetReadyTasks()
+```
+
+### Resource Management
+
+```go
+// Define resource pools
+Resource("workers").
+    Type(workflow.ResourceTypeWorker).
+    Capacity(5).
+    Cost(50, 25).  // $50/unit, $25/hour
+    Done()
+
+// Tasks require resources
+Task("process").
+    RequireResource("workers", 2).
+    Done()
+
+// Check availability
+avail := engine.GetResourceAvailability()
+// avail["workers"] = 5 (before any tasks start)
+```
+
+### SLA Management
+
+```go
+// Workflow-level SLA
+wf.SLA(&workflow.WorkflowSLA{
+    ByPriority: map[workflow.Priority]time.Duration{
+        workflow.PriorityCritical: 1 * time.Hour,
+        workflow.PriorityHigh:     4 * time.Hour,
+        workflow.PriorityMedium:   8 * time.Hour,
+    },
+    WarningAt:  0.8,  // 80% of time elapsed
+    CriticalAt: 0.95, // 95% of time elapsed
+})
+
+// Task-level SLA
+Task("urgent").
+    TaskSLA(30*time.Minute, 0.8, 0.95, workflow.SLAActionEscalate).
+    Done()
+
+// Check for SLA violations
+alerts := engine.CheckSLAs()
+```
+
+### Conditional Execution
+
+```go
+Task("manual_review").
+    Condition(func(ctx *workflow.ExecutionContext) bool {
+        amount, _ := ctx.Variables["amount"].(float64)
+        return amount >= 10000  // Only for large amounts
+    }).
+    Done()
+```
+
+### Retry and Failure Handling
+
+```go
+Task("api_call").
+    MaxRetries(3).
+    Retry(3, 5*time.Minute).  // 3 retries, 5 min delay
+    FailureAction(workflow.FailureEscalate).
+    Done()
+```
+
+### Monitoring and Predictions
+
+```go
+import "github.com/pflow-xyz/go-pflow/workflow"
+
+// Create monitor
+config := workflow.DefaultMonitorConfig()
+monitor := workflow.NewWorkflowMonitor(engine, config)
+
+// Start monitoring
+monitor.Start()
+
+// Get predictions for a case
+pred, _ := monitor.PredictCase("case-001")
+fmt.Printf("Expected completion: %s\n", pred.ExpectedCompletion)
+fmt.Printf("Risk score: %.0f%%\n", pred.RiskScore*100)
+fmt.Printf("Bottlenecks: %v\n", pred.BottleneckTasks)
+
+// Get dashboard data
+dashboard := monitor.GetDashboardData()
+fmt.Printf("Active: %d, Completed: %d\n",
+    dashboard.ActiveCases, dashboard.CompletedCases)
+
+// What-if analysis
+whatif := workflow.NewWhatIfAnalysis(monitor)
+result := whatif.AddResource("workers", 2)
+fmt.Println(result)  // "Add 2 workers: 4h -> 2h (50% improvement)"
+```
+
+### Converting to Petri Net
+
+```go
+// Get the underlying Petri net for advanced analysis
+net := wf.ToPetriNet()
+
+// Use reachability analysis
+analyzer := reachability.NewAnalyzer(net)
+result := analyzer.Analyze()
 ```
 
 ---
