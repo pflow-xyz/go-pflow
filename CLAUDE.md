@@ -15,6 +15,8 @@ This guide helps AI assistants (Claude, etc.) understand when and how to use the
 | `reachability` | Discrete state space analysis, invariants |
 | `statemachine` | Statechart builder with Petri net backend |
 | `workflow` | Full workflow framework with task dependencies, resources, SLA |
+| `actor` | Actor model with message bus and Petri net behaviors |
+| `visualization` | SVG rendering for Petri nets, workflows, state machines |
 | `eventlog` | Parse event logs (CSV) |
 | `mining` | Process discovery (Alpha, Heuristic Miner) |
 | `monitoring` | Real-time case tracking, SLA alerts |
@@ -938,6 +940,209 @@ func (g *Game) AnalyzePosition() {
 
 ---
 
+## Actor Model Package
+
+The `actor` package provides an Actor model built on Petri nets with message passing. Actors are autonomous agents that communicate through a shared message bus.
+
+### Core Concepts
+
+- **Actor**: An autonomous agent containing one or more Petri net models
+- **Bus**: A message bus for inter-actor communication
+- **Signal**: A typed message with payload sent between actors
+- **Behavior**: A Petri net subnet that responds to signals
+- **Trigger**: Defines how a signal activates a behavior
+- **Emitter**: Defines when and how to emit signals
+
+### Building an Actor System
+
+```go
+import "github.com/pflow-xyz/go-pflow/actor"
+
+// Create a system with fluent API
+system := actor.NewSystem("my-system").
+    DefaultBus().
+    Actor("processor").
+        Name("Data Processor").
+        State("count", 0).
+        OnStart(func(ctx *actor.ActorContext) {
+            fmt.Println("Processor starting")
+        }).
+        Handle("data.in", func(ctx *actor.ActorContext, s *actor.Signal) error {
+            count := ctx.GetInt("count", 0)
+            ctx.Set("count", count+1)
+            ctx.Emit("data.out", map[string]any{"processed": true})
+            return nil
+        }).
+        Done().
+    Actor("logger").
+        Name("Logger").
+        On("data.out", func(ctx *actor.ActorContext, s *actor.Signal) error {
+            fmt.Printf("Received: %v\n", s.Payload)
+            return nil
+        }).
+        Done().
+    Start()
+```
+
+### Signals and Message Passing
+
+```go
+// Signal structure
+type Signal struct {
+    ID            string         // Unique signal ID
+    Type          string         // Signal type for routing
+    Source        string         // Actor ID that sent the signal
+    Target        string         // Optional: specific target actor
+    Payload       map[string]any // Signal data
+    Timestamp     time.Time
+    CorrelationID string         // For request-response patterns
+    ReplyTo       string         // Signal type to reply to
+}
+
+// Publish to bus
+bus.Publish(&actor.Signal{
+    Type:    "order.created",
+    Payload: map[string]any{"order_id": "123"},
+})
+
+// Publish synchronously (wait for handlers)
+err := bus.PublishSync(signal)
+
+// Subscribe with filter
+bus.SubscribeWithFilter("actor-1", "orders.*", handler, func(s *Signal) bool {
+    return s.Payload["priority"].(string) == "high"
+})
+
+// Subscribe with priority (higher = first)
+bus.SubscribeWithPriority("actor-1", "orders", handler, 10)
+```
+
+### Behaviors with Petri Nets
+
+```go
+// Create behavior with embedded Petri net
+behavior := actor.NewBehavior("order_processor").
+    Name("Order Processor").
+    WithNet(orderNet).                          // Petri net model
+    OnSignal("order.received").
+        Fire("process_order").                  // Transition to fire
+        MapTokens(func(s *actor.Signal) map[string]float64 {
+            return map[string]float64{"pending": 1}
+        }).
+        When(func(ctx *actor.ActorContext, s *actor.Signal) bool {
+            return s.Payload["valid"].(bool)
+        }).
+        Done().
+    Emit("order.processed").
+        When(func(ctx *actor.ActorContext, state map[string]float64) bool {
+            return state["completed"] >= 1
+        }).
+        WithPayload(func(ctx *actor.ActorContext, state map[string]float64) map[string]any {
+            return map[string]any{"status": "done"}
+        }).
+        Done().
+    Build()
+```
+
+### Convenience Actors
+
+```go
+// Processor: transforms signals
+processor := actor.Processor("transform", "input", "output",
+    func(ctx *actor.ActorContext, s *actor.Signal) map[string]any {
+        return map[string]any{"transformed": s.Payload["data"]}
+    })
+
+// Router: routes signals based on payload key
+router := actor.Router("router", "request", map[string]string{
+    "create": "create.handler",
+    "update": "update.handler",
+    "delete": "delete.handler",
+})
+
+// Filter: passes signals matching predicate
+filter := actor.Filter("validator", "input", "valid",
+    func(s *actor.Signal) bool {
+        return s.Payload["amount"].(float64) > 0
+    })
+
+// Splitter: broadcasts to multiple outputs
+splitter := actor.Splitter("fanout", "input", "output1", "output2", "output3")
+
+// Aggregator: collects N signals before emitting
+aggregator := actor.Aggregator("batch", "item", "batch.complete", 10)
+```
+
+### Bus Middleware
+
+```go
+// Logging middleware
+bus.Use(actor.LoggingMiddleware(log.Printf))
+
+// Filter middleware
+bus.Use(actor.FilterMiddleware(func(s *actor.Signal) bool {
+    return s.Type != "internal.*"
+}))
+
+// Transform middleware
+bus.Use(actor.TransformMiddleware(func(s *actor.Signal) *actor.Signal {
+    s.Payload["timestamp"] = time.Now()
+    return s
+}))
+
+// Deduplication middleware
+bus.Use(actor.DedupeMiddleware(5 * time.Second))
+```
+
+### ActorContext Methods
+
+```go
+func handler(ctx *actor.ActorContext, s *actor.Signal) error {
+    // State access
+    ctx.Get("key")                    // Get any value
+    ctx.Set("key", value)             // Set any value
+    ctx.GetFloat("rate", 0.5)         // Get float with default
+    ctx.GetInt("count", 0)            // Get int with default
+    ctx.GetString("name", "unknown")  // Get string with default
+
+    // Signal emission
+    ctx.Emit("signal.type", payload)           // Broadcast
+    ctx.EmitTo("target-actor", "type", payload) // Targeted
+    ctx.Reply(payload)                          // Reply to request
+
+    return nil
+}
+```
+
+### Workflow and Petri Net Actors
+
+```go
+// Create actor from workflow
+wfActor := actor.WorkflowActor("order-flow", orderWorkflow)
+
+// Create actor from Petri net with signal/transition mappings
+netActor := actor.PetriNetActor("processor", net,
+    map[string]string{  // signal -> transition
+        "start": "t_start",
+        "stop":  "t_stop",
+    },
+    map[string]string{  // transition -> signal
+        "t_complete": "done",
+    })
+```
+
+### Simulating Behaviors
+
+```go
+// Run ODE simulation on behavior's Petri net
+sol := actor.SimulateBehavior(behavior, initialState, [2]float64{0, 10}, rates)
+
+// Create engine for discrete firing
+eng := actor.RunBehaviorEngine(behavior, rates)
+```
+
+---
+
 ## State Machine Package
 
 The `statemachine` package provides a fluent API for building hierarchical state machines (statecharts) that compile to Petri nets.
@@ -1301,6 +1506,106 @@ result := analyzer.Analyze()
 
 ---
 
+## Visualization Package
+
+The `visualization` package provides SVG rendering for Petri nets, workflows, and state machines.
+
+### Petri Net Visualization
+
+```go
+import "github.com/pflow-xyz/go-pflow/visualization"
+
+// Save Petri net as SVG
+err := visualization.SaveSVG(net, "model.svg")
+
+// Render to string
+svg := visualization.RenderSVG(net)
+```
+
+### Workflow Visualization
+
+```go
+// Render workflow to SVG with default options
+svg, err := visualization.RenderWorkflowSVG(workflow, nil)
+
+// Save workflow to file
+err := visualization.SaveWorkflowSVG(workflow, "workflow.svg", nil)
+
+// Custom options
+opts := &visualization.WorkflowSVGOptions{
+    NodeWidth:    120,   // Task box width
+    NodeHeight:   50,    // Task box height
+    NodeSpacingX: 180,   // Horizontal spacing
+    NodeSpacingY: 80,    // Vertical spacing
+    Padding:      60,    // Canvas padding
+    ShowLabels:   true,  // Show task names
+    ShowTypes:    true,  // Show task type labels
+    ShowJoinSplit: true, // Show join/split indicators
+    ColorByType:  true,  // Color tasks by type
+}
+svg, err := visualization.RenderWorkflowSVG(workflow, opts)
+```
+
+Workflow SVG features:
+- **Task types** rendered with distinct colors:
+  - Manual tasks: blue
+  - Automatic tasks: purple
+  - Decision tasks: orange diamond shape
+  - Subflow tasks: green
+  - Start/End tasks: green/red
+- **Dependency types** rendered with distinct styles:
+  - Finish-to-Start (FS): solid lines
+  - Start-to-Start (SS): blue dashed
+  - Finish-to-Finish (FF): green dashed
+  - Start-to-Finish (SF): orange dashed
+- **Join/Split indicators** shown on tasks
+- **Topological layout** automatically positions tasks
+
+### State Machine Visualization
+
+```go
+// Render state machine to SVG with default options
+svg, err := visualization.RenderStateMachineSVG(chart, nil)
+
+// Save state machine to file
+err := visualization.SaveStateMachineSVG(chart, "statemachine.svg", nil)
+
+// Custom options
+opts := &visualization.StateMachineSVGOptions{
+    StateWidth:    100,  // State box width
+    StateHeight:   40,   // State box height
+    StateSpacingX: 150,  // Horizontal spacing
+    StateSpacingY: 70,   // Vertical spacing
+    RegionSpacing: 100,  // Space between regions
+    Padding:       60,   // Canvas padding
+    ShowLabels:    true, // Show state names
+    ShowEvents:    true, // Show event labels on transitions
+    ShowInitial:   true, // Show initial state markers
+    ColorByRegion: true, // Color states by region
+}
+svg, err := visualization.RenderStateMachineSVG(chart, opts)
+```
+
+State machine SVG features:
+- **Region boxes** with dashed borders
+- **Initial state markers** (filled circles with arrows)
+- **State coloring** by region (blue, purple, green, orange, pink, cyan)
+- **Transition arrows** with event labels
+- **Self-transitions** rendered as curved arcs
+- **Composite states** with nested layouts
+
+### Generating Example Visualizations
+
+```bash
+# Generate workflow and state machine SVG examples
+make run-visualization
+
+# Regenerate all SVG files across all examples
+make rebuild-all-svg
+```
+
+---
+
 ## Process Mining Quick Reference
 
 go-pflow includes a complete process mining pipeline: parse event logs, discover models, learn rates, simulate, and monitor.
@@ -1513,12 +1818,15 @@ net, rates := petri.Build().SIR(999, 1, 0).WithRates(1.0)
 
 | Problem Type | Model Pattern | Key Package | Key Insight |
 |--------------|---------------|-------------|-------------|
-| Workflows | Sequential places | `petri`, `solver` | Tokens = work items |
+| Workflows | Sequential places | `petri`, `workflow` | Tokens = work items |
+| State Machines | States + transitions | `statemachine` | Events trigger transitions |
+| Actor Systems | Message passing | `actor` | Behaviors are Petri nets |
 | Games | State + history | `hypothesis`, `cache` | Evaluate moves in parallel |
 | Constraints | Resources as tokens | `solver` | 0 tokens = constraint used |
 | Optimization | Choices as transitions | `sensitivity` | Rates = preferences |
 | Epidemics | Compartments | `solver` | Mass-action kinetics |
 | Process Mining | Event logs | `mining`, `eventlog` | Discover from logs |
 | Verification | State space | `reachability` | Deadlock/liveness analysis |
+| Visualization | SVG rendering | `visualization` | Debug and document models |
 
-**The power of this approach is unification**: the same core abstractions handle workflows, games, optimization, epidemiology, and process mining. The Petri net structure encodes the problem; the solver dynamics reveal the solution.
+**The power of this approach is unification**: the same core abstractions handle workflows, state machines, actor systems, games, optimization, epidemiology, and process mining. The Petri net structure encodes the problem; the solver dynamics reveal the solution.

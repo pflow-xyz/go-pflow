@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring rebuild-all-svg check all
+.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization rebuild-all-svg check all
 
 # Default target
 help:
@@ -19,6 +19,7 @@ help:
 	@echo "  make run-basic       - Run basic example"
 	@echo "  make run-neural      - Run neural ODE example"
 	@echo "  make run-monitoring  - Run monitoring demo"
+	@echo "  make run-visualization - Generate workflow/statemachine SVG examples"
 	@echo "  make rebuild-all-svg - Regenerate all SVG visualizations"
 
 # Build the main CLI tool
@@ -107,6 +108,8 @@ examples:
 	@go build -o bin/chess examples/chess/cmd/*.go
 	@echo "  - Knapsack example"
 	@go build -o bin/knapsack examples/knapsack/cmd/*.go
+	@echo "  - Visualization demo"
+	@go build -o bin/visualization_demo examples/visualization_demo/main.go
 	@echo "Done building examples!"
 
 # Run basic example
@@ -123,6 +126,11 @@ run-neural:
 run-monitoring:
 	@echo "Running monitoring demo..."
 	@go run examples/monitoring_demo/main.go
+
+# Run visualization demo (generates workflow and statemachine SVGs)
+run-visualization:
+	@echo "Running visualization demo..."
+	@cd examples/visualization_demo && go run main.go
 
 # Rebuild all SVG visualizations
 rebuild-all-svg:
@@ -162,6 +170,9 @@ rebuild-all-svg:
 	@echo ""
 	@echo "=== Knapsack Example ==="
 	@cd examples/knapsack/cmd && go run *.go
+	@echo ""
+	@echo "=== Visualization Demo (Workflow & StateMachine) ==="
+	@cd examples/visualization_demo && go run main.go
 	@echo ""
 	@echo "✓ All SVG files regenerated!"
 
