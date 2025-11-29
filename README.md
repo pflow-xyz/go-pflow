@@ -190,6 +190,24 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - See [MODEL_EVOLUTION.md](examples/connect4/MODEL_EVOLUTION.md)
 - **Run**: `cd examples/connect4 && go run ./cmd`
 
+### Puzzle & Constraint Satisfaction Examples
+
+**[examples/sudoku/](examples/sudoku/)** - Constraint satisfaction modeling
+- Sudoku rules as Petri net structure
+- Constraint propagation via transitions
+- ODE analysis for solution detection
+- Colored Petri nets for digit representation
+- See [ODE_ANALYSIS.md](examples/sudoku/ODE_ANALYSIS.md)
+- **Run**: `cd examples/sudoku/cmd && go run *.go`
+
+**[examples/chess/](examples/chess/)** - Classic chess problems ⭐
+- **N-Queens**: Place queens without attacks (backtracking + ODE)
+- **Knight's Tour**: Hamiltonian path with Warnsdorff heuristic
+- **N-Rooks**: Permutation matrix placement
+- ODE-based move evaluation with optimized solver parameters
+- See [examples/chess/README.md](examples/chess/README.md)
+- **Run**: `cd examples/chess/cmd && go run *.go --problem=queens`
+
 ### Visualizations & Model Analysis
 
 - **[examples/VISUALIZATIONS.md](examples/VISUALIZATIONS.md)** - Gallery of visualization examples
@@ -210,6 +228,8 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 | **tictactoe** | Game AI | Medium | Minimax, perfect play | Game theory |
 | **nim** | Game Theory | Medium | Optimal strategy, discrete states | Mathematical modeling |
 | **connect4** | Game AI | Complex | Pattern recognition, lookahead | Advanced AI techniques |
+| **sudoku** | Puzzle | Medium | Constraint satisfaction, colored nets | CSP modeling |
+| **chess** | Puzzle/AI | Complex | N-Queens, Knight's Tour, ODE heuristics | Classic algorithms ⭐ |
 
 ## Package Structure
 

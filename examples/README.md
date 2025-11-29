@@ -7,10 +7,11 @@ This directory contains example implementations demonstrating different aspects 
 | Example | Type | Complexity | Key Concepts | Visualization |
 |---------|------|------------|--------------|---------------|
 | **basic** | Workflow | Simple | Sequential processes, producer-consumer patterns | [workflow](basic/workflow_small.svg), [producer-consumer](basic/pc_small.svg) |
-| **sudoku** | Puzzle | Simple | Constraint satisfaction, ODE analysis, colored nets | [4x4](sudoku/sudoku-4x4.svg), [9x9-ode](sudoku/sudoku-9x9-ode.svg) |
+| **sudoku** | Puzzle | Simple | Constraint satisfaction, ODE analysis, colored nets | [4x4](sudoku/sudoku-4x4.svg) |
 | **tictactoe** | Game AI | Medium | Minimax, perfect play, ODE-guided decisions | [flow](tictactoe/tictactoe_flow.svg) |
 | **nim** | Game Theory | Medium | Discrete state spaces, optimal strategy, position evaluation | [10 stones](nim/nim_10.svg) |
 | **connect4** | Game AI | Complex | Pattern recognition, lookahead, multi-dimensional evaluation | [flow](connect4/connect4_flow.svg) |
+| **chess** | Classic Problems | Complex | N-Queens, Knight's Tour, ODE heuristics, backtracking | [8-queens](chess/cmd/nqueens_8_model.svg) |
 
 ## Example Details
 
@@ -321,6 +322,61 @@ go build -o connect4 ./cmd
 
 ---
 
+### 6. Chess Problems
+
+**Location**: `chess/`
+
+**Model Type**: Classic combinatorial problems with ODE-based AI
+
+**What It Demonstrates**:
+- **N-Queens**: Constraint modeling for non-attacking placement
+- **Knight's Tour**: Hamiltonian path with heuristic guidance
+- **N-Rooks**: Simpler placement (row/column constraints only)
+- **ODE Evaluation**: Move quality via Petri net simulation
+- **Backtracking**: Guaranteed solutions for N-Queens
+- **Warnsdorff's Rule**: Classic heuristic for Knight's Tour
+
+**Problems Included**:
+
+| Problem | Complexity (N=8) | Algorithm | Success Rate |
+|---------|------------------|-----------|--------------|
+| **N-Queens** | 92 solutions | Backtrack + ODE | 100% |
+| **Knight's Tour** | Hamiltonian path | ODE + Warnsdorff | ~95% |
+| **N-Rooks** | N! solutions | ODE | 100% |
+
+**Key Insights**:
+1. **Backtracking**: Guarantees solution for N-Queens (microseconds)
+2. **ODE Heuristics**: Provide good guidance without complete search
+3. **Warnsdorff's Rule**: Nearly optimal for Knight's Tour
+4. **Petri Net Modeling**: Attack constraints as inhibitor arcs
+
+**Run Example**:
+```bash
+cd chess/cmd
+
+# N-Queens with guaranteed solution
+go run *.go --problem queens --size 8 --strategy backtrack
+
+# Knight's Tour with ODE AI
+go run *.go --problem knights --size 8 --strategy ode
+
+# N-Rooks
+go run *.go --problem rooks --size 8
+
+# Verbose output
+go run *.go --problem queens --size 8 --strategy ode -v
+
+# Analyze model structure
+go run *.go --problem queens --size 8 --analyze
+
+# Benchmark strategies
+go run *.go --problem queens --size 8 --benchmark --trials 100
+```
+
+**Documentation**: See [chess/README.md](chess/README.md) for complete details.
+
+---
+
 ## Cross-Example Comparison
 
 ### Architectural Approaches
@@ -356,6 +412,7 @@ The examples use three different approaches to Petri nets:
 | **tictactoe** | Full board state (9 positions) | ODE simulation | Via Petri net | Evaluate moves |
 | **nim** | Full game state (stones) | Go code | Go code (mod 4) | Visualize only |
 | **connect4** | Full board state (42 positions) | Go code | Go code (69 windows) | Visualize only |
+| **chess** | Constraint modeling | ODE + backtracking | Via Petri net constraints | Evaluate moves |
 
 **Key Insights**:
 - **Tic-tac-toe**: Uses Petri net + ODE simulation for AI (true Petri net AI)
