@@ -131,6 +131,192 @@ type SimEvent struct {
 	Properties map[string]any
 }
 
+// SystemHealth represents the overall health state of the coffee shop
+type SystemHealth string
+
+const (
+	HealthHealthy         SystemHealth = "healthy"          // Everything running smoothly
+	HealthBusy            SystemHealth = "busy"             // High traffic but managing
+	HealthStressed        SystemHealth = "stressed"         // Falling behind, queues growing
+	HealthSLACrisis       SystemHealth = "sla_crisis"       // Significant SLA breaches
+	HealthInventoryCrisis SystemHealth = "inventory_crisis" // Running out of ingredients
+	HealthCritical        SystemHealth = "critical"         // Multiple crises or menu empty
+)
+
+// HealthMetrics tracks rolling metrics for health classification
+type HealthMetrics struct {
+	// Rolling window metrics (last N minutes of simulated time)
+	RecentSLABreaches    int     // SLA breaches in window
+	RecentCompletions    int     // Completions in window
+	RecentTurnedAway     int     // Customers turned away in window
+	SLABreachRate        float64 // Breach rate (0.0 - 1.0)
+	QueueTrend           float64 // Positive = growing, negative = shrinking
+	InventoryHealthScore float64 // 1.0 = full, 0.0 = empty
+
+	// Current snapshot
+	CurrentQueueLength int
+	CurrentHealth      SystemHealth
+	HealthChangedAt    time.Time
+	PreviousHealth     SystemHealth
+
+	// History for trend analysis
+	queueHistory []int // Last N queue lengths
+	windowSize   int   // Size of rolling window
+}
+
+// NewHealthMetrics creates a new health metrics tracker
+func NewHealthMetrics() *HealthMetrics {
+	return &HealthMetrics{
+		windowSize:     5, // 5-minute rolling window
+		queueHistory:   make([]int, 0, 10),
+		CurrentHealth:  HealthHealthy,
+		PreviousHealth: HealthHealthy,
+	}
+}
+
+// Update updates health metrics based on current state
+func (h *HealthMetrics) Update(state *SimulatorState, config *SimulatorConfig) {
+	// Update queue history
+	h.queueHistory = append(h.queueHistory, state.QueueLength)
+	if len(h.queueHistory) > 10 {
+		h.queueHistory = h.queueHistory[1:]
+	}
+	h.CurrentQueueLength = state.QueueLength
+
+	// Calculate queue trend (positive = growing)
+	if len(h.queueHistory) >= 3 {
+		recent := h.queueHistory[len(h.queueHistory)-3:]
+		h.QueueTrend = float64(recent[2]-recent[0]) / 3.0
+	}
+
+	// Calculate SLA breach rate
+	if state.CompletedOrders > 0 {
+		h.SLABreachRate = float64(state.SLABreaches) / float64(state.CompletedOrders)
+	}
+
+	// Calculate inventory health (minimum across key ingredients)
+	h.InventoryHealthScore = 1.0
+	if config.EnableInventoryTracking && len(state.Inventory) > 0 {
+		keyIngredients := map[string]float64{
+			"coffee_beans": MaxCoffeeBeans,
+			"milk":         MaxMilk,
+			"cups":         MaxCups,
+		}
+		minScore := 1.0
+		for ing, max := range keyIngredients {
+			if current, ok := state.Inventory[ing]; ok {
+				score := current / max
+				if score < minScore {
+					minScore = score
+				}
+			}
+		}
+		h.InventoryHealthScore = minScore
+	}
+
+	// Track turned away customers
+	h.RecentTurnedAway = state.CustomersTurnedAway
+
+	// Classify health state
+	h.PreviousHealth = h.CurrentHealth
+	h.CurrentHealth = h.classifyHealth(state)
+
+	if h.CurrentHealth != h.PreviousHealth {
+		h.HealthChangedAt = state.CurrentSimTime
+	}
+}
+
+// classifyHealth determines the current health state based on metrics
+func (h *HealthMetrics) classifyHealth(state *SimulatorState) SystemHealth {
+	// Critical: Menu empty or turned away customers
+	if state.MenuEmpty || h.RecentTurnedAway > 0 {
+		return HealthCritical
+	}
+
+	// Inventory crisis: Any ingredient below 10%
+	if h.InventoryHealthScore < 0.10 {
+		return HealthInventoryCrisis
+	}
+
+	// SLA crisis: More than 30% breach rate
+	if h.SLABreachRate > 0.30 {
+		return HealthSLACrisis
+	}
+
+	// Stressed: Queue > 10 or growing fast, or 15-30% breach rate
+	if h.CurrentQueueLength > 10 || h.QueueTrend > 2.0 || h.SLABreachRate > 0.15 {
+		return HealthStressed
+	}
+
+	// Busy: Queue > 5 or moderate growth, or 5-15% breach rate
+	if h.CurrentQueueLength > 5 || h.QueueTrend > 1.0 || h.SLABreachRate > 0.05 {
+		return HealthBusy
+	}
+
+	// Healthy: Everything under control
+	return HealthHealthy
+}
+
+// StatusEmoji returns an emoji representing the health state
+func (h SystemHealth) StatusEmoji() string {
+	switch h {
+	case HealthHealthy:
+		return "💚"
+	case HealthBusy:
+		return "💛"
+	case HealthStressed:
+		return "🟠"
+	case HealthSLACrisis:
+		return "🔴"
+	case HealthInventoryCrisis:
+		return "📦"
+	case HealthCritical:
+		return "🚨"
+	default:
+		return "❓"
+	}
+}
+
+// Description returns a human-readable description of the health state
+func (h SystemHealth) Description() string {
+	switch h {
+	case HealthHealthy:
+		return "Operating smoothly"
+	case HealthBusy:
+		return "High traffic, managing well"
+	case HealthStressed:
+		return "Falling behind, queues growing"
+	case HealthSLACrisis:
+		return "SLA targets being missed"
+	case HealthInventoryCrisis:
+		return "Running low on ingredients"
+	case HealthCritical:
+		return "Critical - immediate action needed"
+	default:
+		return "Unknown state"
+	}
+}
+
+// MatchesConfig returns which config best matches this health state
+func (h SystemHealth) MatchesConfig() string {
+	switch h {
+	case HealthHealthy:
+		return "happy"
+	case HealthBusy:
+		return "rush"
+	case HealthStressed:
+		return "stress"
+	case HealthSLACrisis:
+		return "sla"
+	case HealthInventoryCrisis:
+		return "inventory"
+	case HealthCritical:
+		return "inventory (menu empty)"
+	default:
+		return "quick"
+	}
+}
+
 // DefaultSimulatorConfig returns a reasonable default configuration
 func DefaultSimulatorConfig() *SimulatorConfig {
 	return &SimulatorConfig{
@@ -181,6 +367,9 @@ type Simulator struct {
 	// Order queue with timestamps for SLA tracking
 	orderQueue []*pendingOrder
 
+	// Health monitoring
+	health *HealthMetrics
+
 	// Control
 	mu       sync.RWMutex
 	running  bool
@@ -213,6 +402,7 @@ func NewSimulator(config *SimulatorConfig) *Simulator {
 		customerMachines: make(map[string]*statemachine.Machine),
 		orderQueue:       make([]*pendingOrder, 0),
 		eventsCh:         make(chan *SimEvent, 1000),
+		health:           NewHealthMetrics(),
 	}
 }
 
@@ -338,13 +528,28 @@ func (s *Simulator) tick() {
 	// Process orders (simulate barista work)
 	s.processOrders()
 
+	// Update health metrics
+	s.health.Update(s.state, s.config)
+
+	// Log health state changes
+	if s.config.VerboseLogging && s.health.CurrentHealth != s.health.PreviousHealth {
+		fmt.Printf("  %s HEALTH: %s → %s %s (%s)\n",
+			s.health.CurrentHealth.StatusEmoji(),
+			s.health.PreviousHealth,
+			s.health.CurrentHealth,
+			s.health.CurrentHealth.StatusEmoji(),
+			s.health.CurrentHealth.Description())
+	}
+
 	// Log progress periodically
 	if s.config.VerboseLogging && s.state.CurrentSimTime.Minute() == 0 {
-		fmt.Printf("  %s - Customers: %d, Orders: %d, Queue: %d\n",
+		fmt.Printf("  %s %s - Customers: %d, Orders: %d, Queue: %d, SLA: %.0f%%\n",
 			s.state.CurrentSimTime.Format("15:04"),
+			s.health.CurrentHealth.StatusEmoji(),
 			s.state.TotalCustomers,
 			s.state.TotalOrders,
-			s.state.QueueLength)
+			s.state.QueueLength,
+			(1-s.health.SLABreachRate)*100)
 	}
 }
 
@@ -747,6 +952,8 @@ func (s *Simulator) generateResult(stopReason string) *SimulatorResult {
 		StopReason:    stopReason,
 		EventLog:      s.buildEventLog(),
 		PendingOrders: len(s.orderQueue),
+		FinalHealth:   s.health.CurrentHealth,
+		HealthMetrics: s.health,
 	}
 }
 
@@ -773,6 +980,8 @@ type SimulatorResult struct {
 	StopReason    string
 	EventLog      *eventlog.EventLog
 	PendingOrders int // Orders still in queue when simulation ended
+	FinalHealth   SystemHealth
+	HealthMetrics *HealthMetrics
 }
 
 // PrintSummary prints a summary of the simulation
@@ -786,6 +995,19 @@ func (r *SimulatorResult) PrintSummary() {
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Stop Reason: %s", truncate(r.StopReason, 50)))
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Real Duration: %s", r.State.ElapsedReal.Round(time.Second)))
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Simulated Duration: %s", r.State.ElapsedSimulated))
+	fmt.Printf("╠%s╣\n", border)
+
+	// System health section
+	fmt.Printf("║  %-64s║\n", "SYSTEM HEALTH:")
+	fmt.Printf("║    %-62s║\n", fmt.Sprintf("%s Final State: %s", r.FinalHealth.StatusEmoji(), r.FinalHealth))
+	fmt.Printf("║    %-62s║\n", fmt.Sprintf("   %s", r.FinalHealth.Description()))
+	if r.HealthMetrics != nil {
+		fmt.Printf("║    %-62s║\n", fmt.Sprintf("   Matches config: %s", r.FinalHealth.MatchesConfig()))
+		fmt.Printf("║    %-62s║\n", fmt.Sprintf("   SLA compliance: %.1f%%", (1-r.HealthMetrics.SLABreachRate)*100))
+		if r.HealthMetrics.InventoryHealthScore < 1.0 {
+			fmt.Printf("║    %-62s║\n", fmt.Sprintf("   Inventory health: %.0f%%", r.HealthMetrics.InventoryHealthScore*100))
+		}
+	}
 	fmt.Printf("╠%s╣\n", border)
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Total Customers: %d", r.State.TotalCustomers))
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Total Orders: %d", r.State.TotalOrders))
