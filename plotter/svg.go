@@ -158,8 +158,12 @@ func (p *SVGPlotter) Render() string {
 	plotID := "plot_" + strconv.FormatInt(int64(math.Round(1000000*math.Abs(xmin+xmax+ymin+ymax))), 10)
 
 	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" style="background:white;" id="%s">`,
+	sb.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" id="%s">`,
 		int(p.Width), int(p.Height), plotID))
+
+	// Background rectangle for visibility on dark themes
+	sb.WriteString(fmt.Sprintf(`<rect width="%d" height="%d" fill="#f8f9fa" rx="8"/>`,
+		int(p.Width), int(p.Height)))
 
 	// Title
 	if p.Title != "" {

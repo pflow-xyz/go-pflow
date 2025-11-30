@@ -73,6 +73,11 @@ func RenderWorkflowSVG(wf *workflow.Workflow, opts *WorkflowSVGOptions) (string,
 		minX, minY, width, height, width, height))
 	buf.WriteString("\n")
 
+	// Background rectangle for visibility on dark themes
+	buf.WriteString(fmt.Sprintf(`<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="#f8f9fa" rx="8"/>`,
+		minX, minY, width, height))
+	buf.WriteString("\n")
+
 	// Styles
 	buf.WriteString(`<defs>`)
 	buf.WriteString(`<style>`)

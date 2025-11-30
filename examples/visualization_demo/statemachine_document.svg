@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-320.0 -80.0 640.0 440.0" width="640" height="440">
+<rect x="-320.0" y="-80.0" width="640.0" height="440.0" fill="#f8f9fa" rx="8"/>
 <defs><style>.state { stroke-width: 2; rx: 8; }.state-initial { stroke-width: 3; }.state-composite { stroke-dasharray: 5,3; }.transition { stroke: #666; stroke-width: 1.5; fill: none; }.transition-self { stroke: #999; }.arrowhead { fill: #666; }.initial-marker { fill: #333; }.state-label { font-family: system-ui, Arial; font-size: 11px; fill: #333; text-anchor: middle; dominant-baseline: middle; }.event-label { font-family: system-ui, Arial; font-size: 9px; fill: #666; text-anchor: middle; }.region-label { font-family: system-ui, Arial; font-size: 10px; fill: #999; font-style: italic; }.region-box { fill: none; stroke: #ddd; stroke-width: 1; stroke-dasharray: 3,3; }.chart-title { font-family: system-ui, Arial; font-size: 14px; font-weight: bold; fill: #333; }</style><marker id="sm-arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="arrowhead"/></marker></defs>
 <text x="-310.0" y="-60.0" class="chart-title">Document Lifecycle</text>
 <rect x="-60.0" y="-30.0" width="120.0" height="340.0" class="region-box"/>
@@ -10,8 +11,6 @@
 <path d="M 0.0 190.0 C -160.0 141.0 -160.0 141.0 0.0 92.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-165.0" y="165.0" class="event-label" text-anchor="end">archive</text>
 <path d="M -20.0 -20.0 C -20.0 -45.0 20.0 -45.0 15.0 -20.0" class="transition transition-self" marker-end="url(#sm-arrowhead)"/>
 <text x="0.0" y="-50.0" class="event-label">edit</text>
-<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="70.0" class="state-label">archived</text>
 <rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
 <text x="0.0" y="0.0" class="state-label">draft</text>
 <rect x="-50.0" y="260.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
@@ -20,6 +19,8 @@
 <text x="0.0" y="140.0" class="state-label">approved</text>
 <rect x="-50.0" y="190.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="210.0" class="state-label">published</text>
+<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="70.0" class="state-label">archived</text>
 <circle cx="-70.0" cy="0.0" r="6" class="initial-marker"/>
 <line x1="-62.0" y1="0.0" x2="-52.0" y2="0.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
 </svg>

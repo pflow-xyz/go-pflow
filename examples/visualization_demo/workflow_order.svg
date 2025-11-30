@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-120.0 -85.0 1140.0 170.0" width="1140" height="170">
+<rect x="-120.0" y="-85.0" width="1140.0" height="170.0" fill="#f8f9fa" rx="8"/>
 <defs><style>.task { stroke-width: 2; }.task-manual { fill: #e3f2fd; stroke: #1976d2; }.task-automatic { fill: #f3e5f5; stroke: #7b1fa2; }.task-decision { fill: #fff3e0; stroke: #f57c00; }.task-subflow { fill: #e8f5e9; stroke: #388e3c; }.task-default { fill: #fafafa; stroke: #666; }.task-start { fill: #c8e6c9; stroke: #2e7d32; }.task-end { fill: #ffcdd2; stroke: #c62828; }.dependency { stroke: #666; stroke-width: 1.5; fill: none; }.dependency-fs { stroke: #666; }.dependency-ss { stroke: #2196f3; stroke-dasharray: 5,3; }.dependency-ff { stroke: #4caf50; stroke-dasharray: 5,3; }.dependency-sf { stroke: #ff9800; stroke-dasharray: 5,3; }.arrowhead { fill: #666; }.task-label { font-family: system-ui, Arial; font-size: 12px; fill: #333; text-anchor: middle; dominant-baseline: middle; }.task-type { font-family: system-ui, Arial; font-size: 9px; fill: #666; text-anchor: middle; }.join-split { font-family: system-ui, Arial; font-size: 8px; fill: #999; text-anchor: middle; }.workflow-title { font-family: system-ui, Arial; font-size: 14px; font-weight: bold; fill: #333; }</style><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="arrowhead"/></marker></defs>
 <text x="-110.0" y="-65.0" class="workflow-title">Order Fulfillment</text>
 <line x1="60.0" y1="0.0" x2="110.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
@@ -6,12 +7,6 @@
 <line x1="420.0" y1="0.0" x2="470.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <line x1="600.0" y1="0.0" x2="650.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <line x1="780.0" y1="0.0" x2="830.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
-<rect x="-60.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-start"/>
-<text x="0.0" y="0.0" class="task-label">Receive Order</text>
-<text x="0.0" y="35.0" class="task-type">automatic</text>
-<rect x="120.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-automatic"/>
-<text x="180.0" y="0.0" class="task-label">Validate Order</text>
-<text x="180.0" y="35.0" class="task-type">automatic</text>
 <rect x="300.0" y="-25.0" width="120.0" height="50.0" rx="0.0" class="task task-subflow"/>
 <text x="360.0" y="0.0" class="task-label">Process Payment</text>
 <text x="360.0" y="35.0" class="task-type">subflow</text>
@@ -24,4 +19,10 @@
 <rect x="840.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-end"/>
 <text x="900.0" y="0.0" class="task-label">Order Complete</text>
 <text x="900.0" y="35.0" class="task-type">automatic</text>
+<rect x="-60.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-start"/>
+<text x="0.0" y="0.0" class="task-label">Receive Order</text>
+<text x="0.0" y="35.0" class="task-type">automatic</text>
+<rect x="120.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-automatic"/>
+<text x="180.0" y="0.0" class="task-label">Validate Order</text>
+<text x="180.0" y="35.0" class="task-type">automatic</text>
 </svg>
