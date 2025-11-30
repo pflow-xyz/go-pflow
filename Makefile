@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy run-karate run-karate-server run-karate-cli run-doom run-doom-server rebuild-all-svg check all kill-servers
+.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy run-karate run-karate-server run-karate-cli run-doom run-doom-server run-catacombs run-catacombs-server rebuild-all-svg check all kill-servers
 
 # Default target
 help:
@@ -30,6 +30,8 @@ help:
 	@echo "  make run-karate-cli   - Play karate interactively in terminal"
 	@echo "  make run-doom         - Run DOOM game (alias for run-doom-server)"
 	@echo "  make run-doom-server  - Start DOOM game server (http://localhost:8081)"
+	@echo "  make run-catacombs    - Run Catacombs roguelike (alias for run-catacombs-server)"
+	@echo "  make run-catacombs-server - Start Catacombs game server (http://localhost:8082)"
 	@echo "  make rebuild-all-svg - Regenerate all SVG visualizations"
 	@echo "  make kill-servers    - Kill any running go-pflow servers"
 
@@ -125,6 +127,8 @@ examples:
 	@go build -o bin/karate-cli examples/karate/cmd/cli/*.go
 	@echo "  - DOOM game server"
 	@go build -o bin/doom examples/doom/cmd/*.go
+	@echo "  - Catacombs roguelike server"
+	@go build -o bin/catacombs examples/catacombs/cmd/*.go
 	@echo "  - Visualization demo"
 	@go build -o bin/visualization_demo examples/visualization_demo/main.go
 	@echo "Done building examples!"
@@ -201,6 +205,15 @@ run-doom-server:
 	@echo "Open http://localhost:8081 in your browser"
 	@echo "Supports NES controller via USB!"
 	@go run ./examples/doom/cmd -port 8081
+
+# Run Catacombs roguelike server
+run-catacombs: run-catacombs-server
+
+run-catacombs-server:
+	@echo "Starting Catacombs of Pflow server..."
+	@echo "Open http://localhost:8082 in your browser"
+	@echo "Supports NES controller via USB!"
+	@go run ./examples/catacombs/cmd -port 8082
 
 # Rebuild all SVG visualizations
 rebuild-all-svg:

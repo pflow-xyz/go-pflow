@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catacombs of Pflow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a2e;
+            color: #eee;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+        }
+        h1 {
+            color: #e94560;
+            text-shadow: 0 0 10px #e94560;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        .game-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+        }
+        .main-view {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .side-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 280px;
+        }
+        .panel {
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .panel h2 {
+            color: #e94560;
+            font-size: 14px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #0f3460;
+            padding-bottom: 4px;
+        }
+        #view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        #view-toggle button {
+            flex: 1;
+            padding: 8px;
+            background: #0f3460;
+            border: none;
+            color: #eee;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        #view-toggle button.active {
+            background: #e94560;
+        }
+        #map-canvas {
+            width: 100%;
+            background: #000;
+            border-radius: 4px;
+            image-rendering: pixelated;
+        }
+        #ascii-view {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.2;
+            white-space: pre;
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+            max-height: 500px;
+        }
+        #raycast-canvas {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 4px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+        .stat-label { color: #888; }
+        .stat-value { color: #4ecca3; }
+        .health-bar, .mana-bar {
+            height: 16px;
+            background: #333;
+            border-radius: 3px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        .health-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            transition: width 0.3s;
+        }
+        .mana-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0f3460, #4ecca3);
+            transition: width 0.3s;
+        }
+        #message-log {
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+        #message-log .msg {
+            padding: 2px 0;
+            border-bottom: 1px solid #0f3460;
+        }
+        #message-log .msg:last-child {
+            color: #4ecca3;
+            font-weight: bold;
+        }
+        #inventory-list, #quest-list {
+            font-size: 11px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .inv-item, .quest-item {
+            padding: 4px;
+            margin: 2px 0;
+            background: #0f3460;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .inv-item:hover {
+            background: #1a4a7e;
+        }
+        #dialogue-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #16213e;
+            border: 3px solid #e94560;
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 500px;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
+        }
+        #dialogue-speaker {
+            color: #e94560;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #dialogue-text {
+            color: #eee;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        #dialogue-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .dialogue-choice {
+            padding: 10px;
+            background: #0f3460;
+            border: none;
+            color: #eee;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: left;
+            font-family: inherit;
+        }
+        .dialogue-choice:hover {
+            background: #e94560;
+        }
+        #controls-help {
+            font-size: 10px;
+            color: #666;
+        }
+        #controls-help kbd {
+            background: #0f3460;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin: 0 2px;
+        }
+        #gamepad-status {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        #gamepad-status.connected {
+            background: #4ecca3;
+            color: #000;
+        }
+        #gamepad-status.disconnected {
+            background: #e94560;
+            color: #fff;
+        }
+        .game-over-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        .game-over-box {
+            text-align: center;
+            padding: 40px;
+        }
+        .game-over-box h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .game-over-box.victory h2 {
+            color: #4ecca3;
+        }
+        .game-over-box.defeat h2 {
+            color: #e94560;
+        }
+        .game-over-box button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #e94560;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        /* Tile colors for ASCII view */
+        .tile-wall { color: #666; }
+        .tile-floor { color: #444; }
+        .tile-door { color: #8b4513; }
+        .tile-locked { color: #ff0000; }
+        .tile-stairs { color: #ffd700; }
+        .tile-water { color: #00bfff; }
+        .tile-lava { color: #ff4500; }
+        .tile-chest { color: #ffd700; }
+        .tile-altar { color: #9370db; }
+        .entity-player { color: #00ff00; font-weight: bold; }
+        .entity-enemy { color: #ff0000; }
+        .entity-npc { color: #00ffff; }
+        .entity-item { color: #ffff00; }
+    </style>
+</head>
+<body>
+    <h1>Catacombs of Pflow</h1>
+
+    <div class="game-container">
+        <div class="main-view">
+            <div id="view-toggle" class="panel">
+                <button id="btn-ascii" class="active">ASCII View</button>
+                <button id="btn-raycast">3D View</button>
+            </div>
+
+            <div class="panel" id="map-panel">
+                <h2>Dungeon Level <span id="level-num">1</span></h2>
+                <div id="ascii-view"></div>
+                <canvas id="raycast-canvas" style="display:none;"></canvas>
+            </div>
+
+            <div class="panel" id="message-panel">
+                <h2>Messages</h2>
+                <div id="message-log"></div>
+            </div>
+        </div>
+
+        <div class="side-panel">
+            <div class="panel" id="stats-panel">
+                <h2>Character</h2>
+                <div class="stat-row">
+                    <span class="stat-label">Health</span>
+                    <span class="stat-value" id="hp-text">100/100</span>
+                </div>
+                <div class="health-bar"><div class="fill" id="hp-bar" style="width:100%"></div></div>
+
+                <div class="stat-row">
+                    <span class="stat-label">Mana</span>
+                    <span class="stat-value" id="mp-text">50/50</span>
+                </div>
+                <div class="mana-bar"><div class="fill" id="mp-bar" style="width:100%"></div></div>
+
+                <div class="stat-row">
+                    <span class="stat-label">Gold</span>
+                    <span class="stat-value" id="gold-val">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">XP</span>
+                    <span class="stat-value" id="xp-val">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Level</span>
+                    <span class="stat-value" id="level-val">1</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Attack</span>
+                    <span class="stat-value" id="atk-val">10</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Defense</span>
+                    <span class="stat-value" id="def-val">5</span>
+                </div>
+            </div>
+
+            <div class="panel" id="inventory-panel">
+                <h2>Inventory</h2>
+                <div id="inventory-list"></div>
+            </div>
+
+            <div class="panel" id="quests-panel">
+                <h2>Quests</h2>
+                <div id="quest-list"></div>
+            </div>
+
+            <div class="panel" id="controls-panel">
+                <h2>Controls</h2>
+                <div id="controls-help-ascii">
+                    <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>Arrows</kbd> - Move</div>
+                    <div><kbd>Space</kbd> - Attack</div>
+                    <div><kbd>E</kbd> - Interact/Talk</div>
+                    <div><kbd>X</kbd> - Look mode (examine tiles)</div>
+                    <div><kbd>.</kbd> - Wait</div>
+                    <div><kbd>&gt;</kbd> - Descend  <kbd>&lt;</kbd> - Ascend</div>
+                    <div><kbd>1-9</kbd> - Use inventory</div>
+                </div>
+                <div id="look-info" style="display:none; margin-top:10px; padding:8px; background:#0f3460; border-radius:4px;">
+                    <div style="color:#e94560; font-weight:bold;">LOOK MODE</div>
+                    <div id="look-cursor-pos" style="color:#888;"></div>
+                    <div id="look-description" style="color:#4ecca3; margin-top:4px;"></div>
+                    <div style="color:#666; font-size:9px; margin-top:4px;">Press X or Escape to exit</div>
+                </div>
+                <div id="controls-help-3d" style="display:none;">
+                    <div><kbd>W</kbd>/<kbd>S</kbd> - Forward/Back</div>
+                    <div><kbd>A</kbd>/<kbd>D</kbd> - Turn Left/Right</div>
+                    <div><kbd>Q</kbd>/<kbd>E</kbd> - Strafe</div>
+                    <div><kbd>Space</kbd> - Attack  <kbd>F</kbd> - Talk</div>
+                    <div><kbd>&gt;</kbd> - Descend  <kbd>&lt;</kbd> - Ascend</div>
+                    <div><kbd>1-9</kbd> - Use inventory</div>
+                    <div id="facing-direction" style="color:#4ecca3;margin-top:5px;">Facing: North</div>
+                </div>
+                <div id="gamepad-status" class="disconnected">Gamepad: Not Connected</div>
+                <div id="gamepad-debug" style="font-size:9px;color:#666;margin-top:5px;display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dialogue-panel">
+        <div id="dialogue-speaker"></div>
+        <div id="dialogue-text"></div>
+        <div id="dialogue-choices"></div>
+    </div>
+
+    <div class="game-over-overlay" id="game-over-overlay">
+        <div class="game-over-box" id="game-over-box">
+            <h2 id="game-over-title">GAME OVER</h2>
+            <p id="game-over-text"></p>
+            <button onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        let ws = null;
+        let gameState = null;
+        let currentView = 'ascii';
+
+        // Raycast rendering state
+        let raycastCanvas, raycastCtx;
+
+        // POV camera state (client-side for 3D view)
+        // 0 = East (right), PI/2 = South (down), PI = West (left), 3PI/2 = North (up)
+        let playerAngle = Math.PI * 3 / 2; // Start facing North (up on the map)
+        const TURN_SPEED = Math.PI / 4; // 45 degrees per turn
+        const FOV = 0.66; // Field of view (camera plane magnitude)
+
+        // Look mode state (for examining the map)
+        let lookMode = false;
+        let lookCursor = { x: 0, y: 0 };
+
+        // Tile colors for rendering
+        const TILE_COLORS = {
+            0: '#1a1a1a',  // void
+            1: '#3a3a3a',  // floor
+            2: '#666666',  // wall
+            3: '#8b4513',  // door
+            4: '#ff4444',  // locked door
+            5: '#ffd700',  // stairs down
+            6: '#ffd700',  // stairs up
+            7: '#00bfff',  // water
+            8: '#ff4500',  // lava
+            9: '#ffd700',  // chest
+            10: '#9370db'  // altar
+        };
+
+        // ASCII characters for tiles
+        const TILE_CHARS = {
+            0: ' ',   // void
+            1: '.',   // floor
+            2: '#',   // wall
+            3: '+',   // door
+            4: 'L',   // locked door
+            5: '>',   // stairs down
+            6: '<',   // stairs up
+            7: '~',   // water
+            8: '!',   // lava
+            9: '$',   // chest
+            10: '_'   // altar
+        };
+
+        const TILE_CLASSES = {
+            0: '',
+            1: 'tile-floor',
+            2: 'tile-wall',
+            3: 'tile-door',
+            4: 'tile-locked',
+            5: 'tile-stairs',
+            6: 'tile-stairs',
+            7: 'tile-water',
+            8: 'tile-lava',
+            9: 'tile-chest',
+            10: 'tile-altar'
+        };
+
+        // Descriptions for look mode
+        const TILE_DESCRIPTIONS = {
+            0: 'Void - nothing but darkness',
+            1: 'Stone floor - you can walk here',
+            2: 'Stone wall - solid and impassable',
+            3: 'Wooden door - press E to open',
+            4: 'Locked door - requires a key',
+            5: 'Stairs down - press > to descend',
+            6: 'Stairs up - press < to ascend',
+            7: 'Shallow water - slows movement',
+            8: 'Lava - dangerous! Avoid!',
+            9: 'Treasure chest - contains loot',
+            10: 'Ancient altar - mysterious power'
+        };
+
+        const ENEMY_DESCRIPTIONS = {
+            0: 'Skeleton - undead warrior, weak to blunt weapons',
+            1: 'Zombie - slow but relentless undead',
+            2: 'Ghost - ethereal spirit, hard to hit',
+            3: 'Spider - fast and venomous',
+            4: 'Bat - flying nuisance, easy to kill',
+            5: 'Rat - common dungeon vermin',
+            6: 'Orc - strong green-skinned brute',
+            7: 'Troll - regenerates health, hit hard!',
+            8: 'Lich - powerful undead sorcerer'
+        };
+
+        const NPC_DESCRIPTIONS = {
+            0: 'Merchant - trades goods for gold',
+            1: 'Healer - can restore your health',
+            2: 'Quest Giver - has tasks for adventurers',
+            3: 'Wanderer - a fellow explorer',
+            4: 'Guard - protects this area',
+            5: 'Sage - keeper of ancient knowledge'
+        };
+
+        // NES Gamepad mappings
+        // Standard mapping uses buttons 12-15 for D-pad
+        // Some controllers use axes instead (axis 0 for left/right, axis 1 for up/down)
+        const NES_BUTTONS = {
+            A: 0, B: 1, SELECT: 8, START: 9,
+            DPAD_UP: 12, DPAD_DOWN: 13, DPAD_LEFT: 14, DPAD_RIGHT: 15
+        };
+
+        const BUTTON_ACTION_MAP = {
+            [NES_BUTTONS.A]: 'attack',
+            [NES_BUTTONS.B]: 'interact',
+            [NES_BUTTONS.START]: 'wait',
+            [NES_BUTTONS.DPAD_UP]: 'move_up',
+            [NES_BUTTONS.DPAD_DOWN]: 'move_down',
+            [NES_BUTTONS.DPAD_LEFT]: 'move_left',
+            [NES_BUTTONS.DPAD_RIGHT]: 'move_right'
+        };
+
+        let gamepadConnected = false;
+        let lastButtonStates = {};
+        let lastAxisStates = { up: false, down: false, left: false, right: false };
+        const AXIS_THRESHOLD = 0.5; // How far axis must be pushed to register
+
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                console.log('Connected to server');
+                ws.send(JSON.stringify({ type: 'join', timestamp: Date.now() }));
+            };
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                handleMessage(msg);
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from server');
+                setTimeout(connect, 2000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function handleMessage(msg) {
+            switch (msg.type) {
+                case 'game_state':
+                    gameState = msg.payload.state;
+                    updateDisplay();
+                    break;
+                case 'error':
+                    console.error('Server error:', msg.payload);
+                    break;
+            }
+        }
+
+        function updateDisplay() {
+            if (!gameState) return;
+
+            // Update level
+            document.getElementById('level-num').textContent = gameState.level;
+
+            // Update stats
+            const p = gameState.player;
+            document.getElementById('hp-text').textContent = `${p.health}/${p.max_health}`;
+            document.getElementById('hp-bar').style.width = `${(p.health / p.max_health) * 100}%`;
+            document.getElementById('mp-text').textContent = `${p.mana}/${p.max_mana}`;
+            document.getElementById('mp-bar').style.width = `${(p.mana / p.max_mana) * 100}%`;
+            document.getElementById('gold-val').textContent = p.gold;
+            document.getElementById('xp-val').textContent = p.xp;
+            document.getElementById('level-val').textContent = p.level;
+            document.getElementById('atk-val').textContent = p.attack;
+            document.getElementById('def-val').textContent = p.defense;
+
+            // Update inventory
+            const invList = document.getElementById('inventory-list');
+            invList.innerHTML = '';
+            if (p.inventory && p.inventory.length > 0) {
+                p.inventory.forEach((item, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'inv-item';
+                    div.textContent = `${idx + 1}. ${item.Name}`;
+                    div.onclick = () => useItem(idx);
+                    invList.appendChild(div);
+                });
+            } else {
+                invList.innerHTML = '<div style="color:#666">Empty</div>';
+            }
+
+            // Update quests
+            const questList = document.getElementById('quest-list');
+            questList.innerHTML = '';
+            if (p.active_quests && p.active_quests.length > 0) {
+                p.active_quests.forEach(q => {
+                    const div = document.createElement('div');
+                    div.className = 'quest-item';
+                    div.textContent = q;
+                    questList.appendChild(div);
+                });
+            } else {
+                questList.innerHTML = '<div style="color:#666">No active quests</div>';
+            }
+
+            // Update messages
+            const msgLog = document.getElementById('message-log');
+            msgLog.innerHTML = '';
+            const msgs = gameState.message_log || [];
+            msgs.slice(-10).forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'msg';
+                div.textContent = m;
+                msgLog.appendChild(div);
+            });
+            msgLog.scrollTop = msgLog.scrollHeight;
+
+            // Update map view
+            if (currentView === 'ascii') {
+                renderASCII();
+            } else {
+                renderRaycast();
+            }
+
+            // Handle dialogue
+            if (gameState.in_dialogue && gameState.dialogue_data) {
+                showDialogue(gameState.dialogue_data);
+            } else {
+                hideDialogue();
+            }
+
+            // Handle game over
+            if (gameState.game_over) {
+                showGameOver(gameState.victory);
+            }
+        }
+
+        function renderASCII() {
+            const view = document.getElementById('ascii-view');
+            let html = '';
+
+            const tiles = gameState.tiles;
+            const visible = gameState.visible_tiles || [];
+            const enemies = gameState.enemies || [];
+            const npcs = gameState.npcs || [];
+            const items = gameState.items || [];
+            const player = gameState.player;
+
+            for (let y = 0; y < gameState.map_height; y++) {
+                for (let x = 0; x < gameState.map_width; x++) {
+                    // Check if this is the look cursor position
+                    const isLookCursor = lookMode && x === lookCursor.x && y === lookCursor.y;
+
+                    // Check visibility
+                    if (!visible[y] || !visible[y][x]) {
+                        if (isLookCursor) {
+                            html += '<span style="background:#444;color:#ff0;">?</span>';
+                        } else {
+                            html += ' ';
+                        }
+                        continue;
+                    }
+
+                    // Determine the character and class for this position
+                    let char = '';
+                    let cls = '';
+                    let isEntity = false;
+
+                    // Check for player
+                    if (x === player.x && y === player.y) {
+                        char = '@';
+                        cls = 'entity-player';
+                        isEntity = true;
+                    }
+
+                    // Check for enemies
+                    if (!isEntity) {
+                        for (const e of enemies) {
+                            if (e.x === x && e.y === y && e.state !== 6) {
+                                const chars = 'szgSbrOTL';
+                                char = chars[e.type] || 'e';
+                                cls = 'entity-enemy';
+                                isEntity = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Check for NPCs
+                    if (!isEntity) {
+                        for (const n of npcs) {
+                            if (n.x === x && n.y === y) {
+                                const chars = '$+?NG@';
+                                char = chars[n.type] || 'N';
+                                cls = 'entity-npc';
+                                isEntity = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Check for items
+                    if (!isEntity) {
+                        for (const i of items) {
+                            if (i.x === x && i.y === y) {
+                                char = '*';
+                                cls = 'entity-item';
+                                isEntity = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Draw tile if no entity
+                    if (!isEntity) {
+                        const tile = tiles[y][x];
+                        char = TILE_CHARS[tile] || '?';
+                        cls = TILE_CLASSES[tile] || '';
+                    }
+
+                    // Render with look cursor highlight if needed
+                    if (isLookCursor) {
+                        html += `<span style="background:#ff0;color:#000;font-weight:bold;">${char}</span>`;
+                    } else if (cls) {
+                        html += `<span class="${cls}">${char}</span>`;
+                    } else {
+                        html += char;
+                    }
+                }
+                html += '\n';
+            }
+
+            view.innerHTML = html;
+        }
+
+        // Look mode functions
+        function enterLookMode() {
+            if (!gameState || !gameState.player) return;
+            lookMode = true;
+            lookCursor.x = gameState.player.x;
+            lookCursor.y = gameState.player.y;
+            document.getElementById('look-info').style.display = 'block';
+            updateLookInfo();
+            renderASCII();
+        }
+
+        function exitLookMode() {
+            lookMode = false;
+            document.getElementById('look-info').style.display = 'none';
+            renderASCII();
+        }
+
+        function moveLookCursor(dx, dy) {
+            if (!gameState) return;
+            const newX = lookCursor.x + dx;
+            const newY = lookCursor.y + dy;
+            if (newX >= 0 && newX < gameState.map_width && newY >= 0 && newY < gameState.map_height) {
+                lookCursor.x = newX;
+                lookCursor.y = newY;
+                updateLookInfo();
+                renderASCII();
+            }
+        }
+
+        function updateLookInfo() {
+            if (!gameState) return;
+
+            const x = lookCursor.x;
+            const y = lookCursor.y;
+            const visible = gameState.visible_tiles || [];
+            const enemies = gameState.enemies || [];
+            const npcs = gameState.npcs || [];
+            const items = gameState.items || [];
+            const player = gameState.player;
+            const tiles = gameState.tiles;
+
+            document.getElementById('look-cursor-pos').textContent = `Position: (${x}, ${y})`;
+
+            // Check visibility first
+            if (!visible[y] || !visible[y][x]) {
+                document.getElementById('look-description').textContent = 'You cannot see this area';
+                return;
+            }
+
+            // Check for player
+            if (x === player.x && y === player.y) {
+                document.getElementById('look-description').textContent = 'You - the brave adventurer';
+                return;
+            }
+
+            // Check for enemies
+            for (const e of enemies) {
+                if (e.x === x && e.y === y && e.state !== 6) {
+                    const desc = ENEMY_DESCRIPTIONS[e.type] || 'Unknown creature';
+                    const healthPct = Math.round((e.health / e.max_health) * 100);
+                    document.getElementById('look-description').innerHTML =
+                        `<strong>${e.name}</strong><br>${desc}<br>Health: ${healthPct}%`;
+                    return;
+                }
+            }
+
+            // Check for NPCs
+            for (const n of npcs) {
+                if (n.x === x && n.y === y) {
+                    const desc = NPC_DESCRIPTIONS[n.type] || 'A mysterious figure';
+                    document.getElementById('look-description').innerHTML =
+                        `<strong>${n.name}</strong><br>${desc}`;
+                    return;
+                }
+            }
+
+            // Check for items
+            for (const i of items) {
+                if (i.x === x && i.y === y) {
+                    document.getElementById('look-description').innerHTML =
+                        `<strong>${i.name}</strong><br>An item on the ground`;
+                    return;
+                }
+            }
+
+            // Show tile description
+            const tile = tiles[y][x];
+            const desc = TILE_DESCRIPTIONS[tile] || 'Unknown terrain';
+            const char = TILE_CHARS[tile] || '?';
+            document.getElementById('look-description').innerHTML =
+                `<strong>${char}</strong> - ${desc}`;
+        }
+
+        function renderRaycast() {
+            if (!raycastCtx) return;
+
+            const canvas = raycastCanvas;
+            const ctx = raycastCtx;
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw ceiling and floor with gradient
+            const ceilGrad = ctx.createLinearGradient(0, 0, 0, height / 2);
+            ceilGrad.addColorStop(0, '#0a0a15');
+            ceilGrad.addColorStop(1, '#1a1a2e');
+            ctx.fillStyle = ceilGrad;
+            ctx.fillRect(0, 0, width, height / 2);
+
+            const floorGrad = ctx.createLinearGradient(0, height / 2, 0, height);
+            floorGrad.addColorStop(0, '#2a2a3a');
+            floorGrad.addColorStop(1, '#1a1a25');
+            ctx.fillStyle = floorGrad;
+            ctx.fillRect(0, height / 2, width, height / 2);
+
+            const player = gameState.player;
+            const tiles = gameState.tiles;
+            const mapW = gameState.map_width;
+            const mapH = gameState.map_height;
+
+            // Player position and direction based on angle
+            const px = player.x + 0.5;
+            const py = player.y + 0.5;
+            const dirX = Math.cos(playerAngle);
+            const dirY = Math.sin(playerAngle);
+            // Camera plane perpendicular to direction
+            const planeX = -dirY * FOV;
+            const planeY = dirX * FOV;
+
+            const numRays = width;
+
+            // Store wall distances for sprite clipping
+            const zBuffer = new Array(width);
+
+            for (let x = 0; x < numRays; x++) {
+                const cameraX = 2 * x / numRays - 1;
+                const rayDirX = dirX + planeX * cameraX;
+                const rayDirY = dirY + planeY * cameraX;
+
+                let mapX = Math.floor(px);
+                let mapY = Math.floor(py);
+
+                let sideDistX, sideDistY;
+                const deltaDistX = Math.abs(1 / rayDirX);
+                const deltaDistY = Math.abs(1 / rayDirY);
+                let perpWallDist;
+
+                let stepX, stepY;
+                let hit = 0;
+                let side;
+
+                if (rayDirX < 0) {
+                    stepX = -1;
+                    sideDistX = (px - mapX) * deltaDistX;
+                } else {
+                    stepX = 1;
+                    sideDistX = (mapX + 1 - px) * deltaDistX;
+                }
+                if (rayDirY < 0) {
+                    stepY = -1;
+                    sideDistY = (py - mapY) * deltaDistY;
+                } else {
+                    stepY = 1;
+                    sideDistY = (mapY + 1 - py) * deltaDistY;
+                }
+
+                // DDA
+                while (hit === 0) {
+                    if (sideDistX < sideDistY) {
+                        sideDistX += deltaDistX;
+                        mapX += stepX;
+                        side = 0;
+                    } else {
+                        sideDistY += deltaDistY;
+                        mapY += stepY;
+                        side = 1;
+                    }
+
+                    if (mapX < 0 || mapX >= mapW || mapY < 0 || mapY >= mapH) {
+                        hit = 1;
+                        break;
+                    }
+
+                    const tile = tiles[mapY][mapX];
+                    if (tile === 2 || tile === 4) { // Wall or locked door
+                        hit = 1;
+                    }
+                }
+
+                if (side === 0) {
+                    perpWallDist = (mapX - px + (1 - stepX) / 2) / rayDirX;
+                } else {
+                    perpWallDist = (mapY - py + (1 - stepY) / 2) / rayDirY;
+                }
+
+                zBuffer[x] = perpWallDist;
+
+                const lineHeight = Math.floor(height / perpWallDist);
+                let drawStart = Math.floor(-lineHeight / 2 + height / 2);
+                if (drawStart < 0) drawStart = 0;
+                let drawEnd = Math.floor(lineHeight / 2 + height / 2);
+                if (drawEnd >= height) drawEnd = height - 1;
+
+                // Color based on tile type
+                let color = '#666';
+                if (mapX >= 0 && mapX < mapW && mapY >= 0 && mapY < mapH) {
+                    const tile = tiles[mapY][mapX];
+                    color = TILE_COLORS[tile] || '#666';
+                }
+
+                // Darken one side
+                if (side === 1) {
+                    const rgb = hexToRgb(color);
+                    color = `rgb(${Math.floor(rgb.r * 0.7)}, ${Math.floor(rgb.g * 0.7)}, ${Math.floor(rgb.b * 0.7)})`;
+                }
+
+                ctx.fillStyle = color;
+                ctx.fillRect(x, drawStart, 1, drawEnd - drawStart);
+            }
+
+            // Render sprites (enemies, NPCs, items)
+            renderSprites(ctx, width, height, px, py, dirX, dirY, planeX, planeY, zBuffer);
+        }
+
+        // Sprite colors
+        const ENEMY_COLORS = {
+            0: '#ff4444', // Skeleton - red
+            1: '#88ff88', // Zombie - green
+            2: '#aaaaff', // Ghost - light blue
+            3: '#884400', // Spider - brown
+            4: '#666666', // Bat - gray
+            5: '#aa8866', // Rat - tan
+            6: '#00aa00', // Orc - dark green
+            7: '#aa00aa', // Troll - purple
+            8: '#ffff00'  // Lich - yellow
+        };
+
+        const NPC_COLORS = {
+            0: '#ffdd00', // Merchant - gold
+            1: '#ffffff', // Healer - white
+            2: '#ff8800', // Quest Giver - orange
+            3: '#aaaaaa', // Wanderer - gray
+            4: '#0088ff', // Guard - blue
+            5: '#ff00ff'  // Sage - magenta
+        };
+
+        function renderSprites(ctx, width, height, px, py, dirX, dirY, planeX, planeY, zBuffer) {
+            // Collect all sprites
+            const sprites = [];
+
+            // Add enemies
+            const enemies = gameState.enemies || [];
+            for (const e of enemies) {
+                if (e.state === 6) continue; // Dead
+                sprites.push({
+                    x: e.x + 0.5,
+                    y: e.y + 0.5,
+                    color: ENEMY_COLORS[e.type] || '#ff0000',
+                    char: getEnemyChar(e.type),
+                    type: 'enemy',
+                    name: e.name
+                });
+            }
+
+            // Add NPCs
+            const npcs = gameState.npcs || [];
+            for (const n of npcs) {
+                sprites.push({
+                    x: n.x + 0.5,
+                    y: n.y + 0.5,
+                    color: NPC_COLORS[n.type] || '#00ffff',
+                    char: getNPCChar(n.type),
+                    type: 'npc',
+                    name: n.name
+                });
+            }
+
+            // Add items
+            const items = gameState.items || [];
+            for (const i of items) {
+                sprites.push({
+                    x: i.x + 0.5,
+                    y: i.y + 0.5,
+                    color: '#ffff00',
+                    char: '*',
+                    type: 'item',
+                    name: i.name
+                });
+            }
+
+            // Calculate distance and sort back to front
+            for (const sprite of sprites) {
+                sprite.dist = (px - sprite.x) ** 2 + (py - sprite.y) ** 2;
+            }
+            sprites.sort((a, b) => b.dist - a.dist);
+
+            // Render each sprite
+            for (const sprite of sprites) {
+                // Translate sprite position relative to camera
+                const spriteX = sprite.x - px;
+                const spriteY = sprite.y - py;
+
+                // Transform with inverse camera matrix
+                const invDet = 1.0 / (planeX * dirY - dirX * planeY);
+                const transformX = invDet * (dirY * spriteX - dirX * spriteY);
+                const transformY = invDet * (-planeY * spriteX + planeX * spriteY);
+
+                // Skip if behind camera
+                if (transformY <= 0) continue;
+
+                // Screen X position
+                const spriteScreenX = Math.floor((width / 2) * (1 + transformX / transformY));
+
+                // Calculate sprite height and width
+                const spriteHeight = Math.abs(Math.floor(height / transformY));
+                const spriteWidth = spriteHeight; // Square sprites
+
+                // Calculate draw bounds
+                let drawStartY = Math.floor(-spriteHeight / 2 + height / 2);
+                if (drawStartY < 0) drawStartY = 0;
+                let drawEndY = Math.floor(spriteHeight / 2 + height / 2);
+                if (drawEndY >= height) drawEndY = height - 1;
+
+                let drawStartX = Math.floor(-spriteWidth / 2 + spriteScreenX);
+                if (drawStartX < 0) drawStartX = 0;
+                let drawEndX = Math.floor(spriteWidth / 2 + spriteScreenX);
+                if (drawEndX >= width) drawEndX = width - 1;
+
+                // Draw the sprite column by column (with z-buffer check)
+                for (let stripe = drawStartX; stripe < drawEndX; stripe++) {
+                    if (stripe >= 0 && stripe < width && transformY < zBuffer[stripe]) {
+                        // Draw a colored rectangle for the sprite
+                        const texX = Math.floor((stripe - (-spriteWidth / 2 + spriteScreenX)) / spriteWidth * 8);
+
+                        // Simple sprite - draw as colored bar with character
+                        ctx.fillStyle = sprite.color;
+                        ctx.fillRect(stripe, drawStartY, 1, drawEndY - drawStartY);
+                    }
+                }
+
+                // Draw character/symbol in center of sprite if visible
+                if (spriteScreenX > 0 && spriteScreenX < width && transformY < zBuffer[Math.floor(spriteScreenX)]) {
+                    const fontSize = Math.min(Math.max(Math.floor(spriteHeight * 0.6), 10), 48);
+                    ctx.font = `bold ${fontSize}px monospace`;
+                    ctx.fillStyle = '#000';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    // Draw outline
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.strokeText(sprite.char, spriteScreenX, height / 2);
+                    ctx.fillStyle = sprite.color;
+                    ctx.fillText(sprite.char, spriteScreenX, height / 2);
+                }
+            }
+        }
+
+        function getEnemyChar(type) {
+            const chars = ['s', 'z', 'g', 'S', 'b', 'r', 'O', 'T', 'L'];
+            return chars[type] || 'e';
+        }
+
+        function getNPCChar(type) {
+            const chars = ['$', '+', '?', 'N', 'G', '@'];
+            return chars[type] || 'N';
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 100, g: 100, b: 100 };
+        }
+
+        function showDialogue(data) {
+            const panel = document.getElementById('dialogue-panel');
+            document.getElementById('dialogue-speaker').textContent = data.speaker;
+            document.getElementById('dialogue-text').textContent = data.text;
+
+            const choicesDiv = document.getElementById('dialogue-choices');
+            choicesDiv.innerHTML = '';
+
+            if (data.choices && data.choices.length > 0) {
+                data.choices.forEach((choice, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'dialogue-choice';
+                    btn.textContent = `${idx + 1}. ${choice.text}`;
+                    btn.onclick = () => selectDialogueChoice(idx);
+                    choicesDiv.appendChild(btn);
+                });
+            } else {
+                // Auto-continue button
+                const btn = document.createElement('button');
+                btn.className = 'dialogue-choice';
+                btn.textContent = '[Continue]';
+                btn.onclick = () => selectDialogueChoice(0);
+                choicesDiv.appendChild(btn);
+            }
+
+            panel.style.display = 'block';
+        }
+
+        function hideDialogue() {
+            document.getElementById('dialogue-panel').style.display = 'none';
+        }
+
+        function selectDialogueChoice(idx) {
+            sendDialogueChoice(idx);
+        }
+
+        function showGameOver(victory) {
+            const overlay = document.getElementById('game-over-overlay');
+            const box = document.getElementById('game-over-box');
+            const title = document.getElementById('game-over-title');
+            const text = document.getElementById('game-over-text');
+
+            if (victory) {
+                box.className = 'game-over-box victory';
+                title.textContent = 'VICTORY!';
+                text.textContent = 'You have conquered the Catacombs of Pflow!';
+            } else {
+                box.className = 'game-over-box defeat';
+                title.textContent = 'GAME OVER';
+                text.textContent = 'You have perished in the darkness...';
+            }
+
+            overlay.style.display = 'flex';
+        }
+
+        function resetGame() {
+            document.getElementById('game-over-overlay').style.display = 'none';
+            ws.send(JSON.stringify({ type: 'reset', timestamp: Date.now() }));
+        }
+
+        function sendAction(action) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            if (gameState && gameState.in_dialogue) return;
+            if (gameState && gameState.game_over) return;
+
+            ws.send(JSON.stringify({
+                type: 'action',
+                payload: { action: action },
+                timestamp: Date.now()
+            }));
+        }
+
+        // POV control functions for 3D view
+        function turnLeft() {
+            playerAngle -= TURN_SPEED;
+            if (playerAngle < 0) playerAngle += Math.PI * 2;
+            updateDirectionDisplay();
+            renderRaycast();
+        }
+
+        function turnRight() {
+            playerAngle += TURN_SPEED;
+            if (playerAngle >= Math.PI * 2) playerAngle -= Math.PI * 2;
+            updateDirectionDisplay();
+            renderRaycast();
+        }
+
+        function updateDirectionDisplay() {
+            const elem = document.getElementById('facing-direction');
+            if (elem) {
+                elem.textContent = 'Facing: ' + getDirectionName();
+            }
+        }
+
+        function moveForward() {
+            // Calculate which direction to move based on angle
+            const action = getMovementAction(playerAngle);
+            sendAction(action);
+        }
+
+        function moveBackward() {
+            // Move opposite to facing direction
+            const reverseAngle = (playerAngle + Math.PI) % (Math.PI * 2);
+            const action = getMovementAction(reverseAngle);
+            sendAction(action);
+        }
+
+        function strafeLeft() {
+            // Move perpendicular left
+            const leftAngle = (playerAngle - Math.PI / 2 + Math.PI * 2) % (Math.PI * 2);
+            const action = getMovementAction(leftAngle);
+            sendAction(action);
+        }
+
+        function strafeRight() {
+            // Move perpendicular right
+            const rightAngle = (playerAngle + Math.PI / 2) % (Math.PI * 2);
+            const action = getMovementAction(rightAngle);
+            sendAction(action);
+        }
+
+        function getMovementAction(angle) {
+            // Normalize angle to 0-2PI
+            angle = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+            // Determine primary direction (8-way snapping to 4 directions)
+            // 0 = East (right), PI/2 = South (down), PI = West (left), 3PI/2 = North (up)
+            if (angle < Math.PI / 4 || angle >= Math.PI * 7 / 4) {
+                return 'move_right';  // East
+            } else if (angle < Math.PI * 3 / 4) {
+                return 'move_down';   // South
+            } else if (angle < Math.PI * 5 / 4) {
+                return 'move_left';   // West
+            } else {
+                return 'move_up';     // North
+            }
+        }
+
+        // Get direction name for UI
+        function getDirectionName() {
+            const angle = ((playerAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+            if (angle < Math.PI / 4 || angle >= Math.PI * 7 / 4) return 'East';
+            if (angle < Math.PI * 3 / 4) return 'South';
+            if (angle < Math.PI * 5 / 4) return 'West';
+            return 'North';
+        }
+
+        function sendDialogueChoice(choice) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+            ws.send(JSON.stringify({
+                type: 'dialogue_choice',
+                payload: { choice: choice },
+                timestamp: Date.now()
+            }));
+        }
+
+        function useItem(idx) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+            ws.send(JSON.stringify({
+                type: 'use_item',
+                payload: { index: idx },
+                timestamp: Date.now()
+            }));
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            // Dialogue controls
+            if (gameState && gameState.in_dialogue) {
+                if (e.key >= '1' && e.key <= '9') {
+                    const idx = parseInt(e.key) - 1;
+                    selectDialogueChoice(idx);
+                    return;
+                }
+                if (e.key === 'Enter' || e.key === ' ') {
+                    selectDialogueChoice(0);
+                    return;
+                }
+                return;
+            }
+
+            // Look mode controls (only in ASCII view)
+            if (lookMode && currentView === 'ascii') {
+                e.preventDefault();
+                switch (e.key.toLowerCase()) {
+                    case 'x':
+                    case 'escape':
+                        exitLookMode();
+                        break;
+                    case 'w':
+                    case 'arrowup':
+                        moveLookCursor(0, -1);
+                        break;
+                    case 's':
+                    case 'arrowdown':
+                        moveLookCursor(0, 1);
+                        break;
+                    case 'a':
+                    case 'arrowleft':
+                        moveLookCursor(-1, 0);
+                        break;
+                    case 'd':
+                    case 'arrowright':
+                        moveLookCursor(1, 0);
+                        break;
+                }
+                return;
+            }
+
+            // In 3D view, use POV controls
+            if (currentView === 'raycast') {
+                switch (e.key.toLowerCase()) {
+                    case 'w':
+                    case 'arrowup':
+                        moveForward();
+                        break;
+                    case 's':
+                    case 'arrowdown':
+                        moveBackward();
+                        break;
+                    case 'a':
+                    case 'arrowleft':
+                        turnLeft();
+                        break;
+                    case 'd':
+                    case 'arrowright':
+                        turnRight();
+                        break;
+                    case 'q':
+                        strafeLeft();
+                        break;
+                    case 'e':
+                        strafeRight();
+                        break;
+                    case ' ':
+                        sendAction('attack');
+                        break;
+                    case 'f':
+                        // Interact/talk in 3D mode
+                        sendAction('talk');
+                        break;
+                    case '.':
+                        sendAction('wait');
+                        break;
+                    case '>':
+                        sendAction('descend');
+                        break;
+                    case '<':
+                        sendAction('ascend');
+                        break;
+                    default:
+                        // Number keys for inventory
+                        if (e.key >= '1' && e.key <= '9') {
+                            const idx = parseInt(e.key) - 1;
+                            useItem(idx);
+                        }
+                }
+                return;
+            }
+
+            // ASCII view - traditional roguelike controls
+            switch (e.key.toLowerCase()) {
+                case 'x':
+                    // Enter look mode
+                    enterLookMode();
+                    break;
+                case 'w':
+                case 'arrowup':
+                    sendAction('move_up');
+                    break;
+                case 's':
+                case 'arrowdown':
+                    sendAction('move_down');
+                    break;
+                case 'a':
+                case 'arrowleft':
+                    sendAction('move_left');
+                    break;
+                case 'd':
+                case 'arrowright':
+                    sendAction('move_right');
+                    break;
+                case ' ':
+                    sendAction('attack');
+                    break;
+                case 'e':
+                    // Try talk first, then interact
+                    sendAction('talk');
+                    break;
+                case '.':
+                    sendAction('wait');
+                    break;
+                case '>':
+                    sendAction('descend');
+                    break;
+                case '<':
+                    sendAction('ascend');
+                    break;
+                default:
+                    // Number keys for inventory
+                    if (e.key >= '1' && e.key <= '9') {
+                        const idx = parseInt(e.key) - 1;
+                        useItem(idx);
+                    }
+            }
+        });
+
+        // Gamepad support
+        window.addEventListener('gamepadconnected', (e) => {
+            console.log('Gamepad connected:', e.gamepad);
+            console.log('Buttons:', e.gamepad.buttons.length, 'Axes:', e.gamepad.axes.length);
+            gamepadConnected = true;
+            document.getElementById('gamepad-status').textContent = `Gamepad: ${e.gamepad.id.split('(')[0].trim()}`;
+            document.getElementById('gamepad-status').className = 'connected';
+            // Show debug info
+            document.getElementById('gamepad-debug').style.display = 'block';
+        });
+
+        window.addEventListener('gamepaddisconnected', (e) => {
+            console.log('Gamepad disconnected');
+            gamepadConnected = false;
+            document.getElementById('gamepad-status').textContent = 'Gamepad: Not Connected';
+            document.getElementById('gamepad-status').className = 'disconnected';
+        });
+
+        function pollGamepad() {
+            const gamepads = navigator.getGamepads();
+            for (const gamepad of gamepads) {
+                if (!gamepad) continue;
+
+                // Debug output - show pressed buttons and axis values
+                let debugInfo = [];
+
+                // Check ALL buttons, not just mapped ones
+                for (let i = 0; i < gamepad.buttons.length; i++) {
+                    if (gamepad.buttons[i].pressed) {
+                        debugInfo.push(`B${i}`);
+                    }
+                }
+
+                // Check buttons (A, B, Start, Select, and D-pad if mapped as buttons)
+                for (const buttonIdx of Object.keys(BUTTON_ACTION_MAP).map(Number)) {
+                    const button = gamepad.buttons[buttonIdx];
+                    if (!button) continue;
+
+                    const isPressed = button.pressed;
+                    const wasPressed = lastButtonStates[buttonIdx] || false;
+
+                    if (isPressed && !wasPressed) {
+                        handleGamepadInput(buttonIdx);
+                    }
+
+                    lastButtonStates[buttonIdx] = isPressed;
+                }
+
+                // Check axes for D-pad (many controllers use axes 0,1 for D-pad)
+                // Axis 0: left (-1) / right (+1)
+                // Axis 1: up (-1) / down (+1)
+                if (gamepad.axes.length >= 2) {
+                    const axisX = gamepad.axes[0];
+                    const axisY = gamepad.axes[1];
+
+                    // Show axis values in debug
+                    if (Math.abs(axisX) > 0.1 || Math.abs(axisY) > 0.1) {
+                        debugInfo.push(`X:${axisX.toFixed(1)} Y:${axisY.toFixed(1)}`);
+                    }
+
+                    const isLeft = axisX < -AXIS_THRESHOLD;
+                    const isRight = axisX > AXIS_THRESHOLD;
+                    const isUp = axisY < -AXIS_THRESHOLD;
+                    const isDown = axisY > AXIS_THRESHOLD;
+
+                    // Trigger on press (not held)
+                    if (isUp && !lastAxisStates.up) {
+                        handleGamepadDirection('up');
+                    }
+                    if (isDown && !lastAxisStates.down) {
+                        handleGamepadDirection('down');
+                    }
+                    if (isLeft && !lastAxisStates.left) {
+                        handleGamepadDirection('left');
+                    }
+                    if (isRight && !lastAxisStates.right) {
+                        handleGamepadDirection('right');
+                    }
+
+                    lastAxisStates.up = isUp;
+                    lastAxisStates.down = isDown;
+                    lastAxisStates.left = isLeft;
+                    lastAxisStates.right = isRight;
+                }
+
+                // Check additional axes (some D-pads use axes 9 or other indices)
+                for (let i = 2; i < gamepad.axes.length; i++) {
+                    const val = gamepad.axes[i];
+                    if (Math.abs(val) > 0.1) {
+                        debugInfo.push(`A${i}:${val.toFixed(1)}`);
+                    }
+                }
+
+                // Update debug display
+                const debugElem = document.getElementById('gamepad-debug');
+                if (debugElem && debugInfo.length > 0) {
+                    debugElem.textContent = debugInfo.join(' | ');
+                }
+            }
+
+            requestAnimationFrame(pollGamepad);
+        }
+
+        function handleGamepadInput(buttonIdx) {
+            // Handle dialogue with A button
+            if (gameState && gameState.in_dialogue) {
+                if (buttonIdx === NES_BUTTONS.A) {
+                    selectDialogueChoice(0);
+                }
+                return;
+            }
+
+            if (currentView === 'raycast') {
+                // POV controls for 3D view
+                switch (buttonIdx) {
+                    case NES_BUTTONS.DPAD_UP:
+                        moveForward();
+                        break;
+                    case NES_BUTTONS.DPAD_DOWN:
+                        moveBackward();
+                        break;
+                    case NES_BUTTONS.DPAD_LEFT:
+                        turnLeft();
+                        break;
+                    case NES_BUTTONS.DPAD_RIGHT:
+                        turnRight();
+                        break;
+                    case NES_BUTTONS.A:
+                        sendAction('attack');
+                        break;
+                    case NES_BUTTONS.B:
+                        sendAction('talk');
+                        break;
+                    case NES_BUTTONS.START:
+                        sendAction('wait');
+                        break;
+                }
+            } else {
+                // ASCII view - use mapped actions
+                const action = BUTTON_ACTION_MAP[buttonIdx];
+                if (action) sendAction(action);
+            }
+        }
+
+        function handleGamepadDirection(direction) {
+            // Handle dialogue - ignore directions
+            if (gameState && gameState.in_dialogue) {
+                return;
+            }
+
+            if (currentView === 'raycast') {
+                // POV controls for 3D view
+                switch (direction) {
+                    case 'up': moveForward(); break;
+                    case 'down': moveBackward(); break;
+                    case 'left': turnLeft(); break;
+                    case 'right': turnRight(); break;
+                }
+            } else {
+                // ASCII view - cardinal movement
+                switch (direction) {
+                    case 'up': sendAction('move_up'); break;
+                    case 'down': sendAction('move_down'); break;
+                    case 'left': sendAction('move_left'); break;
+                    case 'right': sendAction('move_right'); break;
+                }
+            }
+        }
+
+        // View toggle
+        document.getElementById('btn-ascii').onclick = () => {
+            currentView = 'ascii';
+            document.getElementById('btn-ascii').classList.add('active');
+            document.getElementById('btn-raycast').classList.remove('active');
+            document.getElementById('ascii-view').style.display = 'block';
+            document.getElementById('raycast-canvas').style.display = 'none';
+            document.getElementById('controls-help-ascii').style.display = 'block';
+            document.getElementById('controls-help-3d').style.display = 'none';
+            if (gameState) renderASCII();
+        };
+
+        document.getElementById('btn-raycast').onclick = () => {
+            currentView = 'raycast';
+            document.getElementById('btn-raycast').classList.add('active');
+            document.getElementById('btn-ascii').classList.remove('active');
+            document.getElementById('ascii-view').style.display = 'none';
+            document.getElementById('raycast-canvas').style.display = 'block';
+            document.getElementById('controls-help-ascii').style.display = 'none';
+            document.getElementById('controls-help-3d').style.display = 'block';
+            updateDirectionDisplay();
+            if (gameState) renderRaycast();
+        };
+
+        // Initialize
+        window.onload = () => {
+            raycastCanvas = document.getElementById('raycast-canvas');
+            raycastCtx = raycastCanvas.getContext('2d');
+            raycastCanvas.width = 640;
+            raycastCanvas.height = 300;
+
+            connect();
+            pollGamepad();
+        };
+    </script>
+</body>
+</html>
