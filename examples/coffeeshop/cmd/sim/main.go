@@ -3,26 +3,31 @@
 // Run a continuous coffee shop simulation with verbose logging.
 //
 // Usage:
-//   go run ./examples/coffeeshop/cmd/sim [flags]
+//
+//	go run ./examples/coffeeshop/cmd/sim [flags]
 //
 // Flags:
-//   -duration   Simulated time duration (default: 2h)
-//   -customers  Stop after N customers (0 = no limit)
-//   -orders     Stop after N orders (0 = no limit)
-//   -drink      Stop after selling N of this drink type
-//   -count      Number of drinks to sell (used with -drink)
-//   -config     Preset config: quick, rush, slow, stress, sla, inventory (default: quick)
-//   -quiet      Disable verbose logging
+//
+//	-duration   Simulated time duration (default: 2h)
+//	-customers  Stop after N customers (0 = no limit)
+//	-orders     Stop after N orders (0 = no limit)
+//	-drink      Stop after selling N of this drink type
+//	-count      Number of drinks to sell (used with -drink)
+//	-config     Preset config: quick, rush, slow, stress, sla, inventory, happy
+//	-quiet      Disable verbose logging
+//	-compare    Show comparison table of all configs and exit
 //
 // Examples:
-//   go run ./examples/coffeeshop/cmd/sim
-//   go run ./examples/coffeeshop/cmd/sim -duration 4h
-//   go run ./examples/coffeeshop/cmd/sim -customers 50
-//   go run ./examples/coffeeshop/cmd/sim -drink latte -count 20
-//   go run ./examples/coffeeshop/cmd/sim -config rush -orders 100
-//   go run ./examples/coffeeshop/cmd/sim -config sla              # Induce SLA violations
-//   go run ./examples/coffeeshop/cmd/sim -config inventory        # Induce inventory warnings
-
+//
+//	go run ./examples/coffeeshop/cmd/sim
+//	go run ./examples/coffeeshop/cmd/sim -duration 4h
+//	go run ./examples/coffeeshop/cmd/sim -customers 50
+//	go run ./examples/coffeeshop/cmd/sim -drink latte -count 20
+//	go run ./examples/coffeeshop/cmd/sim -config rush -orders 100
+//	go run ./examples/coffeeshop/cmd/sim -config sla              # Induce SLA violations
+//	go run ./examples/coffeeshop/cmd/sim -config inventory        # Induce inventory warnings
+//	go run ./examples/coffeeshop/cmd/sim -config happy            # Target ~90% happy customers
+//	go run ./examples/coffeeshop/cmd/sim -compare                 # Show config comparison
 package main
 
 import (
@@ -43,8 +48,15 @@ func main() {
 	configName := flag.String("config", "quick", "Preset config: quick, rush, slow, stress, sla, inventory, happy")
 	quiet := flag.Bool("quiet", false, "Disable verbose logging")
 	analyze := flag.Bool("analyze", true, "Run process mining analysis after simulation")
+	compare := flag.Bool("compare", false, "Show comparison table of all configs and exit")
 
 	flag.Parse()
+
+	// Show comparison table if requested
+	if *compare {
+		printConfigComparison()
+		return
+	}
 
 	// Select base config
 	var config *coffeeshop.SimulatorConfig
@@ -129,4 +141,39 @@ func main() {
 			analysis.PrintAnalysis()
 		}
 	}
+}
+
+// printConfigComparison prints a comparison table of all simulator configs
+func printConfigComparison() {
+	fmt.Println("╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗")
+	fmt.Println("║                           COFFEE SHOP SIMULATOR - CONFIG COMPARISON                               ║")
+	fmt.Println("╠═══════════════════════════════════════════════════════════════════════════════════════════════════╣")
+	fmt.Println("║                                                                                                   ║")
+	fmt.Println("║  Config     │ Cust/min │ Peak │ SLA    │ Baristas │ Speed │ Inventory │ Expected Outcome         ║")
+	fmt.Println("║  ───────────┼──────────┼──────┼────────┼──────────┼───────┼───────────┼───────────────────────── ║")
+	fmt.Println("║  quick      │   2.0    │ 2.5x │ 5 min  │    2     │  0.5  │   full    │ Fast demo, balanced      ║")
+	fmt.Println("║  rush       │   5.0    │ 3.0x │ 5 min  │    2     │  0.5  │   full    │ Busy period, queue grows ║")
+	fmt.Println("║  slow       │   0.5    │ 1.5x │ 5 min  │    2     │  0.5  │   full    │ Light traffic, relaxed   ║")
+	fmt.Println("║  stress     │  10.0    │ 4.0x │ 5 min  │    2     │  0.5  │   full    │ Overwhelmed, long queues ║")
+	fmt.Println("║  sla        │   8.0    │ 3.0x │ 3 min  │    1     │  0.3  │   full    │ SLA breaches guaranteed  ║")
+	fmt.Println("║  inventory  │   6.0    │ 2.0x │ 5 min  │    2     │  0.8  │   LOW     │ Stockouts, menu empty    ║")
+	fmt.Println("║  happy      │   2.0    │ 1.5x │ 3 min  │    2     │  0.8  │   full    │ ~90% customers happy     ║")
+	fmt.Println("║                                                                                                   ║")
+	fmt.Println("╠═══════════════════════════════════════════════════════════════════════════════════════════════════╣")
+	fmt.Println("║  KEY METRICS:                                                                                     ║")
+	fmt.Println("║    Cust/min  = Base customer arrival rate (before peak multiplier)                                ║")
+	fmt.Println("║    Peak      = Multiplier during peak hours (8-9, 12-13, 17-18)                                   ║")
+	fmt.Println("║    SLA       = Target time from order to completion                                               ║")
+	fmt.Println("║    Baristas  = Number of baristas (1 = understaffed)                                              ║")
+	fmt.Println("║    Speed     = Orders/min per barista (capacity = baristas × speed)                               ║")
+	fmt.Println("║    Inventory = Starting inventory level (LOW = triggers stockouts)                                ║")
+	fmt.Println("║                                                                                                   ║")
+	fmt.Println("╠═══════════════════════════════════════════════════════════════════════════════════════════════════╣")
+	fmt.Println("║  MAKE TARGETS:                                                                                    ║")
+	fmt.Println("║    make run-coffeeshop-sim       → runs with -config quick                                        ║")
+	fmt.Println("║    make run-coffeeshop-sla       → runs with -config sla                                          ║")
+	fmt.Println("║    make run-coffeeshop-inventory → runs with -config inventory                                    ║")
+	fmt.Println("║    make run-coffeeshop-happy     → runs with -config happy                                        ║")
+	fmt.Println("║                                                                                                   ║")
+	fmt.Println("╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝")
 }
