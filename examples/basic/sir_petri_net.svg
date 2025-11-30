@@ -21,14 +21,14 @@
 <path d="M 274.8 100.0 L 266.8 103.6 L 266.8 96.4 Z" fill="#000000"/>
 <circle cx="270.9" cy="100.0" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
 <text x="270.9" y="100.0" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">1</text>
-<circle cx="100.0" cy="100.0" r="16.0" class="place"/>
-<text x="100.0" y="100.0" class="token-text">990</text>
-<text x="100.0" y="122.0" class="label-text">S</text>
 <circle cx="200.0" cy="100.0" r="16.0" class="place"/>
 <text x="200.0" y="100.0" class="token-text">10</text>
 <text x="200.0" y="122.0" class="label-text">I</text>
 <circle cx="300.0" cy="100.0" r="16.0" class="place"/>
 <text x="300.0" y="122.0" class="label-text">R</text>
+<circle cx="100.0" cy="100.0" r="16.0" class="place"/>
+<text x="100.0" y="100.0" class="token-text">990</text>
+<text x="100.0" y="122.0" class="label-text">S</text>
 <rect x="135.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="150.0" y="121.0" class="label-text">infection</text>
 <rect x="235.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
