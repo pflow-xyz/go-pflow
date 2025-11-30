@@ -43,7 +43,7 @@ If you see `go version go1.21` or higher, you're good!
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/stackdump/go-pflow
+git clone https://github.com/pflow-xyz/go-pflow
 cd go-pflow
 ```
 
@@ -68,11 +68,11 @@ go test ./...
 
 You should see all tests passing:
 ```
-ok      github.com/stackdump/go-pflow/petri     0.123s
-ok      github.com/stackdump/go-pflow/solver    0.456s
-ok      github.com/stackdump/go-pflow/eventlog  0.089s
-ok      github.com/stackdump/go-pflow/mining    0.234s
-ok      github.com/stackdump/go-pflow/monitoring 0.178s
+ok      github.com/pflow-xyz/go-pflow/petri     0.123s
+ok      github.com/pflow-xyz/go-pflow/solver    0.456s
+ok      github.com/pflow-xyz/go-pflow/eventlog  0.089s
+ok      github.com/pflow-xyz/go-pflow/mining    0.234s
+ok      github.com/pflow-xyz/go-pflow/monitoring 0.178s
 ```
 
 ## Your First Example: SIR Epidemic Model
@@ -459,10 +459,10 @@ If something wasn't clear, go deeper:
 
 ### Try More Examples
 
-Build on what you learned:
-- [Working with Event Logs](event-logs.md) - Parse real CSV data
-- [Discovering Processes](mining.md) - Learn from historical data
-- [Real-Time Monitoring](monitoring.md) - Build a complete system
+Build on what you learned by exploring the package documentation:
+- [eventlog/README.md](../../eventlog/README.md) - Working with event logs, parse real CSV/JSONL data
+- [mining/README.md](../../mining/README.md) - Process discovery, learn from historical data
+- [monitoring/README.md](../../monitoring/README.md) - Real-time monitoring, build a complete system
 
 ### Read the Code
 
@@ -522,7 +522,7 @@ You now understand:
 
 Ready to go deeper?
 
-→ Continue with [**Working with Event Logs**](event-logs.md)
+→ Continue exploring the [examples directory](../../examples/README.md)
 
 ---
 

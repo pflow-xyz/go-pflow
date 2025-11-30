@@ -24,11 +24,11 @@ go run main.go
 
 ### Simple A → B Conversion
 
-![Neural Simple](neural_simple.svg)
+![Neural Simple](cmd/main/neural_simple.svg)
 
 ### SIR Epidemic Model Fitting
 
-![Neural SIR](neural_sir.svg)
+![Neural SIR](cmd/main/neural_sir.svg)
 
 ## Example 1: Simple Decay
 
