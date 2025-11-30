@@ -43,7 +43,7 @@ If you see `go version go1.21` or higher, you're good!
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/stackdump/go-pflow
+git clone https://github.com/pflow-xyz/go-pflow
 cd go-pflow
 ```
 
@@ -68,11 +68,11 @@ go test ./...
 
 You should see all tests passing:
 ```
-ok      github.com/stackdump/go-pflow/petri     0.123s
-ok      github.com/stackdump/go-pflow/solver    0.456s
-ok      github.com/stackdump/go-pflow/eventlog  0.089s
-ok      github.com/stackdump/go-pflow/mining    0.234s
-ok      github.com/stackdump/go-pflow/monitoring 0.178s
+ok      github.com/pflow-xyz/go-pflow/petri     0.123s
+ok      github.com/pflow-xyz/go-pflow/solver    0.456s
+ok      github.com/pflow-xyz/go-pflow/eventlog  0.089s
+ok      github.com/pflow-xyz/go-pflow/mining    0.234s
+ok      github.com/pflow-xyz/go-pflow/monitoring 0.178s
 ```
 
 ## Your First Example: SIR Epidemic Model

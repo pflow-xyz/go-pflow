@@ -16,7 +16,7 @@ package main
 
 import (
     "fmt"
-    "github.com/stackdump/go-pflow/eventlog"
+    "github.com/pflow-xyz/go-pflow/eventlog"
 )
 
 func main() {

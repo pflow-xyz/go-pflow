@@ -580,7 +580,7 @@ Want to contribute? Start with:
 4. Improve documentation
 5. Report bugs or request features
 
-Join the discussion: [GitHub Issues](https://github.com/stackdump/go-pflow/issues)
+Join the discussion: [GitHub Issues](https://github.com/pflow-xyz/go-pflow/issues)
 
 ---
 
