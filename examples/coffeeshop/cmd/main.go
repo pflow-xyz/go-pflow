@@ -42,6 +42,7 @@ func main() {
 	demoStateMachines()
 	demoSimulation()
 	demoActorOrchestration()
+	demoContinuousSimulator()
 	generateVisualizations()
 }
 
@@ -286,9 +287,54 @@ func demoActorOrchestration() {
 	fmt.Printf("\n  Shop closed. Final state: %s\n", shop.GetShopState())
 }
 
+func demoContinuousSimulator() {
+	fmt.Println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	fmt.Println("  6. CONTINUOUS SIMULATOR: Random Customer Interactions")
+	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+	fmt.Println("\n  The simulator supports multiple configurations:")
+	fmt.Println("    • QuickTestConfig() - Fast testing (1 sec = 10 sim minutes)")
+	fmt.Println("    • RushHourConfig() - High traffic scenario")
+	fmt.Println("    • SlowDayConfig() - Low traffic scenario")
+	fmt.Println("    • StressTestConfig() - Push system to limits")
+	fmt.Println("    • ObserverTestConfig() - Run until specific behavior")
+
+	fmt.Println("\n  Running quick simulation (2 simulated hours)...")
+
+	config := coffeeshop.QuickTestConfig()
+	config.MaxSimulatedTime = 2 * time.Hour
+	config.VerboseLogging = false
+
+	sim := coffeeshop.NewSimulator(config)
+	result := sim.Run()
+
+	// Print summary
+	result.PrintSummary()
+
+	// Run process mining analysis
+	fmt.Println("\n  Running process mining analysis on event log...")
+	analysis := result.AnalyzeWithMining()
+	if analysis != nil {
+		analysis.PrintAnalysis()
+	}
+
+	// Demo stop conditions
+	fmt.Println("\n  Demo: Running until we sell 10 lattes...")
+	observerConfig := coffeeshop.ObserverTestConfig("latte", 10)
+	observerConfig.VerboseLogging = false
+
+	observerSim := coffeeshop.NewSimulator(observerConfig)
+	observerResult := observerSim.Run()
+
+	fmt.Printf("    Stop reason: %s\n", observerResult.StopReason)
+	fmt.Printf("    Lattes sold: %d\n", observerResult.State.DrinkCounts["latte"])
+	fmt.Printf("    Total customers: %d\n", observerResult.State.TotalCustomers)
+	fmt.Printf("    Simulated time: %v\n", observerResult.State.ElapsedSimulated)
+}
+
 func generateVisualizations() {
 	fmt.Println("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	fmt.Println("  6. GENERATING VISUALIZATIONS")
+	fmt.Println("  7. GENERATING VISUALIZATIONS")
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 	// Create output directory

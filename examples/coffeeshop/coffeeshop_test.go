@@ -599,3 +599,350 @@ func TestInventoryAndWorkflowIntegration(t *testing.T) {
 	t.Logf("Workflow states: %d, Inventory places: %d",
 		wfResult.StateCount, len(invNet.Places))
 }
+
+// ==================== Simulator Tests ====================
+
+func TestSimulatorCreation(t *testing.T) {
+	sim := NewSimulator(nil)
+
+	if sim == nil {
+		t.Fatal("Simulator should not be nil")
+	}
+
+	if sim.config == nil {
+		t.Error("Simulator config should not be nil")
+	}
+
+	if sim.shop == nil {
+		t.Error("Simulator shop should not be nil")
+	}
+}
+
+func TestSimulatorDefaultConfig(t *testing.T) {
+	config := DefaultSimulatorConfig()
+
+	if config.SimulatedTimeScale <= 0 {
+		t.Error("SimulatedTimeScale should be positive")
+	}
+	if config.BaseCustomerRate <= 0 {
+		t.Error("BaseCustomerRate should be positive")
+	}
+	if len(config.DrinkPreferences) == 0 {
+		t.Error("DrinkPreferences should not be empty")
+	}
+
+	// Check preferences sum to ~1.0
+	total := 0.0
+	for _, prob := range config.DrinkPreferences {
+		total += prob
+	}
+	if total < 0.99 || total > 1.01 {
+		t.Errorf("Drink preferences should sum to ~1.0, got %.2f", total)
+	}
+}
+
+func TestSimulatorQuickRun(t *testing.T) {
+	config := QuickTestConfig()
+	config.MaxDuration = 2 * time.Second // Very quick
+	config.VerboseLogging = false
+
+	sim := NewSimulator(config)
+	result := sim.Run()
+
+	if result == nil {
+		t.Fatal("Simulation result should not be nil")
+	}
+
+	if result.State.TotalCustomers == 0 {
+		t.Error("Should have generated some customers")
+	}
+
+	if result.StopReason == "" {
+		t.Error("Stop reason should be set")
+	}
+}
+
+func TestSimulatorStopConditions(t *testing.T) {
+	config := &SimulatorConfig{
+		SimulatedTimeScale: 1000.0, // Very fast
+		MaxDuration:        30 * time.Second,
+		MaxSimulatedTime:   2 * time.Hour,
+		BaseCustomerRate:   5.0,
+		PeakHours:          []int{},
+		PeakMultiplier:     1.0,
+		BrowseOnlyChance:   0.0,
+		CancelOrderChance:  0.0,
+		MobileOrderChance:  0.0,
+		VIPChance:          0.0,
+		DrinkPreferences:   map[string]float64{"latte": 1.0},
+		EnableObservers:    true,
+		StopConditions: []StopCondition{
+			&OrderCountCondition{Target: 5},
+		},
+		VerboseLogging: false,
+	}
+
+	sim := NewSimulator(config)
+	result := sim.Run()
+
+	if result == nil {
+		t.Fatal("Result should not be nil")
+	}
+
+	if result.State.TotalOrders < 5 {
+		t.Errorf("Should have at least 5 orders, got %d", result.State.TotalOrders)
+	}
+
+	if result.StopReason != "Reached 5 orders" {
+		t.Errorf("Stop reason should indicate order count condition, got %q", result.StopReason)
+	}
+}
+
+func TestSimulatorCustomerCountCondition(t *testing.T) {
+	config := &SimulatorConfig{
+		SimulatedTimeScale: 1000.0,
+		MaxDuration:        30 * time.Second,
+		MaxSimulatedTime:   2 * time.Hour,
+		BaseCustomerRate:   5.0,
+		PeakHours:          []int{},
+		PeakMultiplier:     1.0,
+		BrowseOnlyChance:   0.0,
+		CancelOrderChance:  0.0,
+		MobileOrderChance:  0.0,
+		VIPChance:          0.0,
+		DrinkPreferences:   map[string]float64{"espresso": 1.0},
+		EnableObservers:    true,
+		StopConditions: []StopCondition{
+			&CustomerCountCondition{Target: 10},
+		},
+		VerboseLogging: false,
+	}
+
+	sim := NewSimulator(config)
+	result := sim.Run()
+
+	if result.State.TotalCustomers < 10 {
+		t.Errorf("Should have at least 10 customers, got %d", result.State.TotalCustomers)
+	}
+}
+
+func TestSimulatorDrinkSoldCondition(t *testing.T) {
+	config := &SimulatorConfig{
+		SimulatedTimeScale: 1000.0,
+		MaxDuration:        30 * time.Second,
+		MaxSimulatedTime:   2 * time.Hour,
+		BaseCustomerRate:   10.0,
+		PeakHours:          []int{},
+		PeakMultiplier:     1.0,
+		BrowseOnlyChance:   0.0,
+		CancelOrderChance:  0.0,
+		MobileOrderChance:  0.0,
+		VIPChance:          0.0,
+		DrinkPreferences:   map[string]float64{"cappuccino": 1.0},
+		EnableObservers:    true,
+		StopConditions: []StopCondition{
+			&DrinkSoldCondition{DrinkType: "cappuccino", Target: 3},
+		},
+		VerboseLogging: false,
+	}
+
+	sim := NewSimulator(config)
+	result := sim.Run()
+
+	if result.State.DrinkCounts["cappuccino"] < 3 {
+		t.Errorf("Should have sold at least 3 cappuccinos, got %d", result.State.DrinkCounts["cappuccino"])
+	}
+}
+
+func TestSimulatorBrowseOnlyCustomers(t *testing.T) {
+	config := &SimulatorConfig{
+		SimulatedTimeScale: 1000.0,
+		MaxDuration:        30 * time.Second,
+		MaxSimulatedTime:   2 * time.Hour,
+		BaseCustomerRate:   10.0,
+		PeakHours:          []int{},
+		PeakMultiplier:     1.0,
+		BrowseOnlyChance:   0.5, // 50% browse only
+		CancelOrderChance:  0.0,
+		MobileOrderChance:  0.0,
+		VIPChance:          0.0,
+		DrinkPreferences:   map[string]float64{"latte": 1.0},
+		EnableObservers:    true,
+		StopConditions: []StopCondition{
+			&CustomerCountCondition{Target: 20},
+		},
+		VerboseLogging: false,
+	}
+
+	sim := NewSimulator(config)
+	result := sim.Run()
+
+	// With 50% browse rate, we should have some browse-only customers
+	if result.State.BrowseOnlyCustomers == 0 {
+		t.Error("Should have some browse-only customers with 50% rate")
+	}
+
+	browseRate := float64(result.State.BrowseOnlyCustomers) / float64(result.State.TotalCustomers)
+	// Should be roughly 50% (+/- 25% for randomness)
+	if browseRate < 0.25 || browseRate > 0.75 {
+		t.Errorf("Browse rate should be around 50%%, got %.1f%%", browseRate*100)
+	}
+}
+
+func TestSimulatorEventLogGeneration(t *testing.T) {
+	config := QuickTestConfig()
+	config.MaxDuration = 2 * time.Second
+	config.VerboseLogging = false
+
+	sim := NewSimulator(config)
+	result := sim.Run()
+
+	if result.EventLog == nil {
+		t.Fatal("Event log should not be nil")
+	}
+
+	// Should have events
+	if result.EventLog.NumEvents() == 0 {
+		t.Error("Event log should have events")
+	}
+
+	// Should have cases
+	if result.EventLog.NumCases() == 0 {
+		t.Error("Event log should have cases")
+	}
+
+	t.Logf("Generated %d events across %d cases", result.EventLog.NumEvents(), result.EventLog.NumCases())
+}
+
+func TestSimulatorMiningAnalysis(t *testing.T) {
+	config := QuickTestConfig()
+	config.MaxDuration = 3 * time.Second
+	config.VerboseLogging = false
+
+	sim := NewSimulator(config)
+	result := sim.Run()
+
+	analysis := result.AnalyzeWithMining()
+
+	if analysis == nil {
+		t.Fatal("Mining analysis should not be nil")
+	}
+
+	if analysis.Summary == nil {
+		t.Error("Summary should not be nil")
+	}
+
+	if analysis.TimingStats == nil {
+		t.Error("Timing stats should not be nil")
+	}
+
+	if analysis.Footprint == nil {
+		t.Error("Footprint should not be nil")
+	}
+
+	t.Logf("Mining analysis: %d cases, %d activities",
+		analysis.Summary.NumCases, analysis.Summary.NumActivities)
+}
+
+func TestSimulatorPresetConfigs(t *testing.T) {
+	// Test all preset configs compile and have valid values
+	configs := map[string]*SimulatorConfig{
+		"default":   DefaultSimulatorConfig(),
+		"quick":     QuickTestConfig(),
+		"rush":      RushHourConfig(),
+		"slow":      SlowDayConfig(),
+		"stress":    StressTestConfig(),
+		"observer":  ObserverTestConfig("latte", 5),
+	}
+
+	for name, config := range configs {
+		if config == nil {
+			t.Errorf("%s config should not be nil", name)
+			continue
+		}
+
+		if config.BaseCustomerRate <= 0 {
+			t.Errorf("%s config should have positive customer rate", name)
+		}
+
+		if config.SimulatedTimeScale <= 0 {
+			t.Errorf("%s config should have positive time scale", name)
+		}
+	}
+}
+
+func TestSimulatorResultPrinting(t *testing.T) {
+	config := QuickTestConfig()
+	config.MaxDuration = 1 * time.Second
+	config.VerboseLogging = false
+
+	sim := NewSimulator(config)
+	result := sim.Run()
+
+	// Just verify these don't panic
+	result.PrintSummary()
+
+	analysis := result.AnalyzeWithMining()
+	if analysis != nil {
+		analysis.PrintAnalysis()
+	}
+}
+
+func TestSimulatorGetState(t *testing.T) {
+	config := QuickTestConfig()
+	config.MaxDuration = 500 * time.Millisecond
+	config.VerboseLogging = false
+
+	sim := NewSimulator(config)
+
+	// Start in background
+	done := make(chan *SimulatorResult)
+	go func() {
+		done <- sim.Run()
+	}()
+
+	// Check state during run
+	time.Sleep(100 * time.Millisecond)
+	state := sim.GetState()
+	if state == nil {
+		t.Error("Should be able to get state during run")
+	}
+
+	// Wait for completion
+	result := <-done
+	if result == nil {
+		t.Error("Should get result after completion")
+	}
+}
+
+func TestSimulatorStop(t *testing.T) {
+	config := DefaultSimulatorConfig()
+	config.MaxDuration = 10 * time.Second // Long duration
+	config.MaxSimulatedTime = 8 * time.Hour
+	config.VerboseLogging = false
+
+	sim := NewSimulator(config)
+
+	// Start in background
+	done := make(chan *SimulatorResult)
+	go func() {
+		done <- sim.Run()
+	}()
+
+	// Stop after short time
+	time.Sleep(200 * time.Millisecond)
+	sim.Stop()
+
+	// Should complete quickly
+	select {
+	case result := <-done:
+		if result == nil {
+			t.Error("Should get result after stop")
+		}
+		if result.StopReason != "Manual stop" {
+			t.Errorf("Stop reason should be 'Manual stop', got %q", result.StopReason)
+		}
+	case <-time.After(2 * time.Second):
+		t.Error("Simulator should stop within 2 seconds after Stop() called")
+	}
+}

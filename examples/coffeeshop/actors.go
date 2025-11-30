@@ -83,6 +83,9 @@ type CoffeeShop struct {
 
 	// Metrics
 	metrics *ShopMetrics
+
+	// Sequence counters
+	orderSeq int64
 }
 
 // ShopMetrics tracks operational metrics
@@ -513,14 +516,25 @@ func (cs *CoffeeShop) SimulateCustomerArrival(customerID string) {
 
 // SimulateOrder simulates a customer placing an order
 func (cs *CoffeeShop) SimulateOrder(customerID, drinkType string, priority OrderPriority) string {
-	orderID := fmt.Sprintf("ORD-%d", time.Now().UnixNano())
+	return cs.SimulateOrderAt(customerID, drinkType, priority, time.Now())
+}
+
+// SimulateOrderAt simulates a customer placing an order at a specific time
+// Use this when running accelerated simulations to get meaningful order IDs
+func (cs *CoffeeShop) SimulateOrderAt(customerID, drinkType string, priority OrderPriority, timestamp time.Time) string {
+	cs.mu.Lock()
+	cs.orderSeq++
+	seq := cs.orderSeq
+	cs.mu.Unlock()
+	// Format: ORD-HHMM-SSSS (hour:minute-sequence) for readability
+	orderID := fmt.Sprintf("ORD-%02d%02d-%04d", timestamp.Hour(), timestamp.Minute(), seq)
 
 	order := &Order{
 		ID:         orderID,
 		CustomerID: customerID,
 		DrinkType:  drinkType,
 		Priority:   priority,
-		CreatedAt:  time.Now(),
+		CreatedAt:  timestamp,
 		Status:     "placed",
 	}
 

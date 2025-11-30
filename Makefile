@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization rebuild-all-svg check all
+.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla rebuild-all-svg check all
 
 # Default target
 help:
@@ -20,6 +20,9 @@ help:
 	@echo "  make run-neural      - Run neural ODE example"
 	@echo "  make run-monitoring  - Run monitoring demo"
 	@echo "  make run-visualization - Generate workflow/statemachine SVG examples"
+	@echo "  make run-coffeeshop  - Run coffee shop demo (all features)"
+	@echo "  make run-coffeeshop-sim - Run coffee shop simulator with verbose logging"
+	@echo "  make run-coffeeshop-sla - Run coffee shop SLA stress test"
 	@echo "  make rebuild-all-svg - Regenerate all SVG visualizations"
 
 # Build the main CLI tool
@@ -131,6 +134,24 @@ run-monitoring:
 run-visualization:
 	@echo "Running visualization demo..."
 	@cd examples/visualization_demo && go run main.go
+
+# Run coffee shop demo (all features)
+run-coffeeshop:
+	@echo "Running coffee shop demo..."
+	@go run ./examples/coffeeshop/cmd
+
+# Run coffee shop simulator with verbose logging
+# Usage: make run-coffeeshop-sim [DURATION=2h] [CUSTOMERS=100]
+DURATION ?= 2h
+CUSTOMERS ?= 0
+run-coffeeshop-sim:
+	@echo "Running coffee shop simulator with verbose logging..."
+	@go run ./examples/coffeeshop/cmd/sim
+
+# Run coffee shop SLA stress test (induces SLA violations)
+run-coffeeshop-sla:
+	@echo "Running coffee shop SLA stress test (will generate SLA violations)..."
+	@go run ./examples/coffeeshop/cmd/sim -config sla
 
 # Rebuild all SVG visualizations
 rebuild-all-svg:
