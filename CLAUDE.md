@@ -1804,6 +1804,32 @@ summary := log.Summarize()
 summary.Print()  // Cases, events, activities, variants, durations
 ```
 
+### Parse JSONL Event Logs
+
+```go
+import "github.com/pflow-xyz/go-pflow/eventlog"
+
+// Default field names: case_id, activity, timestamp
+config := eventlog.DefaultJSONLConfig()
+log, err := eventlog.ParseJSONL("events.jsonl", config)
+
+// Custom fields
+config := eventlog.JSONLConfig{
+    CaseIDField:    "incident_id",
+    ActivityField:  "status",
+    TimestampField: "time",
+    ResourceField:  "assignee",
+}
+log, _ := eventlog.ParseJSONL("incidents.jsonl", config)
+
+// Parse from bytes (e.g., from HTTP request)
+log, _ := eventlog.ParseJSONLBytes(jsonData, config)
+
+// Supports Unix timestamps (seconds or milliseconds)
+// {"case_id": "c1", "activity": "Start", "timestamp": 1704110400}
+// {"case_id": "c1", "activity": "Start", "timestamp": 1704110400000}
+```
+
 ### Discover Process Models
 
 ```go
@@ -1832,6 +1858,41 @@ fmt.Printf("Discovered %d places, %d transitions\n",
 | `sequential` | Linear processes | No | No |
 | `alpha` | Concurrent processes | No | Length >2 only |
 | `heuristic` | Noisy real-world logs | Yes | Yes |
+
+### Conformance Checking
+
+Conformance checking validates how well an event log fits a process model.
+
+```go
+import "github.com/pflow-xyz/go-pflow/mining"
+
+// Check fitness: does the log fit the model?
+result := mining.CheckConformance(log, net)
+
+fmt.Printf("Fitness: %.2f%%\n", result.Fitness*100)
+fmt.Printf("Fitting traces: %d/%d (%.1f%%)\n",
+    result.FittingTraces, result.TotalTraces, result.FittingPercent)
+
+// Get non-fitting traces for investigation
+for _, tr := range result.GetNonFittingTraces() {
+    fmt.Printf("Case %s: fitness=%.2f, missing=%v\n",
+        tr.CaseID, tr.Fitness, tr.MissingActivities)
+}
+
+// Check precision: does the model allow only observed behavior?
+precision := mining.CheckPrecision(log, net)
+fmt.Printf("Precision: %.2f%%\n", precision.Precision*100)
+
+// Full conformance analysis (fitness + precision + F-score)
+full := mining.CheckFullConformance(log, net)
+fmt.Printf("F-Score: %.2f%%\n", full.FScore*100)
+fmt.Println(full.String())  // Formatted report
+```
+
+**Metrics explained:**
+- **Fitness** (0-1): How much of the log can be replayed on the model. 1.0 = all traces fit perfectly.
+- **Precision** (0-1): How much model behavior is observed in the log. 1.0 = no unused paths.
+- **F-Score**: Harmonic mean of fitness and precision.
 
 ### Footprint Analysis
 
@@ -1931,8 +1992,8 @@ monitor.CompleteCase("INC-001", time.Now())
 
 | Package | Purpose |
 |---------|---------|
-| `eventlog` | Parse CSV, manage traces, summarize logs |
-| `mining` | Discover models, extract timing, learn rates |
+| `eventlog` | Parse CSV/JSONL, manage traces, summarize logs |
+| `mining` | Discover models, conformance checking, extract timing, learn rates |
 | `monitoring` | Track cases, predict completion, alert on SLA |
 
 See `PROCESS_MINING_DIRECTIONS.md` for complete documentation.
