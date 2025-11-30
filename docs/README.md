@@ -58,30 +58,26 @@ Learn by doing:
 - [**Getting Started**](tutorials/getting-started.md)
   Install, run your first example, see results
 
-- [**Working with Event Logs**](tutorials/event-logs.md)
-  Parse CSV files, analyze process data
-
-- [**Discovering Processes**](tutorials/mining.md)
-  Learn models from historical data automatically
-
-- [**Real-Time Monitoring**](tutorials/monitoring.md)
-  Build a live prediction system
+*Additional tutorials for event logs, process mining, and real-time monitoring coming soon. See package README files for current documentation:*
+- [eventlog/README.md](../eventlog/README.md) - Working with event logs
+- [mining/README.md](../mining/README.md) - Process discovery
+- [monitoring/README.md](../monitoring/README.md) - Real-time monitoring
 
 ### 3. Technical Deep-Dives
 
-Understand the implementation:
+Understand the implementation by exploring the package documentation:
 
-- [**The ODE Solver**](technical/solver.md)
-  How Tsit5 works, adaptive timestepping, mass-action kinetics
+- [**Event Log Package**](../eventlog/README.md)
+  Data structures, CSV/JSONL parsing, statistics
 
-- [**Event Log Package**](technical/eventlog.md)
-  Data structures, CSV parsing, statistics
-
-- [**Mining Package**](technical/mining.md)
+- [**Mining Package**](../mining/README.md)
   Discovery algorithms, timing extraction, rate learning
 
-- [**Monitoring Package**](technical/monitoring.md)
+- [**Monitoring Package**](../monitoring/README.md)
   Case tracking, prediction engine, alert system
+
+- [**Schema Package**](../schema/README.md)
+  JSON schema definitions for models and results
 
 ### 4. Mathematical Foundations
 
@@ -99,7 +95,7 @@ For those who want the details:
 → Jump to [Getting Started](tutorials/getting-started.md)
 
 ### "I want to build a real system"
-→ Read [Process Mining](concepts/process-mining.md) then [Real-Time Monitoring](tutorials/monitoring.md)
+→ Read [Process Mining](concepts/process-mining.md) then see [monitoring/README.md](../monitoring/README.md)
 
 ### "I want to understand the math"
 → Go directly to [Mathematics Reference](mathematics.md)
