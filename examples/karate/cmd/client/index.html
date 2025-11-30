@@ -46,6 +46,71 @@
         .disconnected { background: #e74c3c; }
         .connecting { background: #f39c12; }
 
+        #gamepad-status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            background: #34495e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #gamepad-status.connected {
+            background: #9b59b6;
+        }
+
+        #gamepad-status .icon {
+            font-size: 1.2rem;
+        }
+
+        .controller-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            max-width: 280px;
+            border: 1px solid #9b59b6;
+        }
+
+        .controller-hint h4 {
+            color: #9b59b6;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .controller-hint .mapping {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 5px 15px;
+        }
+
+        .controller-hint .btn-label {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .controller-hint .action-label {
+            color: #ecf0f1;
+        }
+
+        .button-flash {
+            animation: buttonFlash 0.15s ease-out;
+        }
+
+        @keyframes buttonFlash {
+            0% { transform: scale(1.1); box-shadow: 0 0 20px rgba(155, 89, 182, 0.8); }
+            100% { transform: scale(1); box-shadow: none; }
+        }
+
         .menu {
             display: flex;
             gap: 20px;
@@ -394,6 +459,22 @@
     <p class="subtitle">Petri Net Powered Combat</p>
 
     <div id="connection-status" class="disconnected">Disconnected</div>
+    <div id="gamepad-status">
+        <span class="icon">🎮</span>
+        <span id="gamepad-text">No Controller</span>
+    </div>
+
+    <div id="controller-hint" class="controller-hint" style="display: none;">
+        <h4>🎮 NES Controller</h4>
+        <div class="mapping">
+            <span class="btn-label">A</span><span class="action-label">Punch</span>
+            <span class="btn-label">B</span><span class="action-label">Kick</span>
+            <span class="btn-label">Start</span><span class="action-label">Special</span>
+            <span class="btn-label">Select</span><span class="action-label">Block</span>
+            <span class="btn-label">D-Pad ←→</span><span class="action-label">Move</span>
+            <span class="btn-label">D-Pad ↓</span><span class="action-label">Recover</span>
+        </div>
+    </div>
 
     <div id="menu" class="menu">
         <button class="btn-ai" onclick="startGame('ai')">vs AI</button>
@@ -784,6 +865,197 @@
 
         // Initialize on page load
         window.addEventListener('load', init);
+
+        // ============================================
+        // NES Controller / Gamepad Support
+        // ============================================
+
+        // Gamepad state
+        let gamepadIndex = null;
+        let gamepadPollInterval = null;
+        let lastButtonStates = {};
+        let lastAxisStates = { x: 0, y: 0 };
+
+        // NES Controller button mapping (standard mapping)
+        // Most USB NES controllers use these indices:
+        const NES_BUTTONS = {
+            A: 0,           // A button -> Punch
+            B: 1,           // B button -> Kick
+            SELECT: 8,      // Select -> Block
+            START: 9,       // Start -> Special
+            // D-pad as buttons (some controllers)
+            DPAD_UP: 12,
+            DPAD_DOWN: 13,  // D-pad down -> Recover
+            DPAD_LEFT: 14,  // D-pad left -> Move left
+            DPAD_RIGHT: 15  // D-pad right -> Move right
+        };
+
+        // Button to action mapping
+        const BUTTON_ACTION_MAP = {
+            [NES_BUTTONS.A]: 'punch',
+            [NES_BUTTONS.B]: 'kick',
+            [NES_BUTTONS.START]: 'special',
+            [NES_BUTTONS.SELECT]: 'block',
+            [NES_BUTTONS.DPAD_LEFT]: 'move_left',
+            [NES_BUTTONS.DPAD_RIGHT]: 'move_right',
+            [NES_BUTTONS.DPAD_DOWN]: 'recover'
+        };
+
+        // D-pad axis threshold (some controllers use axes instead of buttons)
+        const AXIS_THRESHOLD = 0.5;
+
+        function handleGamepadConnected(e) {
+            const gamepad = e.gamepad;
+            console.log('Gamepad connected:', gamepad.id, 'index:', gamepad.index);
+
+            gamepadIndex = gamepad.index;
+            updateGamepadStatus(true, gamepad.id);
+
+            // Show controller hint
+            document.getElementById('controller-hint').style.display = 'block';
+
+            // Start polling for input
+            if (!gamepadPollInterval) {
+                gamepadPollInterval = setInterval(pollGamepad, 16); // ~60fps
+            }
+
+            log('🎮 Controller connected: ' + gamepad.id.substring(0, 30), 'system');
+        }
+
+        function handleGamepadDisconnected(e) {
+            console.log('Gamepad disconnected:', e.gamepad.id);
+
+            if (e.gamepad.index === gamepadIndex) {
+                gamepadIndex = null;
+                updateGamepadStatus(false);
+                document.getElementById('controller-hint').style.display = 'none';
+
+                // Check if any other gamepads are still connected
+                const gamepads = navigator.getGamepads();
+                for (let i = 0; i < gamepads.length; i++) {
+                    if (gamepads[i]) {
+                        gamepadIndex = i;
+                        updateGamepadStatus(true, gamepads[i].id);
+                        document.getElementById('controller-hint').style.display = 'block';
+                        break;
+                    }
+                }
+
+                if (gamepadIndex === null && gamepadPollInterval) {
+                    clearInterval(gamepadPollInterval);
+                    gamepadPollInterval = null;
+                }
+            }
+
+            log('🎮 Controller disconnected', 'system');
+        }
+
+        function updateGamepadStatus(connected, name = '') {
+            const statusEl = document.getElementById('gamepad-status');
+            const textEl = document.getElementById('gamepad-text');
+
+            if (connected) {
+                statusEl.classList.add('connected');
+                // Truncate long controller names
+                const shortName = name.length > 20 ? name.substring(0, 20) + '...' : name;
+                textEl.textContent = shortName || 'Controller';
+            } else {
+                statusEl.classList.remove('connected');
+                textEl.textContent = 'No Controller';
+            }
+        }
+
+        function pollGamepad() {
+            if (gamepadIndex === null) return;
+
+            const gamepads = navigator.getGamepads();
+            const gamepad = gamepads[gamepadIndex];
+
+            if (!gamepad) return;
+
+            // Check buttons
+            for (let i = 0; i < gamepad.buttons.length; i++) {
+                const button = gamepad.buttons[i];
+                const pressed = button.pressed || button.value > 0.5;
+                const wasPressed = lastButtonStates[i] || false;
+
+                // Trigger on button press (not release)
+                if (pressed && !wasPressed) {
+                    handleGamepadButton(i);
+                }
+
+                lastButtonStates[i] = pressed;
+            }
+
+            // Check axes for D-pad (some controllers use axes instead of buttons)
+            if (gamepad.axes.length >= 2) {
+                const xAxis = gamepad.axes[0];
+                const yAxis = gamepad.axes[1];
+
+                // Left
+                if (xAxis < -AXIS_THRESHOLD && lastAxisStates.x >= -AXIS_THRESHOLD) {
+                    handleGamepadButton(NES_BUTTONS.DPAD_LEFT);
+                }
+                // Right
+                if (xAxis > AXIS_THRESHOLD && lastAxisStates.x <= AXIS_THRESHOLD) {
+                    handleGamepadButton(NES_BUTTONS.DPAD_RIGHT);
+                }
+                // Down (for recover)
+                if (yAxis > AXIS_THRESHOLD && lastAxisStates.y <= AXIS_THRESHOLD) {
+                    handleGamepadButton(NES_BUTTONS.DPAD_DOWN);
+                }
+
+                lastAxisStates.x = xAxis;
+                lastAxisStates.y = yAxis;
+            }
+        }
+
+        function handleGamepadButton(buttonIndex) {
+            const action = BUTTON_ACTION_MAP[buttonIndex];
+
+            if (action) {
+                console.log('Gamepad button', buttonIndex, '->', action);
+
+                // Flash the corresponding button on screen
+                flashActionButton(action);
+
+                // Perform the action
+                doAction(action);
+            }
+        }
+
+        function flashActionButton(action) {
+            const btn = document.querySelector(`.action-btn[data-action="${action}"]`);
+            if (btn) {
+                btn.classList.add('button-flash');
+                setTimeout(() => btn.classList.remove('button-flash'), 150);
+            }
+        }
+
+        // Initialize gamepad listeners
+        window.addEventListener('gamepadconnected', handleGamepadConnected);
+        window.addEventListener('gamepaddisconnected', handleGamepadDisconnected);
+
+        // Check for already-connected gamepads on page load
+        window.addEventListener('load', () => {
+            // Some browsers require a user interaction before gamepads are visible
+            // But we can still check on load
+            setTimeout(() => {
+                const gamepads = navigator.getGamepads();
+                for (let i = 0; i < gamepads.length; i++) {
+                    if (gamepads[i]) {
+                        gamepadIndex = i;
+                        updateGamepadStatus(true, gamepads[i].id);
+                        document.getElementById('controller-hint').style.display = 'block';
+                        if (!gamepadPollInterval) {
+                            gamepadPollInterval = setInterval(pollGamepad, 16);
+                        }
+                        log('🎮 Controller detected: ' + gamepads[i].id.substring(0, 30), 'system');
+                        break;
+                    }
+                }
+            }, 100);
+        });
     </script>
 </body>
 </html>
