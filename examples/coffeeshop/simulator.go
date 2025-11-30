@@ -75,6 +75,12 @@ type SimulatorState struct {
 	MobileOrders         int
 	VIPOrders            int
 
+	// Customer disposition tracking
+	CustomersServedHappy   int // Completed within SLA
+	CustomersServedUnhappy int // Completed but SLA breached
+	CustomersTurnedAway    int // Left due to empty menu (angry!)
+	CustomersLeftQueue     int // Gave up waiting (future: queue too long)
+
 	// Per-drink counters
 	DrinkCounts map[string]int
 
@@ -361,6 +367,22 @@ func (s *Simulator) generateCustomer() {
 	isMobile := s.rng.Float64() < s.config.MobileOrderChance
 	isVIP := s.rng.Float64() < s.config.VIPChance
 
+	// Check if menu is empty - customer gets turned away angry!
+	if s.state.MenuEmpty {
+		s.recordEvent(customerID, "turned_away_empty_menu", "kiosk", nil)
+		machine.SendEvent("view_menu")
+		machine.SendEvent("get_frustrated")
+		machine.SendEvent("leave_early")
+
+		s.state.CustomersTurnedAway++
+		s.state.ActiveCustomers--
+
+		if s.config.VerboseLogging {
+			fmt.Printf("  😤 TURNED AWAY: Customer %s left angry - menu empty!\n", customerID)
+		}
+		return
+	}
+
 	// Determine if browse-only
 	if !isMobile && s.rng.Float64() < s.config.BrowseOnlyChance {
 		// Customer browses and leaves
@@ -461,10 +483,13 @@ func (s *Simulator) processOrders() {
 		// Calculate wait time
 		waitTime := s.state.CurrentSimTime.Sub(order.orderTime)
 
-		// Check SLA
+		// Check SLA and track customer disposition
 		breachedSLA := waitTime > s.config.SLATarget
 		if breachedSLA {
 			s.state.SLABreaches++
+			s.state.CustomersServedUnhappy++
+		} else {
+			s.state.CustomersServedHappy++
 		}
 
 		// Update timing stats
@@ -769,6 +794,18 @@ func (r *SimulatorResult) PrintSummary() {
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Cancelled: %d", r.State.CancelledOrders))
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Mobile Orders: %d", r.State.MobileOrders))
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("VIP Orders: %d", r.State.VIPOrders))
+
+	// Customer disposition section
+	fmt.Printf("╠%s╣\n", border)
+	fmt.Printf("║  %-64s║\n", "CUSTOMER DISPOSITION:")
+	fmt.Printf("║    %-62s║\n", fmt.Sprintf("😊 Happy (within SLA): %d", r.State.CustomersServedHappy))
+	fmt.Printf("║    %-62s║\n", fmt.Sprintf("😕 Unhappy (SLA breach): %d", r.State.CustomersServedUnhappy))
+	if r.State.CustomersTurnedAway > 0 {
+		fmt.Printf("║    %-62s║\n", fmt.Sprintf("😤 Turned Away (menu empty): %d", r.State.CustomersTurnedAway))
+	}
+	if r.State.CustomersLeftQueue > 0 {
+		fmt.Printf("║    %-62s║\n", fmt.Sprintf("😒 Left Queue (gave up): %d", r.State.CustomersLeftQueue))
+	}
 	fmt.Printf("╠%s╣\n", border)
 	fmt.Printf("║  %-64s║\n", "DRINKS ORDERED:")
 
