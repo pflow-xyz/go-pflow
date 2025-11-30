@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla rebuild-all-svg check all
+.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory rebuild-all-svg check all
 
 # Default target
 help:
@@ -23,6 +23,7 @@ help:
 	@echo "  make run-coffeeshop  - Run coffee shop demo (all features)"
 	@echo "  make run-coffeeshop-sim - Run coffee shop simulator with verbose logging"
 	@echo "  make run-coffeeshop-sla - Run coffee shop SLA stress test"
+	@echo "  make run-coffeeshop-inventory - Run coffee shop inventory stress test"
 	@echo "  make rebuild-all-svg - Regenerate all SVG visualizations"
 
 # Build the main CLI tool
@@ -152,6 +153,11 @@ run-coffeeshop-sim:
 run-coffeeshop-sla:
 	@echo "Running coffee shop SLA stress test (will generate SLA violations)..."
 	@go run ./examples/coffeeshop/cmd/sim -config sla
+
+# Run coffee shop inventory stress test (induces inventory warnings/stockouts)
+run-coffeeshop-inventory:
+	@echo "Running coffee shop inventory stress test (will generate inventory warnings)..."
+	@go run ./examples/coffeeshop/cmd/sim -config inventory
 
 # Rebuild all SVG visualizations
 rebuild-all-svg:

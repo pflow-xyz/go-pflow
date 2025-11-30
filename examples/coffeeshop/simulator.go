@@ -36,6 +36,11 @@ type SimulatorConfig struct {
 	BaristaSpeed       float64       // Orders per minute per barista (default: 0.5)
 	ReducedBaristaMode bool          // Simulate understaffing (1 barista instead of 2)
 
+	// Inventory settings
+	InitialInventory    map[string]float64 // Starting inventory levels (nil = full)
+	InventoryWarningWindow time.Duration   // Warn if projected runout within this window (default: 30 min)
+	EnableInventoryTracking bool           // Track and warn about inventory levels
+
 	// Observer settings
 	EnableObservers bool
 	StopConditions  []StopCondition
@@ -90,8 +95,23 @@ type SimulatorState struct {
 	InventoryAlerts   int
 	EquipmentIssues   int
 
+	// Inventory tracking
+	Inventory           map[string]float64   // Current inventory levels
+	InventoryUsage      map[string]float64   // Total usage since start
+	InventoryWarnings   []InventoryWarning   // Active warnings
+	StockoutsLogged     map[string]bool      // Track which stockouts have been logged
+
 	// Event log
 	Events []*SimEvent
+}
+
+// InventoryWarning represents a projected inventory runout warning
+type InventoryWarning struct {
+	Ingredient     string
+	CurrentLevel   float64
+	UsageRate      float64        // units per minute
+	ProjectedRunout time.Duration // time until runout at current rate
+	Timestamp      time.Time
 }
 
 // SimEvent represents a simulation event (for process mining)
@@ -173,6 +193,10 @@ func NewSimulator(config *SimulatorConfig) *Simulator {
 	if config.BaristaSpeed == 0 {
 		config.BaristaSpeed = 0.5 // 1 order per 2 minutes
 	}
+	// Set defaults for inventory settings
+	if config.InventoryWarningWindow == 0 {
+		config.InventoryWarningWindow = 30 * time.Minute
+	}
 
 	return &Simulator{
 		config:           config,
@@ -206,9 +230,28 @@ func (s *Simulator) Run() *SimulatorResult {
 		DrinkCounts:        make(map[string]int),
 		Events:             make([]*SimEvent, 0),
 		AvailableBaristas:  numBaristas,
+		Inventory:          make(map[string]float64),
+		InventoryUsage:     make(map[string]float64),
+		InventoryWarnings:  make([]InventoryWarning, 0),
+		StockoutsLogged:    make(map[string]bool),
 	}
 	s.state.CurrentSimTime = s.state.SimulatedStartTime
 	s.orderQueue = make([]*pendingOrder, 0)
+
+	// Initialize inventory
+	if s.config.InitialInventory != nil {
+		for k, v := range s.config.InitialInventory {
+			s.state.Inventory[k] = v
+		}
+	} else {
+		// Default to full inventory
+		s.state.Inventory["coffee_beans"] = MaxCoffeeBeans
+		s.state.Inventory["milk"] = MaxMilk
+		s.state.Inventory["water"] = MaxWater
+		s.state.Inventory["cups"] = MaxCups
+		s.state.Inventory["sugar_packets"] = MaxSugarPackets
+		s.state.Inventory["syrup"] = MaxSyrupPumps
+	}
 
 	// Start the shop
 	s.shop.Start()
@@ -435,6 +478,11 @@ func (s *Simulator) processOrders() {
 		s.state.CompletedOrders++
 		s.state.ActiveCustomers--
 
+		// Consume inventory for this drink
+		if s.config.EnableInventoryTracking {
+			s.consumeInventory(order.drink)
+		}
+
 		// Calculate average
 		if s.state.CompletedOrders > 0 {
 			s.state.AverageWaitTime = s.state.TotalWaitTime / time.Duration(s.state.CompletedOrders)
@@ -451,6 +499,95 @@ func (s *Simulator) processOrders() {
 		if s.config.VerboseLogging && breachedSLA {
 			fmt.Printf("  ⚠️  SLA BREACH: Order %s waited %v (target: %v)\n",
 				order.orderID[:12], waitTime.Round(time.Second), s.config.SLATarget)
+		}
+	}
+}
+
+// consumeInventory deducts ingredients for a completed drink and checks for warnings
+func (s *Simulator) consumeInventory(drinkType string) {
+	recipe, ok := Recipes[drinkType]
+	if !ok {
+		return
+	}
+
+	for ingredient, amount := range recipe {
+		s.state.Inventory[ingredient] -= amount
+		s.state.InventoryUsage[ingredient] += amount
+
+		// Clamp to zero (shouldn't go negative, but just in case)
+		if s.state.Inventory[ingredient] < 0 {
+			s.state.Inventory[ingredient] = 0
+		}
+	}
+
+	// Check for projected runout warnings
+	s.checkInventoryWarnings()
+}
+
+// checkInventoryWarnings checks if any ingredient will run out within the warning window
+func (s *Simulator) checkInventoryWarnings() {
+	elapsedMinutes := s.state.ElapsedSimulated.Minutes()
+	if elapsedMinutes < 1 {
+		return // Need some history to project
+	}
+
+	// Check each ingredient
+	ingredients := []string{"coffee_beans", "milk", "water", "cups", "sugar_packets", "syrup"}
+	for _, ingredient := range ingredients {
+		current := s.state.Inventory[ingredient]
+		used := s.state.InventoryUsage[ingredient]
+
+		if used == 0 {
+			continue // Not used yet
+		}
+
+		// Calculate usage rate (units per minute)
+		usageRate := used / elapsedMinutes
+
+		if usageRate <= 0 {
+			continue
+		}
+
+		// Project time until runout
+		minutesUntilRunout := current / usageRate
+		projectedRunout := time.Duration(minutesUntilRunout) * time.Minute
+
+		// Check if within warning window
+		if projectedRunout <= s.config.InventoryWarningWindow && projectedRunout > 0 {
+			// Check if we already warned about this ingredient recently
+			alreadyWarned := false
+			for _, w := range s.state.InventoryWarnings {
+				if w.Ingredient == ingredient &&
+					s.state.CurrentSimTime.Sub(w.Timestamp) < 10*time.Minute {
+					alreadyWarned = true
+					break
+				}
+			}
+
+			if !alreadyWarned {
+				warning := InventoryWarning{
+					Ingredient:      ingredient,
+					CurrentLevel:    current,
+					UsageRate:       usageRate,
+					ProjectedRunout: projectedRunout,
+					Timestamp:       s.state.CurrentSimTime,
+				}
+				s.state.InventoryWarnings = append(s.state.InventoryWarnings, warning)
+				s.state.InventoryAlerts++
+
+				if s.config.VerboseLogging {
+					fmt.Printf("  📦 INVENTORY WARNING: %s will run out in ~%v (%.0f remaining, %.1f/min usage)\n",
+						ingredient, projectedRunout.Round(time.Minute), current, usageRate)
+				}
+			}
+		}
+
+		// Check for actual stockout (only log once)
+		if current <= 0 && !s.state.StockoutsLogged[ingredient] {
+			s.state.StockoutsLogged[ingredient] = true
+			if s.config.VerboseLogging {
+				fmt.Printf("  🚨 STOCKOUT: %s is depleted!\n", ingredient)
+			}
 		}
 	}
 }
@@ -619,6 +756,37 @@ func (r *SimulatorResult) PrintSummary() {
 	fmt.Printf("║    %-62s║\n", fmt.Sprintf("Longest Wait: %s", r.State.LongestWaitTime.Round(time.Second)))
 	fmt.Printf("║    %-62s║\n", fmt.Sprintf("Shortest Wait: %s", r.State.ShortestWaitTime.Round(time.Second)))
 	fmt.Printf("║    %-62s║\n", fmt.Sprintf("Pending Orders: %d", r.PendingOrders))
+
+	// Inventory section (only if tracking enabled)
+	if len(r.State.Inventory) > 0 {
+		fmt.Printf("╠%s╣\n", border)
+		fmt.Printf("║  %-64s║\n", "INVENTORY:")
+		if r.State.InventoryAlerts > 0 {
+			fmt.Printf("║    %-62s║\n", fmt.Sprintf("📦 Inventory Alerts: %d", r.State.InventoryAlerts))
+		}
+		// Show key ingredients
+		ingredients := []struct {
+			name string
+			max  float64
+		}{
+			{"coffee_beans", MaxCoffeeBeans},
+			{"milk", MaxMilk},
+			{"cups", MaxCups},
+		}
+		for _, ing := range ingredients {
+			level := r.State.Inventory[ing.name]
+			pct := (level / ing.max) * 100
+			status := "✓"
+			if pct < 20 {
+				status = "⚠️"
+			}
+			if level <= 0 {
+				status = "🚨"
+			}
+			fmt.Printf("║    %-62s║\n", fmt.Sprintf("%s %-14s: %.0f/%.0f (%.0f%%)",
+				status, ing.name, level, ing.max, pct))
+		}
+	}
 
 	fmt.Printf("╠%s╣\n", border)
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Event Log Traces: %d", r.EventLog.NumCases()))
@@ -836,6 +1004,47 @@ func (c *SLABreachCondition) Description() string {
 	return fmt.Sprintf("SLA breaches reached %d", c.Threshold)
 }
 
+// InventoryAlertCondition stops when inventory alerts exceed threshold
+type InventoryAlertCondition struct {
+	Threshold int
+}
+
+func (c *InventoryAlertCondition) Check(state *SimulatorState) bool {
+	return state.InventoryAlerts >= c.Threshold
+}
+
+func (c *InventoryAlertCondition) Description() string {
+	return fmt.Sprintf("Inventory alerts reached %d", c.Threshold)
+}
+
+// IngredientStockoutCondition stops when any tracked ingredient runs out
+type IngredientStockoutCondition struct {
+	Ingredient string // specific ingredient, or empty for any
+}
+
+func (c *IngredientStockoutCondition) Check(state *SimulatorState) bool {
+	if state.Inventory == nil {
+		return false
+	}
+	if c.Ingredient != "" {
+		return state.Inventory[c.Ingredient] <= 0
+	}
+	// Check any ingredient
+	for _, level := range state.Inventory {
+		if level <= 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *IngredientStockoutCondition) Description() string {
+	if c.Ingredient != "" {
+		return fmt.Sprintf("%s depleted", c.Ingredient)
+	}
+	return "Any ingredient depleted"
+}
+
 // === Preset Configurations ===
 
 // QuickTestConfig returns a config for quick testing
@@ -915,6 +1124,37 @@ func SLAStressConfig() *SimulatorConfig {
 	config.VerboseLogging = true
 	config.StopConditions = []StopCondition{
 		&SLABreachCondition{Threshold: 10}, // Stop after 10 breaches
+	}
+	return config
+}
+
+// InventoryStressConfig creates conditions likely to cause inventory warnings/stockouts
+// Low starting inventory + high order rate + fast baristas = quick depletion
+func InventoryStressConfig() *SimulatorConfig {
+	config := DefaultSimulatorConfig()
+	config.SimulatedTimeScale = 300.0       // Fast simulation
+	config.MaxSimulatedTime = 2 * time.Hour
+	config.BaseCustomerRate = 6.0           // High traffic
+	config.PeakMultiplier = 2.0
+	config.BrowseOnlyChance = 0.05          // Most people order
+	config.MobileOrderChance = 0.30
+	config.BaristaSpeed = 0.8               // Fast baristas = more inventory burn
+	config.EnableInventoryTracking = true   // Track inventory!
+	config.InventoryWarningWindow = 20 * time.Minute // Warn 20 min before runout
+	config.VerboseLogging = true
+	config.EnableObservers = true           // Enable stop conditions
+	// Start with low inventory to trigger warnings faster
+	config.InitialInventory = map[string]float64{
+		"coffee_beans":  200,  // Only 200g (normally 1000)
+		"milk":          1000, // Only 1L (normally 5L)
+		"water":         10000,
+		"cups":          30,   // Only 30 cups (normally 100)
+		"sugar_packets": 200,
+		"syrup":         100,
+	}
+	config.StopConditions = []StopCondition{
+		&InventoryAlertCondition{Threshold: 5},      // Stop after 5 warnings
+		&IngredientStockoutCondition{Ingredient: ""}, // Or any stockout
 	}
 	return config
 }
