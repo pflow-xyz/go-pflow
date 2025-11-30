@@ -7,6 +7,7 @@ This directory contains example implementations demonstrating different aspects 
 | Example | Type | Complexity | Key Concepts | Visualization |
 |---------|------|------------|--------------|---------------|
 | **basic** | Workflow | Simple | Sequential processes, producer-consumer patterns | [workflow](basic/workflow_small.svg), [producer-consumer](basic/pc_small.svg) |
+| **coffeeshop** | Integration | Complex | Actors, workflows, state machines, process mining | [inventory](coffeeshop/cmd/output/inventory_net.svg), [workflow](coffeeshop/cmd/output/order_workflow.svg) |
 | **sudoku** | Puzzle | Simple | Constraint satisfaction, ODE analysis, colored nets | [4x4](sudoku/sudoku-4x4.svg) |
 | **knapsack** | Optimization | Medium | 0/1 Knapsack, mass-action kinetics, exclusion analysis | [model](knapsack/cmd/knapsack_model.svg) |
 | **tictactoe** | Game AI | Medium | Minimax, perfect play, ODE-guided decisions | [flow](tictactoe/tictactoe_flow.svg) |
@@ -51,7 +52,53 @@ pflow simulate pc_small.json
 
 ---
 
-### 2. Sudoku Puzzle
+### 2. Coffee Shop (Kitchen Sink Demo)
+
+**Location**: `coffeeshop/`
+
+**Model Type**: Comprehensive integration example
+
+**What It Demonstrates**:
+- **Actor Pattern**: High-level orchestration of shop operations
+- **Petri Nets**: Ingredient inventory management with reachability analysis
+- **Workflows**: Order processing with SLA tracking (regular vs VIP)
+- **State Machines**: Equipment states, barista work cycles, customer journeys
+- **ODE Simulation**: Capacity planning and runout prediction
+- **Process Mining**: Analyzing simulation event logs
+
+**Complexity Metrics**:
+- Inventory Petri net: 11 places, 6 transitions
+- Order workflow: 6 tasks with parallel paths
+- State machines: 3 concurrent (barista, espresso machine, customer)
+- Simulation: Full-day capacity planning
+
+**Key Features**:
+- **Inventory Tracking**: Coffee beans, milk, water, cups, syrup
+- **Multiple Drink Recipes**: Latte, cappuccino, espresso, etc.
+- **SLA Monitoring**: 5 min regular, 3 min VIP/mobile orders
+- **Configurable Scenarios**: Rush hour, slow day, stress test
+
+**Visualizations**:
+
+| Model | Description | Preview |
+|-------|-------------|---------|
+| Inventory Net | Ingredient tracking | ![inventory](coffeeshop/cmd/output/inventory_net.svg) |
+| Order Workflow | Processing pipeline | ![workflow](coffeeshop/cmd/output/order_workflow.svg) |
+| Barista State | Work cycle states | ![barista](coffeeshop/cmd/output/barista_statemachine.svg) |
+| Customer Journey | Interaction flow | ![customer](coffeeshop/cmd/output/customer_journey.svg) |
+| Espresso Machine | Equipment states | ![espresso](coffeeshop/cmd/output/espresso_machine.svg) |
+
+**Run Example**:
+```bash
+cd coffeeshop/cmd
+go run main.go
+```
+
+**Documentation**: See [coffeeshop/README.md](coffeeshop/README.md) for complete details.
+
+---
+
+### 3. Sudoku Puzzle
 
 **Location**: `sudoku/`
 
@@ -103,7 +150,7 @@ go build -o sudoku ./cmd
 
 ---
 
-### 3. Knapsack Problem
+### 4. Knapsack Problem
 
 **Location**: `knapsack/`
 
@@ -148,7 +195,7 @@ go run *.go
 
 ---
 
-### 4. Tic-Tac-Toe
+### 5. Tic-Tac-Toe
 
 **Location**: `tictactoe/`
 
@@ -210,7 +257,7 @@ go build -o ttt ./cmd
 
 ---
 
-### 5. Nim Game
+### 6. Nim Game
 
 **Location**: `nim/`
 
@@ -266,7 +313,7 @@ go build -o nim ./cmd
 
 ---
 
-### 6. Connect Four
+### 7. Connect Four
 
 **Location**: `connect4/`
 
@@ -362,7 +409,7 @@ go build -o connect4 ./cmd
 
 ---
 
-### 7. Chess Problems
+### 8. Chess Problems
 
 **Location**: `chess/`
 
