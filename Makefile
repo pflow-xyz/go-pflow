@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all
+.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy run-karate run-karate-server run-karate-cli rebuild-all-svg check all kill-servers
 
 # Default target
 help:
@@ -25,7 +25,11 @@ help:
 	@echo "  make run-coffeeshop-sla - Run coffee shop SLA stress test"
 	@echo "  make run-coffeeshop-inventory - Run coffee shop inventory stress test"
 	@echo "  make run-coffeeshop-happy - Run coffee shop happy customer scenario (90%+ satisfied)"
+	@echo "  make run-karate       - Run karate game AI demo"
+	@echo "  make run-karate-server - Start karate game server (http://localhost:8080)"
+	@echo "  make run-karate-cli   - Play karate interactively in terminal"
 	@echo "  make rebuild-all-svg - Regenerate all SVG visualizations"
+	@echo "  make kill-servers    - Kill any running go-pflow servers"
 
 # Build the main CLI tool
 build:
@@ -113,6 +117,10 @@ examples:
 	@go build -o bin/chess examples/chess/cmd/*.go
 	@echo "  - Knapsack example"
 	@go build -o bin/knapsack examples/knapsack/cmd/*.go
+	@echo "  - Karate game server"
+	@go build -o bin/karate examples/karate/cmd/*.go
+	@echo "  - Karate CLI client"
+	@go build -o bin/karate-cli examples/karate/cmd/cli/*.go
 	@echo "  - Visualization demo"
 	@go build -o bin/visualization_demo examples/visualization_demo/main.go
 	@echo "Done building examples!"
@@ -165,6 +173,22 @@ run-coffeeshop-happy:
 	@echo "Running coffee shop happy customer scenario (targeting 90%+ satisfaction)..."
 	@go run ./examples/coffeeshop/cmd/sim -config happy
 
+# Run karate game AI demo
+run-karate:
+	@echo "Running karate game AI demo..."
+	@go run ./examples/karate/cmd -demo
+
+# Run karate game server
+run-karate-server:
+	@echo "Starting karate game server..."
+	@echo "Open http://localhost:8080 in your browser"
+	@go run ./examples/karate/cmd -port 8080
+
+# Run karate CLI client (interactive terminal game)
+run-karate-cli:
+	@echo "Starting karate CLI game..."
+	@go run ./examples/karate/cmd/cli
+
 # Rebuild all SVG visualizations
 rebuild-all-svg:
 	@echo "Regenerating all SVG visualizations..."
@@ -204,6 +228,9 @@ rebuild-all-svg:
 	@echo "=== Knapsack Example ==="
 	@cd examples/knapsack/cmd && go run *.go
 	@echo ""
+	@echo "=== Karate Game Example ==="
+	@cd examples/karate && go run ./cmd -svg
+	@echo ""
 	@echo "=== Visualization Demo (Workflow & StateMachine) ==="
 	@cd examples/visualization_demo && go run main.go
 	@echo ""
@@ -220,3 +247,11 @@ publish-check: clean check
 	@echo "  1. git add ."
 	@echo "  2. git commit -m 'Prepare for publication'"
 	@echo "  3. git push"
+
+# Kill any running go-pflow servers
+kill-servers:
+	@echo "Killing go-pflow servers..."
+	@-lsof -ti:8080 | xargs -r kill -9 2>/dev/null
+	@-lsof -ti:8081 | xargs -r kill -9 2>/dev/null
+	@-lsof -ti:8082 | xargs -r kill -9 2>/dev/null
+	@echo "Done."

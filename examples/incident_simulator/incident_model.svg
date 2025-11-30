@@ -57,6 +57,14 @@
 <path d="M 1124.8 100.0 L 1116.8 103.6 L 1116.8 96.4 Z" fill="#999999"/>
 <circle cx="1108.4" cy="100.0" r="10" fill="#fafafa" stroke="#999999" stroke-width="1"/>
 <text x="1108.4" y="100.0" font-family="system-ui, Arial" font-size="10px" fill="#666" text-anchor="middle" dominant-baseline="middle">1</text>
+<circle cx="250.0" cy="100.0" r="16.0" class="place"/>
+<text x="250.0" y="122.0" class="label-text">After Ticket_Created</text>
+<circle cx="400.0" cy="100.0" r="16.0" class="place"/>
+<text x="400.0" y="122.0" class="label-text">After Triage</text>
+<circle cx="550.0" cy="100.0" r="16.0" class="place"/>
+<text x="550.0" y="122.0" class="label-text">After Investigation</text>
+<circle cx="700.0" cy="100.0" r="16.0" class="place"/>
+<text x="700.0" y="122.0" class="label-text">After Develop_Fix</text>
 <circle cx="850.0" cy="100.0" r="16.0" class="place"/>
 <text x="850.0" y="122.0" class="label-text">After Code_Review</text>
 <circle cx="1000.0" cy="100.0" r="16.0" class="place"/>
@@ -66,16 +74,6 @@
 <text x="100.0" y="122.0" class="label-text">Start</text>
 <circle cx="1150.0" cy="100.0" r="16.0" class="place"/>
 <text x="1150.0" y="122.0" class="label-text">End</text>
-<circle cx="250.0" cy="100.0" r="16.0" class="place"/>
-<text x="250.0" y="122.0" class="label-text">After Ticket_Created</text>
-<circle cx="400.0" cy="100.0" r="16.0" class="place"/>
-<text x="400.0" y="122.0" class="label-text">After Triage</text>
-<circle cx="550.0" cy="100.0" r="16.0" class="place"/>
-<text x="550.0" y="122.0" class="label-text">After Investigation</text>
-<circle cx="700.0" cy="100.0" r="16.0" class="place"/>
-<text x="700.0" y="122.0" class="label-text">After Develop_Fix</text>
-<rect x="610.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="625.0" y="121.0" class="label-text">Develop_Fix</text>
 <rect x="460.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="475.0" y="121.0" class="label-text">Investigation</text>
 <rect x="1060.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
@@ -88,4 +86,6 @@
 <text x="325.0" y="121.0" class="label-text">Triage</text>
 <rect x="760.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="775.0" y="121.0" class="label-text">Code_Review</text>
+<rect x="610.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="625.0" y="121.0" class="label-text">Develop_Fix</text>
 </svg>
