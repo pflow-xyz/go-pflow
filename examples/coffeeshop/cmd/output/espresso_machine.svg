@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-320.0 -80.0 640.0 1050.0" width="640" height="1050">
+<defs><style>.state { stroke-width: 2; rx: 8; }.state-initial { stroke-width: 3; }.state-composite { stroke-dasharray: 5,3; }.transition { stroke: #666; stroke-width: 1.5; fill: none; }.transition-self { stroke: #999; }.arrowhead { fill: #666; }.initial-marker { fill: #333; }.state-label { font-family: system-ui, Arial; font-size: 11px; fill: #333; text-anchor: middle; dominant-baseline: middle; }.event-label { font-family: system-ui, Arial; font-size: 9px; fill: #666; text-anchor: middle; }.region-label { font-family: system-ui, Arial; font-size: 10px; fill: #999; font-style: italic; }.region-box { fill: none; stroke: #ddd; stroke-width: 1; stroke-dasharray: 3,3; }.chart-title { font-family: system-ui, Arial; font-size: 14px; font-weight: bold; fill: #333; }</style><marker id="sm-arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="arrowhead"/></marker></defs>
+<text x="-310.0" y="-60.0" class="chart-title">espresso_machine</text>
+<rect x="-60.0" y="-30.0" width="120.0" height="200.0" class="region-box"/>
+<text x="-55.0" y="-35.0" class="region-label">health</text>
+<rect x="-60.0" y="310.0" width="120.0" height="200.0" class="region-box"/>
+<text x="-55.0" y="305.0" class="region-label">maintenance</text>
+<rect x="-60.0" y="650.0" width="120.0" height="270.0" class="region-box"/>
+<text x="-55.0" y="645.0" class="region-label">status</text>
+<path d="M 0.0 700.0 C 80.0 749.0 80.0 749.0 0.0 798.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="749.0" class="event-label">start_brew</text>
+<path d="M 0.0 800.0 C -80.0 751.0 -80.0 751.0 0.0 702.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="751.0" class="event-label" text-anchor="end">brew_complete</text>
+<path d="M 0.0 700.0 C 80.0 784.0 80.0 784.0 0.0 868.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="784.0" class="event-label">start_steam</text>
+<path d="M 0.0 870.0 C -80.0 786.0 -80.0 786.0 0.0 702.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="786.0" class="event-label" text-anchor="end">steam_complete</text>
+<path d="M 0.0 800.0 C -160.0 786.0 -160.0 786.0 0.0 772.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-165.0" y="810.0" class="event-label" text-anchor="end">start_dispense</text>
+<path d="M 0.0 730.0 C -80.0 716.0 -80.0 716.0 0.0 702.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="716.0" class="event-label" text-anchor="end">dispense_complete</text>
+<path d="M 0.0 360.0 C 80.0 409.0 80.0 409.0 0.0 458.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="409.0" class="event-label">cleaning_required</text>
+<path d="M 0.0 460.0 C -80.0 446.0 -80.0 446.0 0.0 432.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="446.0" class="event-label" text-anchor="end">start_cleaning</text>
+<path d="M 0.0 390.0 C -80.0 376.0 -80.0 376.0 0.0 362.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="376.0" class="event-label" text-anchor="end">cleaning_complete</text>
+<path d="M 0.0 20.0 C 80.0 69.0 80.0 69.0 0.0 118.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="69.0" class="event-label">pressure_warning</text>
+<path d="M 0.0 20.0 C 160.0 69.0 160.0 69.0 0.0 118.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="165.0" y="93.0" class="event-label">temp_warning</text>
+<path d="M 0.0 120.0 C -80.0 71.0 -80.0 71.0 0.0 22.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="71.0" class="event-label" text-anchor="end">warning_cleared</text>
+<path d="M 0.0 120.0 C -80.0 106.0 -80.0 106.0 0.0 92.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="106.0" class="event-label" text-anchor="end">critical_error</text>
+<path d="M 0.0 20.0 C 80.0 34.0 80.0 34.0 0.0 48.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="34.0" class="event-label">critical_error</text>
+<path d="M 0.0 50.0 C -80.0 36.0 -80.0 36.0 0.0 22.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="36.0" class="event-label" text-anchor="end">error_resolved</text>
+<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
+<text x="0.0" y="0.0" class="state-label">operational</text>
+<rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="140.0" class="state-label">warning</text>
+<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="70.0" class="state-label">error</text>
+<rect x="-50.0" y="730.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="750.0" class="state-label">dispensing</text>
+<rect x="-50.0" y="660.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state state-initial"/>
+<text x="0.0" y="680.0" class="state-label">ready</text>
+<rect x="-50.0" y="800.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="820.0" class="state-label">brewing</text>
+<rect x="-50.0" y="870.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="890.0" class="state-label">steaming_...</text>
+<rect x="-50.0" y="320.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state state-initial"/>
+<text x="0.0" y="340.0" class="state-label">clean</text>
+<rect x="-50.0" y="460.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state"/>
+<text x="0.0" y="480.0" class="state-label">needs_cle...</text>
+<rect x="-50.0" y="390.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state"/>
+<text x="0.0" y="410.0" class="state-label">cleaning_...</text>
+<circle cx="-70.0" cy="680.0" r="6" class="initial-marker"/>
+<line x1="-62.0" y1="680.0" x2="-52.0" y2="680.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
+<circle cx="-70.0" cy="340.0" r="6" class="initial-marker"/>
+<line x1="-62.0" y1="340.0" x2="-52.0" y2="340.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
+<circle cx="-70.0" cy="0.0" r="6" class="initial-marker"/>
+<line x1="-62.0" y1="0.0" x2="-52.0" y2="0.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
+</svg>

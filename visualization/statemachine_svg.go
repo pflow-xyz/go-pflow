@@ -69,8 +69,11 @@ func RenderStateMachineSVG(chart *statemachine.Chart, opts *StateMachineSVGOptio
 	// Calculate layout
 	layout := layoutStateMachine(chart, opts)
 
-	// Calculate bounds
-	minX, minY, maxX, maxY := calculateStateMachineBounds(layout, opts)
+	// Pre-calculate transition offsets to avoid overlapping labels
+	transitionOffsets := calculateTransitionOffsets(chart, layout, opts)
+
+	// Calculate bounds (including extra space for offset transitions)
+	minX, minY, maxX, maxY := calculateStateMachineBoundsWithOffsets(layout, opts, transitionOffsets)
 	minX -= opts.Padding
 	minY -= opts.Padding
 	maxX += opts.Padding
@@ -131,7 +134,8 @@ func RenderStateMachineSVG(chart *statemachine.Chart, opts *StateMachineSVGOptio
 
 	// Draw transitions first (behind states)
 	for _, trans := range chart.Transitions {
-		drawStateMachineTransition(&buf, chart, trans, layout, opts)
+		offset := transitionOffsets[transitionKey(trans)]
+		drawStateMachineTransitionWithOffset(&buf, chart, trans, layout, opts, offset.curveOffset, offset.labelYDelta)
 	}
 
 	// Draw states
@@ -361,6 +365,13 @@ func calculateStateMachineBounds(layout *stateMachineLayout, opts *StateMachineS
 			}
 		}
 	}
+
+	// Add space for transition curves and labels on both sides
+	// Curves go out by StateWidth/2 + 30, labels add another 50
+	curveSpace := opts.StateWidth/2 + 30 + 50
+	maxX += curveSpace
+	minX -= curveSpace
+
 	return
 }
 
@@ -504,43 +515,102 @@ func drawStateMachineTransition(buf *bytes.Buffer, chart *statemachine.Chart, tr
 		return
 	}
 
-	// Calculate connection points
-	x1 := srcPos.x + opts.StateWidth/2
-	y1 := srcPos.y
-	x2 := trgPos.x - opts.StateWidth/2
-	y2 := trgPos.y
+	// Calculate connection points based on relative positions
+	// Use side connections for horizontal layouts, top/bottom for vertical
+	var x1, y1, x2, y2 float64
+	dx := trgPos.x - srcPos.x
+	dy := trgPos.y - srcPos.y
 
-	// Adjust for arrowhead
-	arrowOffset := 10.0
-	dx := x2 - x1
-	dy := y2 - y1
-	dist := max(1, sqrt(dx*dx+dy*dy))
-	x2 -= (dx / dist) * arrowOffset
-	y2 -= (dy / dist) * arrowOffset
+	// Determine if states are primarily horizontal or vertical relative to each other
+	if absFloat(dx) > absFloat(dy) {
+		// Horizontal: use left/right edges
+		if dx > 0 {
+			// Target is to the right
+			x1 = srcPos.x + opts.StateWidth/2
+			x2 = trgPos.x - opts.StateWidth/2
+		} else {
+			// Target is to the left
+			x1 = srcPos.x - opts.StateWidth/2
+			x2 = trgPos.x + opts.StateWidth/2
+		}
+		y1 = srcPos.y
+		y2 = trgPos.y
+	} else {
+		// Vertical: use top/bottom edges
+		if dy > 0 {
+			// Target is below
+			y1 = srcPos.y + opts.StateHeight/2
+			y2 = trgPos.y - opts.StateHeight/2
+		} else {
+			// Target is above
+			y1 = srcPos.y - opts.StateHeight/2
+			y2 = trgPos.y + opts.StateHeight/2
+		}
+		x1 = srcPos.x
+		x2 = trgPos.x
+	}
+
+	// Adjust endpoint for arrowhead (don't go all the way to edge)
+	arrowOffset := 2.0
+	finalDx := x2 - x1
+	finalDy := y2 - y1
+	dist := max(1, sqrt(finalDx*finalDx+finalDy*finalDy))
+	x2 -= (finalDx / dist) * arrowOffset
+	y2 -= (finalDy / dist) * arrowOffset
 
 	class := "transition"
 
-	// Draw path
-	if absFloat(y1-y2) < 5 {
-		// Straight line
-		buf.WriteString(fmt.Sprintf(`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
-			x1, y1, x2, y2, class))
+	// Draw curved path that goes around the side
+	if absFloat(dx) > absFloat(dy) {
+		// Horizontal layout - use S-curve if needed
+		if absFloat(y1-y2) < 5 {
+			// Straight line
+			buf.WriteString(fmt.Sprintf(`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
+				x1, y1, x2, y2, class))
+		} else {
+			// S-curve
+			midX := (x1 + x2) / 2
+			buf.WriteString(fmt.Sprintf(`<path d="M %.1f %.1f C %.1f %.1f %.1f %.1f %.1f %.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
+				x1, y1, midX, y1, midX, y2, x2, y2, class))
+		}
+		// Event label
+		if opts.ShowEvents && trans.Event != "" {
+			labelX := (x1 + x2) / 2
+			labelY := (y1+y2)/2 - 10
+			buf.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" class="event-label">%s</text>`,
+				labelX, labelY, escapeXML(trans.Event)))
+		}
 	} else {
-		// Curved path
-		midX := (x1 + x2) / 2
-		buf.WriteString(fmt.Sprintf(`<path d="M %.1f %.1f C %.1f %.1f %.1f %.1f %.1f %.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
-			x1, y1, midX, y1, midX, y2, x2, y2, class))
+		// Vertical layout - curve out to the side to be visible
+		// Use right side for downward transitions, left side for upward
+		curveOffset := opts.StateWidth/2 + 30 // Go outside the state
+		midY := (y1 + y2) / 2
+
+		if dy > 0 {
+			// Downward transition - curve to the right
+			buf.WriteString(fmt.Sprintf(`<path d="M %.1f %.1f C %.1f %.1f %.1f %.1f %.1f %.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
+				x1, y1, x1+curveOffset, midY, x2+curveOffset, midY, x2, y2, class))
+			// Event label on the right
+			if opts.ShowEvents && trans.Event != "" {
+				labelX := srcPos.x + opts.StateWidth/2 + 35
+				labelY := midY
+				buf.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" class="event-label">%s</text>`,
+					labelX, labelY, escapeXML(trans.Event)))
+			}
+		} else {
+			// Upward transition - curve to the left
+			buf.WriteString(fmt.Sprintf(`<path d="M %.1f %.1f C %.1f %.1f %.1f %.1f %.1f %.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
+				x1, y1, x1-curveOffset, midY, x2-curveOffset, midY, x2, y2, class))
+			// Event label on the left
+			if opts.ShowEvents && trans.Event != "" {
+				labelX := srcPos.x - opts.StateWidth/2 - 35
+				labelY := midY
+				buf.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" class="event-label" text-anchor="end">%s</text>`,
+					labelX, labelY, escapeXML(trans.Event)))
+			}
+		}
 	}
 	buf.WriteString("\n")
-
-	// Event label
-	if opts.ShowEvents && trans.Event != "" {
-		labelX := (x1 + x2) / 2
-		labelY := (y1+y2)/2 - 10
-		buf.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" class="event-label">%s</text>`,
-			labelX, labelY, escapeXML(trans.Event)))
-		buf.WriteString("\n")
-	}
 }
 
 // drawSelfTransition draws a loop back to the same state
@@ -582,4 +652,343 @@ func absFloat(x float64) float64 {
 		return -x
 	}
 	return x
+}
+
+// transitionKey creates a unique key for a transition
+func transitionKey(trans *statemachine.Transition) string {
+	return trans.Source + "->" + trans.Target + ":" + trans.Event
+}
+
+// transitionInfo holds pre-calculated info about a transition for offset calculation
+type transitionInfo struct {
+	trans    *statemachine.Transition
+	side     string  // "left", "right", or "none" (for horizontal)
+	midY     float64 // midpoint Y for vertical transitions
+	srcY     float64 // source Y position
+	trgY     float64 // target Y position
+}
+
+// transitionOffset holds both the curve offset and any Y adjustment for the label
+type transitionOffset struct {
+	curveOffset float64 // how far to push the curve outward
+	labelYDelta float64 // vertical offset for the label to avoid overlap
+}
+
+// calculateTransitionOffsets pre-calculates curve offsets to avoid overlapping labels
+func calculateTransitionOffsets(chart *statemachine.Chart, layout *stateMachineLayout, opts *StateMachineSVGOptions) map[string]transitionOffset {
+	offsets := make(map[string]transitionOffset)
+
+	// Collect info about all vertical transitions
+	var leftTrans, rightTrans []transitionInfo
+
+	for _, trans := range chart.Transitions {
+		info := getTransitionInfo(chart, trans, layout, opts)
+		if info.side == "left" {
+			leftTrans = append(leftTrans, info)
+		} else if info.side == "right" {
+			rightTrans = append(rightTrans, info)
+		}
+		// Initialize all offsets to zero
+		offsets[transitionKey(trans)] = transitionOffset{}
+	}
+
+	// Sort by midY and assign offsets to avoid collisions
+	assignOffsets(leftTrans, offsets, 40.0, 12.0)  // Push left side further left, offset labels vertically
+	assignOffsets(rightTrans, offsets, 40.0, 12.0) // Push right side further right
+
+	return offsets
+}
+
+// getTransitionInfo calculates layout info for a transition
+func getTransitionInfo(chart *statemachine.Chart, trans *statemachine.Transition, layout *stateMachineLayout, opts *StateMachineSVGOptions) transitionInfo {
+	info := transitionInfo{trans: trans, side: "none"}
+
+	srcPath := statemachine.StatePath(trans.Source)
+	trgPath := statemachine.StatePath(trans.Target)
+
+	srcRegion := srcPath.Region()
+	srcState := srcPath.State()
+	if srcState == "" {
+		srcState = srcRegion
+		srcRegion = findRegionForState(chart, srcState)
+	}
+
+	trgRegion := trgPath.Region()
+	trgState := trgPath.State()
+	if trgState == "" {
+		trgState = trgRegion
+		trgRegion = findRegionForState(chart, trgState)
+	}
+
+	// Get positions
+	srcRegLayout, srcOK := layout.regions[srcRegion]
+	if !srcOK {
+		return info
+	}
+	srcPos, srcPosOK := srcRegLayout.states[srcState]
+	if !srcPosOK {
+		return info
+	}
+
+	trgRegLayout, trgOK := layout.regions[trgRegion]
+	if !trgOK {
+		return info
+	}
+	trgPos, trgPosOK := trgRegLayout.states[trgState]
+	if !trgPosOK {
+		return info
+	}
+
+	// Self-transitions don't need offset handling
+	if srcRegion == trgRegion && srcState == trgState {
+		return info
+	}
+
+	dx := trgPos.x - srcPos.x
+	dy := trgPos.y - srcPos.y
+
+	// Only vertical transitions need offset handling
+	if absFloat(dx) <= absFloat(dy) {
+		info.srcY = srcPos.y
+		info.trgY = trgPos.y
+
+		// Calculate connection points
+		var y1, y2 float64
+		if dy > 0 {
+			y1 = srcPos.y + opts.StateHeight/2
+			y2 = trgPos.y - opts.StateHeight/2
+			info.side = "right" // downward = right side
+		} else {
+			y1 = srcPos.y - opts.StateHeight/2
+			y2 = trgPos.y + opts.StateHeight/2
+			info.side = "left" // upward = left side
+		}
+		info.midY = (y1 + y2) / 2
+	}
+
+	return info
+}
+
+// assignOffsets assigns incremental offsets to transitions whose labels would overlap
+func assignOffsets(transitions []transitionInfo, offsets map[string]transitionOffset, curveStep float64, labelYStep float64) {
+	if len(transitions) == 0 {
+		return
+	}
+
+	// Sort by midY
+	sort.Slice(transitions, func(i, j int) bool {
+		return transitions[i].midY < transitions[j].midY
+	})
+
+	// Minimum vertical distance between labels to avoid overlap
+	minLabelSpacing := 15.0
+
+	// Track label positions that have been used
+	// Each entry is (adjustedY, curveOffset) for a placed label
+	type placedLabel struct {
+		y           float64
+		curveOffset float64
+	}
+	var placedLabels []placedLabel
+
+	for _, info := range transitions {
+		key := transitionKey(info.trans)
+		baseY := info.midY
+
+		// Find an available position for this label
+		// Start with no offset, then try progressively larger Y offsets
+		curveOffset := 0.0
+		labelYDelta := 0.0
+
+		// Check for collisions with already placed labels
+		for attempt := 0; attempt < 10; attempt++ {
+			testY := baseY + labelYDelta
+			collision := false
+
+			for _, placed := range placedLabels {
+				if absFloat(testY-placed.y) < minLabelSpacing {
+					collision = true
+					break
+				}
+			}
+
+			if !collision {
+				// Found a good position
+				break
+			}
+
+			// Try moving the label down and pushing the curve out
+			labelYDelta += labelYStep
+			curveOffset += curveStep
+		}
+
+		// Record this label's position
+		placedLabels = append(placedLabels, placedLabel{
+			y:           baseY + labelYDelta,
+			curveOffset: curveOffset,
+		})
+
+		offsets[key] = transitionOffset{
+			curveOffset: curveOffset,
+			labelYDelta: labelYDelta,
+		}
+	}
+}
+
+// calculateStateMachineBoundsWithOffsets returns bounds accounting for transition offsets
+func calculateStateMachineBoundsWithOffsets(layout *stateMachineLayout, opts *StateMachineSVGOptions, offsets map[string]transitionOffset) (minX, minY, maxX, maxY float64) {
+	// Start with basic bounds
+	minX, minY, maxX, maxY = calculateStateMachineBounds(layout, opts)
+
+	// Find max offset to add to bounds
+	maxOffset := 0.0
+	for _, offset := range offsets {
+		if offset.curveOffset > maxOffset {
+			maxOffset = offset.curveOffset
+		}
+	}
+
+	// Add extra space for offset curves
+	if maxOffset > 0 {
+		minX -= maxOffset
+		maxX += maxOffset
+	}
+
+	return
+}
+
+// drawStateMachineTransitionWithOffset renders a transition with a specific curve offset
+func drawStateMachineTransitionWithOffset(buf *bytes.Buffer, chart *statemachine.Chart, trans *statemachine.Transition, layout *stateMachineLayout, opts *StateMachineSVGOptions, extraOffset float64, labelYDelta float64) {
+	// Parse source and target paths
+	srcPath := statemachine.StatePath(trans.Source)
+	trgPath := statemachine.StatePath(trans.Target)
+
+	srcRegion := srcPath.Region()
+	srcState := srcPath.State()
+	if srcState == "" {
+		srcState = srcRegion // Handle flat paths
+		srcRegion = findRegionForState(chart, srcState)
+	}
+
+	trgRegion := trgPath.Region()
+	trgState := trgPath.State()
+	if trgState == "" {
+		trgState = trgRegion
+		trgRegion = findRegionForState(chart, trgState)
+	}
+
+	// Get positions
+	srcRegLayout, srcOK := layout.regions[srcRegion]
+	if !srcOK {
+		return
+	}
+	srcPos, srcPosOK := srcRegLayout.states[srcState]
+	if !srcPosOK {
+		return
+	}
+
+	trgRegLayout, trgOK := layout.regions[trgRegion]
+	if !trgOK {
+		return
+	}
+	trgPos, trgPosOK := trgRegLayout.states[trgState]
+	if !trgPosOK {
+		return
+	}
+
+	// Check if self-transition
+	if srcRegion == trgRegion && srcState == trgState {
+		drawSelfTransition(buf, srcPos, trans.Event, opts)
+		return
+	}
+
+	// Calculate connection points based on relative positions
+	var x1, y1, x2, y2 float64
+	dx := trgPos.x - srcPos.x
+	dy := trgPos.y - srcPos.y
+
+	// Determine if states are primarily horizontal or vertical relative to each other
+	if absFloat(dx) > absFloat(dy) {
+		// Horizontal: use left/right edges
+		if dx > 0 {
+			x1 = srcPos.x + opts.StateWidth/2
+			x2 = trgPos.x - opts.StateWidth/2
+		} else {
+			x1 = srcPos.x - opts.StateWidth/2
+			x2 = trgPos.x + opts.StateWidth/2
+		}
+		y1 = srcPos.y
+		y2 = trgPos.y
+	} else {
+		// Vertical: use top/bottom edges
+		if dy > 0 {
+			y1 = srcPos.y + opts.StateHeight/2
+			y2 = trgPos.y - opts.StateHeight/2
+		} else {
+			y1 = srcPos.y - opts.StateHeight/2
+			y2 = trgPos.y + opts.StateHeight/2
+		}
+		x1 = srcPos.x
+		x2 = trgPos.x
+	}
+
+	// Adjust endpoint for arrowhead
+	arrowOffset := 2.0
+	finalDx := x2 - x1
+	finalDy := y2 - y1
+	dist := max(1, sqrt(finalDx*finalDx+finalDy*finalDy))
+	x2 -= (finalDx / dist) * arrowOffset
+	y2 -= (finalDy / dist) * arrowOffset
+
+	class := "transition"
+
+	// Draw curved path
+	if absFloat(dx) > absFloat(dy) {
+		// Horizontal layout - use S-curve if needed
+		if absFloat(y1-y2) < 5 {
+			buf.WriteString(fmt.Sprintf(`<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
+				x1, y1, x2, y2, class))
+		} else {
+			midX := (x1 + x2) / 2
+			buf.WriteString(fmt.Sprintf(`<path d="M %.1f %.1f C %.1f %.1f %.1f %.1f %.1f %.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
+				x1, y1, midX, y1, midX, y2, x2, y2, class))
+		}
+		// Event label
+		if opts.ShowEvents && trans.Event != "" {
+			labelX := (x1 + x2) / 2
+			labelY := (y1+y2)/2 - 10
+			buf.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" class="event-label">%s</text>`,
+				labelX, labelY, escapeXML(trans.Event)))
+		}
+	} else {
+		// Vertical layout - curve out to the side
+		// Base offset plus extra offset to avoid overlapping labels
+		curveOffset := opts.StateWidth/2 + 30 + extraOffset
+		midY := (y1 + y2) / 2
+
+		if dy > 0 {
+			// Downward transition - curve to the right
+			buf.WriteString(fmt.Sprintf(`<path d="M %.1f %.1f C %.1f %.1f %.1f %.1f %.1f %.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
+				x1, y1, x1+curveOffset, midY, x2+curveOffset, midY, x2, y2, class))
+			// Event label on the right
+			if opts.ShowEvents && trans.Event != "" {
+				labelX := srcPos.x + opts.StateWidth/2 + 35 + extraOffset
+				labelY := midY + labelYDelta
+				buf.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" class="event-label">%s</text>`,
+					labelX, labelY, escapeXML(trans.Event)))
+			}
+		} else {
+			// Upward transition - curve to the left
+			buf.WriteString(fmt.Sprintf(`<path d="M %.1f %.1f C %.1f %.1f %.1f %.1f %.1f %.1f" class="%s" marker-end="url(#sm-arrowhead)"/>`,
+				x1, y1, x1-curveOffset, midY, x2-curveOffset, midY, x2, y2, class))
+			// Event label on the left
+			if opts.ShowEvents && trans.Event != "" {
+				labelX := srcPos.x - opts.StateWidth/2 - 35 - extraOffset
+				labelY := midY + labelYDelta
+				buf.WriteString(fmt.Sprintf(`<text x="%.1f" y="%.1f" class="event-label" text-anchor="end">%s</text>`,
+					labelX, labelY, escapeXML(trans.Event)))
+			}
+		}
+	}
+	buf.WriteString("\n")
 }

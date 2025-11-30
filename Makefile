@@ -189,7 +189,7 @@ rebuild-all-svg:
 	@cd examples/incident_simulator && go run main.go --regression-test
 	@echo ""
 	@echo "=== Game AI Examples ==="
-	@cd examples/tictactoe/cmd && go run *.go
+	@cd examples/tictactoe/cmd && go run $$(ls *.go | grep -v _test.go)
 	@cd examples/nim/cmd && go run *.go --player-x=ode --player-o=optimal
 	@cd examples/connect4/cmd && go run *.go --player-x=ode --player-o=random
 	@echo ""

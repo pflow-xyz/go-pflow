@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-320.0 -80.0 640.0 1470.0" width="640" height="1470">
+<defs><style>.state { stroke-width: 2; rx: 8; }.state-initial { stroke-width: 3; }.state-composite { stroke-dasharray: 5,3; }.transition { stroke: #666; stroke-width: 1.5; fill: none; }.transition-self { stroke: #999; }.arrowhead { fill: #666; }.initial-marker { fill: #333; }.state-label { font-family: system-ui, Arial; font-size: 11px; fill: #333; text-anchor: middle; dominant-baseline: middle; }.event-label { font-family: system-ui, Arial; font-size: 9px; fill: #666; text-anchor: middle; }.region-label { font-family: system-ui, Arial; font-size: 10px; fill: #999; font-style: italic; }.region-box { fill: none; stroke: #ddd; stroke-width: 1; stroke-dasharray: 3,3; }.chart-title { font-family: system-ui, Arial; font-size: 14px; font-weight: bold; fill: #333; }</style><marker id="sm-arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="arrowhead"/></marker></defs>
+<text x="-310.0" y="-60.0" class="chart-title">customer_CUST-VIZ</text>
+<rect x="-60.0" y="-30.0" width="120.0" height="270.0" class="region-box"/>
+<text x="-55.0" y="-35.0" class="region-label">engagement</text>
+<rect x="-60.0" y="380.0" width="120.0" height="620.0" class="region-box"/>
+<text x="-55.0" y="375.0" class="region-label">journey</text>
+<rect x="-60.0" y="1140.0" width="120.0" height="200.0" class="region-box"/>
+<text x="-55.0" y="1135.0" class="region-label">loyalty</text>
+<path d="M 0.0 430.0 C 80.0 444.0 80.0 444.0 0.0 458.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="444.0" class="event-label">detected</text>
+<path d="M 0.0 500.0 C 80.0 514.0 80.0 514.0 0.0 528.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="514.0" class="event-label">view_menu</text>
+<path d="M 0.0 570.0 C 80.0 654.0 80.0 654.0 0.0 738.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="654.0" class="event-label">start_order</text>
+<path d="M 0.0 780.0 C 80.0 794.0 80.0 794.0 0.0 808.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="794.0" class="event-label">confirm_order</text>
+<path d="M 0.0 850.0 C 80.0 899.0 80.0 899.0 0.0 948.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="899.0" class="event-label">payment_complete</text>
+<path d="M 0.0 950.0 C -80.0 936.0 -80.0 936.0 0.0 922.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="936.0" class="event-label" text-anchor="end">order_ready</text>
+<path d="M 0.0 880.0 C -80.0 761.0 -80.0 761.0 0.0 642.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="761.0" class="event-label" text-anchor="end">leave_happy</text>
+<path d="M 0.0 500.0 C 80.0 584.0 80.0 584.0 0.0 668.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="584.0" class="event-label">leave_early</text>
+<path d="M 0.0 570.0 C 80.0 619.0 80.0 619.0 0.0 668.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="619.0" class="event-label">leave_early</text>
+<path d="M 0.0 740.0 C -80.0 726.0 -80.0 726.0 0.0 712.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="726.0" class="event-label" text-anchor="end">cancel_order</text>
+<path d="M 0.0 810.0 C -160.0 761.0 -160.0 761.0 0.0 712.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-165.0" y="785.0" class="event-label" text-anchor="end">payment_failed</text>
+<path d="M 0.0 950.0 C -120.0 796.0 -120.0 796.0 0.0 642.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-125.0" y="808.0" class="event-label" text-anchor="end">timeout</text>
+<path d="M 0.0 20.0 C 80.0 69.0 80.0 69.0 0.0 118.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="69.0" class="event-label">show_interest</text>
+<path d="M 0.0 160.0 C 80.0 174.0 80.0 174.0 0.0 188.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="174.0" class="event-label">decide_to_buy</text>
+<path d="M 0.0 20.0 C 80.0 104.0 80.0 104.0 0.0 188.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="104.0" class="event-label">decide_to_buy</text>
+<path d="M 0.0 20.0 C 80.0 34.0 80.0 34.0 0.0 48.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="34.0" class="event-label">get_frustrated</text>
+<path d="M 0.0 120.0 C -80.0 106.0 -80.0 106.0 0.0 92.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="106.0" class="event-label" text-anchor="end">get_frustrated</text>
+<path d="M 0.0 190.0 C -80.0 141.0 -80.0 141.0 0.0 92.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="141.0" class="event-label" text-anchor="end">get_frustrated</text>
+<path d="M 0.0 90.0 C 80.0 139.0 80.0 139.0 0.0 188.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="139.0" class="event-label">calm_down</text>
+<path d="M 0.0 1190.0 C 80.0 1204.0 80.0 1204.0 0.0 1218.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="1204.0" class="event-label">recognize_returning</text>
+<path d="M 0.0 1260.0 C 80.0 1274.0 80.0 1274.0 0.0 1288.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="1274.0" class="event-label">recognize_vip</text>
+<path d="M 0.0 1190.0 C 80.0 1239.0 80.0 1239.0 0.0 1288.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="1239.0" class="event-label">recognize_vip</text>
+<rect x="-50.0" y="390.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
+<text x="0.0" y="410.0" class="state-label">approaching</text>
+<rect x="-50.0" y="530.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="550.0" class="state-label">browsing_...</text>
+<rect x="-50.0" y="740.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="760.0" class="state-label">ordering</text>
+<rect x="-50.0" y="880.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="900.0" class="state-label">served</text>
+<rect x="-50.0" y="460.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="480.0" class="state-label">at_kiosk</text>
+<rect x="-50.0" y="810.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="830.0" class="state-label">paying</text>
+<rect x="-50.0" y="950.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="970.0" class="state-label">waiting</text>
+<rect x="-50.0" y="600.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="620.0" class="state-label">departed</text>
+<rect x="-50.0" y="670.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="690.0" class="state-label">departed_...</text>
+<rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="140.0" class="state-label">interested</text>
+<rect x="-50.0" y="190.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="210.0" class="state-label">committed</text>
+<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="70.0" class="state-label">frustrated</text>
+<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state state-initial"/>
+<text x="0.0" y="0.0" class="state-label">undecided</text>
+<rect x="-50.0" y="1150.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state state-initial"/>
+<text x="0.0" y="1170.0" class="state-label">new_customer</text>
+<rect x="-50.0" y="1220.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state"/>
+<text x="0.0" y="1240.0" class="state-label">returning</text>
+<rect x="-50.0" y="1290.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state"/>
+<text x="0.0" y="1310.0" class="state-label">vip</text>
+<circle cx="-70.0" cy="410.0" r="6" class="initial-marker"/>
+<line x1="-62.0" y1="410.0" x2="-52.0" y2="410.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
+<circle cx="-70.0" cy="0.0" r="6" class="initial-marker"/>
+<line x1="-62.0" y1="0.0" x2="-52.0" y2="0.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
+<circle cx="-70.0" cy="1170.0" r="6" class="initial-marker"/>
+<line x1="-62.0" y1="1170.0" x2="-52.0" y2="1170.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
+</svg>

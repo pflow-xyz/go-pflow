@@ -340,6 +340,19 @@ func generateVisualizations() {
 	// Create output directory
 	os.MkdirAll("output", 0755)
 
+	// Generate health SVG from a quick simulation
+	fmt.Println("\n  Generating health dashboard SVG...")
+	healthConfig := coffeeshop.QuickTestConfig()
+	healthConfig.MaxSimulatedTime = 1 * time.Hour
+	healthConfig.VerboseLogging = false
+	healthSim := coffeeshop.NewSimulator(healthConfig)
+	healthResult := healthSim.Run()
+	if err := healthResult.SaveHealthSVG("output/health_dashboard.svg"); err != nil {
+		fmt.Printf("  ✗ Failed to save health dashboard: %v\n", err)
+	} else {
+		fmt.Printf("  ✓ Saved: output/health_dashboard.svg (State: %s)\n", healthResult.FinalHealth)
+	}
+
 	// Inventory Petri net
 	invNet := coffeeshop.NewInventoryNet()
 	if err := visualization.SaveSVG(invNet, "output/inventory_net.svg"); err != nil {

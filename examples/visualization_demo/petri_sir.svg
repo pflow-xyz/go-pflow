@@ -28,8 +28,8 @@
 <circle cx="100.0" cy="100.0" r="16.0" class="place"/>
 <text x="100.0" y="100.0" class="token-text">999</text>
 <text x="100.0" y="122.0" class="label-text">S</text>
-<rect x="235.0" y="135.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="250.0" y="171.0" class="label-text">recover</text>
 <rect x="135.0" y="135.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="150.0" y="171.0" class="label-text">infect</text>
+<rect x="235.0" y="135.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="250.0" y="171.0" class="label-text">recover</text>
 </svg>

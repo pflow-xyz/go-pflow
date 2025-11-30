@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-240.0 -80.0 480.0 710.0" width="480" height="710">
+<defs><style>.state { stroke-width: 2; rx: 8; }.state-initial { stroke-width: 3; }.state-composite { stroke-dasharray: 5,3; }.transition { stroke: #666; stroke-width: 1.5; fill: none; }.transition-self { stroke: #999; }.arrowhead { fill: #666; }.initial-marker { fill: #333; }.state-label { font-family: system-ui, Arial; font-size: 11px; fill: #333; text-anchor: middle; dominant-baseline: middle; }.event-label { font-family: system-ui, Arial; font-size: 9px; fill: #666; text-anchor: middle; }.region-label { font-family: system-ui, Arial; font-size: 10px; fill: #999; font-style: italic; }.region-box { fill: none; stroke: #ddd; stroke-width: 1; stroke-dasharray: 3,3; }.chart-title { font-family: system-ui, Arial; font-size: 14px; font-weight: bold; fill: #333; }</style><marker id="sm-arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="arrowhead"/></marker></defs>
+<text x="-230.0" y="-60.0" class="chart-title">barista_1</text>
+<rect x="-60.0" y="310.0" width="120.0" height="270.0" class="region-box"/>
+<text x="-55.0" y="305.0" class="region-label">work</text>
+<rect x="-60.0" y="-30.0" width="120.0" height="200.0" class="region-box"/>
+<text x="-55.0" y="-35.0" class="region-label">break_status</text>
+<path d="M 0.0 360.0 C 80.0 409.0 80.0 409.0 0.0 458.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="409.0" class="event-label">order_assigned</text>
+<path d="M 0.0 460.0 C -80.0 411.0 -80.0 411.0 0.0 362.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="411.0" class="event-label" text-anchor="end">drink_complete</text>
+<path d="M 0.0 360.0 C 80.0 374.0 80.0 374.0 0.0 388.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="374.0" class="event-label">cleaning_needed</text>
+<path d="M 0.0 390.0 C -80.0 376.0 -80.0 376.0 0.0 362.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="376.0" class="event-label" text-anchor="end">cleaning_done</text>
+<path d="M 0.0 360.0 C 80.0 444.0 80.0 444.0 0.0 528.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="444.0" class="event-label">restock_needed</text>
+<path d="M 0.0 530.0 C -80.0 446.0 -80.0 446.0 0.0 362.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="446.0" class="event-label" text-anchor="end">restock_done</text>
+<path d="M 0.0 20.0 C 80.0 34.0 80.0 34.0 0.0 48.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="34.0" class="event-label">take_break</text>
+<path d="M 0.0 50.0 C -80.0 36.0 -80.0 36.0 0.0 22.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="36.0" class="event-label" text-anchor="end">return_from_break</text>
+<path d="M 0.0 20.0 C 80.0 69.0 80.0 69.0 0.0 118.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="69.0" class="event-label">end_shift</text>
+<path d="M 0.0 90.0 C 80.0 104.0 80.0 104.0 0.0 118.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="104.0" class="event-label">end_shift</text>
+<rect x="-50.0" y="320.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
+<text x="0.0" y="340.0" class="state-label">available</text>
+<rect x="-50.0" y="460.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="480.0" class="state-label">making_drink</text>
+<rect x="-50.0" y="390.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="410.0" class="state-label">cleaning</text>
+<rect x="-50.0" y="530.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="550.0" class="state-label">restocking</text>
+<rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="140.0" class="state-label">shift_ended</text>
+<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state state-initial"/>
+<text x="0.0" y="0.0" class="state-label">on_duty</text>
+<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="70.0" class="state-label">on_break</text>
+<circle cx="-70.0" cy="340.0" r="6" class="initial-marker"/>
+<line x1="-62.0" y1="340.0" x2="-52.0" y2="340.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
+<circle cx="-70.0" cy="0.0" r="6" class="initial-marker"/>
+<line x1="-62.0" y1="0.0" x2="-52.0" y2="0.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
+</svg>

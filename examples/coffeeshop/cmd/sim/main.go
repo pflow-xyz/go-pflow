@@ -141,6 +141,14 @@ func main() {
 			analysis.PrintAnalysis()
 		}
 	}
+
+	// Generate health SVG
+	svgFile := fmt.Sprintf("health_%s.svg", *configName)
+	if err := result.SaveHealthSVG(svgFile); err != nil {
+		fmt.Printf("\n  ✗ Failed to save health SVG: %v\n", err)
+	} else {
+		fmt.Printf("\n  ✓ Saved health dashboard: %s\n", svgFile)
+	}
 }
 
 // printConfigComparison prints a comparison table of all simulator configs

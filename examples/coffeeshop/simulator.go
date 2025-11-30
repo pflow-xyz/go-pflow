@@ -3,6 +3,7 @@ package coffeeshop
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -315,6 +316,251 @@ func (h SystemHealth) MatchesConfig() string {
 	default:
 		return "quick"
 	}
+}
+
+// HealthTransition represents a state transition in the health history
+type HealthTransition struct {
+	From      SystemHealth
+	To        SystemHealth
+	Timestamp string // formatted time string
+}
+
+// ToSVGData converts HealthMetrics to visualization.HealthSVGData for SVG rendering
+func (h *HealthMetrics) ToSVGData(state *SimulatorState) *HealthSVGData {
+	// Calculate SLA compliance as 1 - breach rate
+	slaCompliance := 1.0 - h.SLABreachRate
+
+	return &HealthSVGData{
+		CurrentState:     h.CurrentHealth,
+		SLACompliance:    slaCompliance,
+		InventoryHealth:  h.InventoryHealthScore,
+		QueueLength:      h.CurrentQueueLength,
+		CustomersHappy:   state.CustomersServedHappy,
+		CustomersUnhappy: state.CustomersServedUnhappy,
+		CustomersTurned:  state.CustomersTurnedAway,
+		MatchesConfig:    h.CurrentHealth.MatchesConfig(),
+	}
+}
+
+// HealthSVGData holds all data needed to render a health SVG
+type HealthSVGData struct {
+	CurrentState     SystemHealth
+	SLACompliance    float64 // 0.0 - 1.0
+	InventoryHealth  float64 // 0.0 - 1.0
+	QueueLength      int
+	CustomersHappy   int
+	CustomersUnhappy int
+	CustomersTurned  int
+	MatchesConfig    string
+}
+
+// HealthSVGOptions controls health dashboard rendering
+type HealthSVGOptions struct {
+	Width      float64
+	Height     float64
+	ShowGauges bool
+	ShowLegend bool
+}
+
+// DefaultHealthSVGOptions returns sensible defaults
+func DefaultHealthSVGOptions() *HealthSVGOptions {
+	return &HealthSVGOptions{
+		Width:      600,
+		Height:     350,
+		ShowGauges: true,
+		ShowLegend: true,
+	}
+}
+
+// renderHealthSVGFromData renders a health dashboard as SVG
+func renderHealthSVGFromData(data *HealthSVGData) (string, error) {
+	opts := DefaultHealthSVGOptions()
+
+	var buf strings.Builder
+
+	// SVG header
+	buf.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %.0f %.0f" width="%.0f" height="%.0f">`,
+		opts.Width, opts.Height, opts.Width, opts.Height))
+	buf.WriteString("\n")
+
+	// Styles
+	buf.WriteString(`<defs>`)
+	buf.WriteString(`<style>`)
+	buf.WriteString(`.health-title { font-family: system-ui, Arial; font-size: 18px; font-weight: bold; fill: #333; }`)
+	buf.WriteString(`.health-label { font-family: system-ui, Arial; font-size: 12px; fill: #666; }`)
+	buf.WriteString(`.health-value { font-family: system-ui, Arial; font-size: 14px; font-weight: bold; fill: #333; }`)
+	buf.WriteString(`.health-state { font-family: system-ui, Arial; font-size: 24px; font-weight: bold; }`)
+	buf.WriteString(`.gauge-bg { fill: #e0e0e0; }`)
+	buf.WriteString(`.gauge-fill { transition: width 0.3s; }`)
+	buf.WriteString(`.legend-item { font-family: system-ui, Arial; font-size: 10px; fill: #666; }`)
+	buf.WriteString(`.card { fill: #fff; stroke: #e0e0e0; stroke-width: 1; rx: 8; }`)
+	buf.WriteString(`</style>`)
+	buf.WriteString(`</defs>`)
+	buf.WriteString("\n")
+
+	// Background
+	buf.WriteString(fmt.Sprintf(`<rect width="%.0f" height="%.0f" fill="#fafafa"/>`, opts.Width, opts.Height))
+	buf.WriteString("\n")
+
+	// Title
+	buf.WriteString(`<text x="20" y="35" class="health-title">System Health Dashboard</text>`)
+	buf.WriteString("\n")
+
+	// Current state card
+	stateColor := healthStateColorFromSystem(data.CurrentState)
+	stateLabel := healthStateLabelFromSystem(data.CurrentState)
+	buf.WriteString(`<rect x="20" y="50" width="200" height="100" class="card"/>`)
+	buf.WriteString(fmt.Sprintf(`<rect x="20" y="50" width="200" height="30" fill="%s" rx="8"/>`, stateColor))
+	buf.WriteString(fmt.Sprintf(`<rect x="20" y="72" width="200" height="8" fill="%s"/>`, stateColor))
+	buf.WriteString(fmt.Sprintf(`<text x="120" y="70" text-anchor="middle" class="health-state" fill="#fff">%s</text>`,
+		stateLabel))
+	buf.WriteString(fmt.Sprintf(`<text x="120" y="105" text-anchor="middle" class="health-value">Matches: %s</text>`,
+		data.MatchesConfig))
+	buf.WriteString(fmt.Sprintf(`<text x="120" y="125" text-anchor="middle" class="health-label">Queue: %d</text>`,
+		data.QueueLength))
+	buf.WriteString("\n")
+
+	// Gauges
+	if opts.ShowGauges {
+		// SLA Compliance gauge
+		drawHealthGauge(&buf, 240, 60, 150, "SLA Compliance", data.SLACompliance, gaugeColorForSLA(data.SLACompliance))
+
+		// Inventory Health gauge
+		drawHealthGauge(&buf, 240, 110, 150, "Inventory Health", data.InventoryHealth, gaugeColorForInventory(data.InventoryHealth))
+	}
+
+	// Customer disposition
+	buf.WriteString(`<rect x="420" y="50" width="160" height="100" class="card"/>`)
+	buf.WriteString(`<text x="500" y="75" text-anchor="middle" class="health-label">Customer Disposition</text>`)
+	buf.WriteString(fmt.Sprintf(`<text x="440" y="100" class="health-value" fill="#4caf50">😊 %d happy</text>`, data.CustomersHappy))
+	buf.WriteString(fmt.Sprintf(`<text x="440" y="120" class="health-value" fill="#ff9800">😕 %d unhappy</text>`, data.CustomersUnhappy))
+	if data.CustomersTurned > 0 {
+		buf.WriteString(fmt.Sprintf(`<text x="440" y="140" class="health-value" fill="#f44336">😤 %d turned away</text>`, data.CustomersTurned))
+	}
+	buf.WriteString("\n")
+
+	// Health state legend
+	if opts.ShowLegend {
+		drawHealthStateLegend(&buf, 20, 170)
+	}
+
+	buf.WriteString("</svg>\n")
+
+	return buf.String(), nil
+}
+
+// drawHealthGauge draws a horizontal gauge bar
+func drawHealthGauge(buf *strings.Builder, x, y, width float64, label string, value float64, color string) {
+	height := 20.0
+	fillWidth := width * value
+	if fillWidth < 0 {
+		fillWidth = 0
+	}
+	if fillWidth > width {
+		fillWidth = width
+	}
+
+	buf.WriteString(fmt.Sprintf(`<text x="%.0f" y="%.0f" class="health-label">%s</text>`, x, y, label))
+	buf.WriteString(fmt.Sprintf(`<rect x="%.0f" y="%.0f" width="%.0f" height="%.0f" class="gauge-bg" rx="4"/>`,
+		x, y+5, width, height))
+	buf.WriteString(fmt.Sprintf(`<rect x="%.0f" y="%.0f" width="%.0f" height="%.0f" fill="%s" class="gauge-fill" rx="4"/>`,
+		x, y+5, fillWidth, height, color))
+	buf.WriteString(fmt.Sprintf(`<text x="%.0f" y="%.0f" class="health-value">%.0f%%</text>`,
+		x+width+10, y+20, value*100))
+	buf.WriteString("\n")
+}
+
+// gaugeColorForSLA returns color based on SLA compliance
+func gaugeColorForSLA(value float64) string {
+	if value >= 0.9 {
+		return "#4caf50" // green
+	} else if value >= 0.7 {
+		return "#ffeb3b" // yellow
+	} else if value >= 0.5 {
+		return "#ff9800" // orange
+	}
+	return "#f44336" // red
+}
+
+// gaugeColorForInventory returns color based on inventory health
+func gaugeColorForInventory(value float64) string {
+	if value >= 0.5 {
+		return "#4caf50" // green
+	} else if value >= 0.2 {
+		return "#ff9800" // orange
+	}
+	return "#f44336" // red
+}
+
+// healthStateColorFromSystem returns the color for a system health state
+func healthStateColorFromSystem(state SystemHealth) string {
+	switch state {
+	case HealthHealthy:
+		return "#4caf50" // green
+	case HealthBusy:
+		return "#ffeb3b" // yellow
+	case HealthStressed:
+		return "#ff9800" // orange
+	case HealthSLACrisis:
+		return "#f44336" // red
+	case HealthInventoryCrisis:
+		return "#9c27b0" // purple
+	case HealthCritical:
+		return "#d32f2f" // dark red
+	default:
+		return "#9e9e9e" // gray
+	}
+}
+
+// healthStateLabelFromSystem returns the label for a system health state
+func healthStateLabelFromSystem(state SystemHealth) string {
+	switch state {
+	case HealthHealthy:
+		return "Healthy"
+	case HealthBusy:
+		return "Busy"
+	case HealthStressed:
+		return "Stressed"
+	case HealthSLACrisis:
+		return "SLA Crisis"
+	case HealthInventoryCrisis:
+		return "Inventory Crisis"
+	case HealthCritical:
+		return "Critical"
+	default:
+		return "Unknown"
+	}
+}
+
+// drawHealthStateLegend draws the health state legend
+func drawHealthStateLegend(buf *strings.Builder, x, y float64) {
+	states := []SystemHealth{
+		HealthHealthy,
+		HealthBusy,
+		HealthStressed,
+		HealthSLACrisis,
+		HealthInventoryCrisis,
+		HealthCritical,
+	}
+
+	buf.WriteString(fmt.Sprintf(`<text x="%.0f" y="%.0f" class="health-label">Health States:</text>`, x, y))
+	y += 20
+
+	for i, state := range states {
+		col := float64(i % 3)
+		row := float64(i / 3)
+		itemX := x + col*180
+		itemY := y + row*25
+
+		color := healthStateColorFromSystem(state)
+		label := healthStateLabelFromSystem(state)
+
+		buf.WriteString(fmt.Sprintf(`<rect x="%.0f" y="%.0f" width="12" height="12" fill="%s" rx="2"/>`,
+			itemX, itemY-10, color))
+		buf.WriteString(fmt.Sprintf(`<text x="%.0f" y="%.0f" class="legend-item">%s</text>`,
+			itemX+18, itemY, label))
+	}
+	buf.WriteString("\n")
 }
 
 // DefaultSimulatorConfig returns a reasonable default configuration
@@ -1089,6 +1335,24 @@ func (r *SimulatorResult) PrintSummary() {
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Event Log Traces: %d", r.EventLog.NumCases()))
 	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Total Events: %d", len(r.State.Events)))
 	fmt.Printf("╚%s╝\n", border)
+}
+
+// RenderHealthSVG renders the health dashboard as SVG
+func (r *SimulatorResult) RenderHealthSVG() (string, error) {
+	if r.HealthMetrics == nil {
+		return "", fmt.Errorf("no health metrics available")
+	}
+	data := r.HealthMetrics.ToSVGData(r.State)
+	return renderHealthSVGFromData(data)
+}
+
+// SaveHealthSVG renders and saves the health dashboard SVG to a file
+func (r *SimulatorResult) SaveHealthSVG(filename string) error {
+	svg, err := r.RenderHealthSVG()
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filename, []byte(svg), 0644)
 }
 
 // truncate truncates a string to maxLen characters
