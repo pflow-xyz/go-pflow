@@ -149,6 +149,17 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - Your first Petri net simulation
 - **Run**: `cd examples/basic && go run main.go`
 
+### Integration Example (Kitchen Sink)
+
+**[examples/coffeeshop/](examples/coffeeshop/)** - Comprehensive demo ⭐
+- **Actor pattern** for high-level orchestration
+- **Petri nets** for inventory management
+- **Workflows** for order processing with SLAs
+- **State machines** for equipment/staff/customer states
+- **ODE simulation** for capacity planning
+- **Process mining** for analyzing event logs
+- **Run**: `cd examples/coffeeshop/cmd && go run main.go`
+
 ### Process Mining & Monitoring
 
 **[examples/eventlog_demo/](examples/eventlog_demo/)** - Event log analysis
@@ -262,6 +273,7 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 | Example | Type | Complexity | Key Concepts | Best For Learning |
 |---------|------|------------|--------------|-------------------|
 | **basic** | Workflow | Simple | Token flow, sequential processes | Petri net fundamentals |
+| **coffeeshop** | Integration | Complex | Actors, workflows, state machines, mining | All features together ⭐ |
 | **eventlog_demo** | Analysis | Simple | CSV parsing, statistics | Event log basics |
 | **mining_demo** | Discovery | Medium | Process discovery, rate learning | Process mining |
 | **monitoring_demo** | Real-time | Medium | Prediction, SLA detection | Production systems ⭐ |
