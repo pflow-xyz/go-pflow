@@ -24,14 +24,31 @@ Port of the JavaScript [pflow.xyz](https://pflow.xyz) library with additional fe
 
 ## Features
 
-- **Petri Net Modeling**: Define places, transitions, and arcs with support for colored tokens
+### Core Modeling
+- **Petri Net Modeling**: Define places, transitions, and arcs with fluent Builder API
 - **JSON Import/Export**: Load and save Petri nets in JSON-LD format compatible with pflow.xyz
-- **ODE Simulation**: Convert Petri nets to ODEs using mass-action kinetics and solve with Tsit5 adaptive solver
-- **Process Mining**: Discover process models from event logs and learn timing parameters
+- **ODE Simulation**: Convert Petri nets to ODEs using mass-action kinetics with multiple solvers (Tsit5, RK45, implicit methods)
+- **Equilibrium Detection**: Automatic steady-state detection with configurable tolerances
+
+### Higher-Level Abstractions
+- **Workflow Framework**: Task dependencies, resource management, SLA tracking, and case monitoring
+- **State Machine Engine**: Hierarchical states, parallel regions, guards, and actions compiled to Petri nets
+- **Actor Model**: Message-passing actors with Petri net behaviors, signal bus, and middleware
+
+### Analysis & Optimization
+- **Reachability Analysis**: State space exploration, deadlock detection, liveness analysis, P-invariants
+- **Sensitivity Analysis**: Parameter impact ranking, gradient computation, grid search optimization
+- **Hypothesis Evaluation**: Parallel move evaluation for game AI and decision making
+- **Caching**: Memoization for repeated simulations with LRU eviction
+
+### Process Mining
+- **Process Discovery**: Alpha Miner and Heuristic Miner algorithms
+- **Rate Learning**: Learn transition rates from event log timing data
 - **Predictive Monitoring**: Real-time case tracking with SLA prediction and alerting
-- **Neural ODE-ish Learning**: Fit learnable transition rates to observed data while preserving Petri net structure
-- **SVG Visualization**: Generate embeddable SVG plots of simulation results
-- **State Machine Engine**: Continuous simulation with condition-based action triggers
+
+### Learning & Visualization
+- **Neural ODE-ish Learning**: Fit learnable transition rates to observed data
+- **SVG Visualization**: Petri nets, workflows, state machines, and simulation plots
 
 ## Installation
 
@@ -225,7 +242,15 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - Same pattern as game move evaluation (disable → observe)
 - **Run**: `cd examples/knapsack/cmd && go run *.go`
 
-### Visualizations & Model Analysis
+### Visualization Examples
+
+**[examples/visualization_demo/](examples/visualization_demo/)** - SVG generation demo
+- Petri net visualizations (SIR model, producer-consumer)
+- Workflow diagrams (approval, parallel, incident management)
+- State machine diagrams (traffic light, order status, media player)
+- **Run**: `make run-visualization`
+
+### Documentation & Analysis
 
 - **[examples/VISUALIZATIONS.md](examples/VISUALIZATIONS.md)** - Gallery of visualization examples
 - **[examples/FEATURE_REVIEW.md](examples/FEATURE_REVIEW.md)** - Feature comparison across examples
@@ -248,6 +273,7 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 | **sudoku** | Puzzle | Medium | Constraint satisfaction, colored nets | CSP modeling |
 | **chess** | Puzzle/AI | Complex | N-Queens, Knight's Tour, ODE heuristics | Classic algorithms ⭐ |
 | **knapsack** | Optimization | Medium | Mass-action kinetics, exclusion analysis | Combinatorial optimization |
+| **visualization_demo** | Visualization | Simple | SVG rendering, workflows, state machines | Model documentation |
 
 ## Package Structure
 
@@ -257,13 +283,27 @@ Comprehensive API reference for each package:
 
 #### `petri` - Core Petri Net Data Structures
 
-Defines the fundamental building blocks:
+Defines the fundamental building blocks with both explicit and fluent APIs:
 
 ```go
+// Explicit construction
 net := petri.NewPetriNet()
 net.AddPlace("p1", initialTokens, capacity, x, y, labelText)
 net.AddTransition("t1", role, x, y, labelText)
 net.AddArc(source, target, weight, inhibitTransition)
+
+// Fluent Builder API
+net := petri.Build().
+    Place("S", 999).Place("I", 1).Place("R", 0).
+    Transition("infect").Transition("recover").
+    Arc("S", "infect", 1).Arc("I", "infect", 1).Arc("infect", "I", 2).
+    Arc("I", "recover", 1).Arc("recover", "R", 1).
+    Done()
+
+// With rates
+net, rates := petri.Build().
+    SIR(999, 1, 0).
+    WithCustomRates(map[string]float64{"infect": 0.3, "recover": 0.1})
 ```
 
 **Key types:**
@@ -271,6 +311,7 @@ net.AddArc(source, target, weight, inhibitTransition)
 - `Transition` - Events that consume/produce tokens
 - `Arc` - Directed connections between places and transitions
 - `PetriNet` - Complete net structure
+- `Builder` - Fluent API for net construction
 
 #### `parser` - JSON Import/Export
 
@@ -466,6 +507,229 @@ fmt.Printf("Final loss: %.4f\n", result.FinalLoss)
 
 See **[examples/neural/](examples/neural/)** for complete examples including SIR model parameter recovery.
 
+#### `stateutil` - State Manipulation Utilities
+
+Helper functions for working with state maps:
+
+```go
+import "github.com/pflow-xyz/go-pflow/stateutil"
+
+// Copy and modify state
+newState := stateutil.Copy(state)
+newState := stateutil.Apply(state, map[string]float64{"A": 10, "B": 0})
+
+// Analyze state
+total := stateutil.Sum(state)
+active := stateutil.NonZero(state)
+changes := stateutil.Diff(before, after)
+
+// Compare states
+if stateutil.Equal(s1, s2) { /* identical */ }
+if stateutil.EqualTol(s1, s2, 1e-6) { /* within tolerance */ }
+```
+
+#### `hypothesis` - Move Evaluation for Game AI
+
+Evaluate hypothetical moves and find optimal decisions:
+
+```go
+import "github.com/pflow-xyz/go-pflow/hypothesis"
+
+// Create evaluator with scoring function
+eval := hypothesis.NewEvaluator(net, rates, func(final map[string]float64) float64 {
+    return final["wins"] - final["losses"]
+}).WithOptions(solver.FastOptions())
+
+// Find best move from candidates
+moves := []map[string]float64{
+    {"pos0": 0, "_X0": 1},
+    {"pos1": 0, "_X1": 1},
+}
+bestIdx, bestScore := eval.FindBestParallel(currentState, moves)
+
+// Sensitivity analysis
+impact := eval.SensitivityImpact(state)  // Which transitions matter most?
+```
+
+#### `sensitivity` - Parameter Sensitivity Analysis
+
+Analyze how parameters affect outcomes:
+
+```go
+import "github.com/pflow-xyz/go-pflow/sensitivity"
+
+// Create analyzer
+scorer := sensitivity.DiffScorer("wins", "losses")
+analyzer := sensitivity.NewAnalyzer(net, state, rates, scorer)
+
+// Rank parameters by impact
+result := analyzer.AnalyzeRatesParallel()
+for _, r := range result.Ranking {
+    fmt.Printf("%s: %+.2f impact\n", r.Name, r.Impact)
+}
+
+// Grid search optimization
+grid := sensitivity.NewGridSearch(analyzer).
+    AddParameterRange("infect", 0.1, 0.5, 5).
+    AddParameterRange("recover", 0.05, 0.2, 5)
+best := grid.Run()
+```
+
+#### `cache` - Simulation Caching
+
+Memoize repeated simulations for performance:
+
+```go
+import "github.com/pflow-xyz/go-pflow/cache"
+
+// State cache for full solutions
+stateCache := cache.NewStateCache(1000)
+sol := stateCache.GetOrCompute(state, func() *solver.Solution {
+    return solver.Solve(prob, solver.Tsit5(), opts)
+})
+
+// Score cache for game AI (lighter weight)
+scoreCache := cache.NewScoreCache(10000)
+score := scoreCache.GetOrCompute(state, computeScore)
+
+// Check hit rate
+stats := stateCache.Stats()
+fmt.Printf("Hit rate: %.1f%%\n", stats.HitRate*100)
+```
+
+#### `reachability` - State Space Analysis
+
+Analyze discrete state space properties:
+
+```go
+import "github.com/pflow-xyz/go-pflow/reachability"
+
+// Create analyzer
+analyzer := reachability.NewAnalyzer(net).
+    WithMaxStates(10000)
+
+// Full analysis
+result := analyzer.Analyze()
+fmt.Printf("States: %d, Bounded: %v, Live: %v\n",
+    result.StateCount, result.Bounded, result.Live)
+fmt.Printf("Deadlocks: %d, Dead transitions: %v\n",
+    len(result.Deadlocks), result.DeadTrans)
+
+// Path finding
+if analyzer.IsReachable(target) {
+    path := analyzer.PathTo(target)
+}
+
+// Invariant analysis
+invAnalyzer := reachability.NewInvariantAnalyzer(net)
+if invAnalyzer.CheckConservation(initial) {
+    fmt.Println("Net conserves total tokens")
+}
+```
+
+### Higher-Level Abstractions
+
+#### `workflow` - Workflow Management Framework
+
+Build and execute workflows with task dependencies:
+
+```go
+import "github.com/pflow-xyz/go-pflow/workflow"
+
+// Build workflow with fluent API
+wf := workflow.New("approval").
+    Name("Document Approval").
+    Task("submit").Name("Submit").Manual().Duration(5*time.Minute).Done().
+    Task("review").Name("Review").Manual().Duration(30*time.Minute).Done().
+    Task("decide").Name("Approve?").Decision().Done().
+    Task("approved").Name("Approved").Automatic().Done().
+    Task("rejected").Name("Rejected").Automatic().Done().
+    Connect("submit", "review").
+    Connect("review", "decide").
+    Connect("decide", "approved").
+    Connect("decide", "rejected").
+    Start("submit").
+    End("approved", "rejected").
+    Build()
+
+// Execute workflow
+engine := workflow.NewEngine(wf)
+caseID := engine.StartCase(nil)
+engine.CompleteTask(caseID, "submit", nil)
+```
+
+#### `statemachine` - Hierarchical State Machines
+
+Build state machines that compile to Petri nets:
+
+```go
+import "github.com/pflow-xyz/go-pflow/statemachine"
+
+// Build state machine
+chart := statemachine.New("traffic_light").
+    State("red").Initial().Done().
+    State("yellow").Done().
+    State("green").Done().
+    On("timer").From("red").To("green").Done().
+    On("timer").From("green").To("yellow").Done().
+    On("timer").From("yellow").To("red").Done().
+    Build()
+
+// Create machine and process events
+machine := chart.NewMachine()
+machine.Send("timer")  // red -> green
+machine.Send("timer")  // green -> yellow
+
+// Get underlying Petri net
+net := chart.ToPetriNet()
+```
+
+#### `actor` - Actor Model with Message Passing
+
+Build actor systems with Petri net behaviors:
+
+```go
+import "github.com/pflow-xyz/go-pflow/actor"
+
+// Build actor system
+system := actor.NewSystem("my-system").
+    DefaultBus().
+    Actor("processor").
+        Name("Data Processor").
+        State("count", 0).
+        Handle("data.in", func(ctx *actor.ActorContext, s *actor.Signal) error {
+            count := ctx.GetInt("count", 0)
+            ctx.Set("count", count+1)
+            ctx.Emit("data.out", map[string]any{"processed": true})
+            return nil
+        }).
+        Done().
+    Start()
+
+// Publish signals
+system.Bus().Publish(&actor.Signal{
+    Type:    "data.in",
+    Payload: map[string]any{"value": 42},
+})
+```
+
+#### `visualization` - SVG Rendering
+
+Generate SVG visualizations for models:
+
+```go
+import "github.com/pflow-xyz/go-pflow/visualization"
+
+// Render Petri net
+err := visualization.SaveSVG(net, "model.svg")
+
+// Render workflow
+err := visualization.SaveWorkflowSVG(workflow, "workflow.svg", nil)
+
+// Render state machine
+err := visualization.SaveStateMachineSVG(chart, "statemachine.svg", nil)
+```
+
 ## Testing
 
 Comprehensive test coverage across all packages:
@@ -530,23 +794,40 @@ See **[examples/monitoring_demo/](examples/monitoring_demo/)** for complete hosp
 
 ## Architecture
 
-The library is designed with modularity and the long-term goal of a continuous state machine harness in mind:
+The library is designed with modularity and layered abstractions:
 
 ```
 petri/             Core data structures (places, transitions, arcs)
 ├── parser/        JSON serialization (compatible with pflow.xyz)
-├── solver/        ODE builder and Tsit5 numerical integrator
-├── learn/         Neural ODE-ish learnable rates and parameter fitting
-├── plotter/       SVG visualization
-├── engine/        State machine with continuous updates and triggers
+├── solver/        ODE solvers (Tsit5, RK45, implicit methods)
+├── stateutil/     State manipulation utilities
+├── learn/         Neural ODE-ish learnable rates
+├── plotter/       SVG plot generation
+├── engine/        Continuous simulation with triggers
 │
-eventlog/          Event log parsing and analysis
-├── mining/        Process discovery and rate learning
-└── monitoring/    Real-time case tracking and prediction
-    
-cmd/pflow/         Command-line interface for simulation and analysis
-examples/          Complete working demonstrations
-docs/              Comprehensive learning materials
+Higher-Level Abstractions
+├── workflow/      Task dependencies, resources, SLA tracking
+├── statemachine/  Hierarchical states compiled to Petri nets
+├── actor/         Message-passing actors with Petri net behaviors
+│
+Analysis & Optimization
+├── reachability/  State space analysis, deadlock detection
+├── sensitivity/   Parameter impact analysis, grid search
+├── hypothesis/    Move evaluation for game AI
+├── cache/         Memoization for repeated simulations
+│
+Process Mining
+├── eventlog/      Event log parsing and analysis
+├── mining/        Alpha Miner, Heuristic Miner, rate learning
+├── monitoring/    Real-time case tracking and prediction
+│
+Visualization
+├── visualization/ SVG rendering for nets, workflows, state machines
+└── plotter/       Time series plots
+
+cmd/pflow/         Command-line interface
+examples/          Working demonstrations
+docs/              Learning materials
 ```
 
 **Data Flow:**
