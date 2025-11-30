@@ -45,7 +45,7 @@ type MonitorConfig struct {
 	AlertBufferSize int
 
 	// Performance thresholds
-	WaitTimeWarningThreshold time.Duration
+	WaitTimeWarningThreshold  time.Duration
 	WaitTimeCriticalThreshold time.Duration
 }
 
@@ -65,9 +65,9 @@ func DefaultMonitorConfig() MonitorConfig {
 
 // WorkflowPredictor uses ODE simulation for workflow predictions.
 type WorkflowPredictor struct {
-	net       *petri.PetriNet
-	rates     map[string]float64
-	timeSpan  float64
+	net        *petri.PetriNet
+	rates      map[string]float64
+	timeSpan   float64
 	solverOpts *solver.Options
 }
 
@@ -425,10 +425,10 @@ func (m *WorkflowMonitor) updateAllPredictions() {
 				Message:   fmt.Sprintf("Case at risk: %.0f%% of SLA used, predicted remaining: %s", pred.RiskScore*100, pred.RemainingDuration.Round(time.Minute)),
 				CreatedAt: m.engine.now(),
 				Details: map[string]any{
-					"risk_score":          pred.RiskScore,
-					"remaining_duration":  pred.RemainingDuration.String(),
-					"completion_prob":     pred.CompletionProbability,
-					"bottleneck_tasks":    pred.BottleneckTasks,
+					"risk_score":         pred.RiskScore,
+					"remaining_duration": pred.RemainingDuration.String(),
+					"completion_prob":    pred.CompletionProbability,
+					"bottleneck_tasks":   pred.BottleneckTasks,
 				},
 			})
 		}

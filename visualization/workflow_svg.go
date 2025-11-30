@@ -13,29 +13,29 @@ import (
 
 // WorkflowSVGOptions controls workflow rendering
 type WorkflowSVGOptions struct {
-	NodeWidth      float64
-	NodeHeight     float64
-	NodeSpacingX   float64
-	NodeSpacingY   float64
-	Padding        float64
-	ShowLabels     bool
-	ShowTypes      bool
-	ShowJoinSplit  bool
-	ColorByType    bool
+	NodeWidth     float64
+	NodeHeight    float64
+	NodeSpacingX  float64
+	NodeSpacingY  float64
+	Padding       float64
+	ShowLabels    bool
+	ShowTypes     bool
+	ShowJoinSplit bool
+	ColorByType   bool
 }
 
 // DefaultWorkflowSVGOptions returns sensible defaults
 func DefaultWorkflowSVGOptions() *WorkflowSVGOptions {
 	return &WorkflowSVGOptions{
-		NodeWidth:    120,
-		NodeHeight:   50,
-		NodeSpacingX: 180,
-		NodeSpacingY: 80,
-		Padding:      60,
-		ShowLabels:   true,
-		ShowTypes:    true,
+		NodeWidth:     120,
+		NodeHeight:    50,
+		NodeSpacingX:  180,
+		NodeSpacingY:  80,
+		Padding:       60,
+		ShowLabels:    true,
+		ShowTypes:     true,
 		ShowJoinSplit: true,
-		ColorByType:  true,
+		ColorByType:   true,
 	}
 }
 

@@ -21,14 +21,14 @@ import (
 
 // Signal represents a message on the bus
 type Signal struct {
-	ID        string         // Unique signal ID
-	Type      string         // Signal type for routing
-	Source    string         // Actor ID that sent the signal
-	Target    string         // Optional: specific target actor ("" = broadcast)
-	Payload   map[string]any // Signal data
-	Timestamp time.Time      // When the signal was created
-	CorrelationID string     // For request-response patterns
-	ReplyTo   string         // Signal type to reply to
+	ID            string         // Unique signal ID
+	Type          string         // Signal type for routing
+	Source        string         // Actor ID that sent the signal
+	Target        string         // Optional: specific target actor ("" = broadcast)
+	Payload       map[string]any // Signal data
+	Timestamp     time.Time      // When the signal was created
+	CorrelationID string         // For request-response patterns
+	ReplyTo       string         // Signal type to reply to
 }
 
 // SignalHandler processes incoming signals
@@ -36,11 +36,11 @@ type SignalHandler func(ctx *ActorContext, signal *Signal) error
 
 // Subscription represents an actor's subscription to a signal type
 type Subscription struct {
-	ActorID     string
-	SignalType  string
-	Handler     SignalHandler
-	Filter      func(*Signal) bool // Optional filter
-	Priority    int                // Higher = processed first
+	ActorID    string
+	SignalType string
+	Handler    SignalHandler
+	Filter     func(*Signal) bool // Optional filter
+	Priority   int                // Higher = processed first
 }
 
 // Bus is a message bus for actor communication
@@ -51,13 +51,13 @@ type Bus struct {
 	signals       chan *Signal
 	middleware    []BusMiddleware
 
-	mu            sync.RWMutex
-	running       bool
-	stopCh        chan struct{}
+	mu      sync.RWMutex
+	running bool
+	stopCh  chan struct{}
 
 	// Metrics
-	signalCount   int64
-	errorCount    int64
+	signalCount int64
+	errorCount  int64
 }
 
 // BusMiddleware can intercept and transform signals
@@ -69,48 +69,48 @@ type Actor struct {
 	Name        string
 	Description string
 
-	bus         *Bus
-	behaviors   map[string]*Behavior
-	state       map[string]any // Actor-level state
-	inbox       chan *Signal
+	bus       *Bus
+	behaviors map[string]*Behavior
+	state     map[string]any // Actor-level state
+	inbox     chan *Signal
 
 	// Lifecycle
-	onStart     func(*ActorContext)
-	onStop      func(*ActorContext)
-	onError     func(*ActorContext, error)
+	onStart func(*ActorContext)
+	onStop  func(*ActorContext)
+	onError func(*ActorContext, error)
 
-	mu          sync.RWMutex
-	running     bool
-	stopCh      chan struct{}
+	mu      sync.RWMutex
+	running bool
+	stopCh  chan struct{}
 }
 
 // Behavior is a Petri net subnet that responds to signals
 type Behavior struct {
-	ID          string
-	Name        string
+	ID   string
+	Name string
 
 	// The model can be a raw Petri net or a workflow
-	net         *petri.PetriNet
-	workflow    *workflow.Workflow
-	engine      *workflow.Engine
+	net      *petri.PetriNet
+	workflow *workflow.Workflow
+	engine   *workflow.Engine
 
 	// Signal triggers
-	triggers    map[string]*Trigger  // signalType -> trigger
-	emitters    []*Emitter           // signals to emit
+	triggers map[string]*Trigger // signalType -> trigger
+	emitters []*Emitter          // signals to emit
 
 	// State transformation
 	stateMapper func(signal *Signal, currentState map[string]float64) map[string]float64
 
 	// Conditions for activation
-	guard       func(*ActorContext, *Signal) bool
+	guard func(*ActorContext, *Signal) bool
 }
 
 // Trigger defines how a signal activates a behavior
 type Trigger struct {
-	SignalType    string
-	TransitionID  string              // Which Petri net transition to fire
-	TokenMap      func(*Signal) map[string]float64 // Map signal to tokens
-	Condition     func(*ActorContext, *Signal) bool
+	SignalType   string
+	TransitionID string                           // Which Petri net transition to fire
+	TokenMap     func(*Signal) map[string]float64 // Map signal to tokens
+	Condition    func(*ActorContext, *Signal) bool
 }
 
 // Emitter defines when and how to emit signals
@@ -123,13 +123,13 @@ type Emitter struct {
 
 // ActorContext provides context during signal processing
 type ActorContext struct {
-	Actor       *Actor
-	Bus         *Bus
-	Signal      *Signal           // Current signal being processed
-	Behavior    *Behavior         // Current behavior
-	State       map[string]any    // Actor state
-	NetState    map[string]float64 // Current Petri net state
-	Variables   map[string]any    // Processing variables
+	Actor     *Actor
+	Bus       *Bus
+	Signal    *Signal            // Current signal being processed
+	Behavior  *Behavior          // Current behavior
+	State     map[string]any     // Actor state
+	NetState  map[string]float64 // Current Petri net state
+	Variables map[string]any     // Processing variables
 }
 
 // Emit sends a signal to the bus
@@ -214,9 +214,9 @@ func (ctx *ActorContext) GetString(key string, defaultVal string) string {
 
 // ActorSystem manages multiple actors and buses
 type ActorSystem struct {
-	name    string
-	buses   map[string]*Bus
-	actors  map[string]*Actor
+	name   string
+	buses  map[string]*Bus
+	actors map[string]*Actor
 
 	mu      sync.RWMutex
 	running bool
@@ -238,10 +238,10 @@ const (
 
 // Supervisor monitors and manages actor lifecycles
 type Supervisor struct {
-	ID       string
-	Strategy SupervisorStrategy
+	ID          string
+	Strategy    SupervisorStrategy
 	MaxRestarts int
-	Window   time.Duration
+	Window      time.Duration
 
 	actors   []*Actor
 	restarts map[string][]time.Time
@@ -258,4 +258,3 @@ func generateID() string {
 	idCounter++
 	return fmt.Sprintf("sig_%d_%d", time.Now().UnixNano(), idCounter)
 }
-

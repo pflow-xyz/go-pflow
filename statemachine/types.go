@@ -15,11 +15,11 @@ package statemachine
 // State represents a state in the state machine.
 // States can be simple (leaf) or composite (containing substates).
 type State struct {
-	Name      string
-	Parent    *State            // nil for top-level states
-	Children  map[string]*State // substates (nil for leaf states)
-	Initial   bool              // is this the initial substate?
-	IsLeaf    bool              // true if no children
+	Name         string
+	Parent       *State            // nil for top-level states
+	Children     map[string]*State // substates (nil for leaf states)
+	Initial      bool              // is this the initial substate?
+	IsLeaf       bool              // true if no children
 	EntryActions []Action
 	ExitActions  []Action
 }
@@ -54,8 +54,8 @@ type Action interface {
 
 // Chart represents a complete state chart with multiple regions.
 type Chart struct {
-	Name      string
-	Regions   map[string]*Region
+	Name        string
+	Regions     map[string]*Region
 	Transitions []*Transition
 }
 

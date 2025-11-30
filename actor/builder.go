@@ -22,8 +22,8 @@ func NewSystem(name string) *SystemBuilder {
 
 // SystemBuilder provides fluent API for building actor systems
 type SystemBuilder struct {
-	system      *ActorSystem
-	currentBus  *Bus
+	system     *ActorSystem
+	currentBus *Bus
 }
 
 // Bus creates or selects a message bus
@@ -329,10 +329,10 @@ func Processor(id, inputSignal, outputSignal string, process func(*ActorContext,
 		NewBehavior("process").
 			OnSignal(inputSignal).Done().
 			Emit(outputSignal).
-				WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
-					return process(ctx, ctx.Signal)
-				}).
-				Done().
+			WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
+				return process(ctx, ctx.Signal)
+			}).
+			Done().
 			Build(),
 	)
 	return actor
@@ -349,16 +349,16 @@ func Router(id, inputSignal string, routes map[string]string) *Actor {
 		actor.AddBehavior(
 			NewBehavior("route_" + key).
 				OnSignal(inputSignal).
-					When(func(ctx *ActorContext, s *Signal) bool {
-						routeKey, ok := s.Payload["route"].(string)
-						return ok && routeKey == key
-					}).
-					Done().
+				When(func(ctx *ActorContext, s *Signal) bool {
+					routeKey, ok := s.Payload["route"].(string)
+					return ok && routeKey == key
+				}).
+				Done().
 				Emit(targetSignal).
-					WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
-						return ctx.Signal.Payload
-					}).
-					Done().
+				WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
+					return ctx.Signal.Payload
+				}).
+				Done().
 				Build(),
 		)
 	}
@@ -383,10 +383,10 @@ func Aggregator(id, inputSignal, outputSignal string, count int) *Actor {
 				WithNet(net).
 				OnSignal(inputSignal).Fire("collect").Done().
 				Emit(outputSignal).
-					When(func(ctx *ActorContext, state map[string]float64) bool {
-						return state["collected"] >= float64(count)
-					}).
-					Done().
+				When(func(ctx *ActorContext, state map[string]float64) bool {
+					return state["collected"] >= float64(count)
+				}).
+				Done().
 				Build(),
 		)
 }
@@ -401,10 +401,10 @@ func Splitter(id, inputSignal string, outputSignals ...string) *Actor {
 			NewBehavior("split_to_" + output).
 				OnSignal(inputSignal).Done().
 				Emit(output).
-					WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
-						return ctx.Signal.Payload
-					}).
-					Done().
+				WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
+					return ctx.Signal.Payload
+				}).
+				Done().
 				Build(),
 		)
 	}
@@ -418,15 +418,15 @@ func Filter(id, inputSignal, outputSignal string, predicate func(*Signal) bool) 
 		AddBehavior(
 			NewBehavior("filter").
 				OnSignal(inputSignal).
-					When(func(ctx *ActorContext, s *Signal) bool {
-						return predicate(s)
-					}).
-					Done().
+				When(func(ctx *ActorContext, s *Signal) bool {
+					return predicate(s)
+				}).
+				Done().
 				Emit(outputSignal).
-					WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
-						return ctx.Signal.Payload
-					}).
-					Done().
+				WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
+					return ctx.Signal.Payload
+				}).
+				Done().
 				Build(),
 		)
 }

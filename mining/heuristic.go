@@ -15,8 +15,8 @@ import (
 // The algorithm uses dependency measures based on directly-follows counts
 // to determine which activities are causally related.
 type HeuristicMiner struct {
-	log                *eventlog.EventLog
-	footprint          *FootprintMatrix
+	log                 *eventlog.EventLog
+	footprint           *FootprintMatrix
 	dependencyThreshold float64 // Minimum dependency score to include an edge
 	andThreshold        float64 // Threshold for detecting AND splits/joins
 	loopThreshold       float64 // Threshold for detecting loops
@@ -60,8 +60,8 @@ func NewHeuristicMiner(log *eventlog.EventLog) *HeuristicMiner {
 // NewHeuristicMinerWithOptions creates a new Heuristic Miner with custom options.
 func NewHeuristicMinerWithOptions(log *eventlog.EventLog, opts *HeuristicMinerOptions) *HeuristicMiner {
 	return &HeuristicMiner{
-		log:                log,
-		footprint:          NewFootprintMatrix(log),
+		log:                 log,
+		footprint:           NewFootprintMatrix(log),
 		dependencyThreshold: opts.DependencyThreshold,
 		andThreshold:        opts.AndThreshold,
 		loopThreshold:       opts.LoopThreshold,
@@ -113,11 +113,11 @@ func (m *HeuristicMiner) Loop2Score(a, b string) float64 {
 
 // DependencyGraph represents the causal dependency graph.
 type DependencyGraph struct {
-	Nodes      []string                    // Activities
+	Nodes      []string                      // Activities
 	Edges      map[string]map[string]float64 // a -> b -> score
-	StartNodes []string                    // Activities that can start
-	EndNodes   []string                    // Activities that can end
-	SelfLoops  map[string]float64          // Activities with length-1 loops
+	StartNodes []string                      // Activities that can start
+	EndNodes   []string                      // Activities that can end
+	SelfLoops  map[string]float64            // Activities with length-1 loops
 }
 
 // BuildDependencyGraph constructs the dependency graph based on thresholds.

@@ -16,11 +16,11 @@ import (
 
 // StateCache caches ODE simulation results keyed by state hash.
 type StateCache struct {
-	mu       sync.RWMutex
-	cache    map[string]*solver.Solution
-	maxSize  int
-	hits     int64
-	misses   int64
+	mu        sync.RWMutex
+	cache     map[string]*solver.Solution
+	maxSize   int
+	hits      int64
+	misses    int64
 	evictions int64
 }
 

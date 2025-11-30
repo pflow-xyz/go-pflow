@@ -323,10 +323,10 @@ func TestBehaviorEmitter(t *testing.T) {
 	behavior := NewBehavior("emitting").
 		OnSignal("input").Done().
 		Emit("output").
-			WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
-				return map[string]any{"processed": true}
-			}).
-			Done().
+		WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
+			return map[string]any{"processed": true}
+		}).
+		Done().
 		Build()
 
 	actor := NewActor("processor").AddBehavior(behavior)
@@ -361,20 +361,20 @@ func TestSystemBuilder(t *testing.T) {
 	system := NewSystem("test_system").
 		DefaultBus().
 		Actor("pinger").
-			Name("Pinger").
-			On("pong", func(ctx *ActorContext, signal *Signal) error {
-				atomic.AddInt32(&pongReceived, 1)
-				return nil
-			}).
-			Done().
+		Name("Pinger").
+		On("pong", func(ctx *ActorContext, signal *Signal) error {
+			atomic.AddInt32(&pongReceived, 1)
+			return nil
+		}).
+		Done().
 		Actor("ponger").
-			Name("Ponger").
-			On("ping", func(ctx *ActorContext, signal *Signal) error {
-				atomic.AddInt32(&pingReceived, 1)
-				ctx.Emit("pong", nil)
-				return nil
-			}).
-			Done().
+		Name("Ponger").
+		On("ping", func(ctx *ActorContext, signal *Signal) error {
+			atomic.AddInt32(&pingReceived, 1)
+			ctx.Emit("pong", nil)
+			return nil
+		}).
+		Done().
 		Start()
 
 	// Get the default bus

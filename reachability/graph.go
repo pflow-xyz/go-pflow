@@ -18,16 +18,16 @@ type Graph struct {
 
 // State represents a node in the reachability graph.
 type State struct {
-	ID             int
-	Marking        Marking
-	Hash           string
-	Enabled        []string  // Enabled transitions
-	Successors     []*Edge   // Outgoing edges
-	Predecessors   []*Edge   // Incoming edges
-	IsInitial      bool
-	IsTerminal     bool      // No enabled transitions
-	IsDeadlock     bool      // Terminal but not a goal state
-	Depth          int       // Distance from initial state
+	ID           int
+	Marking      Marking
+	Hash         string
+	Enabled      []string // Enabled transitions
+	Successors   []*Edge  // Outgoing edges
+	Predecessors []*Edge  // Incoming edges
+	IsInitial    bool
+	IsTerminal   bool // No enabled transitions
+	IsDeadlock   bool // Terminal but not a goal state
+	Depth        int  // Distance from initial state
 }
 
 // Edge represents a transition firing from one state to another.

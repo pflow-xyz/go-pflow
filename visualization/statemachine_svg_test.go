@@ -360,9 +360,9 @@ func TestRenderStateMachineSVG_ColorByRegion(t *testing.T) {
 
 func TestStatePath(t *testing.T) {
 	tests := []struct {
-		path    statemachine.StatePath
-		region  string
-		state   string
+		path     statemachine.StatePath
+		region   string
+		state    string
 		substate string
 	}{
 		{"mode:time:display", "mode", "time", "display"},

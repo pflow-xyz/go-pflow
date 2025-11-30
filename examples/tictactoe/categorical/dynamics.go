@@ -17,14 +17,14 @@ const (
 
 // DynamicsAnalysis contains detailed analysis results
 type DynamicsAnalysis struct {
-	Type           DynamicsType
-	Iterations     int
-	ConvergenceIter int              // Iteration where convergence detected
-	CyclePeriod    int              // Period of cycle if oscillating
-	MoveHistory    []Move           // Full move history
-	UtilityHistory []Utility        // Full utility history
-	FinalUtility   Utility          // Final or average utility
-	Variance       float64          // Variance in utility
+	Type            DynamicsType
+	Iterations      int
+	ConvergenceIter int       // Iteration where convergence detected
+	CyclePeriod     int       // Period of cycle if oscillating
+	MoveHistory     []Move    // Full move history
+	UtilityHistory  []Utility // Full utility history
+	FinalUtility    Utility   // Final or average utility
+	Variance        float64   // Variance in utility
 }
 
 // AnalyzeDynamics runs a lens for many iterations and classifies behavior

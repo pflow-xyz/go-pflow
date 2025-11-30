@@ -254,8 +254,8 @@ func TestScoreCacheHitRate(t *testing.T) {
 	state := map[string]float64{"A": 1}
 	cache.Put(state, 1)
 
-	cache.Get(state)                        // Hit
-	cache.Get(state)                        // Hit
+	cache.Get(state)                       // Hit
+	cache.Get(state)                       // Hit
 	cache.Get(map[string]float64{"A": 99}) // Miss
 
 	rate := cache.HitRate()

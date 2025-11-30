@@ -80,34 +80,34 @@ func generateWorkflowExamples() {
 	approvalWF := workflow.New("approval").
 		Name("Document Approval Workflow").
 		Task("submit").
-			Name("Submit Document").
-			Manual().
-			Duration(5 * time.Minute).
-			Done().
+		Name("Submit Document").
+		Manual().
+		Duration(5*time.Minute).
+		Done().
 		Task("review").
-			Name("Review Document").
-			Manual().
-			Duration(30 * time.Minute).
-			Done().
+		Name("Review Document").
+		Manual().
+		Duration(30*time.Minute).
+		Done().
 		Task("decide").
-			Name("Approve?").
-			Decision().
-			Done().
+		Name("Approve?").
+		Decision().
+		Done().
 		Task("approve").
-			Name("Mark Approved").
-			Automatic().
-			Duration(1 * time.Minute).
-			Done().
+		Name("Mark Approved").
+		Automatic().
+		Duration(1*time.Minute).
+		Done().
 		Task("reject").
-			Name("Mark Rejected").
-			Automatic().
-			Duration(1 * time.Minute).
-			Done().
+		Name("Mark Rejected").
+		Automatic().
+		Duration(1*time.Minute).
+		Done().
 		Task("notify").
-			Name("Send Notification").
-			Automatic().
-			Duration(1 * time.Minute).
-			Done().
+		Name("Send Notification").
+		Automatic().
+		Duration(1*time.Minute).
+		Done().
 		Connect("submit", "review").
 		Connect("review", "decide").
 		Connect("decide", "approve").
@@ -128,34 +128,34 @@ func generateWorkflowExamples() {
 	parallelWF := workflow.New("parallel").
 		Name("Parallel Processing Workflow").
 		Task("start").
-			Name("Start").
-			Automatic().
-			SplitAll().
-			Done().
+		Name("Start").
+		Automatic().
+		SplitAll().
+		Done().
 		Task("taskA").
-			Name("Process A").
-			Automatic().
-			Duration(10 * time.Minute).
-			Done().
+		Name("Process A").
+		Automatic().
+		Duration(10*time.Minute).
+		Done().
 		Task("taskB").
-			Name("Process B").
-			Automatic().
-			Duration(15 * time.Minute).
-			Done().
+		Name("Process B").
+		Automatic().
+		Duration(15*time.Minute).
+		Done().
 		Task("taskC").
-			Name("Process C").
-			Automatic().
-			Duration(8 * time.Minute).
-			Done().
+		Name("Process C").
+		Automatic().
+		Duration(8*time.Minute).
+		Done().
 		Task("sync").
-			Name("Synchronize").
-			Automatic().
-			JoinAll().
-			Done().
+		Name("Synchronize").
+		Automatic().
+		JoinAll().
+		Done().
 		Task("finish").
-			Name("Finish").
-			Automatic().
-			Done().
+		Name("Finish").
+		Automatic().
+		Done().
 		Connect("start", "taskA").
 		Connect("start", "taskB").
 		Connect("start", "taskC").
@@ -177,38 +177,38 @@ func generateWorkflowExamples() {
 	incidentWF := workflow.New("incident").
 		Name("Incident Management").
 		Task("create").
-			Name("Create Ticket").
-			Automatic().
-			Done().
+		Name("Create Ticket").
+		Automatic().
+		Done().
 		Task("triage").
-			Name("Triage").
-			Manual().
-			Duration(15 * time.Minute).
-			Done().
+		Name("Triage").
+		Manual().
+		Duration(15*time.Minute).
+		Done().
 		Task("assign").
-			Name("Assign Engineer").
-			Manual().
-			Duration(5 * time.Minute).
-			Done().
+		Name("Assign Engineer").
+		Manual().
+		Duration(5*time.Minute).
+		Done().
 		Task("investigate").
-			Name("Investigate").
-			Manual().
-			Duration(2 * time.Hour).
-			Done().
+		Name("Investigate").
+		Manual().
+		Duration(2*time.Hour).
+		Done().
 		Task("resolve").
-			Name("Implement Fix").
-			Manual().
-			Duration(4 * time.Hour).
-			Done().
+		Name("Implement Fix").
+		Manual().
+		Duration(4*time.Hour).
+		Done().
 		Task("verify").
-			Name("Verify Fix").
-			Manual().
-			Duration(30 * time.Minute).
-			Done().
+		Name("Verify Fix").
+		Manual().
+		Duration(30*time.Minute).
+		Done().
 		Task("close").
-			Name("Close Ticket").
-			Automatic().
-			Done().
+		Name("Close Ticket").
+		Automatic().
+		Done().
 		Connect("create", "triage").
 		Connect("triage", "assign").
 		Connect("assign", "investigate").
@@ -229,29 +229,29 @@ func generateWorkflowExamples() {
 	orderWF := workflow.New("order").
 		Name("Order Fulfillment").
 		Task("receive").
-			Name("Receive Order").
-			Automatic().
-			Done().
+		Name("Receive Order").
+		Automatic().
+		Done().
 		Task("validate").
-			Name("Validate Order").
-			Automatic().
-			Done().
+		Name("Validate Order").
+		Automatic().
+		Done().
 		Task("payment").
-			Name("Process Payment").
-			Type(workflow.TaskTypeSubflow).
-			Done().
+		Name("Process Payment").
+		Type(workflow.TaskTypeSubflow).
+		Done().
 		Task("inventory").
-			Name("Check Inventory").
-			Automatic().
-			Done().
+		Name("Check Inventory").
+		Automatic().
+		Done().
 		Task("ship").
-			Name("Ship Order").
-			Manual().
-			Done().
+		Name("Ship Order").
+		Manual().
+		Done().
 		Task("complete").
-			Name("Order Complete").
-			Automatic().
-			Done().
+		Name("Order Complete").
+		Automatic().
+		Done().
 		Connect("receive", "validate").
 		Connect("validate", "payment").
 		Connect("payment", "inventory").

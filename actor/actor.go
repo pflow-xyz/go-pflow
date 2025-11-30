@@ -520,10 +520,10 @@ func ForwarderBehavior(fromType, toType string) *Behavior {
 		Name("Forward " + fromType + " to " + toType).
 		OnSignal(fromType).Done().
 		Emit(toType).
-			WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
-				return ctx.Signal.Payload
-			}).
-			Done().
+		WithPayload(func(ctx *ActorContext, state map[string]float64) map[string]any {
+			return ctx.Signal.Payload
+		}).
+		Done().
 		Build()
 }
 
@@ -543,12 +543,12 @@ func ThrottleBehavior(signalType string, maxPerSecond int) *Behavior {
 		Name("Throttle " + signalType).
 		WithNet(net).
 		OnSignal(signalType).
-			Fire("consume").
-			When(func(ctx *ActorContext, s *Signal) bool {
-				// Only process if tokens available
-				return ctx.NetState["tokens"] >= 1
-			}).
-			Done().
+		Fire("consume").
+		When(func(ctx *ActorContext, s *Signal) bool {
+			// Only process if tokens available
+			return ctx.NetState["tokens"] >= 1
+		}).
+		Done().
 		Build()
 }
 

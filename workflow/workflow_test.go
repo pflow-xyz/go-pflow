@@ -14,35 +14,35 @@ func TestWorkflowBuilder(t *testing.T) {
 		Name("Document Approval").
 		Description("Review and approve documents").
 		Task("submit").
-			Name("Submit Document").
-			Type(TaskTypeManual).
-			Duration(5 * time.Minute).
-			Done().
+		Name("Submit Document").
+		Type(TaskTypeManual).
+		Duration(5*time.Minute).
+		Done().
 		Task("review").
-			Name("Review Document").
-			Type(TaskTypeManual).
-			Duration(30 * time.Minute).
-			RequireResource("reviewers", 1).
-			Done().
+		Name("Review Document").
+		Type(TaskTypeManual).
+		Duration(30*time.Minute).
+		RequireResource("reviewers", 1).
+		Done().
 		Task("approve").
-			Name("Approve Document").
-			Type(TaskTypeDecision).
-			Duration(10 * time.Minute).
-			Done().
+		Name("Approve Document").
+		Type(TaskTypeDecision).
+		Duration(10*time.Minute).
+		Done().
 		Task("archive").
-			Name("Archive Document").
-			Type(TaskTypeAutomatic).
-			Duration(1 * time.Minute).
-			Done().
+		Name("Archive Document").
+		Type(TaskTypeAutomatic).
+		Duration(1*time.Minute).
+		Done().
 		Connect("submit", "review").
 		Connect("review", "approve").
 		Connect("approve", "archive").
 		Start("submit").
 		End("archive").
 		Resource("reviewers").
-			Name("Document Reviewers").
-			Capacity(3).
-			Done().
+		Name("Document Reviewers").
+		Capacity(3).
+		Done().
 		Build()
 
 	if wf.ID != "approval_workflow" {
@@ -370,10 +370,10 @@ func TestEngineResourceContention(t *testing.T) {
 func TestEngineTaskRetry(t *testing.T) {
 	wf := New("retry_test").
 		Task("flaky").
-			Duration(time.Minute).
-			MaxRetries(2).
-			FailureAction(FailureRetry).
-			Done().
+		Duration(time.Minute).
+		MaxRetries(2).
+		FailureAction(FailureRetry).
+		Done().
 		Start("flaky").
 		End("flaky").
 		Build()
@@ -403,8 +403,8 @@ func TestEngineTaskRetry(t *testing.T) {
 func TestEngineTaskFailureAbort(t *testing.T) {
 	wf := New("abort_test").
 		Task("critical").
-			FailureAction(FailureAbort).
-			Done().
+		FailureAction(FailureAbort).
+		Done().
 		Start("critical").
 		End("critical").
 		Build()
@@ -424,9 +424,9 @@ func TestEngineTaskFailureAbort(t *testing.T) {
 func TestEngineSLACheck(t *testing.T) {
 	wf := New("sla_test").
 		Task("task1").
-			Duration(time.Minute).
-			TaskSLA(10*time.Minute, 0.8, 0.95, SLAActionAlert).
-			Done().
+		Duration(time.Minute).
+		TaskSLA(10*time.Minute, 0.8, 0.95, SLAActionAlert).
+		Done().
 		Start("task1").
 		End("task1").
 		Build()
@@ -527,17 +527,17 @@ func TestEngineCondition(t *testing.T) {
 	wf := New("condition_test").
 		Task("check").Done().
 		Task("approve").
-			Condition(func(ctx *ExecutionContext) bool {
-				amount, ok := ctx.Variables["amount"].(float64)
-				return ok && amount >= 1000
-			}).
-			Done().
+		Condition(func(ctx *ExecutionContext) bool {
+			amount, ok := ctx.Variables["amount"].(float64)
+			return ok && amount >= 1000
+		}).
+		Done().
 		Task("auto_approve").
-			Condition(func(ctx *ExecutionContext) bool {
-				amount, ok := ctx.Variables["amount"].(float64)
-				return ok && amount < 1000
-			}).
-			Done().
+		Condition(func(ctx *ExecutionContext) bool {
+			amount, ok := ctx.Variables["amount"].(float64)
+			return ok && amount < 1000
+		}).
+		Done().
 		Task("complete").JoinType(JoinAny).Done().
 		Connect("check", "approve").
 		Connect("check", "auto_approve").
@@ -569,16 +569,16 @@ func TestEngineCallbacks(t *testing.T) {
 
 	wf := New("callback_test").
 		Task("task1").
-			OnStart(func(ctx *ExecutionContext, t *TaskInstance) {
-				atomic.AddInt32(&startCalled, 1)
-			}).
-			OnComplete(func(ctx *ExecutionContext, t *TaskInstance) {
-				atomic.AddInt32(&completeCalled, 1)
-			}).
-			OnFail(func(ctx *ExecutionContext, t *TaskInstance) {
-				atomic.AddInt32(&failCalled, 1)
-			}).
-			Done().
+		OnStart(func(ctx *ExecutionContext, t *TaskInstance) {
+			atomic.AddInt32(&startCalled, 1)
+		}).
+		OnComplete(func(ctx *ExecutionContext, t *TaskInstance) {
+			atomic.AddInt32(&completeCalled, 1)
+		}).
+		OnFail(func(ctx *ExecutionContext, t *TaskInstance) {
+			atomic.AddInt32(&failCalled, 1)
+		}).
+		Done().
 		Start("task1").
 		End("task1").
 		Build()
@@ -717,4 +717,3 @@ func TestParallelHelper(t *testing.T) {
 		}
 	}
 }
-

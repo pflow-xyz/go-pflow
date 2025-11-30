@@ -20,14 +20,14 @@ const (
 type SubState string
 
 const (
-	SubDefault      SubState = "default"
-	SubHolding      SubState = "holding"
-	SubCasio        SubState = "casio"
-	SubModified     SubState = "modified"
-	SubEditHours    SubState = "edit_hours"
-	SubEditMinutes  SubState = "edit_minutes"
-	SubEditMonth    SubState = "edit_month"
-	SubEditDayNum   SubState = "edit_day_number"
+	SubDefault     SubState = "default"
+	SubHolding     SubState = "holding"
+	SubCasio       SubState = "casio"
+	SubModified    SubState = "modified"
+	SubEditHours   SubState = "edit_hours"
+	SubEditMinutes SubState = "edit_minutes"
+	SubEditMonth   SubState = "edit_month"
+	SubEditDayNum  SubState = "edit_day_number"
 )
 
 // Event types for button presses

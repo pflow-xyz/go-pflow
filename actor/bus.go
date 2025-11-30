@@ -302,11 +302,11 @@ func (b *Bus) processLoop() {
 // Stats returns bus statistics
 func (b *Bus) Stats() BusStats {
 	return BusStats{
-		SignalCount:      atomic.LoadInt64(&b.signalCount),
-		ErrorCount:       atomic.LoadInt64(&b.errorCount),
-		ActorCount:       len(b.actors),
+		SignalCount:       atomic.LoadInt64(&b.signalCount),
+		ErrorCount:        atomic.LoadInt64(&b.errorCount),
+		ActorCount:        len(b.actors),
 		SubscriptionCount: b.countSubscriptions(),
-		QueueSize:        len(b.signals),
+		QueueSize:         len(b.signals),
 	}
 }
 
@@ -412,4 +412,3 @@ func (bb *BroadcastBus) Publish(signal *Signal) {
 		bus.Publish(signal)
 	}
 }
-

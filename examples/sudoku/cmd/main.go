@@ -106,17 +106,17 @@ func main() {
 
 // SudokuModel represents the JSON-LD structure
 type SudokuModel struct {
-	Context     interface{}            `json:"@context"`
-	Type        string                 `json:"@type"`
-	Version     string                 `json:"@version"`
-	Description string                 `json:"description"`
-	Puzzle      PuzzleInfo             `json:"puzzle"`
-	Token       []string               `json:"token"`
-	Colors      *ColorDefinition       `json:"colors,omitempty"`
-	Places      map[string]PlaceInfo   `json:"places"`
-	Transitions map[string]TransInfo   `json:"transitions"`
-	Arcs        []ArcInfo              `json:"arcs"`
-	Constraints *ConstraintInfo        `json:"constraints,omitempty"`
+	Context     interface{}          `json:"@context"`
+	Type        string               `json:"@type"`
+	Version     string               `json:"@version"`
+	Description string               `json:"description"`
+	Puzzle      PuzzleInfo           `json:"puzzle"`
+	Token       []string             `json:"token"`
+	Colors      *ColorDefinition     `json:"colors,omitempty"`
+	Places      map[string]PlaceInfo `json:"places"`
+	Transitions map[string]TransInfo `json:"transitions"`
+	Arcs        []ArcInfo            `json:"arcs"`
+	Constraints *ConstraintInfo      `json:"constraints,omitempty"`
 }
 
 type PuzzleInfo struct {

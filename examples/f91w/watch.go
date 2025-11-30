@@ -122,18 +122,18 @@ func (w *Watch) IsLightOn() bool {
 func (w *Watch) GetActionCounts() map[string]int {
 	state := w.engine.GetState()
 	return map[string]int{
-		"bip":                  int(state["bip_count"]),
-		"time_mode_toggle":     int(state["time_mode_toggles"]),
-		"alarm_mode_toggle":    int(state["alarm_mode_toggles"]),
-		"alarm_hours_inc":      int(state["alarm_hours_increments"]),
-		"alarm_minutes_inc":    int(state["alarm_minutes_increments"]),
-		"stopwatch_toggle":     int(state["stopwatch_toggles"]),
+		"bip":                   int(state["bip_count"]),
+		"time_mode_toggle":      int(state["time_mode_toggles"]),
+		"alarm_mode_toggle":     int(state["alarm_mode_toggles"]),
+		"alarm_hours_inc":       int(state["alarm_hours_increments"]),
+		"alarm_minutes_inc":     int(state["alarm_minutes_increments"]),
+		"stopwatch_toggle":      int(state["stopwatch_toggles"]),
 		"stopwatch_split_clear": int(state["stopwatch_split_clear"]),
-		"time_seconds_reset":   int(state["time_seconds_resets"]),
-		"time_hours_inc":       int(state["time_hours_increments"]),
-		"time_minutes_inc":     int(state["time_minutes_increments"]),
-		"date_month_inc":       int(state["date_month_increments"]),
-		"date_day_inc":         int(state["date_day_increments"]),
+		"time_seconds_reset":    int(state["time_seconds_resets"]),
+		"time_hours_inc":        int(state["time_hours_increments"]),
+		"time_minutes_inc":      int(state["time_minutes_increments"]),
+		"date_month_inc":        int(state["date_month_increments"]),
+		"date_day_inc":          int(state["date_day_increments"]),
 	}
 }
 

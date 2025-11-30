@@ -13,16 +13,16 @@ import (
 
 // StateMachineSVGOptions controls state machine rendering
 type StateMachineSVGOptions struct {
-	StateWidth     float64
-	StateHeight    float64
-	StateSpacingX  float64
-	StateSpacingY  float64
-	RegionSpacing  float64
-	Padding        float64
-	ShowLabels     bool
-	ShowEvents     bool
-	ShowInitial    bool
-	ColorByRegion  bool
+	StateWidth    float64
+	StateHeight   float64
+	StateSpacingX float64
+	StateSpacingY float64
+	RegionSpacing float64
+	Padding       float64
+	ShowLabels    bool
+	ShowEvents    bool
+	ShowInitial   bool
+	ColorByRegion bool
 }
 
 // DefaultStateMachineSVGOptions returns sensible defaults
@@ -300,7 +300,7 @@ func assignStateLevels(region *statemachine.Region, stateNames []string) map[str
 			for pn, ps := range region.States {
 				if ps.Name == parentName {
 					levels[pn] = 0 // Ensure parent exists
-					level = 1     // Child is one level deeper
+					level = 1      // Child is one level deeper
 					break
 				}
 			}

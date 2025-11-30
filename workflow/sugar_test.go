@@ -160,13 +160,13 @@ func TestPrioritySLA(t *testing.T) {
 func TestTaskBuilderSugar(t *testing.T) {
 	wf := New("task_sugar").
 		Task("work").
-			Takes(30 * time.Minute).
-			Needs("workers").
-			MustCompleteIn(1 * time.Hour).
-			RetryOnFailure(3).
-			WaitForAny().
-			TriggerAll().
-			Done().
+		Takes(30*time.Minute).
+		Needs("workers").
+		MustCompleteIn(1*time.Hour).
+		RetryOnFailure(3).
+		WaitForAny().
+		TriggerAll().
+		Done().
 		Workers("workers", 5).
 		Start("work").
 		End("work").
@@ -325,39 +325,38 @@ func TestComprehensiveWorkflow(t *testing.T) {
 		// Define tasks with sugar
 		ManualTask("receive_order", "Receive Order", 2*time.Minute).
 		Task("validate").
-			Name("Validate Order").
-			Automatic().
-			Takes(30 * time.Second).
-			Needs("inventory_api").
-			MustCompleteIn(5 * time.Minute).
-			Done().
+		Name("Validate Order").
+		Automatic().
+		Takes(30*time.Second).
+		Needs("inventory_api").
+		MustCompleteIn(5*time.Minute).
+		Done().
 		Task("pick").
-			Name("Pick Items").
-			Manual().
-			Takes(15 * time.Minute).
-			NeedsN("warehouse_staff", 1).
-			RetryOnFailure(2).
-			Done().
+		Name("Pick Items").
+		Manual().
+		Takes(15*time.Minute).
+		NeedsN("warehouse_staff", 1).
+		RetryOnFailure(2).
+		Done().
 		Task("pack").
-			Name("Pack Order").
-			Manual().
-			Takes(10 * time.Minute).
-			NeedsN("warehouse_staff", 1).
-			After("pick").
-			Done().
+		Name("Pack Order").
+		Manual().
+		Takes(10*time.Minute).
+		NeedsN("warehouse_staff", 1).
+		After("pick").
+		Done().
 		Task("ship").
-			Name("Ship Order").
-			Manual().
-			Takes(5 * time.Minute).
-			Needs("delivery_drivers").
-			After("pack").
-			Done().
+		Name("Ship Order").
+		Manual().
+		Takes(5*time.Minute).
+		Needs("delivery_drivers").
+		After("pack").
+		Done().
 		AutoTask("notify_customer", "Notify Customer", time.Minute).
 
 		// Wire up the flow
 		From("receive_order").Then("validate").Then("pick").To("pack").
 		Connect("ship", "notify_customer").
-
 		Start("receive_order").
 		End("notify_customer").
 		Build()

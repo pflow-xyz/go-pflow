@@ -34,9 +34,9 @@ func TestSimpleStateMachine(t *testing.T) {
 	// Simple traffic light: red -> green -> yellow -> red
 	chart := NewChart("traffic_light").
 		Region("light").
-			State("red").Initial().
-			State("green").
-			State("yellow").
+		State("red").Initial().
+		State("green").
+		State("yellow").
 		EndRegion().
 		When("timer").In("light:red").GoTo("light:green").
 		When("timer").In("light:green").GoTo("light:yellow").
@@ -85,9 +85,9 @@ func TestHierarchicalStates(t *testing.T) {
 	// Full hierarchy support (state.Sub()) is a future enhancement
 	chart := NewChart("player").
 		Region("playback").
-			State("stopped").Initial().
-			State("running").
-			State("paused").
+		State("stopped").Initial().
+		State("running").
+		State("paused").
 		EndRegion().
 		When("play").In("playback:stopped").GoTo("playback:running").
 		When("pause").In("playback:running").GoTo("playback:paused").
@@ -132,12 +132,12 @@ func TestParallelRegions(t *testing.T) {
 	// Two independent regions: mode + light (like F91W)
 	chart := NewChart("watch").
 		Region("mode").
-			State("time").Initial().
-			State("alarm").
+		State("time").Initial().
+		State("alarm").
 		EndRegion().
 		Region("light").
-			State("off").Initial().
-			State("on").
+		State("off").Initial().
+		State("on").
 		EndRegion().
 		When("c_press").In("mode:time").GoTo("mode:alarm").
 		When("c_press").In("mode:alarm").GoTo("mode:time").
@@ -183,16 +183,16 @@ func TestParallelRegions(t *testing.T) {
 func TestActionsAndCounters(t *testing.T) {
 	chart := NewChart("counter_test").
 		Region("state").
-			State("a").Initial().
-			State("b").
+		State("a").Initial().
+		State("b").
 		EndRegion().
 		Counter("transitions").
 		Counter("beeps").
 		When("next").In("state:a").GoTo("state:b").
-			Do(Increment("transitions")).
-			Do(Increment("beeps")).
+		Do(Increment("transitions")).
+		Do(Increment("beeps")).
 		When("next").In("state:b").GoTo("state:a").
-			Do(Increment("transitions")).
+		Do(Increment("transitions")).
 		Build()
 
 	m := NewMachine(chart)
@@ -224,16 +224,16 @@ func TestActionsAndCounters(t *testing.T) {
 func TestGuardConditions(t *testing.T) {
 	chart := NewChart("guarded").
 		Region("state").
-			State("locked").Initial().
-			State("unlocked").
+		State("locked").Initial().
+		State("unlocked").
 		EndRegion().
 		Counter("attempts").
 		When("unlock").In("state:locked").GoTo("state:unlocked").
-			If(func(state map[string]float64) bool {
-				return state["attempts"] >= 3
-			}).
+		If(func(state map[string]float64) bool {
+			return state["attempts"] >= 3
+		}).
 		When("try").In("state:locked").GoTo("state:locked").
-			Do(Increment("attempts")).
+		Do(Increment("attempts")).
 		Build()
 
 	m := NewMachine(chart)
@@ -265,8 +265,8 @@ func TestGuardConditions(t *testing.T) {
 func TestIsIn(t *testing.T) {
 	chart := NewChart("test").
 		Region("r").
-			State("a").Initial().
-			State("b").
+		State("a").Initial().
+		State("b").
 		EndRegion().
 		Build()
 
@@ -283,7 +283,7 @@ func TestIsIn(t *testing.T) {
 func TestMachineString(t *testing.T) {
 	chart := NewChart("test").
 		Region("mode").
-			State("time").Initial().
+		State("time").Initial().
 		EndRegion().
 		Build()
 
@@ -298,8 +298,8 @@ func TestMachineString(t *testing.T) {
 func TestPetriNetGeneration(t *testing.T) {
 	chart := NewChart("test").
 		Region("state").
-			State("a").Initial().
-			State("b").
+		State("a").Initial().
+		State("b").
 		EndRegion().
 		When("go").In("state:a").GoTo("state:b").
 		Build()

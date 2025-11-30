@@ -24,7 +24,7 @@ func createDeadlockNet() *petri.PetriNet {
 	return petri.Build().
 		Place("start", 1).
 		Place("working", 0).
-		Place("resource", 1).  // Only 1 resource available
+		Place("resource", 1). // Only 1 resource available
 		Place("done", 0).
 		Transition("begin").
 		Transition("finish"). // Needs 2 resources but only 1 exists

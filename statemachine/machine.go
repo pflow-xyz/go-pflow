@@ -20,7 +20,7 @@ type Machine struct {
 }
 
 type transitionMapping struct {
-	transition    *Transition
+	transition     *Transition
 	petriTransName string // name of the Petri net transition
 }
 

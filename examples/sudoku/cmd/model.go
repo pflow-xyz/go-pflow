@@ -379,12 +379,12 @@ func SaveJSONLD(net *petri.PetriNet, filename string, size, blockSize int, color
 
 	// Add puzzle info
 	jsonLD["puzzle"] = map[string]interface{}{
-		"description":     fmt.Sprintf("%dx%d Sudoku puzzle", size, size),
-		"size":            size,
-		"block_size":      blockSize,
-		"initial_state":   puzzle,
-		"solution":        solution,
-		"ode_compatible":  ode,
+		"description":    fmt.Sprintf("%dx%d Sudoku puzzle", size, size),
+		"size":           size,
+		"block_size":     blockSize,
+		"initial_state":  puzzle,
+		"solution":       solution,
+		"ode_compatible": ode,
 	}
 
 	// Add token colors

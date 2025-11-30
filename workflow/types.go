@@ -28,16 +28,16 @@ const (
 type TaskStatus string
 
 const (
-	TaskStatusPending    TaskStatus = "pending"     // Waiting for dependencies
-	TaskStatusReady      TaskStatus = "ready"       // Dependencies met, awaiting resources
-	TaskStatusAssigned   TaskStatus = "assigned"    // Resource assigned, not started
-	TaskStatusRunning    TaskStatus = "running"     // In progress
-	TaskStatusCompleted  TaskStatus = "completed"   // Successfully finished
-	TaskStatusFailed     TaskStatus = "failed"      // Failed with error
-	TaskStatusSkipped    TaskStatus = "skipped"     // Conditionally skipped
-	TaskStatusCancelled  TaskStatus = "cancelled"   // Cancelled by user/system
-	TaskStatusTimedOut   TaskStatus = "timed_out"   // Exceeded timeout
-	TaskStatusEscalated  TaskStatus = "escalated"   // Escalated due to SLA
+	TaskStatusPending   TaskStatus = "pending"   // Waiting for dependencies
+	TaskStatusReady     TaskStatus = "ready"     // Dependencies met, awaiting resources
+	TaskStatusAssigned  TaskStatus = "assigned"  // Resource assigned, not started
+	TaskStatusRunning   TaskStatus = "running"   // In progress
+	TaskStatusCompleted TaskStatus = "completed" // Successfully finished
+	TaskStatusFailed    TaskStatus = "failed"    // Failed with error
+	TaskStatusSkipped   TaskStatus = "skipped"   // Conditionally skipped
+	TaskStatusCancelled TaskStatus = "cancelled" // Cancelled by user/system
+	TaskStatusTimedOut  TaskStatus = "timed_out" // Exceeded timeout
+	TaskStatusEscalated TaskStatus = "escalated" // Escalated due to SLA
 )
 
 // DependencyType defines how task dependencies work
@@ -106,9 +106,9 @@ type Task struct {
 	ProducedResources []ResourceProduction  // Resources released on completion
 
 	// Dependencies
-	JoinType   JoinType // How to handle multiple predecessors
-	JoinCount  int      // For JoinN type
-	SplitType  SplitType // How to trigger successors
+	JoinType  JoinType  // How to handle multiple predecessors
+	JoinCount int       // For JoinN type
+	SplitType SplitType // How to trigger successors
 
 	// Retry/failure handling
 	MaxRetries    int           // Max retry attempts (0 = no retries)
@@ -154,10 +154,10 @@ type TaskCallback func(ctx *ExecutionContext, task *TaskInstance)
 type FailureAction string
 
 const (
-	FailureRetry    FailureAction = "retry"    // Retry the task
-	FailureSkip     FailureAction = "skip"     // Skip and continue
-	FailureAbort    FailureAction = "abort"    // Abort the case
-	FailureEscalate FailureAction = "escalate" // Escalate to handler
+	FailureRetry      FailureAction = "retry"      // Retry the task
+	FailureSkip       FailureAction = "skip"       // Skip and continue
+	FailureAbort      FailureAction = "abort"      // Abort the case
+	FailureEscalate   FailureAction = "escalate"   // Escalate to handler
 	FailureCompensate FailureAction = "compensate" // Run compensation
 )
 
@@ -178,16 +178,16 @@ type Resource struct {
 	Type        ResourceType
 
 	// Capacity
-	Capacity    float64 // Max available (0 = unlimited)
-	Available   float64 // Currently available
-	Reserved    float64 // Reserved but not consumed
+	Capacity  float64 // Max available (0 = unlimited)
+	Available float64 // Currently available
+	Reserved  float64 // Reserved but not consumed
 
 	// Cost/metrics
 	CostPerUnit float64 // Cost per unit usage
 	CostPerHour float64 // Cost per hour held
 
 	// Constraints
-	MaxConcurrent int           // Max concurrent users (0 = unlimited)
+	MaxConcurrent  int           // Max concurrent users (0 = unlimited)
 	AcquireTimeout time.Duration // Max wait time to acquire
 
 	// Labels for matching
@@ -235,39 +235,39 @@ type WorkflowSLA struct {
 
 // TaskInstance represents a running instance of a task
 type TaskInstance struct {
-	ID          string
-	TaskID      string       // Reference to Task definition
-	CaseID      string       // Parent case
-	Status      TaskStatus
+	ID     string
+	TaskID string // Reference to Task definition
+	CaseID string // Parent case
+	Status TaskStatus
 
 	// Timing
 	CreatedAt   time.Time
-	ReadyAt     *time.Time   // When dependencies were met
-	StartedAt   *time.Time   // When execution began
-	CompletedAt *time.Time   // When execution finished
-	Deadline    *time.Time   // SLA deadline
+	ReadyAt     *time.Time // When dependencies were met
+	StartedAt   *time.Time // When execution began
+	CompletedAt *time.Time // When execution finished
+	Deadline    *time.Time // SLA deadline
 
 	// Assignment
-	AssignedTo   string  // Resource/worker assigned
-	AssignedAt   *time.Time
+	AssignedTo string // Resource/worker assigned
+	AssignedAt *time.Time
 
 	// Execution
-	RetryCount   int
-	Error        string
-	Output       map[string]any // Task output data
+	RetryCount int
+	Error      string
+	Output     map[string]any // Task output data
 
 	// Metrics
-	WaitDuration    time.Duration // Time in ready state
-	WorkDuration    time.Duration // Actual execution time
-	TotalDuration   time.Duration // End-to-end duration
+	WaitDuration  time.Duration // Time in ready state
+	WorkDuration  time.Duration // Actual execution time
+	TotalDuration time.Duration // End-to-end duration
 }
 
 // Case represents a running workflow instance
 type Case struct {
-	ID          string
-	WorkflowID  string
-	Priority    Priority
-	Status      CaseStatus
+	ID         string
+	WorkflowID string
+	Priority   Priority
+	Status     CaseStatus
 
 	// Timing
 	CreatedAt   time.Time
@@ -276,19 +276,19 @@ type Case struct {
 	Deadline    *time.Time
 
 	// State
-	CurrentTasks []string              // Currently active task IDs
-	CompletedTasks []string            // Completed task IDs
-	TaskInstances map[string]*TaskInstance
+	CurrentTasks   []string // Currently active task IDs
+	CompletedTasks []string // Completed task IDs
+	TaskInstances  map[string]*TaskInstance
 
 	// Data
-	Input       map[string]any // Initial input data
-	Output      map[string]any // Final output data
-	Variables   map[string]any // Runtime variables
+	Input     map[string]any // Initial input data
+	Output    map[string]any // Final output data
+	Variables map[string]any // Runtime variables
 
 	// Metadata
-	Labels      map[string]string
-	Attributes  map[string]any
-	ParentCase  string // For subflows
+	Labels     map[string]string
+	Attributes map[string]any
+	ParentCase string // For subflows
 }
 
 // CaseStatus represents workflow instance lifecycle
@@ -305,39 +305,39 @@ const (
 
 // ExecutionContext provides runtime context for callbacks and conditions
 type ExecutionContext struct {
-	Case          *Case
-	TaskInstance  *TaskInstance
-	Workflow      *Workflow
-	Variables     map[string]any
-	Now           time.Time
+	Case         *Case
+	TaskInstance *TaskInstance
+	Workflow     *Workflow
+	Variables    map[string]any
+	Now          time.Time
 }
 
 // Alert represents a workflow alert/notification
 type Alert struct {
-	ID          string
-	Type        AlertType
-	Severity    AlertSeverity
-	CaseID      string
-	TaskID      string
-	Message     string
-	Details     map[string]any
-	CreatedAt   time.Time
-	AckedAt     *time.Time
-	AckedBy     string
-	ResolvedAt  *time.Time
+	ID         string
+	Type       AlertType
+	Severity   AlertSeverity
+	CaseID     string
+	TaskID     string
+	Message    string
+	Details    map[string]any
+	CreatedAt  time.Time
+	AckedAt    *time.Time
+	AckedBy    string
+	ResolvedAt *time.Time
 }
 
 // AlertType classifies alerts
 type AlertType string
 
 const (
-	AlertSLAWarning    AlertType = "sla_warning"
-	AlertSLABreach     AlertType = "sla_breach"
-	AlertTaskFailed    AlertType = "task_failed"
-	AlertTaskTimeout   AlertType = "task_timeout"
-	AlertResourceLow   AlertType = "resource_low"
-	AlertCaseStuck     AlertType = "case_stuck"
-	AlertDeadlock      AlertType = "deadlock"
+	AlertSLAWarning  AlertType = "sla_warning"
+	AlertSLABreach   AlertType = "sla_breach"
+	AlertTaskFailed  AlertType = "task_failed"
+	AlertTaskTimeout AlertType = "task_timeout"
+	AlertResourceLow AlertType = "resource_low"
+	AlertCaseStuck   AlertType = "case_stuck"
+	AlertDeadlock    AlertType = "deadlock"
 )
 
 // AlertSeverity levels
@@ -363,35 +363,35 @@ type Workflow struct {
 	EndTaskIDs   []string // Exit points
 
 	// Resources
-	Resources    map[string]*Resource
+	Resources map[string]*Resource
 
 	// SLA
-	SLA          *WorkflowSLA
+	SLA *WorkflowSLA
 
 	// Defaults
 	DefaultPriority Priority
 	DefaultTimeout  time.Duration
 
 	// Metadata
-	Labels      map[string]string
-	Attributes  map[string]any
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	Labels     map[string]string
+	Attributes map[string]any
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 // Metrics aggregates workflow performance data
 type Metrics struct {
 	// Case metrics
-	TotalCases      int
-	ActiveCases     int
-	CompletedCases  int
-	FailedCases     int
+	TotalCases     int
+	ActiveCases    int
+	CompletedCases int
+	FailedCases    int
 
 	// Timing metrics
-	AvgCaseDuration    time.Duration
-	P50CaseDuration    time.Duration
-	P95CaseDuration    time.Duration
-	P99CaseDuration    time.Duration
+	AvgCaseDuration time.Duration
+	P50CaseDuration time.Duration
+	P95CaseDuration time.Duration
+	P99CaseDuration time.Duration
 
 	// Task metrics
 	TaskMetrics map[string]*TaskMetrics
@@ -410,13 +410,13 @@ type Metrics struct {
 
 // TaskMetrics aggregates per-task performance
 type TaskMetrics struct {
-	TaskID          string
-	ExecutionCount  int
-	SuccessCount    int
-	FailureCount    int
-	RetryCount      int
-	AvgDuration     time.Duration
-	P95Duration     time.Duration
-	AvgWaitTime     time.Duration
-	SLACompliance   float64
+	TaskID         string
+	ExecutionCount int
+	SuccessCount   int
+	FailureCount   int
+	RetryCount     int
+	AvgDuration    time.Duration
+	P95Duration    time.Duration
+	AvgWaitTime    time.Duration
+	SLACompliance  float64
 }

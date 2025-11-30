@@ -80,10 +80,10 @@ func TestRenderWorkflowSVG_DecisionTask(t *testing.T) {
 		ID:   "decision-wf",
 		Name: "Decision Workflow",
 		Tasks: map[string]*workflow.Task{
-			"start": {ID: "start", Name: "Start", Type: workflow.TaskTypeManual},
+			"start":  {ID: "start", Name: "Start", Type: workflow.TaskTypeManual},
 			"decide": {ID: "decide", Name: "Decision", Type: workflow.TaskTypeDecision},
-			"pathA": {ID: "pathA", Name: "Path A", Type: workflow.TaskTypeAutomatic},
-			"pathB": {ID: "pathB", Name: "Path B", Type: workflow.TaskTypeAutomatic},
+			"pathA":  {ID: "pathA", Name: "Path A", Type: workflow.TaskTypeAutomatic},
+			"pathB":  {ID: "pathB", Name: "Path B", Type: workflow.TaskTypeAutomatic},
 		},
 		Dependencies: []*workflow.Dependency{
 			{FromTaskID: "start", ToTaskID: "decide", Type: workflow.DepFinishToStart},
@@ -187,15 +187,15 @@ func TestRenderWorkflowSVG_CustomOptions(t *testing.T) {
 	}
 
 	opts := &WorkflowSVGOptions{
-		NodeWidth:    200,
-		NodeHeight:   80,
-		NodeSpacingX: 250,
-		NodeSpacingY: 100,
-		Padding:      100,
-		ShowLabels:   false,
-		ShowTypes:    false,
+		NodeWidth:     200,
+		NodeHeight:    80,
+		NodeSpacingX:  250,
+		NodeSpacingY:  100,
+		Padding:       100,
+		ShowLabels:    false,
+		ShowTypes:     false,
 		ShowJoinSplit: false,
-		ColorByType:  false,
+		ColorByType:   false,
 	}
 
 	svg, err := RenderWorkflowSVG(wf, opts)
@@ -314,18 +314,18 @@ func TestWorkflowBuilderIntegration(t *testing.T) {
 	wf := workflow.New("test").
 		Name("Integration Test").
 		Task("submit").
-			Name("Submit Request").
-			Manual().
-			Duration(5 * time.Minute).
-			Done().
+		Name("Submit Request").
+		Manual().
+		Duration(5*time.Minute).
+		Done().
 		Task("review").
-			Name("Review Request").
-			Manual().
-			Done().
+		Name("Review Request").
+		Manual().
+		Done().
 		Task("approve").
-			Name("Approve").
-			Decision().
-			Done().
+		Name("Approve").
+		Decision().
+		Done().
 		Connect("submit", "review").
 		Connect("review", "approve").
 		Start("submit").

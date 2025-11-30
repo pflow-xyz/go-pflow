@@ -236,7 +236,7 @@ func (a *Analyzer) detectCycles(graph *Graph) (bool, [][]string) {
 	var cycles [][]string
 	visited := make(map[string]bool)
 	inStack := make(map[string]bool)
-	path := make([]string, 0)       // Current path of transitions
+	path := make([]string, 0)      // Current path of transitions
 	statePath := make([]string, 0) // Current path of state hashes
 
 	var dfs func(state *State) bool

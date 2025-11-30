@@ -49,11 +49,11 @@ func (r Relation) String() string {
 // FootprintMatrix represents the log-based ordering relations between activities.
 // This is the foundation for the Alpha Miner algorithm.
 type FootprintMatrix struct {
-	Activities  []string               // Ordered list of activities
-	activityIdx map[string]int         // Activity name to index
+	Activities  []string                  // Ordered list of activities
+	activityIdx map[string]int            // Activity name to index
 	follows     map[string]map[string]int // a -> b -> count (directly follows)
-	StartSet    map[string]bool        // Activities that start traces
-	EndSet      map[string]bool        // Activities that end traces
+	StartSet    map[string]bool           // Activities that start traces
+	EndSet      map[string]bool           // Activities that end traces
 }
 
 // NewFootprintMatrix creates a footprint matrix from an event log.
