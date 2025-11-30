@@ -40,7 +40,7 @@ func main() {
 	orders := flag.Int("orders", 0, "Stop after N orders (0 = no limit)")
 	drink := flag.String("drink", "", "Stop after selling N of this drink type")
 	count := flag.Int("count", 10, "Number of drinks to sell (used with -drink)")
-	configName := flag.String("config", "quick", "Preset config: quick, rush, slow, stress, sla, inventory")
+	configName := flag.String("config", "quick", "Preset config: quick, rush, slow, stress, sla, inventory, happy")
 	quiet := flag.Bool("quiet", false, "Disable verbose logging")
 	analyze := flag.Bool("analyze", true, "Run process mining analysis after simulation")
 
@@ -59,6 +59,8 @@ func main() {
 		config = coffeeshop.SLAStressConfig()
 	case "inventory":
 		config = coffeeshop.InventoryStressConfig()
+	case "happy":
+		config = coffeeshop.HappyCustomerConfig()
 	default:
 		config = coffeeshop.QuickTestConfig()
 	}

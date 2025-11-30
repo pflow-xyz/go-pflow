@@ -25,20 +25,20 @@
 <text x="2.9" y="55.9" class="event-label">end_shift</text>
 <path d="M 50.0 70.0 C 4.1 70.0 4.1 134.3 -41.8 134.3" class="transition" marker-end="url(#sm-arrowhead)"/>
 <text x="4.1" y="92.1" class="event-label">end_shift</text>
-<rect x="-50.0" y="320.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
-<text x="0.0" y="340.0" class="state-label">available</text>
 <rect x="-50.0" y="460.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="480.0" class="state-label">making_drink</text>
 <rect x="-50.0" y="390.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="410.0" class="state-label">cleaning</text>
 <rect x="-50.0" y="530.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="550.0" class="state-label">restocking</text>
+<rect x="-50.0" y="320.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
+<text x="0.0" y="340.0" class="state-label">available</text>
+<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state state-initial"/>
+<text x="0.0" y="0.0" class="state-label">on_duty</text>
 <rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
 <text x="0.0" y="70.0" class="state-label">on_break</text>
 <rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
 <text x="0.0" y="140.0" class="state-label">shift_ended</text>
-<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state state-initial"/>
-<text x="0.0" y="0.0" class="state-label">on_duty</text>
 <circle cx="-70.0" cy="340.0" r="6" class="initial-marker"/>
 <line x1="-62.0" y1="340.0" x2="-52.0" y2="340.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
 <circle cx="-70.0" cy="0.0" r="6" class="initial-marker"/>

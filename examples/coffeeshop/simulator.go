@@ -1214,6 +1214,27 @@ func SLAStressConfig() *SimulatorConfig {
 	return config
 }
 
+// HappyCustomerConfig optimizes for high customer satisfaction (~90% happy)
+// Tuned: capacity slightly exceeds demand to maintain ~90% SLA compliance
+func HappyCustomerConfig() *SimulatorConfig {
+	config := DefaultSimulatorConfig()
+	config.SimulatedTimeScale = 300.0       // Fast simulation
+	config.MaxSimulatedTime = 1 * time.Hour
+	config.BaseCustomerRate = 2.0           // Moderate traffic
+	config.PeakMultiplier = 1.5             // Mild peaks
+	config.BrowseOnlyChance = 0.10          // Some browsers
+	config.MobileOrderChance = 0.25
+	config.SLATarget = 3 * time.Minute      // Tight 3 minute SLA
+	config.BaristaSpeed = 0.80              // Good baristas: 2 * 0.80 = 1.6 orders/min capacity
+	config.ReducedBaristaMode = false       // Full staff (2 baristas)
+	config.VerboseLogging = true
+	config.EnableObservers = true
+	config.StopConditions = []StopCondition{
+		&CustomerCountCondition{Target: 100}, // Stop after 100 customers
+	}
+	return config
+}
+
 // InventoryStressConfig creates conditions likely to cause inventory warnings/stockouts
 // Low starting inventory + high order rate + fast baristas = quick depletion
 func InventoryStressConfig() *SimulatorConfig {
