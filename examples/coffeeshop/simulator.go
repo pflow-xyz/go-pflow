@@ -1243,73 +1243,69 @@ type SimulatorResult struct {
 
 // PrintSummary prints a summary of the simulation
 func (r *SimulatorResult) PrintSummary() {
-	const w = 66 // inner width
+	const w = 67 // inner width (matches header in sim/main.go)
 	border := strings.Repeat("═", w)
 
 	fmt.Printf("\n╔%s╗\n", border)
-	fmt.Printf("║%-66s║\n", "           COFFEE SHOP SIMULATION SUMMARY")
+	fmt.Printf("║%-67s║\n", "           COFFEE SHOP SIMULATION SUMMARY")
 	fmt.Printf("╠%s╣\n", border)
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Stop Reason: %s", truncate(r.StopReason, 50)))
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Real Duration: %s", r.State.ElapsedReal.Round(time.Second)))
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Simulated Duration: %s", r.State.ElapsedSimulated))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Stop Reason: %s", truncate(r.StopReason, 50)))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Real Duration: %s", r.State.ElapsedReal.Round(time.Second)))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Simulated Duration: %s", r.State.ElapsedSimulated))
 	fmt.Printf("╠%s╣\n", border)
 
 	// System health section
-	fmt.Printf("║  %-64s║\n", "SYSTEM HEALTH:")
-	fmt.Printf("║    %-62s║\n", fmt.Sprintf("%s Final State: %s", r.FinalHealth.StatusEmoji(), r.FinalHealth))
-	fmt.Printf("║    %-62s║\n", fmt.Sprintf("   %s", r.FinalHealth.Description()))
+	fmt.Printf("║  %-65s║\n", "SYSTEM HEALTH:")
+	fmt.Printf("║    %-63s║\n", fmt.Sprintf("Final State: %s", r.FinalHealth))
+	fmt.Printf("║    %-63s║\n", fmt.Sprintf("   %s", r.FinalHealth.Description()))
 	if r.HealthMetrics != nil {
-		fmt.Printf("║    %-62s║\n", fmt.Sprintf("   Matches config: %s", r.FinalHealth.MatchesConfig()))
-		fmt.Printf("║    %-62s║\n", fmt.Sprintf("   SLA compliance: %.1f%%", (1-r.HealthMetrics.SLABreachRate)*100))
+		fmt.Printf("║    %-63s║\n", fmt.Sprintf("   Matches config: %s", r.FinalHealth.MatchesConfig()))
+		fmt.Printf("║    %-63s║\n", fmt.Sprintf("   SLA compliance: %.1f%%", (1-r.HealthMetrics.SLABreachRate)*100))
 		if r.HealthMetrics.InventoryHealthScore < 1.0 {
-			fmt.Printf("║    %-62s║\n", fmt.Sprintf("   Inventory health: %.0f%%", r.HealthMetrics.InventoryHealthScore*100))
+			fmt.Printf("║    %-63s║\n", fmt.Sprintf("   Inventory health: %.0f%%", r.HealthMetrics.InventoryHealthScore*100))
 		}
 	}
 	fmt.Printf("╠%s╣\n", border)
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Total Customers: %d", r.State.TotalCustomers))
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Total Orders: %d", r.State.TotalOrders))
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Completed Orders: %d", r.State.CompletedOrders))
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Browse Only: %d", r.State.BrowseOnlyCustomers))
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Cancelled: %d", r.State.CancelledOrders))
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Mobile Orders: %d", r.State.MobileOrders))
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("VIP Orders: %d", r.State.VIPOrders))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Total Customers: %d", r.State.TotalCustomers))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Total Orders: %d", r.State.TotalOrders))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Completed Orders: %d", r.State.CompletedOrders))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Browse Only: %d", r.State.BrowseOnlyCustomers))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Cancelled: %d", r.State.CancelledOrders))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Mobile Orders: %d", r.State.MobileOrders))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("VIP Orders: %d", r.State.VIPOrders))
 
 	// Customer disposition section
 	fmt.Printf("╠%s╣\n", border)
-	fmt.Printf("║  %-64s║\n", "CUSTOMER DISPOSITION:")
-	fmt.Printf("║    %-62s║\n", fmt.Sprintf("😊 Happy (within SLA): %d", r.State.CustomersServedHappy))
-	fmt.Printf("║    %-62s║\n", fmt.Sprintf("😕 Unhappy (SLA breach): %d", r.State.CustomersServedUnhappy))
+	fmt.Printf("║  %-65s║\n", "CUSTOMER DISPOSITION:")
+	fmt.Printf("║    %-63s║\n", fmt.Sprintf("Happy (within SLA): %d", r.State.CustomersServedHappy))
+	fmt.Printf("║    %-63s║\n", fmt.Sprintf("Unhappy (SLA breach): %d", r.State.CustomersServedUnhappy))
 	if r.State.CustomersTurnedAway > 0 {
-		fmt.Printf("║    %-62s║\n", fmt.Sprintf("😤 Turned Away (menu empty): %d", r.State.CustomersTurnedAway))
+		fmt.Printf("║    %-63s║\n", fmt.Sprintf("Turned Away (menu empty): %d", r.State.CustomersTurnedAway))
 	}
 	if r.State.CustomersLeftQueue > 0 {
-		fmt.Printf("║    %-62s║\n", fmt.Sprintf("😒 Left Queue (gave up): %d", r.State.CustomersLeftQueue))
+		fmt.Printf("║    %-63s║\n", fmt.Sprintf("Left Queue (gave up): %d", r.State.CustomersLeftQueue))
 	}
 	fmt.Printf("╠%s╣\n", border)
-	fmt.Printf("║  %-64s║\n", "DRINKS ORDERED:")
+	fmt.Printf("║  %-65s║\n", "DRINKS ORDERED:")
 
 	for drink, count := range r.State.DrinkCounts {
-		fmt.Printf("║    %-62s║\n", fmt.Sprintf("%-14s: %d", drink, count))
+		fmt.Printf("║    %-63s║\n", fmt.Sprintf("%-14s: %d", drink, count))
 	}
 
 	fmt.Printf("╠%s╣\n", border)
-	fmt.Printf("║  %-64s║\n", "SLA & TIMING:")
-	if r.State.SLABreaches > 0 {
-		fmt.Printf("║    %-62s║\n", fmt.Sprintf("⚠️  SLA Breaches: %d", r.State.SLABreaches))
-	} else {
-		fmt.Printf("║    %-62s║\n", fmt.Sprintf("SLA Breaches: %d", r.State.SLABreaches))
-	}
-	fmt.Printf("║    %-62s║\n", fmt.Sprintf("Average Wait: %s", r.State.AverageWaitTime.Round(time.Second)))
-	fmt.Printf("║    %-62s║\n", fmt.Sprintf("Longest Wait: %s", r.State.LongestWaitTime.Round(time.Second)))
-	fmt.Printf("║    %-62s║\n", fmt.Sprintf("Shortest Wait: %s", r.State.ShortestWaitTime.Round(time.Second)))
-	fmt.Printf("║    %-62s║\n", fmt.Sprintf("Pending Orders: %d", r.PendingOrders))
+	fmt.Printf("║  %-65s║\n", "SLA & TIMING:")
+	fmt.Printf("║    %-63s║\n", fmt.Sprintf("SLA Breaches: %d", r.State.SLABreaches))
+	fmt.Printf("║    %-63s║\n", fmt.Sprintf("Average Wait: %s", r.State.AverageWaitTime.Round(time.Second)))
+	fmt.Printf("║    %-63s║\n", fmt.Sprintf("Longest Wait: %s", r.State.LongestWaitTime.Round(time.Second)))
+	fmt.Printf("║    %-63s║\n", fmt.Sprintf("Shortest Wait: %s", r.State.ShortestWaitTime.Round(time.Second)))
+	fmt.Printf("║    %-63s║\n", fmt.Sprintf("Pending Orders: %d", r.PendingOrders))
 
 	// Inventory section (only if tracking enabled)
 	if len(r.State.Inventory) > 0 {
 		fmt.Printf("╠%s╣\n", border)
-		fmt.Printf("║  %-64s║\n", "INVENTORY:")
+		fmt.Printf("║  %-65s║\n", "INVENTORY:")
 		if r.State.InventoryAlerts > 0 {
-			fmt.Printf("║    %-62s║\n", fmt.Sprintf("📦 Inventory Alerts: %d", r.State.InventoryAlerts))
+			fmt.Printf("║    %-63s║\n", fmt.Sprintf("Inventory Alerts: %d", r.State.InventoryAlerts))
 		}
 		// Show key ingredients
 		ingredients := []struct {
@@ -1323,28 +1319,28 @@ func (r *SimulatorResult) PrintSummary() {
 		for _, ing := range ingredients {
 			level := r.State.Inventory[ing.name]
 			pct := (level / ing.max) * 100
-			status := "✓"
+			status := "[OK]"
 			if pct < 20 {
-				status = "⚠️"
+				status = "[LO]"
 			}
 			if level <= 0 {
-				status = "🚨"
+				status = "[!!]"
 			}
-			fmt.Printf("║    %-62s║\n", fmt.Sprintf("%s %-14s: %.0f/%.0f (%.0f%%)",
+			fmt.Printf("║    %-63s║\n", fmt.Sprintf("%s %-14s: %.0f/%.0f (%.0f%%)",
 				status, ing.name, level, ing.max, pct))
 		}
 		// Show menu status
 		available := AvailableDrinks(r.State.Inventory)
 		if r.State.MenuEmpty {
-			fmt.Printf("║    %-62s║\n", "🚨🚨🚨 MENU EMPTY - Shop cannot operate!")
+			fmt.Printf("║    %-63s║\n", "*** MENU EMPTY - Shop cannot operate! ***")
 		} else if len(available) < len(Recipes) {
-			fmt.Printf("║    %-62s║\n", fmt.Sprintf("Menu: %d/%d drinks available", len(available), len(Recipes)))
+			fmt.Printf("║    %-63s║\n", fmt.Sprintf("Menu: %d/%d drinks available", len(available), len(Recipes)))
 		}
 	}
 
 	fmt.Printf("╠%s╣\n", border)
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Event Log Traces: %d", r.EventLog.NumCases()))
-	fmt.Printf("║  %-64s║\n", fmt.Sprintf("Total Events: %d", len(r.State.Events)))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Event Log Traces: %d", r.EventLog.NumCases()))
+	fmt.Printf("║  %-65s║\n", fmt.Sprintf("Total Events: %d", len(r.State.Events)))
 	fmt.Printf("╚%s╝\n", border)
 }
 
@@ -1372,6 +1368,34 @@ func truncate(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen-3] + "..."
+}
+
+// padRight pads a string to width, accounting for emoji display width
+// Most emojis display as 2 characters wide but count as 1 rune
+func padRight(s string, width int) string {
+	// Calculate display width (visual character count)
+	displayWidth := 0
+	for _, r := range s {
+		if r == 0xFE0F { // Variation selector-16 (makes emoji colorful) - zero width
+			continue
+		} else if r >= 0x1F300 && r <= 0x1F9FF { // Misc symbols and pictographs, emoticons (double-width)
+			displayWidth += 2
+		} else if r >= 0x1F600 && r <= 0x1F64F { // Emoticons (double-width)
+			displayWidth += 2
+		} else if r == 0x26A0 { // ⚠ Warning sign (double-width)
+			displayWidth += 2
+		} else {
+			// Most other characters including ✓ (U+2713) are single-width
+			displayWidth++
+		}
+	}
+
+	// Calculate how much padding we need
+	padding := width - displayWidth
+	if padding <= 0 {
+		return s
+	}
+	return s + strings.Repeat(" ", padding)
 }
 
 // AnalyzeWithMining runs process mining on the event log
@@ -1417,40 +1441,40 @@ func (a *MiningAnalysis) PrintAnalysis() {
 		return
 	}
 
-	const w = 66 // inner width
+	const w = 67 // inner width (matches header in sim/main.go)
 	border := strings.Repeat("═", w)
 
 	fmt.Printf("\n╔%s╗\n", border)
-	fmt.Printf("║%-66s║\n", "            PROCESS MINING ANALYSIS")
+	fmt.Printf("║%-67s║\n", "            PROCESS MINING ANALYSIS")
 	fmt.Printf("╠%s╣\n", border)
 
 	if a.Summary != nil {
-		fmt.Printf("║  %-64s║\n", fmt.Sprintf("Cases: %d", a.Summary.NumCases))
-		fmt.Printf("║  %-64s║\n", fmt.Sprintf("Events: %d", a.Summary.NumEvents))
-		fmt.Printf("║  %-64s║\n", fmt.Sprintf("Activities: %d", a.Summary.NumActivities))
-		fmt.Printf("║  %-64s║\n", fmt.Sprintf("Variants: %d", a.Summary.NumVariants))
+		fmt.Printf("║  %-65s║\n", fmt.Sprintf("Cases: %d", a.Summary.NumCases))
+		fmt.Printf("║  %-65s║\n", fmt.Sprintf("Events: %d", a.Summary.NumEvents))
+		fmt.Printf("║  %-65s║\n", fmt.Sprintf("Activities: %d", a.Summary.NumActivities))
+		fmt.Printf("║  %-65s║\n", fmt.Sprintf("Variants: %d", a.Summary.NumVariants))
 	}
 
 	if a.TimingStats != nil {
 		fmt.Printf("╠%s╣\n", border)
-		fmt.Printf("║  %-64s║\n", "ACTIVITY TIMING:")
+		fmt.Printf("║  %-65s║\n", "ACTIVITY TIMING:")
 		for activity, count := range a.TimingStats.ActivityCounts {
 			meanDur := a.TimingStats.GetMeanDuration(activity)
 			line := fmt.Sprintf("%-20s: mean=%6.1fs, count=%d", activity, meanDur, count)
-			fmt.Printf("║    %-62s║\n", line)
+			fmt.Printf("║    %-63s║\n", line)
 		}
 	}
 
 	if a.Footprint != nil {
 		fmt.Printf("╠%s╣\n", border)
-		fmt.Printf("║  %-64s║\n", "CAUSAL RELATIONS (->):")
+		fmt.Printf("║  %-65s║\n", "CAUSAL RELATIONS (->):")
 		// Show a few key relations
 		shown := 0
 		for i, from := range a.Footprint.Activities {
 			for j, to := range a.Footprint.Activities {
 				if i != j && a.Footprint.IsCausal(from, to) && shown < 5 {
 					relation := fmt.Sprintf("%s -> %s", from, to)
-					fmt.Printf("║    %-62s║\n", relation)
+					fmt.Printf("║    %-63s║\n", relation)
 					shown++
 				}
 			}
