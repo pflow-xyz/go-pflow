@@ -100,6 +100,8 @@ type SimulatorState struct {
 	InventoryUsage      map[string]float64   // Total usage since start
 	InventoryWarnings   []InventoryWarning   // Active warnings
 	StockoutsLogged     map[string]bool      // Track which stockouts have been logged
+	MenuEmpty           bool                 // True if no drinks can be made
+	MenuEmptyTime       time.Time            // When the menu became empty
 
 	// Event log
 	Events []*SimEvent
@@ -585,10 +587,39 @@ func (s *Simulator) checkInventoryWarnings() {
 		// Check for actual stockout (only log once)
 		if current <= 0 && !s.state.StockoutsLogged[ingredient] {
 			s.state.StockoutsLogged[ingredient] = true
-			if s.config.VerboseLogging {
-				fmt.Printf("  🚨 STOCKOUT: %s is depleted!\n", ingredient)
-			}
+			s.logStockoutWithMenuImpact(ingredient)
 		}
+	}
+}
+
+// logStockoutWithMenuImpact logs a stockout and shows which drinks are affected
+func (s *Simulator) logStockoutWithMenuImpact(ingredient string) {
+	if !s.config.VerboseLogging {
+		return
+	}
+
+	// Find which drinks are now unavailable due to this ingredient
+	affectedDrinks := []string{}
+	for drink, recipe := range Recipes {
+		if _, needsIngredient := recipe[ingredient]; needsIngredient {
+			affectedDrinks = append(affectedDrinks, drink)
+		}
+	}
+
+	fmt.Printf("  🚨 STOCKOUT: %s is depleted!\n", ingredient)
+	if len(affectedDrinks) > 0 {
+		fmt.Printf("     ├─ Menu impact: %v now unavailable\n", affectedDrinks)
+	}
+
+	// Check what's still available on the menu
+	available := AvailableDrinks(s.state.Inventory)
+	if len(available) == 0 {
+		// CRITICAL: Nothing can be made!
+		fmt.Printf("  🚨🚨🚨 CRITICAL: MENU EMPTY - No drinks can be made! 🚨🚨🚨\n")
+		s.state.MenuEmpty = true
+		s.state.MenuEmptyTime = s.state.CurrentSimTime
+	} else {
+		fmt.Printf("     └─ Still available: %v\n", available)
 	}
 }
 
@@ -785,6 +816,13 @@ func (r *SimulatorResult) PrintSummary() {
 			}
 			fmt.Printf("║    %-62s║\n", fmt.Sprintf("%s %-14s: %.0f/%.0f (%.0f%%)",
 				status, ing.name, level, ing.max, pct))
+		}
+		// Show menu status
+		available := AvailableDrinks(r.State.Inventory)
+		if r.State.MenuEmpty {
+			fmt.Printf("║    %-62s║\n", "🚨🚨🚨 MENU EMPTY - Shop cannot operate!")
+		} else if len(available) < len(Recipes) {
+			fmt.Printf("║    %-62s║\n", fmt.Sprintf("Menu: %d/%d drinks available", len(available), len(Recipes)))
 		}
 	}
 
@@ -1045,6 +1083,17 @@ func (c *IngredientStockoutCondition) Description() string {
 	return "Any ingredient depleted"
 }
 
+// MenuEmptyCondition stops when no drinks can be made (critical situation)
+type MenuEmptyCondition struct{}
+
+func (c *MenuEmptyCondition) Check(state *SimulatorState) bool {
+	return state.MenuEmpty
+}
+
+func (c *MenuEmptyCondition) Description() string {
+	return "CRITICAL: Menu empty - no drinks can be made"
+}
+
 // === Preset Configurations ===
 
 // QuickTestConfig returns a config for quick testing
@@ -1153,8 +1202,7 @@ func InventoryStressConfig() *SimulatorConfig {
 		"syrup":         100,
 	}
 	config.StopConditions = []StopCondition{
-		&InventoryAlertCondition{Threshold: 5},      // Stop after 5 warnings
-		&IngredientStockoutCondition{Ingredient: ""}, // Or any stockout
+		&MenuEmptyCondition{}, // Stop when nothing can be made (critical)
 	}
 	return config
 }
