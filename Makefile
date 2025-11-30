@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy run-karate run-karate-server run-karate-cli rebuild-all-svg check all kill-servers
+.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy run-karate run-karate-server run-karate-cli run-doom run-doom-server rebuild-all-svg check all kill-servers
 
 # Default target
 help:
@@ -28,6 +28,8 @@ help:
 	@echo "  make run-karate       - Run karate game AI demo"
 	@echo "  make run-karate-server - Start karate game server (http://localhost:8080)"
 	@echo "  make run-karate-cli   - Play karate interactively in terminal"
+	@echo "  make run-doom         - Run DOOM game (alias for run-doom-server)"
+	@echo "  make run-doom-server  - Start DOOM game server (http://localhost:8081)"
 	@echo "  make rebuild-all-svg - Regenerate all SVG visualizations"
 	@echo "  make kill-servers    - Kill any running go-pflow servers"
 
@@ -121,6 +123,8 @@ examples:
 	@go build -o bin/karate examples/karate/cmd/*.go
 	@echo "  - Karate CLI client"
 	@go build -o bin/karate-cli examples/karate/cmd/cli/*.go
+	@echo "  - DOOM game server"
+	@go build -o bin/doom examples/doom/cmd/*.go
 	@echo "  - Visualization demo"
 	@go build -o bin/visualization_demo examples/visualization_demo/main.go
 	@echo "Done building examples!"
@@ -189,6 +193,15 @@ run-karate-cli:
 	@echo "Starting karate CLI game..."
 	@go run ./examples/karate/cmd/cli
 
+# Run DOOM game server
+run-doom: run-doom-server
+
+run-doom-server:
+	@echo "Starting DOOM game server..."
+	@echo "Open http://localhost:8081 in your browser"
+	@echo "Supports NES controller via USB!"
+	@go run ./examples/doom/cmd -port 8081
+
 # Rebuild all SVG visualizations
 rebuild-all-svg:
 	@echo "Regenerating all SVG visualizations..."
@@ -230,6 +243,9 @@ rebuild-all-svg:
 	@echo ""
 	@echo "=== Karate Game Example ==="
 	@cd examples/karate && go run ./cmd -svg
+	@echo ""
+	@echo "=== DOOM Game Example ==="
+	@cd examples/doom && go run ./cmd -svg
 	@echo ""
 	@echo "=== Visualization Demo (Workflow & StateMachine) ==="
 	@cd examples/visualization_demo && go run main.go
