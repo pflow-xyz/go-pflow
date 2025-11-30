@@ -7,6 +7,12 @@
 <line x1="600.0" y1="0.0" x2="650.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <line x1="780.0" y1="0.0" x2="830.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <line x1="960.0" y1="0.0" x2="1010.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
+<rect x="840.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
+<text x="900.0" y="0.0" class="task-label">Verify Fix</text>
+<text x="900.0" y="35.0" class="task-type">manual</text>
+<rect x="1020.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-end"/>
+<text x="1080.0" y="0.0" class="task-label">Close Ticket</text>
+<text x="1080.0" y="35.0" class="task-type">automatic</text>
 <rect x="-60.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-start"/>
 <text x="0.0" y="0.0" class="task-label">Create Ticket</text>
 <text x="0.0" y="35.0" class="task-type">automatic</text>
@@ -22,10 +28,4 @@
 <rect x="660.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
 <text x="720.0" y="0.0" class="task-label">Implement Fix</text>
 <text x="720.0" y="35.0" class="task-type">manual</text>
-<rect x="840.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
-<text x="900.0" y="0.0" class="task-label">Verify Fix</text>
-<text x="900.0" y="35.0" class="task-type">manual</text>
-<rect x="1020.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-end"/>
-<text x="1080.0" y="0.0" class="task-label">Close Ticket</text>
-<text x="1080.0" y="35.0" class="task-type">automatic</text>
 </svg>

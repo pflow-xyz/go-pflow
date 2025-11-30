@@ -366,7 +366,7 @@ type HealthSVGOptions struct {
 func DefaultHealthSVGOptions() *HealthSVGOptions {
 	return &HealthSVGOptions{
 		Width:      600,
-		Height:     350,
+		Height:     260,
 		ShowGauges: true,
 		ShowLegend: true,
 	}
@@ -409,16 +409,19 @@ func renderHealthSVGFromData(data *HealthSVGData) (string, error) {
 	// Current state card
 	stateColor := healthStateColorFromSystem(data.CurrentState)
 	stateLabel := healthStateLabelFromSystem(data.CurrentState)
-	buf.WriteString(`<rect x="20" y="50" width="200" height="100" class="card"/>`)
-	buf.WriteString(fmt.Sprintf(`<rect x="20" y="50" width="200" height="30" fill="%s" rx="8"/>`, stateColor))
-	buf.WriteString(fmt.Sprintf(`<rect x="20" y="72" width="200" height="8" fill="%s"/>`, stateColor))
-	buf.WriteString(fmt.Sprintf(`<text x="120" y="70" text-anchor="middle" class="health-state" fill="#fff">%s</text>`,
+	buf.WriteString(`<rect x="20" y="50" width="200" height="110" class="card"/>`)
+	buf.WriteString(fmt.Sprintf(`<rect x="20" y="50" width="200" height="40" fill="%s" rx="8"/>`, stateColor))
+	buf.WriteString(fmt.Sprintf(`<rect x="20" y="82" width="200" height="8" fill="%s"/>`, stateColor))
+	buf.WriteString(fmt.Sprintf(`<text x="120" y="77" text-anchor="middle" class="health-state" fill="#fff">%s</text>`,
 		stateLabel))
-	buf.WriteString(fmt.Sprintf(`<text x="120" y="105" text-anchor="middle" class="health-value">Matches: %s</text>`,
+	buf.WriteString(fmt.Sprintf(`<text x="120" y="115" text-anchor="middle" class="health-value">Matches: %s</text>`,
 		data.MatchesConfig))
-	buf.WriteString(fmt.Sprintf(`<text x="120" y="125" text-anchor="middle" class="health-label">Queue: %d</text>`,
+	buf.WriteString(fmt.Sprintf(`<text x="120" y="140" text-anchor="middle" class="health-label">Queue: %d</text>`,
 		data.QueueLength))
 	buf.WriteString("\n")
+
+	// Customer disposition card (draw card background first so gauges appear on top)
+	buf.WriteString(`<rect x="445" y="50" width="145" height="110" class="card"/>`)
 
 	// Gauges
 	if opts.ShowGauges {
@@ -429,19 +432,27 @@ func renderHealthSVGFromData(data *HealthSVGData) (string, error) {
 		drawHealthGauge(&buf, 240, 110, 150, "Inventory Health", data.InventoryHealth, gaugeColorForInventory(data.InventoryHealth))
 	}
 
-	// Customer disposition
-	buf.WriteString(`<rect x="420" y="50" width="160" height="100" class="card"/>`)
-	buf.WriteString(`<text x="500" y="75" text-anchor="middle" class="health-label">Customer Disposition</text>`)
-	buf.WriteString(fmt.Sprintf(`<text x="440" y="100" class="health-value" fill="#4caf50">😊 %d happy</text>`, data.CustomersHappy))
-	buf.WriteString(fmt.Sprintf(`<text x="440" y="120" class="health-value" fill="#ff9800">😕 %d unhappy</text>`, data.CustomersUnhappy))
+	// Customer disposition content
+	buf.WriteString(`<text x="517" y="75" text-anchor="middle" class="health-label">Customer Disposition</text>`)
+	totalCustomers := data.CustomersHappy + data.CustomersUnhappy + data.CustomersTurned
+	happyPct := 0.0
+	unhappyPct := 0.0
+	turnedPct := 0.0
+	if totalCustomers > 0 {
+		happyPct = float64(data.CustomersHappy) / float64(totalCustomers) * 100
+		unhappyPct = float64(data.CustomersUnhappy) / float64(totalCustomers) * 100
+		turnedPct = float64(data.CustomersTurned) / float64(totalCustomers) * 100
+	}
+	buf.WriteString(fmt.Sprintf(`<text x="455" y="100" class="health-value" fill="#4caf50">😊 %d (%.0f%%)</text>`, data.CustomersHappy, happyPct))
+	buf.WriteString(fmt.Sprintf(`<text x="455" y="120" class="health-value" fill="#ff9800">😕 %d (%.0f%%)</text>`, data.CustomersUnhappy, unhappyPct))
 	if data.CustomersTurned > 0 {
-		buf.WriteString(fmt.Sprintf(`<text x="440" y="140" class="health-value" fill="#f44336">😤 %d turned away</text>`, data.CustomersTurned))
+		buf.WriteString(fmt.Sprintf(`<text x="455" y="140" class="health-value" fill="#f44336">😤 %d (%.0f%%)</text>`, data.CustomersTurned, turnedPct))
 	}
 	buf.WriteString("\n")
 
 	// Health state legend
 	if opts.ShowLegend {
-		drawHealthStateLegend(&buf, 20, 170)
+		drawHealthStateLegend(&buf, 20, 185)
 	}
 
 	buf.WriteString("</svg>\n")

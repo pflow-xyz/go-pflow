@@ -6,9 +6,6 @@
 <line x1="420.0" y1="0.0" x2="470.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <line x1="600.0" y1="0.0" x2="650.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <line x1="780.0" y1="0.0" x2="830.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
-<rect x="120.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-automatic"/>
-<text x="180.0" y="0.0" class="task-label">Validate Order</text>
-<text x="180.0" y="35.0" class="task-type">automatic</text>
 <rect x="300.0" y="-25.0" width="120.0" height="50.0" rx="0.0" class="task task-subflow"/>
 <text x="360.0" y="0.0" class="task-label">Process Payment</text>
 <text x="360.0" y="35.0" class="task-type">subflow</text>
@@ -24,4 +21,7 @@
 <rect x="-60.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-start"/>
 <text x="0.0" y="0.0" class="task-label">Receive Order</text>
 <text x="0.0" y="35.0" class="task-type">automatic</text>
+<rect x="120.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-automatic"/>
+<text x="180.0" y="0.0" class="task-label">Validate Order</text>
+<text x="180.0" y="35.0" class="task-type">automatic</text>
 </svg>

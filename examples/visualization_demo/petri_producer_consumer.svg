@@ -24,14 +24,14 @@
 <path d="M 282.2 67.8 L 288.3 74.1 L 281.5 76.6 Z" fill="#999999"/>
 <circle cx="282.7" cy="88.5" r="10" fill="#fafafa" stroke="#999999" stroke-width="1"/>
 <text x="282.7" y="88.5" font-family="system-ui, Arial" font-size="10px" fill="#666" text-anchor="middle" dominant-baseline="middle">1</text>
+<circle cx="200.0" cy="100.0" r="16.0" class="place"/>
+<text x="200.0" y="122.0" class="label-text">buffer</text>
 <circle cx="300.0" cy="50.0" r="16.0" class="place"/>
 <circle cx="300.0" cy="50.0" r="3" class="token-dot"/>
 <text x="300.0" y="72.0" class="label-text">consumer_ready</text>
 <circle cx="100.0" cy="50.0" r="16.0" class="place"/>
 <circle cx="100.0" cy="50.0" r="3" class="token-dot"/>
 <text x="100.0" y="72.0" class="label-text">producer_ready</text>
-<circle cx="200.0" cy="100.0" r="16.0" class="place"/>
-<text x="200.0" y="122.0" class="label-text">buffer</text>
 <rect x="235.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="250.0" y="121.0" class="label-text">consume</text>
 <rect x="135.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>

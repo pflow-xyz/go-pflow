@@ -22,26 +22,26 @@
 <path d="M 0.0 120.0 C -80.0 106.0 -80.0 106.0 0.0 92.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="106.0" class="event-label" text-anchor="end">critical_error</text>
 <path d="M 0.0 20.0 C 80.0 34.0 80.0 34.0 0.0 48.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="34.0" class="event-label">critical_error</text>
 <path d="M 0.0 50.0 C -80.0 36.0 -80.0 36.0 0.0 22.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="36.0" class="event-label" text-anchor="end">error_resolved</text>
-<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
-<text x="0.0" y="0.0" class="state-label">operational</text>
-<rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="140.0" class="state-label">warning</text>
-<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="70.0" class="state-label">error</text>
-<rect x="-50.0" y="730.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
-<text x="0.0" y="750.0" class="state-label">dispensing</text>
-<rect x="-50.0" y="660.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state state-initial"/>
+<rect x="-50.0" y="660.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
 <text x="0.0" y="680.0" class="state-label">ready</text>
-<rect x="-50.0" y="800.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<rect x="-50.0" y="800.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="820.0" class="state-label">brewing</text>
-<rect x="-50.0" y="870.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<rect x="-50.0" y="870.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="890.0" class="state-label">steaming_...</text>
-<rect x="-50.0" y="320.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state state-initial"/>
-<text x="0.0" y="340.0" class="state-label">clean</text>
-<rect x="-50.0" y="460.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state"/>
+<rect x="-50.0" y="730.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="750.0" class="state-label">dispensing</text>
+<rect x="-50.0" y="460.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
 <text x="0.0" y="480.0" class="state-label">needs_cle...</text>
-<rect x="-50.0" y="390.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state"/>
+<rect x="-50.0" y="390.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
 <text x="0.0" y="410.0" class="state-label">cleaning_...</text>
+<rect x="-50.0" y="320.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state state-initial"/>
+<text x="0.0" y="340.0" class="state-label">clean</text>
+<rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state"/>
+<text x="0.0" y="140.0" class="state-label">warning</text>
+<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state"/>
+<text x="0.0" y="70.0" class="state-label">error</text>
+<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#e8f5e9" stroke="#388e3c" class="state state-initial"/>
+<text x="0.0" y="0.0" class="state-label">operational</text>
 <circle cx="-70.0" cy="680.0" r="6" class="initial-marker"/>
 <line x1="-62.0" y1="680.0" x2="-52.0" y2="680.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
 <circle cx="-70.0" cy="340.0" r="6" class="initial-marker"/>

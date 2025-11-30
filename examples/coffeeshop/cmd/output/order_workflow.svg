@@ -17,42 +17,42 @@
 <rect x="660.0" y="55.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
 <text x="720.0" y="80.0" class="task-label">Take Order</text>
 <text x="720.0" y="115.0" class="task-type">manual</text>
+<rect x="1200.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
+<text x="1260.0" y="0.0" class="task-label">Queue Order</text>
+<text x="1260.0" y="35.0" class="task-type">manual</text>
+<rect x="2100.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-end"/>
+<text x="2160.0" y="0.0" class="task-label">Complete Order</text>
+<text x="2160.0" y="35.0" class="task-type">manual</text>
+<rect x="660.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
+<text x="720.0" y="0.0" class="task-label">Customer Exits</text>
+<text x="720.0" y="35.0" class="task-type">manual</text>
+<rect x="300.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
+<text x="360.0" y="0.0" class="task-label">Show Menu</text>
+<text x="360.0" y="35.0" class="task-type">manual</text>
 <rect x="840.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
 <text x="900.0" y="0.0" class="task-label">Process Payment</text>
 <text x="900.0" y="35.0" class="task-type">manual</text>
+<rect x="1020.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
+<text x="1080.0" y="0.0" class="task-label">Confirm Order</text>
+<text x="1080.0" y="35.0" class="task-type">manual</text>
 <rect x="1380.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
 <text x="1440.0" y="0.0" class="task-label">Prepare Drink</text>
 <text x="1440.0" y="35.0" class="task-type">manual</text>
 <rect x="1560.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
 <text x="1620.0" y="0.0" class="task-label">Quality Check</text>
 <text x="1620.0" y="35.0" class="task-type">manual</text>
-<rect x="660.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
-<text x="720.0" y="0.0" class="task-label">Customer Exits</text>
-<text x="720.0" y="35.0" class="task-type">manual</text>
-<rect x="120.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
-<text x="180.0" y="0.0" class="task-label">Greet Customer</text>
-<text x="180.0" y="35.0" class="task-type">manual</text>
-<rect x="1020.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
-<text x="1080.0" y="0.0" class="task-label">Confirm Order</text>
-<text x="1080.0" y="35.0" class="task-type">manual</text>
-<rect x="1200.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
-<text x="1260.0" y="0.0" class="task-label">Queue Order</text>
-<text x="1260.0" y="35.0" class="task-type">manual</text>
 <rect x="1740.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
 <text x="1800.0" y="0.0" class="task-label">Call Customer</text>
 <text x="1800.0" y="35.0" class="task-type">manual</text>
 <rect x="1920.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
 <text x="1980.0" y="0.0" class="task-label">Serve Drink</text>
 <text x="1980.0" y="35.0" class="task-type">manual</text>
-<rect x="2100.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-end"/>
-<text x="2160.0" y="0.0" class="task-label">Complete Order</text>
-<text x="2160.0" y="35.0" class="task-type">manual</text>
 <rect x="-60.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-start"/>
 <text x="0.0" y="0.0" class="task-label">Detect Customer</text>
 <text x="0.0" y="35.0" class="task-type">manual</text>
-<rect x="300.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
-<text x="360.0" y="0.0" class="task-label">Show Menu</text>
-<text x="360.0" y="35.0" class="task-type">manual</text>
+<rect x="120.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
+<text x="180.0" y="0.0" class="task-label">Greet Customer</text>
+<text x="180.0" y="35.0" class="task-type">manual</text>
 <rect x="480.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-manual"/>
 <text x="540.0" y="0.0" class="task-label">Await Selection</text>
 <text x="540.0" y="35.0" class="task-type">manual</text>

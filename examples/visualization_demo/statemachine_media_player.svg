@@ -12,16 +12,16 @@
 <path d="M 0.0 120.0 C -80.0 71.0 -80.0 71.0 0.0 22.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="71.0" class="event-label" text-anchor="end">stop</text>
 <path d="M 0.0 360.0 C 80.0 374.0 80.0 374.0 0.0 388.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="374.0" class="event-label">mute</text>
 <path d="M 0.0 390.0 C -80.0 376.0 -80.0 376.0 0.0 362.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="376.0" class="event-label" text-anchor="end">unmute</text>
-<rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="140.0" class="state-label">paused</text>
-<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
-<text x="0.0" y="0.0" class="state-label">stopped</text>
-<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="70.0" class="state-label">playing</text>
-<rect x="-50.0" y="390.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<rect x="-50.0" y="390.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="410.0" class="state-label">muted</text>
-<rect x="-50.0" y="320.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state state-initial"/>
+<rect x="-50.0" y="320.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
 <text x="0.0" y="340.0" class="state-label">normal</text>
+<rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="140.0" class="state-label">paused</text>
+<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state state-initial"/>
+<text x="0.0" y="0.0" class="state-label">stopped</text>
+<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#f3e5f5" stroke="#7b1fa2" class="state"/>
+<text x="0.0" y="70.0" class="state-label">playing</text>
 <circle cx="-70.0" cy="0.0" r="6" class="initial-marker"/>
 <line x1="-62.0" y1="0.0" x2="-52.0" y2="0.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
 <circle cx="-70.0" cy="340.0" r="6" class="initial-marker"/>
