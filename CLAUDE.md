@@ -2,6 +2,129 @@
 
 This guide helps AI assistants (Claude, etc.) understand when and how to use the go-pflow library for modeling problems as Petri nets with ODE simulation.
 
+## Evolutionary Development Approach
+
+When building applications with go-pflow, follow this evolutionary development approach where the **Petri net is the single source of truth**:
+
+```
+1. DOMAIN LOGS     → Generate fictional but realistic event logs
+2. PROCESS MINING  → Discover Petri net structure from logs
+3. RATE LEARNING   → Fit transition rates to timing data
+4. ODE VALIDATION  → Simulate and verify expected behavior
+5. USER FEATURES   → Build UI/API on validated model
+```
+
+The Petri net captures domain structure, timing behavior, conservation laws, and testable invariants. User features are built on top of this validated foundation.
+
+### Example: Build a Patient Flow Monitoring System
+
+When asked to build an application (e.g., "Build me a patient flow monitoring system for an emergency department"):
+
+1. **Generate fictional event logs** with realistic timing:
+   - arrival → triage → assessment → treatment → discharge
+   - Include variations: admissions, left-without-treatment
+   - 100+ cases with realistic distributions
+
+2. **Discover the process model** from logs using `mining.Discover(log, "heuristic")`
+
+3. **Learn transition rates** (avg time between activities) using `mining.LearnRatesFromLog(log, net)`
+
+4. **Validate with simulation**:
+   - Conservation: patients don't disappear
+   - Completion: most patients reach discharge
+   - Timing: matches historical averages
+
+5. **Build monitoring features**:
+   - 4-hour ED target SLA alerts
+   - Real-time patient tracking
+   - Completion time predictions
+
+---
+
+## Discovering Existing Models in the Codebase
+
+When working with an existing go-pflow project, use these techniques to find and understand models:
+
+### Finding Petri Net Definitions
+
+```bash
+# Find fluent builder usage
+grep -r "petri.Build()" --include="*.go"
+
+# Find direct net construction
+grep -r "petri.NewPetriNet\|AddPlace\|AddTransition" --include="*.go"
+
+# Find JSON model files
+find . -name "*.json" -exec grep -l '"places"' {} \;
+```
+
+### Finding Workflows
+
+```bash
+# Find workflow definitions
+grep -r "workflow.New(" --include="*.go"
+
+# Find task definitions
+grep -r "\.Task(" --include="*.go"
+
+# Find workflow patterns
+grep -r "\.Pipeline\|\.ForkJoin\|\.Choice" --include="*.go"
+```
+
+### Finding State Machines
+
+```bash
+# Find state machine definitions
+grep -r "statemachine.NewChart(" --include="*.go"
+
+# Find regions and states
+grep -r "\.Region(\|\.State(" --include="*.go"
+
+# Find transitions
+grep -r "\.When(\|\.GoTo(" --include="*.go"
+```
+
+### Finding Actor Systems
+
+```bash
+# Find actor definitions
+grep -r "actor.NewSystem\|actor.NewActor" --include="*.go"
+
+# Find signal handlers
+grep -r "\.Handle(\|\.On(" --include="*.go"
+
+# Find behaviors
+grep -r "actor.NewBehavior" --include="*.go"
+```
+
+### Understanding Model Structure
+
+Once you find a model, understand it by:
+
+1. **Visualize it**: Generate SVG using `visualization.SaveSVG()`, `SaveWorkflowSVG()`, or `SaveStateMachineSVG()`
+
+2. **Check the examples**: Look in `examples/` directory for similar patterns
+
+3. **Run reachability analysis**: For Petri nets, use `reachability.NewAnalyzer(net).Analyze()` to find deadlocks, liveness issues
+
+4. **Simulate it**: Use ODE solver to see dynamic behavior:
+   ```go
+   prob := solver.NewProblem(net, net.SetState(nil), [2]float64{0, 100}, rates)
+   sol := solver.Solve(prob, solver.Tsit5(), solver.DefaultOptions())
+   ```
+
+### Common File Locations
+
+| Type | Typical Location |
+|------|-----------------|
+| Event logs | `data/*.csv`, `events/*.csv` |
+| Discovered models | `models/*.json` |
+| Visualizations | `output/*.svg`, `*.svg` |
+| Examples | `examples/*/` |
+| Tests with models | `*_test.go` |
+
+---
+
 ## Package Overview
 
 | Package | Purpose |
@@ -326,13 +449,24 @@ opts := solver.StiffOptions()
 
 ### Preset Comparison
 
+**General Presets:**
+
 | Preset | Dt | Reltol | Maxiters | Use Case |
 |--------|-----|--------|----------|----------|
 | `DefaultOptions()` | 0.01 | 1e-3 | 100k | General purpose |
 | `JSParityOptions()` | 0.01 | 1e-3 | 100k | Match web simulator |
-| `FastOptions()` | 0.1 | 1e-2 | 1k | Game AI, interactivity |
+| `FastOptions()` | 0.1 | 1e-2 | 1k | Speed over accuracy |
 | `AccurateOptions()` | 0.001 | 1e-6 | 1M | Publishing, research |
 | `StiffOptions()` | 0.001 | 1e-5 | 500k | Stiff systems |
+
+**Domain-Specific Presets:**
+
+| Preset | Dt | Reltol | Maxiters | Use Case |
+|--------|-----|--------|----------|----------|
+| `GameAIOptions()` | 0.1 | 1e-2 | 500 | Move evaluation, hypothesis testing |
+| `EpidemicOptions()` | 0.01 | 1e-4 | 200k | SIR/SEIR compartmental models |
+| `WorkflowOptions()` | 0.1 | 1e-3 | 50k | Process simulation, SLA prediction |
+| `LongRunOptions()` | 0.1 | 1e-3 | 500k | Extended simulations, steady-state |
 
 ### Solver Methods
 
@@ -408,6 +542,25 @@ eqOpts := &solver.EquilibriumOptions{
     MinTime:          0.1,    // Don't check before this time
     CheckInterval:    10,     // Check every N steps
 }
+```
+
+### Combined Option Pairs
+
+For convenience, use `OptionPair` presets that combine solver and equilibrium options:
+
+```go
+// Game AI: fast evaluation with loose equilibrium detection
+pair := solver.GameAIOptionPair()
+sol, result := solver.SolveUntilEquilibrium(prob, nil, pair.Solver, pair.Equilibrium)
+
+// Epidemic modeling: accurate with standard equilibrium
+pair := solver.EpidemicOptionPair()
+
+// Workflow simulation: moderate precision, relaxed equilibrium
+pair := solver.WorkflowOptionPair()
+
+// Long-running analysis: extended runtime, strict equilibrium
+pair := solver.LongRunOptionPair()
 ```
 
 ### Choosing Between Explicit and Implicit Methods

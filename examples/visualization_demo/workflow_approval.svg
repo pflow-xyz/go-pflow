@@ -7,9 +7,6 @@
 <path d="M 420.0 0.0 C 447.0 0.0 447.0 72.0 474.0 72.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <line x1="600.0" y1="0.0" x2="650.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <path d="M 600.0 80.0 C 627.0 80.0 627.0 8.0 654.0 8.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
-<rect x="660.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-end"/>
-<text x="720.0" y="0.0" class="task-label">Send Notific...</text>
-<text x="720.0" y="35.0" class="task-type">automatic</text>
 <rect x="-60.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-start"/>
 <text x="0.0" y="0.0" class="task-label">Submit Document</text>
 <text x="0.0" y="35.0" class="task-type">manual</text>
@@ -25,4 +22,7 @@
 <rect x="480.0" y="55.0" width="120.0" height="50.0" rx="5.0" class="task task-automatic"/>
 <text x="540.0" y="80.0" class="task-label">Mark Rejected</text>
 <text x="540.0" y="115.0" class="task-type">automatic</text>
+<rect x="660.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-end"/>
+<text x="720.0" y="0.0" class="task-label">Send Notific...</text>
+<text x="720.0" y="35.0" class="task-type">automatic</text>
 </svg>

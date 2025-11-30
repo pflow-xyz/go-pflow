@@ -6,12 +6,12 @@
 <path d="M 0.0 20.0 C 80.0 34.0 80.0 34.0 0.0 48.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="34.0" class="event-label">timer</text>
 <path d="M 0.0 90.0 C 80.0 104.0 80.0 104.0 0.0 118.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="104.0" class="event-label">timer</text>
 <path d="M 0.0 120.0 C -80.0 71.0 -80.0 71.0 0.0 22.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="71.0" class="event-label" text-anchor="end">timer</text>
+<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="70.0" class="state-label">green</text>
 <rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
 <text x="0.0" y="0.0" class="state-label">red</text>
 <rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="140.0" class="state-label">yellow</text>
-<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="70.0" class="state-label">green</text>
 <circle cx="-70.0" cy="0.0" r="6" class="initial-marker"/>
 <line x1="-62.0" y1="0.0" x2="-52.0" y2="0.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
 </svg>

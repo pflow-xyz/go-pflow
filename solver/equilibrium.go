@@ -258,3 +258,65 @@ func FindEquilibriumFast(prob *Problem) (map[string]float64, bool) {
 	// Return final state even if equilibrium not formally reached
 	return sol.GetFinalState(), false
 }
+
+// FindEquilibriumAccurate uses strict settings for high-confidence equilibrium detection.
+func FindEquilibriumAccurate(prob *Problem) (map[string]float64, bool) {
+	_, result := SolveUntilEquilibrium(prob, nil, AccurateOptions(), StrictEquilibriumOptions())
+	return result.State, result.Reached
+}
+
+// =============================================================================
+// Combined Option Pairs - convenient presets that pair solver and equilibrium options
+// =============================================================================
+
+// OptionPair combines solver and equilibrium options for specific use cases.
+type OptionPair struct {
+	Solver      *Options
+	Equilibrium *EquilibriumOptions
+}
+
+// GameAIOptionPair returns options optimized for game AI move evaluation.
+// Fast evaluation with loose equilibrium detection.
+func GameAIOptionPair() OptionPair {
+	return OptionPair{
+		Solver: GameAIOptions(),
+		Equilibrium: &EquilibriumOptions{
+			Tolerance:        1e-3,
+			ConsecutiveSteps: 2,
+			MinTime:          0.01,
+			CheckInterval:    3,
+		},
+	}
+}
+
+// EpidemicOptionPair returns options for epidemic modeling.
+// Accurate simulation with standard equilibrium detection.
+func EpidemicOptionPair() OptionPair {
+	return OptionPair{
+		Solver:      EpidemicOptions(),
+		Equilibrium: DefaultEquilibriumOptions(),
+	}
+}
+
+// WorkflowOptionPair returns options for workflow/process simulation.
+// Moderate precision with relaxed equilibrium detection.
+func WorkflowOptionPair() OptionPair {
+	return OptionPair{
+		Solver: WorkflowOptions(),
+		Equilibrium: &EquilibriumOptions{
+			Tolerance:        1e-4,
+			ConsecutiveSteps: 3,
+			MinTime:          0.5,
+			CheckInterval:    5,
+		},
+	}
+}
+
+// LongRunOptionPair returns options for extended equilibrium analysis.
+// Extended runtime with strict equilibrium detection.
+func LongRunOptionPair() OptionPair {
+	return OptionPair{
+		Solver:      LongRunOptions(),
+		Equilibrium: StrictEquilibriumOptions(),
+	}
+}

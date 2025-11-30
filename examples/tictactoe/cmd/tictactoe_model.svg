@@ -472,141 +472,141 @@
 <path d="M 595.7 1159.3 L 588.1 1154.8 L 594.1 1150.7 Z" fill="#999999"/>
 <circle cx="562.7" cy="1111.6" r="10" fill="#fafafa" stroke="#999999" stroke-width="1"/>
 <text x="562.7" y="1111.6" font-family="system-ui, Arial" font-size="10px" fill="#666" text-anchor="middle" dominant-baseline="middle">1</text>
-<circle cx="770.0" cy="250.0" r="16.0" class="place place-cap-full"/>
-<circle cx="770.0" cy="250.0" r="3" class="token-dot"/>
-<text x="770.0" y="272.0" class="label-text">P00</text>
-<circle cx="930.0" cy="330.0" r="16.0" class="place place-cap-full"/>
-<circle cx="930.0" cy="330.0" r="3" class="token-dot"/>
-<text x="930.0" y="352.0" class="label-text">P12</text>
-<circle cx="1030.0" cy="690.0" r="16.0" class="place"/>
-<text x="1030.0" y="712.0" class="label-text">_X20</text>
-<circle cx="1110.0" cy="530.0" r="16.0" class="place"/>
-<text x="1110.0" y="552.0" class="label-text">_X01</text>
-<circle cx="600.0" cy="520.0" r="16.0" class="place"/>
-<text x="600.0" y="542.0" class="label-text">_O01</text>
-<circle cx="680.0" cy="680.0" r="16.0" class="place"/>
-<text x="680.0" y="702.0" class="label-text">_O22</text>
+<circle cx="860.0" cy="40.0" r="16.0" class="place"/>
+<text x="860.0" y="62.0" class="label-text">Next</text>
 <circle cx="930.0" cy="250.0" r="16.0" class="place place-cap-full"/>
 <circle cx="930.0" cy="250.0" r="3" class="token-dot"/>
 <text x="930.0" y="272.0" class="label-text">P02</text>
+<circle cx="770.0" cy="330.0" r="16.0" class="place place-cap-full"/>
+<circle cx="770.0" cy="330.0" r="3" class="token-dot"/>
+<text x="770.0" y="352.0" class="label-text">P10</text>
+<circle cx="1030.0" cy="690.0" r="16.0" class="place"/>
+<text x="1030.0" y="712.0" class="label-text">_X20</text>
+<circle cx="1190.0" cy="690.0" r="16.0" class="place"/>
+<text x="1190.0" y="712.0" class="label-text">_X22</text>
+<circle cx="770.0" cy="250.0" r="16.0" class="place place-cap-full"/>
+<circle cx="770.0" cy="250.0" r="3" class="token-dot"/>
+<text x="770.0" y="272.0" class="label-text">P00</text>
+<circle cx="850.0" cy="250.0" r="16.0" class="place place-cap-full"/>
+<circle cx="850.0" cy="250.0" r="3" class="token-dot"/>
+<text x="850.0" y="272.0" class="label-text">P01</text>
 <circle cx="930.0" cy="410.0" r="16.0" class="place place-cap-full"/>
 <circle cx="930.0" cy="410.0" r="3" class="token-dot"/>
 <text x="930.0" y="432.0" class="label-text">P22</text>
-<circle cx="520.0" cy="600.0" r="16.0" class="place"/>
-<text x="520.0" y="622.0" class="label-text">_O10</text>
-<circle cx="600.0" cy="680.0" r="16.0" class="place"/>
-<text x="600.0" y="702.0" class="label-text">_O21</text>
-<circle cx="1190.0" cy="530.0" r="16.0" class="place"/>
-<text x="1190.0" y="552.0" class="label-text">_X02</text>
-<circle cx="1110.0" cy="1200.0" r="16.0" class="place"/>
-<text x="1110.0" y="1222.0" class="label-text">win_x</text>
-<circle cx="850.0" cy="410.0" r="16.0" class="place place-cap-full"/>
-<circle cx="850.0" cy="410.0" r="3" class="token-dot"/>
-<text x="850.0" y="432.0" class="label-text">P21</text>
+<circle cx="1190.0" cy="610.0" r="16.0" class="place"/>
+<text x="1190.0" y="632.0" class="label-text">_X12</text>
+<circle cx="1110.0" cy="530.0" r="16.0" class="place"/>
+<text x="1110.0" y="552.0" class="label-text">_X01</text>
+<circle cx="1110.0" cy="690.0" r="16.0" class="place"/>
+<text x="1110.0" y="712.0" class="label-text">_X21</text>
+<circle cx="610.0" cy="1180.0" r="16.0" class="place"/>
+<text x="610.0" y="1202.0" class="label-text">win_o</text>
 <circle cx="600.0" cy="600.0" r="16.0" class="place"/>
 <text x="600.0" y="622.0" class="label-text">_O11</text>
 <circle cx="520.0" cy="680.0" r="16.0" class="place"/>
 <text x="520.0" y="702.0" class="label-text">_O20</text>
-<circle cx="1190.0" cy="690.0" r="16.0" class="place"/>
-<text x="1190.0" y="712.0" class="label-text">_X22</text>
-<circle cx="680.0" cy="520.0" r="16.0" class="place"/>
-<text x="680.0" y="542.0" class="label-text">_O02</text>
-<circle cx="1190.0" cy="610.0" r="16.0" class="place"/>
-<text x="1190.0" y="632.0" class="label-text">_X12</text>
-<circle cx="1110.0" cy="690.0" r="16.0" class="place"/>
-<text x="1110.0" y="712.0" class="label-text">_X21</text>
-<circle cx="860.0" cy="40.0" r="16.0" class="place"/>
-<text x="860.0" y="62.0" class="label-text">Next</text>
-<circle cx="850.0" cy="250.0" r="16.0" class="place place-cap-full"/>
-<circle cx="850.0" cy="250.0" r="3" class="token-dot"/>
-<text x="850.0" y="272.0" class="label-text">P01</text>
-<circle cx="770.0" cy="330.0" r="16.0" class="place place-cap-full"/>
-<circle cx="770.0" cy="330.0" r="3" class="token-dot"/>
-<text x="770.0" y="352.0" class="label-text">P10</text>
+<circle cx="1190.0" cy="530.0" r="16.0" class="place"/>
+<text x="1190.0" y="552.0" class="label-text">_X02</text>
 <circle cx="850.0" cy="330.0" r="16.0" class="place place-cap-full"/>
 <circle cx="850.0" cy="330.0" r="3" class="token-dot"/>
 <text x="850.0" y="352.0" class="label-text">P11</text>
+<circle cx="850.0" cy="410.0" r="16.0" class="place place-cap-full"/>
+<circle cx="850.0" cy="410.0" r="3" class="token-dot"/>
+<text x="850.0" y="432.0" class="label-text">P21</text>
+<circle cx="600.0" cy="520.0" r="16.0" class="place"/>
+<text x="600.0" y="542.0" class="label-text">_O01</text>
+<circle cx="680.0" cy="600.0" r="16.0" class="place"/>
+<text x="680.0" y="622.0" class="label-text">_O12</text>
+<circle cx="680.0" cy="680.0" r="16.0" class="place"/>
+<text x="680.0" y="702.0" class="label-text">_O22</text>
+<circle cx="1030.0" cy="530.0" r="16.0" class="place"/>
+<text x="1030.0" y="552.0" class="label-text">_X00</text>
+<circle cx="1110.0" cy="610.0" r="16.0" class="place"/>
+<text x="1110.0" y="632.0" class="label-text">_X11</text>
+<circle cx="1110.0" cy="1200.0" r="16.0" class="place"/>
+<text x="1110.0" y="1222.0" class="label-text">win_x</text>
 <circle cx="770.0" cy="410.0" r="16.0" class="place place-cap-full"/>
 <circle cx="770.0" cy="410.0" r="3" class="token-dot"/>
 <text x="770.0" y="432.0" class="label-text">P20</text>
-<circle cx="680.0" cy="600.0" r="16.0" class="place"/>
-<text x="680.0" y="622.0" class="label-text">_O12</text>
 <circle cx="520.0" cy="520.0" r="16.0" class="place"/>
 <text x="520.0" y="542.0" class="label-text">_O00</text>
-<circle cx="1030.0" cy="530.0" r="16.0" class="place"/>
-<text x="1030.0" y="552.0" class="label-text">_X00</text>
+<circle cx="680.0" cy="520.0" r="16.0" class="place"/>
+<text x="680.0" y="542.0" class="label-text">_O02</text>
+<circle cx="520.0" cy="600.0" r="16.0" class="place"/>
+<text x="520.0" y="622.0" class="label-text">_O10</text>
+<circle cx="600.0" cy="680.0" r="16.0" class="place"/>
+<text x="600.0" y="702.0" class="label-text">_O21</text>
 <circle cx="1030.0" cy="610.0" r="16.0" class="place"/>
 <text x="1030.0" y="632.0" class="label-text">_X10</text>
-<circle cx="1110.0" cy="610.0" r="16.0" class="place"/>
-<text x="1110.0" y="632.0" class="label-text">_X11</text>
-<circle cx="610.0" cy="1180.0" r="16.0" class="place"/>
-<text x="610.0" y="1202.0" class="label-text">win_o</text>
+<circle cx="930.0" cy="330.0" r="16.0" class="place place-cap-full"/>
+<circle cx="930.0" cy="330.0" r="3" class="token-dot"/>
+<text x="930.0" y="352.0" class="label-text">P12</text>
+<rect x="1175.0" y="895.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="1190.0" y="931.0" class="label-text">X00_X11_X22</text>
+<rect x="1095.0" y="975.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="1110.0" y="1011.0" class="label-text">X01_X11_X21</text>
 <rect x="1095.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="1110.0" y="351.0" class="label-text">X11</text>
-<rect x="665.0" y="955.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="680.0" y="991.0" class="label-text">O10_O11_O12</text>
+<rect x="1095.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="1110.0" y="431.0" class="label-text">X21</text>
+<rect x="495.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="510.0" y="351.0" class="label-text">O10</text>
+<rect x="1095.0" y="895.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="1110.0" y="931.0" class="label-text">X00_X10_X20</text>
+<rect x="1175.0" y="1055.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="1190.0" y="1091.0" class="label-text">X20_X11_X02</text>
+<rect x="1015.0" y="1055.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="1030.0" y="1091.0" class="label-text">X20_X21_X22</text>
+<rect x="585.0" y="955.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="600.0" y="991.0" class="label-text">O01_O11_O21</text>
+<rect x="655.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="670.0" y="271.0" class="label-text">O02</text>
+<rect x="495.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="510.0" y="431.0" class="label-text">O20</text>
+<rect x="575.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="590.0" y="431.0" class="label-text">O21</text>
+<rect x="655.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="670.0" y="431.0" class="label-text">O22</text>
 <rect x="1015.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="1030.0" y="271.0" class="label-text">X00</text>
 <rect x="1015.0" y="895.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="1030.0" y="931.0" class="label-text">X00_X01_X02</text>
-<rect x="1095.0" y="895.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="1110.0" y="931.0" class="label-text">X00_X10_X20</text>
-<rect x="1175.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="1190.0" y="351.0" class="label-text">X12</text>
+<rect x="1015.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="1030.0" y="431.0" class="label-text">X20</text>
 <rect x="495.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="510.0" y="271.0" class="label-text">O00</text>
 <rect x="505.0" y="875.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="520.0" y="911.0" class="label-text">O00_O11_O22</text>
-<rect x="575.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="590.0" y="351.0" class="label-text">O11</text>
-<rect x="655.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="670.0" y="351.0" class="label-text">O12</text>
-<rect x="495.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="510.0" y="431.0" class="label-text">O20</text>
+<rect x="575.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="590.0" y="271.0" class="label-text">O01</text>
+<rect x="1175.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="1190.0" y="271.0" class="label-text">X02</text>
 <rect x="1015.0" y="975.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="1030.0" y="1011.0" class="label-text">X10_X11_X12</text>
-<rect x="1015.0" y="1055.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="1030.0" y="1091.0" class="label-text">X20_X21_X22</text>
+<rect x="1175.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="1190.0" y="351.0" class="label-text">X12</text>
 <rect x="1175.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="1190.0" y="431.0" class="label-text">X22</text>
-<rect x="495.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="510.0" y="351.0" class="label-text">O10</text>
-<rect x="505.0" y="1035.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="520.0" y="1071.0" class="label-text">O20_O11_O02</text>
-<rect x="575.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="590.0" y="431.0" class="label-text">O21</text>
-<rect x="1095.0" y="975.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="1110.0" y="1011.0" class="label-text">X01_X11_X21</text>
-<rect x="655.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="670.0" y="431.0" class="label-text">O22</text>
+<rect x="575.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="590.0" y="351.0" class="label-text">O11</text>
+<rect x="665.0" y="1035.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="680.0" y="1071.0" class="label-text">O20_O21_O22</text>
+<rect x="585.0" y="875.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="600.0" y="911.0" class="label-text">O00_O10_O20</text>
+<rect x="585.0" y="1035.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="600.0" y="1071.0" class="label-text">O02_O12_O22</text>
+<rect x="655.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="670.0" y="351.0" class="label-text">O12</text>
+<rect x="1095.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="1110.0" y="271.0" class="label-text">X01</text>
+<rect x="1095.0" y="1055.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="1110.0" y="1091.0" class="label-text">X02_X12_X22</text>
 <rect x="1015.0" y="315.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="1030.0" y="351.0" class="label-text">X10</text>
 <rect x="665.0" y="875.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="680.0" y="911.0" class="label-text">O00_O01_O02</text>
-<rect x="655.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="670.0" y="271.0" class="label-text">O02</text>
-<rect x="665.0" y="1035.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="680.0" y="1071.0" class="label-text">O20_O21_O22</text>
-<rect x="1175.0" y="895.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="1190.0" y="931.0" class="label-text">X00_X11_X22</text>
-<rect x="1095.0" y="1055.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="1110.0" y="1091.0" class="label-text">X02_X12_X22</text>
-<rect x="1015.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="1030.0" y="431.0" class="label-text">X20</text>
-<rect x="1175.0" y="1055.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="1190.0" y="1091.0" class="label-text">X20_X11_X02</text>
-<rect x="1095.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="1110.0" y="271.0" class="label-text">X01</text>
-<rect x="1175.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="1190.0" y="271.0" class="label-text">X02</text>
-<rect x="1095.0" y="395.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="1110.0" y="431.0" class="label-text">X21</text>
-<rect x="585.0" y="955.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="600.0" y="991.0" class="label-text">O01_O11_O21</text>
-<rect x="585.0" y="1035.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="600.0" y="1071.0" class="label-text">O02_O12_O22</text>
-<rect x="585.0" y="875.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="600.0" y="911.0" class="label-text">O00_O10_O20</text>
-<rect x="575.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="590.0" y="271.0" class="label-text">O01</text>
+<rect x="665.0" y="955.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="680.0" y="991.0" class="label-text">O10_O11_O12</text>
+<rect x="505.0" y="1035.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="520.0" y="1071.0" class="label-text">O20_O11_O02</text>
 </svg>

@@ -1696,282 +1696,282 @@
 <path d="M 992.0 273.9 L 992.9 282.6 L 986.1 280.4 Z" fill="#999999"/>
 <circle cx="973.7" cy="328.9" r="10" fill="#fafafa" stroke="#999999" stroke-width="1"/>
 <text x="973.7" y="328.9" font-family="system-ui, Arial" font-size="10px" fill="#666" text-anchor="middle" dominant-baseline="middle">1</text>
-<circle cx="180.0" cy="400.0" r="16.0" class="place"/>
-<text x="180.0" y="422.0" class="label-text">O left 3</text>
+<circle cx="60.0" cy="250.0" r="16.0" class="place"/>
+<text x="60.0" y="272.0" class="label-text">X left 1</text>
+<circle cx="660.0" cy="250.0" r="16.0" class="place"/>
+<text x="660.0" y="272.0" class="label-text">X left 11</text>
+<circle cx="720.0" cy="250.0" r="16.0" class="place"/>
+<text x="720.0" y="272.0" class="label-text">X left 12</text>
 <circle cx="120.0" cy="250.0" r="16.0" class="place"/>
 <text x="120.0" y="272.0" class="label-text">X left 2</text>
-<circle cx="300.0" cy="250.0" r="16.0" class="place"/>
-<text x="300.0" y="272.0" class="label-text">X left 5</text>
-<circle cx="540.0" cy="100.0" r="16.0" class="place"/>
-<text x="540.0" y="122.0" class="label-text">9 stones</text>
-<circle cx="420.0" cy="400.0" r="16.0" class="place"/>
-<text x="420.0" y="422.0" class="label-text">O left 7</text>
-<circle cx="120.0" cy="400.0" r="16.0" class="place"/>
-<text x="120.0" y="422.0" class="label-text">O left 2</text>
-<circle cx="50.0" cy="350.0" r="16.0" class="place"/>
-<text x="50.0" y="372.0" class="label-text">O&apos;s Turn</text>
-<circle cx="0.0" cy="100.0" r="16.0" class="place"/>
-<text x="0.0" y="122.0" class="label-text">0 stones</text>
-<circle cx="60.0" cy="100.0" r="16.0" class="place"/>
-<text x="60.0" y="122.0" class="label-text">1 stones</text>
-<circle cx="780.0" cy="100.0" r="16.0" class="place"/>
-<text x="780.0" y="122.0" class="label-text">13 stones</text>
+<circle cx="540.0" cy="250.0" r="16.0" class="place"/>
+<text x="540.0" y="272.0" class="label-text">X left 9</text>
+<circle cx="840.0" cy="400.0" r="16.0" class="place"/>
+<text x="840.0" y="422.0" class="label-text">O left 14</text>
+<circle cx="720.0" cy="100.0" r="16.0" class="place"/>
+<text x="720.0" y="122.0" class="label-text">12 stones</text>
 <circle cx="900.0" cy="100.0" r="16.0" class="place"/>
 <circle cx="900.0" cy="100.0" r="3" class="token-dot"/>
 <text x="900.0" y="122.0" class="label-text">15 stones</text>
+<circle cx="540.0" cy="100.0" r="16.0" class="place"/>
+<text x="540.0" y="122.0" class="label-text">9 stones</text>
+<circle cx="50.0" cy="200.0" r="16.0" class="place"/>
+<circle cx="50.0" cy="200.0" r="3" class="token-dot"/>
+<text x="50.0" y="222.0" class="label-text">X&apos;s Turn</text>
+<circle cx="360.0" cy="250.0" r="16.0" class="place"/>
+<text x="360.0" y="272.0" class="label-text">X left 6</text>
+<circle cx="1000.0" cy="250.0" r="16.0" class="place"/>
+<text x="1000.0" y="272.0" class="label-text">X Wins</text>
+<circle cx="300.0" cy="100.0" r="16.0" class="place"/>
+<text x="300.0" y="122.0" class="label-text">5 stones</text>
 <circle cx="660.0" cy="400.0" r="16.0" class="place"/>
 <text x="660.0" y="422.0" class="label-text">O left 11</text>
+<circle cx="240.0" cy="400.0" r="16.0" class="place"/>
+<text x="240.0" y="422.0" class="label-text">O left 4</text>
+<circle cx="420.0" cy="400.0" r="16.0" class="place"/>
+<text x="420.0" y="422.0" class="label-text">O left 7</text>
+<circle cx="480.0" cy="400.0" r="16.0" class="place"/>
+<text x="480.0" y="422.0" class="label-text">O left 8</text>
+<circle cx="780.0" cy="250.0" r="16.0" class="place"/>
+<text x="780.0" y="272.0" class="label-text">X left 13</text>
+<circle cx="900.0" cy="250.0" r="16.0" class="place"/>
+<text x="900.0" y="272.0" class="label-text">X left 15</text>
+<circle cx="240.0" cy="250.0" r="16.0" class="place"/>
+<text x="240.0" y="272.0" class="label-text">X left 4</text>
 <circle cx="780.0" cy="400.0" r="16.0" class="place"/>
 <text x="780.0" y="422.0" class="label-text">O left 13</text>
-<circle cx="720.0" cy="100.0" r="16.0" class="place"/>
-<text x="720.0" y="122.0" class="label-text">12 stones</text>
-<circle cx="360.0" cy="100.0" r="16.0" class="place"/>
-<text x="360.0" y="122.0" class="label-text">6 stones</text>
-<circle cx="420.0" cy="100.0" r="16.0" class="place"/>
-<text x="420.0" y="122.0" class="label-text">7 stones</text>
-<circle cx="0.0" cy="400.0" r="16.0" class="place"/>
-<text x="0.0" y="422.0" class="label-text">O left 0</text>
-<circle cx="720.0" cy="400.0" r="16.0" class="place"/>
-<text x="720.0" y="422.0" class="label-text">O left 12</text>
-<circle cx="360.0" cy="400.0" r="16.0" class="place"/>
-<text x="360.0" y="422.0" class="label-text">O left 6</text>
-<circle cx="540.0" cy="400.0" r="16.0" class="place"/>
-<text x="540.0" y="422.0" class="label-text">O left 9</text>
-<circle cx="720.0" cy="250.0" r="16.0" class="place"/>
-<text x="720.0" y="272.0" class="label-text">X left 12</text>
-<circle cx="660.0" cy="100.0" r="16.0" class="place"/>
-<text x="660.0" y="122.0" class="label-text">11 stones</text>
+<circle cx="180.0" cy="400.0" r="16.0" class="place"/>
+<text x="180.0" y="422.0" class="label-text">O left 3</text>
+<circle cx="780.0" cy="100.0" r="16.0" class="place"/>
+<text x="780.0" y="122.0" class="label-text">13 stones</text>
 <circle cx="840.0" cy="100.0" r="16.0" class="place"/>
 <text x="840.0" y="122.0" class="label-text">14 stones</text>
 <circle cx="120.0" cy="100.0" r="16.0" class="place"/>
 <text x="120.0" y="122.0" class="label-text">2 stones</text>
-<circle cx="240.0" cy="400.0" r="16.0" class="place"/>
-<text x="240.0" y="422.0" class="label-text">O left 4</text>
-<circle cx="480.0" cy="400.0" r="16.0" class="place"/>
-<text x="480.0" y="422.0" class="label-text">O left 8</text>
-<circle cx="840.0" cy="250.0" r="16.0" class="place"/>
-<text x="840.0" y="272.0" class="label-text">X left 14</text>
-<circle cx="240.0" cy="250.0" r="16.0" class="place"/>
-<text x="240.0" y="272.0" class="label-text">X left 4</text>
-<circle cx="360.0" cy="250.0" r="16.0" class="place"/>
-<text x="360.0" y="272.0" class="label-text">X left 6</text>
-<circle cx="180.0" cy="100.0" r="16.0" class="place"/>
-<text x="180.0" y="122.0" class="label-text">3 stones</text>
-<circle cx="50.0" cy="200.0" r="16.0" class="place"/>
-<circle cx="50.0" cy="200.0" r="3" class="token-dot"/>
-<text x="50.0" y="222.0" class="label-text">X&apos;s Turn</text>
-<circle cx="60.0" cy="400.0" r="16.0" class="place"/>
-<text x="60.0" y="422.0" class="label-text">O left 1</text>
+<circle cx="720.0" cy="400.0" r="16.0" class="place"/>
+<text x="720.0" y="422.0" class="label-text">O left 12</text>
+<circle cx="0.0" cy="400.0" r="16.0" class="place"/>
+<text x="0.0" y="422.0" class="label-text">O left 0</text>
 <circle cx="900.0" cy="400.0" r="16.0" class="place"/>
 <text x="900.0" y="422.0" class="label-text">O left 15</text>
-<circle cx="300.0" cy="400.0" r="16.0" class="place"/>
-<text x="300.0" y="422.0" class="label-text">O left 5</text>
-<circle cx="0.0" cy="250.0" r="16.0" class="place"/>
-<text x="0.0" y="272.0" class="label-text">X left 0</text>
-<circle cx="660.0" cy="250.0" r="16.0" class="place"/>
-<text x="660.0" y="272.0" class="label-text">X left 11</text>
-<circle cx="900.0" cy="250.0" r="16.0" class="place"/>
-<text x="900.0" y="272.0" class="label-text">X left 15</text>
-<circle cx="300.0" cy="100.0" r="16.0" class="place"/>
-<text x="300.0" y="122.0" class="label-text">5 stones</text>
-<circle cx="600.0" cy="250.0" r="16.0" class="place"/>
-<text x="600.0" y="272.0" class="label-text">X left 10</text>
-<circle cx="180.0" cy="250.0" r="16.0" class="place"/>
-<text x="180.0" y="272.0" class="label-text">X left 3</text>
-<circle cx="420.0" cy="250.0" r="16.0" class="place"/>
-<text x="420.0" y="272.0" class="label-text">X left 7</text>
-<circle cx="480.0" cy="250.0" r="16.0" class="place"/>
-<text x="480.0" y="272.0" class="label-text">X left 8</text>
-<circle cx="540.0" cy="250.0" r="16.0" class="place"/>
-<text x="540.0" y="272.0" class="label-text">X left 9</text>
-<circle cx="1000.0" cy="250.0" r="16.0" class="place"/>
-<text x="1000.0" y="272.0" class="label-text">X Wins</text>
-<circle cx="840.0" cy="400.0" r="16.0" class="place"/>
-<text x="840.0" y="422.0" class="label-text">O left 14</text>
-<circle cx="600.0" cy="100.0" r="16.0" class="place"/>
-<text x="600.0" y="122.0" class="label-text">10 stones</text>
+<circle cx="60.0" cy="100.0" r="16.0" class="place"/>
+<text x="60.0" y="122.0" class="label-text">1 stones</text>
+<circle cx="180.0" cy="100.0" r="16.0" class="place"/>
+<text x="180.0" y="122.0" class="label-text">3 stones</text>
 <circle cx="240.0" cy="100.0" r="16.0" class="place"/>
 <text x="240.0" y="122.0" class="label-text">4 stones</text>
+<circle cx="420.0" cy="100.0" r="16.0" class="place"/>
+<text x="420.0" y="122.0" class="label-text">7 stones</text>
+<circle cx="540.0" cy="400.0" r="16.0" class="place"/>
+<text x="540.0" y="422.0" class="label-text">O left 9</text>
+<circle cx="600.0" cy="250.0" r="16.0" class="place"/>
+<text x="600.0" y="272.0" class="label-text">X left 10</text>
 <circle cx="480.0" cy="100.0" r="16.0" class="place"/>
 <text x="480.0" y="122.0" class="label-text">8 stones</text>
-<circle cx="60.0" cy="250.0" r="16.0" class="place"/>
-<text x="60.0" y="272.0" class="label-text">X left 1</text>
-<circle cx="780.0" cy="250.0" r="16.0" class="place"/>
-<text x="780.0" y="272.0" class="label-text">X left 13</text>
-<circle cx="1000.0" cy="400.0" r="16.0" class="place"/>
-<text x="1000.0" y="422.0" class="label-text">O Wins</text>
+<circle cx="60.0" cy="400.0" r="16.0" class="place"/>
+<text x="60.0" y="422.0" class="label-text">O left 1</text>
 <circle cx="600.0" cy="400.0" r="16.0" class="place"/>
 <text x="600.0" y="422.0" class="label-text">O left 10</text>
+<circle cx="360.0" cy="400.0" r="16.0" class="place"/>
+<text x="360.0" y="422.0" class="label-text">O left 6</text>
+<circle cx="840.0" cy="250.0" r="16.0" class="place"/>
+<text x="840.0" y="272.0" class="label-text">X left 14</text>
+<circle cx="420.0" cy="250.0" r="16.0" class="place"/>
+<text x="420.0" y="272.0" class="label-text">X left 7</text>
+<circle cx="1000.0" cy="400.0" r="16.0" class="place"/>
+<text x="1000.0" y="422.0" class="label-text">O Wins</text>
+<circle cx="360.0" cy="100.0" r="16.0" class="place"/>
+<text x="360.0" y="122.0" class="label-text">6 stones</text>
+<circle cx="50.0" cy="350.0" r="16.0" class="place"/>
+<text x="50.0" y="372.0" class="label-text">O&apos;s Turn</text>
+<circle cx="600.0" cy="100.0" r="16.0" class="place"/>
+<text x="600.0" y="122.0" class="label-text">10 stones</text>
+<circle cx="660.0" cy="100.0" r="16.0" class="place"/>
+<text x="660.0" y="122.0" class="label-text">11 stones</text>
+<circle cx="300.0" cy="400.0" r="16.0" class="place"/>
+<text x="300.0" y="422.0" class="label-text">O left 5</text>
+<circle cx="180.0" cy="250.0" r="16.0" class="place"/>
+<text x="180.0" y="272.0" class="label-text">X left 3</text>
+<circle cx="300.0" cy="250.0" r="16.0" class="place"/>
+<text x="300.0" y="272.0" class="label-text">X left 5</text>
+<circle cx="480.0" cy="250.0" r="16.0" class="place"/>
+<text x="480.0" y="272.0" class="label-text">X left 8</text>
+<circle cx="0.0" cy="100.0" r="16.0" class="place"/>
+<text x="0.0" y="122.0" class="label-text">0 stones</text>
+<circle cx="120.0" cy="400.0" r="16.0" class="place"/>
+<text x="120.0" y="422.0" class="label-text">O left 2</text>
+<circle cx="0.0" cy="250.0" r="16.0" class="place"/>
+<text x="0.0" y="272.0" class="label-text">X left 0</text>
+<rect x="625.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="640.0" y="371.0" class="label-text">O takes 2</text>
 <rect x="265.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="280.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="385.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="400.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="625.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="640.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="145.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="160.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="325.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="340.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="865.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="880.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="505.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="520.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="325.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="340.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="505.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="520.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="145.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="160.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="205.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="220.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="685.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="700.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="385.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="400.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="565.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="580.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="745.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="760.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="325.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="340.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="685.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="700.0" y="221.0" class="label-text">O takes 1</text>
+<text x="280.0" y="371.0" class="label-text">O takes 3</text>
 <rect x="85.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="100.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="145.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="160.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="205.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="220.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="505.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="520.0" y="221.0" class="label-text">O takes 1</text>
 <rect x="625.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="640.0" y="371.0" class="label-text">O takes 1</text>
 <rect x="445.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="460.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="865.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="880.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="865.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="880.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="935.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="950.0" y="271.0" class="label-text">O Wins!</text>
-<rect x="745.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="760.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="805.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="820.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="565.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="580.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="685.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="700.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="625.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="640.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="25.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="40.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="865.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="880.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="265.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="280.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="505.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="520.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="625.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="640.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="385.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="400.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="445.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="460.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="505.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="520.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="325.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="340.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="505.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="520.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="445.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="460.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="625.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="640.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="745.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="760.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="865.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="880.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="85.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="100.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="445.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="460.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="25.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="40.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="745.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="760.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="265.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="280.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="565.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="580.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="145.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="160.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="385.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="400.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="325.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="340.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="805.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="820.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="505.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="520.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="745.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="760.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="205.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="220.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="85.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="100.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="625.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="640.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="445.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="460.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="685.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="700.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="565.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="580.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="145.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="160.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="85.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="100.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="205.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="220.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="385.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="400.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="565.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="580.0" y="221.0" class="label-text">O takes 1</text>
-<rect x="205.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="220.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="805.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="820.0" y="221.0" class="label-text">O takes 1</text>
 <rect x="745.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="760.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="505.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="520.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="205.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="220.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="325.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="340.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="325.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="340.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="805.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="820.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="85.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="100.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="805.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="820.0" y="371.0" class="label-text">O takes 1</text>
 <rect x="805.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="820.0" y="371.0" class="label-text">O takes 2</text>
 <rect x="145.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="160.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="805.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="820.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="445.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="460.0" y="371.0" class="label-text">O takes 3</text>
-<rect x="685.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="700.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="265.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="280.0" y="221.0" class="label-text">O takes 2</text>
-<rect x="205.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="220.0" y="371.0" class="label-text">O takes 1</text>
-<rect x="205.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="220.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="325.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="340.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="385.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="400.0" y="371.0" class="label-text">O takes 2</text>
-<rect x="565.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="580.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="805.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="820.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="265.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="280.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="935.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="950.0" y="271.0" class="label-text">O Wins!</text>
 <rect x="865.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="880.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="145.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="160.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="385.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="400.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="205.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="220.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="505.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="520.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="85.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="100.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="805.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="820.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="565.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="580.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="445.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="460.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="805.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="820.0" y="221.0" class="label-text">O takes 3</text>
 <rect x="265.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="280.0" y="221.0" class="label-text">O takes 3</text>
-<rect x="935.0" y="385.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="950.0" y="421.0" class="label-text">X Wins!</text>
+<rect x="385.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="400.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="25.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="40.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="205.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="220.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="565.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="580.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="385.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="400.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="145.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="160.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="325.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="340.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="385.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="400.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="625.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="640.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="325.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="340.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="445.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="460.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="505.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="520.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="865.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="880.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="445.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="460.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="505.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="520.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="685.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="700.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="565.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="580.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="685.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="700.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="145.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="160.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="685.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="700.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="865.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="880.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="865.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="880.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="865.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="880.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="145.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="160.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="325.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="340.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="85.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="100.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="205.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="220.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="265.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="280.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="625.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="640.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="745.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="760.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="445.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="460.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="745.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="760.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="145.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="160.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="565.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="580.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="445.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="460.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="505.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="520.0" y="371.0" class="label-text">O takes 2</text>
+<rect x="265.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="280.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="625.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="640.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="685.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="700.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="745.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="760.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="205.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="220.0" y="221.0" class="label-text">O takes 3</text>
+<rect x="565.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="580.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="265.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="280.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="625.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="640.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="865.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="880.0" y="221.0" class="label-text">O takes 1</text>
+<rect x="685.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="700.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="745.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="760.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="805.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="820.0" y="221.0" class="label-text">O takes 2</text>
 <rect x="685.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="700.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="745.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="760.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="325.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="340.0" y="371.0" class="label-text">O takes 3</text>
+<rect x="565.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="580.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="265.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="280.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="385.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="400.0" y="221.0" class="label-text">O takes 2</text>
+<rect x="935.0" y="385.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="950.0" y="421.0" class="label-text">X Wins!</text>
+<rect x="385.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="400.0" y="371.0" class="label-text">O takes 1</text>
+<rect x="25.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="40.0" y="221.0" class="label-text">O takes 1</text>
 </svg>

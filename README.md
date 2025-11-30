@@ -124,7 +124,8 @@ Detailed API and implementation documentation:
   - Full simulation, analysis, and visualization pipeline
 
 ### 🤖 AI Assistant Guide
-- **[CLAUDE_GUIDE](CLAUDE_GUIDE.md)** - Comprehensive guide for AI assistants (Claude, etc.)
+- **[CLAUDE.md](CLAUDE.md)** - Comprehensive guide for AI assistants (Claude, etc.)
+  - Evolutionary development approach (logs → mining → validation → features)
   - When to use Petri nets for different problem types
   - Problem-specific patterns (games, optimization, constraints, epidemics)
   - Solver tuning and performance optimization

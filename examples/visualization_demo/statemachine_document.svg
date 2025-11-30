@@ -10,16 +10,16 @@
 <path d="M 0.0 190.0 C -160.0 141.0 -160.0 141.0 0.0 92.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-165.0" y="165.0" class="event-label" text-anchor="end">archive</text>
 <path d="M -20.0 -20.0 C -20.0 -45.0 20.0 -45.0 15.0 -20.0" class="transition transition-self" marker-end="url(#sm-arrowhead)"/>
 <text x="0.0" y="-50.0" class="event-label">edit</text>
+<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="70.0" class="state-label">archived</text>
+<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
+<text x="0.0" y="0.0" class="state-label">draft</text>
 <rect x="-50.0" y="260.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="280.0" class="state-label">review</text>
 <rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="140.0" class="state-label">approved</text>
 <rect x="-50.0" y="190.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="210.0" class="state-label">published</text>
-<rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="70.0" class="state-label">archived</text>
-<rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
-<text x="0.0" y="0.0" class="state-label">draft</text>
 <circle cx="-70.0" cy="0.0" r="6" class="initial-marker"/>
 <line x1="-62.0" y1="0.0" x2="-52.0" y2="0.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
 </svg>

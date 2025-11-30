@@ -9,18 +9,18 @@
 <path d="M 0.0 330.0 C -80.0 246.0 -80.0 246.0 0.0 162.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="-85.0" y="246.0" class="event-label" text-anchor="end">deliver</text>
 <path d="M 0.0 20.0 C 80.0 104.0 80.0 104.0 0.0 188.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="104.0" class="event-label">cancel</text>
 <path d="M 0.0 90.0 C 80.0 139.0 80.0 139.0 0.0 188.0" class="transition" marker-end="url(#sm-arrowhead)"/><text x="85.0" y="139.0" class="event-label">cancel</text>
-<rect x="-50.0" y="330.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="350.0" class="state-label">shipped</text>
-<rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="140.0" class="state-label">delivered</text>
-<rect x="-50.0" y="190.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
-<text x="0.0" y="210.0" class="state-label">cancelled</text>
 <rect x="-50.0" y="-20.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state state-initial"/>
 <text x="0.0" y="0.0" class="state-label">pending</text>
 <rect x="-50.0" y="50.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="70.0" class="state-label">confirmed</text>
 <rect x="-50.0" y="260.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
 <text x="0.0" y="280.0" class="state-label">processing</text>
+<rect x="-50.0" y="330.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="350.0" class="state-label">shipped</text>
+<rect x="-50.0" y="120.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="140.0" class="state-label">delivered</text>
+<rect x="-50.0" y="190.0" width="100.0" height="40.0" rx="8" fill="#e3f2fd" stroke="#1976d2" class="state"/>
+<text x="0.0" y="210.0" class="state-label">cancelled</text>
 <circle cx="-70.0" cy="0.0" r="6" class="initial-marker"/>
 <line x1="-62.0" y1="0.0" x2="-52.0" y2="0.0" stroke="#333" stroke-width="1.5" marker-end="url(#sm-arrowhead)"/>
 </svg>

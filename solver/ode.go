@@ -224,6 +224,70 @@ func StiffOptions() *Options {
 	}
 }
 
+// =============================================================================
+// Domain-Specific Presets
+// =============================================================================
+
+// GameAIOptions returns options optimized for game AI move evaluation.
+// Prioritizes speed for evaluating many candidate moves quickly.
+// Use with hypothesis.Evaluator.FindBestParallel().
+func GameAIOptions() *Options {
+	return &Options{
+		Dt:       0.1,
+		Dtmin:    1e-3,
+		Dtmax:    1.0,
+		Abstol:   1e-2,
+		Reltol:   1e-2,
+		Maxiters: 500,
+		Adaptive: true,
+	}
+}
+
+// EpidemicOptions returns options for epidemic/population modeling.
+// Balances accuracy with reasonable runtime for compartmental models (SIR, SEIR).
+// Handles the mass-action kinetics common in epidemiology.
+func EpidemicOptions() *Options {
+	return &Options{
+		Dt:       0.01,
+		Dtmin:    1e-6,
+		Dtmax:    0.5,
+		Abstol:   1e-6,
+		Reltol:   1e-4,
+		Maxiters: 200000,
+		Adaptive: true,
+	}
+}
+
+// WorkflowOptions returns options for workflow/process simulation.
+// Tuned for discrete-like behavior where transitions fire at distinct rates.
+// Good for process mining validation and SLA prediction.
+func WorkflowOptions() *Options {
+	return &Options{
+		Dt:       0.1,
+		Dtmin:    1e-4,
+		Dtmax:    10.0,
+		Abstol:   1e-4,
+		Reltol:   1e-3,
+		Maxiters: 50000,
+		Adaptive: true,
+	}
+}
+
+// LongRunOptions returns options for extended simulations (hours/days of simulated time).
+// Uses larger step sizes while maintaining stability.
+// Good for equilibrium analysis and steady-state behavior.
+func LongRunOptions() *Options {
+	return &Options{
+		Dt:       0.1,
+		Dtmin:    1e-4,
+		Dtmax:    10.0,
+		Abstol:   1e-5,
+		Reltol:   1e-3,
+		Maxiters: 500000,
+		Adaptive: true,
+	}
+}
+
 // Solver represents an ODE solver method.
 type Solver struct {
 	Name  string
