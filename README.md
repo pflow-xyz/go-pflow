@@ -666,19 +666,21 @@ Build state machines that compile to Petri nets:
 import "github.com/pflow-xyz/go-pflow/statemachine"
 
 // Build state machine
-chart := statemachine.New("traffic_light").
-    State("red").Initial().Done().
-    State("yellow").Done().
-    State("green").Done().
-    On("timer").From("red").To("green").Done().
-    On("timer").From("green").To("yellow").Done().
-    On("timer").From("yellow").To("red").Done().
+chart := statemachine.NewChart("traffic_light").
+    Region("light").
+        State("red").Initial().
+        State("yellow").
+        State("green").
+    EndRegion().
+    When("timer").In("light:red").GoTo("light:green").
+    When("timer").In("light:green").GoTo("light:yellow").
+    When("timer").In("light:yellow").GoTo("light:red").
     Build()
 
 // Create machine and process events
-machine := chart.NewMachine()
-machine.Send("timer")  // red -> green
-machine.Send("timer")  // green -> yellow
+machine := statemachine.NewMachine(chart)
+machine.SendEvent("timer")  // red -> green
+machine.SendEvent("timer")  // green -> yellow
 
 // Get underlying Petri net
 net := chart.ToPetriNet()

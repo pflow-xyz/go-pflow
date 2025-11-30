@@ -14,19 +14,30 @@ Use this skill when building applications using **go-pflow** - a Go library for 
 
 | Package | Purpose |
 |---------|---------|
+| **Core Modeling** | |
 | `petri` | Core Petri net types, fluent Builder API |
 | `solver` | ODE solvers (Tsit5, RK45, implicit), equilibrium detection |
 | `stateutil` | State manipulation utilities |
+| `engine` | Discrete event engine, conditions, actions |
+| **Higher-Level Abstractions** | |
+| `workflow` | Task dependencies, resources, SLA tracking |
+| `statemachine` | Hierarchical states, parallel regions, guards |
+| `actor` | Message-passing actors with Petri net behaviors |
+| **Analysis & Optimization** | |
 | `hypothesis` | Move evaluation for game AI |
 | `sensitivity` | Parameter sensitivity analysis |
 | `cache` | Memoization for ODE simulations |
 | `reachability` | Discrete state space analysis, invariants |
+| `validation` | Model validation, reachability graphs |
+| **Process Mining** | |
 | `eventlog` | Parse event logs (CSV) |
 | `mining` | Process discovery (Alpha, Heuristic Miner) |
 | `monitoring` | Real-time case tracking, SLA alerts |
+| **Serialization & Visualization** | |
 | `learn` | Neural ODE-ish learnable parameters |
 | `parser` | JSON serialization (pflow.xyz compatible) |
-| `plotter` | SVG visualization |
+| `visualization` | SVG rendering for nets, workflows, state machines |
+| `plotter` | Legacy SVG visualization |
 
 ---
 
@@ -219,6 +230,114 @@ fmt.Printf("Expected: %s, Risk: %.0f%%\n",
 
 ---
 
+## Higher-Level Abstractions
+
+### Workflow Package
+
+Model business processes with task dependencies, resources, and SLA tracking:
+
+```go
+import "github.com/pflow-xyz/go-pflow/workflow"
+
+// Build workflow with fluent API
+wf := workflow.New("order_processing").
+    Task("receive").Initial().
+    Task("validate").DependsOn("receive").Duration(5 * time.Minute).
+    Task("process").DependsOn("validate").Duration(30 * time.Minute).
+    Task("ship").DependsOn("process").Duration(2 * time.Hour).
+    Resource("worker", 3).  // 3 workers available
+    SLA(4 * time.Hour).
+    Build()
+
+// Convert to Petri net for simulation
+net := wf.ToPetriNet()
+```
+
+### State Machine Package
+
+Model event-driven systems with hierarchical states and parallel regions:
+
+```go
+import "github.com/pflow-xyz/go-pflow/statemachine"
+
+// Traffic light with fluent API
+chart := statemachine.NewChart("traffic_light").
+    Region("light").
+        State("red").Initial().
+        State("yellow").
+        State("green").
+    EndRegion().
+    When("timer").In("light:red").GoTo("light:green").
+    When("timer").In("light:green").GoTo("light:yellow").
+    When("timer").In("light:yellow").GoTo("light:red").
+    Build()
+
+// Create and run machine
+m := statemachine.NewMachine(chart)
+m.SendEvent("timer")  // red -> green
+fmt.Println(m.State("light"))  // "green"
+
+// Convert to Petri net for analysis
+net := chart.ToPetriNet()
+```
+
+### Actor Package
+
+Model message-passing concurrent systems with Petri net behaviors:
+
+```go
+import "github.com/pflow-xyz/go-pflow/actor"
+
+// Create bus and actors
+bus := actor.NewBus("main")
+processor := actor.NewActor("processor").State("count", 0)
+
+bus.RegisterActor(processor)
+bus.Subscribe("processor", "task", func(ctx *actor.ActorContext, signal *actor.Signal) error {
+    current := ctx.GetInt("count", 0)
+    ctx.Set("count", current+1)
+    return nil
+})
+
+// Built-in actor patterns
+filter := actor.Filter("filter", "raw", "filtered", func(s *actor.Signal) bool {
+    return s.Payload["value"].(float64) > 0.5
+})
+router := actor.Router("router", "input", map[string]string{
+    "high":   "fast_queue",
+    "low":    "slow_queue",
+})
+
+// Behaviors with Petri nets
+behavior := actor.NewBehavior("counter").
+    Name("Counter Behavior").
+    WithNet(net).
+    OnSignal("increment").Fire("add").Done().
+    Build()
+```
+
+---
+
+## Visualization
+
+Generate SVG diagrams for Petri nets, workflows, and state machines:
+
+```go
+import "github.com/pflow-xyz/go-pflow/visualization"
+
+// Render Petri net
+svg, _ := visualization.RenderSVG(net)
+visualization.SaveSVG(net, "model.svg")
+
+// Render workflow
+svg, _ := visualization.RenderWorkflowSVG(wf, nil)
+
+// Render state machine
+svg, _ := visualization.RenderStateMachineSVG(chart, nil)
+```
+
+---
+
 ## Game AI and Move Evaluation
 
 ```go
@@ -341,19 +460,30 @@ func TestOrderFlow(t *testing.T) {
 
 | Package | Purpose |
 |---------|---------|
+| **Core Modeling** | |
 | `petri` | Core Petri net types, fluent Builder API |
 | `solver` | ODE solvers (Tsit5, RK45, implicit), equilibrium detection |
 | `stateutil` | State manipulation utilities |
+| `engine` | Discrete event engine, conditions, actions |
+| **Higher-Level Abstractions** | |
+| `workflow` | Task dependencies, resources, SLA tracking |
+| `statemachine` | Hierarchical states, parallel regions, guards |
+| `actor` | Message-passing actors with Petri net behaviors |
+| **Analysis & Optimization** | |
 | `hypothesis` | Move evaluation for game AI |
 | `sensitivity` | Parameter sensitivity analysis |
 | `cache` | Memoization for ODE simulations |
 | `reachability` | Discrete state space analysis, invariants |
+| `validation` | Model validation, reachability graphs |
+| **Process Mining** | |
 | `eventlog` | Parse event logs (CSV) |
 | `mining` | Process discovery (Alpha, Heuristic Miner) |
 | `monitoring` | Real-time case tracking, SLA alerts |
+| **Serialization & Visualization** | |
 | `learn` | Neural ODE-ish learnable parameters |
 | `parser` | JSON serialization (pflow.xyz compatible) |
-| `plotter` | SVG visualization |
+| `visualization` | SVG rendering for nets, workflows, state machines |
+| `plotter` | Legacy SVG visualization |
 
 ---
 

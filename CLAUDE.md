@@ -26,14 +26,26 @@ This guide helps AI assistants (Claude, etc.) understand when and how to use the
 ```
 Is your problem about...
 │
-├─ Sequential workflows or processes?
+├─ Business workflows with tasks and dependencies?
+│  └─ YES → Use `workflow` package (fluent API, SLA tracking, resources)
+│
+├─ Event-driven state transitions?
+│  └─ YES → Use `statemachine` package (hierarchical states, parallel regions)
+│
+├─ Message-passing concurrent systems?
+│  └─ YES → Use `actor` package (actors with Petri net behaviors)
+│
+├─ Sequential processes or pipelines?
 │  └─ YES → Use basic Petri net (places = stages, transitions = steps)
 │
 ├─ Resource allocation or scheduling?
 │  └─ YES → Use Petri net with token conservation
 │
 ├─ Game or decision making?
-│  └─ YES → Model state space, use ODE for move evaluation
+│  └─ YES → Use `hypothesis` package for move evaluation
+│
+├─ Parameter tuning or sensitivity?
+│  └─ YES → Use `sensitivity` package for analysis
 │
 ├─ Constraint satisfaction (Sudoku, N-Queens)?
 │  └─ YES → Model constraints as arc weights, use ODE for feasibility
@@ -43,6 +55,12 @@ Is your problem about...
 │
 ├─ Epidemic/population dynamics?
 │  └─ YES → Classic Petri net + ODE, compartmental model
+│
+├─ Process discovery from logs?
+│  └─ YES → Use `mining` package (Alpha, Heuristic Miner)
+│
+├─ Deadlock or liveness verification?
+│  └─ YES → Use `reachability` package for state space analysis
 │
 └─ Something else?
    └─ Ask: "Can I represent state as token counts?"
