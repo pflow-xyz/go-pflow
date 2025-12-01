@@ -1,6 +1,7 @@
 package poker
 
 import (
+	"math"
 	"testing"
 )
 
@@ -39,6 +40,110 @@ func TestStartHand(t *testing.T) {
 	// Check phase is pre-flop
 	if game.GetPhase() != PhasePreflop {
 		t.Errorf("Expected phase to be Pre-flop, got %s", game.GetPhase())
+	}
+}
+
+func TestODEHandStrengthComputation(t *testing.T) {
+	game := NewPokerGame(1000, 1, 2)
+	game.StartHand()
+
+	// Get hand strength computed via ODE
+	state := game.engine.GetState()
+	p1Str := state["p1_hand_str"]
+	p2Str := state["p2_hand_str"]
+
+	// Strengths should be in valid range [0, 1]
+	if p1Str < 0 || p1Str > 1 {
+		t.Errorf("P1 ODE hand strength out of range: %f", p1Str)
+	}
+	if p2Str < 0 || p2Str > 1 {
+		t.Errorf("P2 ODE hand strength out of range: %f", p2Str)
+	}
+
+	// Check that ODE input places were set
+	p1RankInput := state["p1_rank_input"]
+	p1HighInput := state["p1_highcard_input"]
+
+	if p1RankInput < 0 || p1RankInput > 1 {
+		t.Errorf("P1 rank input out of range: %f", p1RankInput)
+	}
+	if p1HighInput < 0 || p1HighInput > 1.1 { // highcard can be slightly > 1 for Ace
+		t.Errorf("P1 highcard input out of range: %f", p1HighInput)
+	}
+}
+
+func TestODEHandStrengthConsistency(t *testing.T) {
+	// Test that the ODE-computed strength is consistent with the formula
+	// strength = (rank * 0.9) + (highcard * 0.1) + small adjustment
+
+	// Test with known values
+	testCases := []struct {
+		rankNorm  float64
+		highNorm  float64
+		minExpect float64 // Minimum expected strength
+		maxExpect float64 // Maximum expected strength
+	}{
+		{0.0, 0.14, 0.0, 0.2},    // High card with 2 high
+		{0.0, 1.0, 0.05, 0.15},   // High card with Ace
+		{0.11, 0.5, 0.1, 0.2},    // One pair
+		{1.0, 1.0, 0.9, 1.0},     // Royal flush with Ace high
+	}
+
+	for _, tc := range testCases {
+		strength := computeStrengthFromODE(tc.rankNorm, tc.highNorm, 0)
+		if strength < tc.minExpect || strength > tc.maxExpect {
+			t.Errorf("computeStrengthFromODE(%f, %f, 0) = %f, expected between %f and %f",
+				tc.rankNorm, tc.highNorm, strength, tc.minExpect, tc.maxExpect)
+		}
+	}
+}
+
+func TestODEHandStrengthUpdatesWithCommunity(t *testing.T) {
+	game := NewPokerGame(1000, 1, 2)
+	game.StartHand()
+
+	// Get initial hand strength
+	state := game.engine.GetState()
+	initialP1Str := state["p1_hand_str"]
+
+	// Advance to flop
+	game.MakeAction(ActionCall, 0)
+	game.MakeAction(ActionCheck, 0)
+
+	// Hand strength may have changed (community cards affect hand)
+	state = game.engine.GetState()
+	flopP1Str := state["p1_hand_str"]
+
+	// Both should still be valid
+	if flopP1Str < 0 || flopP1Str > 1 {
+		t.Errorf("P1 hand strength out of range after flop: %f", flopP1Str)
+	}
+
+	// Note: We don't require strength to change, as it depends on the random cards
+	// Just verify it's still a valid value computed via ODE
+	_ = initialP1Str // Mark as used
+}
+
+func TestComputeStrengthFromODE(t *testing.T) {
+	// Test the ODE strength computation function
+	tests := []struct {
+		rank   float64
+		high   float64
+		delta  float64
+		expect float64
+	}{
+		{0.0, 0.0, 0.0, 0.0},     // Minimum
+		{1.0, 1.0, 0.0, 1.0},     // Maximum (rank 1.0 * 0.9 + high 1.0 * 0.1)
+		{0.5, 0.5, 0.0, 0.5},     // Middle
+		{0.5, 0.5, 1.0, 0.55},    // With delta adjustment
+	}
+
+	for _, tt := range tests {
+		got := computeStrengthFromODE(tt.rank, tt.high, tt.delta)
+		if math.Abs(got-tt.expect) > 0.01 {
+			t.Errorf("computeStrengthFromODE(%f, %f, %f) = %f, want %f",
+				tt.rank, tt.high, tt.delta, got, tt.expect)
+		}
 	}
 }
 

@@ -48,6 +48,7 @@ func (a Action) String() string {
 // - Betting rounds within each phase
 // - Player actions (fold, check, call, raise, all-in)
 // - Win conditions and pot distribution
+// - Hand strength computation via ODE
 func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 	net := petri.Build().
 		// === GAME PHASE PLACES ===
@@ -67,8 +68,14 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 		Place("p1_bet", 0).        // Amount bet this round
 		Place("p1_chips", 1000).   // Stack size
 		Place("p1_pot_share", 0).  // Accumulated pot contributions
-		Place("p1_hand_str", 0.5). // Normalized hand strength (0-1)
+		Place("p1_hand_str", 0.5). // Normalized hand strength (0-1) - computed via ODE
 		Place("p1_wins", 0).       // Win accumulator
+
+		// === PLAYER 1 HAND STRENGTH ODE PLACES ===
+		// These places hold the components of hand strength that flow through ODE
+		Place("p1_rank_input", 0).     // Raw hand rank score (0-9) normalized
+		Place("p1_highcard_input", 0). // High card contribution normalized
+		Place("p1_str_delta", 0).      // Change in hand strength (for ODE update)
 
 		// Player 2
 		Place("p2_active", 1).
@@ -78,8 +85,13 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 		Place("p2_bet", 0).
 		Place("p2_chips", 1000).
 		Place("p2_pot_share", 0).
-		Place("p2_hand_str", 0.5).
+		Place("p2_hand_str", 0.5). // Normalized hand strength (0-1) - computed via ODE
 		Place("p2_wins", 0).
+
+		// === PLAYER 2 HAND STRENGTH ODE PLACES ===
+		Place("p2_rank_input", 0).
+		Place("p2_highcard_input", 0).
+		Place("p2_str_delta", 0).
 
 		// === POT AND BETTING PLACES ===
 		Place("pot", 0).            // Current pot size
@@ -117,6 +129,14 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 		// === WIN TRANSITIONS ===
 		Transition("p1_wins_pot").
 		Transition("p2_wins_pot").
+
+		// === HAND STRENGTH ODE TRANSITIONS ===
+		// These transitions compute hand strength through ODE dynamics
+		// The rank and highcard inputs flow into the hand strength place
+		Transition("p1_compute_str"). // Computes P1 hand strength from inputs
+		Transition("p2_compute_str"). // Computes P2 hand strength from inputs
+		Transition("p1_update_str").  // Updates P1 hand strength from delta
+		Transition("p2_update_str").  // Updates P2 hand strength from delta
 
 		// === ARCS ===
 		// Phase transitions
@@ -210,6 +230,23 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 		Arc("pot", "p2_wins_pot", 1).
 		Arc("p2_wins_pot", "p2_wins", 1).
 
+		// === HAND STRENGTH ODE ARCS ===
+		// Player 1 hand strength computation
+		// rank_input and highcard_input flow into str_delta through p1_compute_str
+		Arc("p1_rank_input", "p1_compute_str", 1).
+		Arc("p1_highcard_input", "p1_compute_str", 1).
+		Arc("p1_compute_str", "p1_str_delta", 1).
+		// str_delta flows into hand_str through p1_update_str
+		Arc("p1_str_delta", "p1_update_str", 1).
+		Arc("p1_update_str", "p1_hand_str", 1).
+
+		// Player 2 hand strength computation
+		Arc("p2_rank_input", "p2_compute_str", 1).
+		Arc("p2_highcard_input", "p2_compute_str", 1).
+		Arc("p2_compute_str", "p2_str_delta", 1).
+		Arc("p2_str_delta", "p2_update_str", 1).
+		Arc("p2_update_str", "p2_hand_str", 1).
+
 		Done()
 
 	return net
@@ -228,9 +265,9 @@ func DefaultRates() map[string]float64 {
 		"end_hand":     0.0,
 
 		// Player 1 actions (base rates, modified by hand strength)
-		"p1_fold":   0.2, // Fold rate decreases with hand strength
-		"p1_check":  0.3, // Check when possible
-		"p1_call":   0.3, // Call rate based on pot odds
+		"p1_fold":   0.2,  // Fold rate decreases with hand strength
+		"p1_check":  0.3,  // Check when possible
+		"p1_call":   0.3,  // Call rate based on pot odds
 		"p1_raise":  0.15, // Raise with strong hands
 		"p1_all_in": 0.05, // All-in with premium hands
 
@@ -249,6 +286,13 @@ func DefaultRates() map[string]float64 {
 		// Win transitions (enabled by game state)
 		"p1_wins_pot": 0.0,
 		"p2_wins_pot": 0.0,
+
+		// Hand strength ODE transitions
+		// These rates control how quickly hand strength flows through the ODE
+		"p1_compute_str": 1.0, // Rate at which P1 hand strength is computed
+		"p2_compute_str": 1.0, // Rate at which P2 hand strength is computed
+		"p1_update_str":  1.0, // Rate at which P1 hand strength is updated
+		"p2_update_str":  1.0, // Rate at which P2 hand strength is updated
 	}
 }
 

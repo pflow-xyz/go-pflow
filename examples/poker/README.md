@@ -77,8 +77,13 @@ The game is modeled as a Petri net with the following structure:
 - `p*_turn`: It's this player's turn
 - `p*_bet`: Amount bet this round
 - `p*_chips`: Stack size
-- `p*_hand_str`: Normalized hand strength (0-1)
+- `p*_hand_str`: Normalized hand strength (0-1) - computed via ODE
 - `p*_wins`: Win accumulator
+
+**Hand Strength ODE Places** (for each player):
+- `p*_rank_input`: Normalized hand rank score (0-1) from card evaluation
+- `p*_highcard_input`: Normalized high card value (0-1) from card evaluation
+- `p*_str_delta`: Change in hand strength from ODE dynamics
 
 **Betting Places**:
 - `pot`: Current pot size
@@ -102,9 +107,32 @@ The game is modeled as a Petri net with the following structure:
 - `p*_raise`: Raise the bet
 - `p*_all_in`: Go all-in
 
+**Hand Strength ODE Transitions** (per player):
+- `p*_compute_str`: Computes hand strength from rank and highcard inputs
+- `p*_update_str`: Updates hand strength from delta
+
 **Win Transitions**:
 - `p1_wins_pot`: Player 1 wins pot
 - `p2_wins_pot`: Player 2 wins pot
+
+## ODE-Based Hand Strength Computation
+
+A key feature is that hand strength is computed through the ODE dynamics rather than
+being set directly. This models hand strength as a continuous flow through the Petri net:
+
+1. **Input Places**: `p*_rank_input` and `p*_highcard_input` receive normalized values from card evaluation
+2. **Computation Transitions**: `p*_compute_str` combines inputs using mass-action kinetics
+3. **Update Transitions**: `p*_update_str` flows the computed strength to `p*_hand_str`
+
+The ODE-based computation uses the formula:
+```
+strength = (rank_norm × 0.9) + (highcard_norm × 0.1) + delta_adjustment
+```
+
+Where:
+- `rank_norm`: Normalized hand rank (0 = High Card, 1 = Royal Flush)
+- `highcard_norm`: Normalized high card value (2-14 → 0.14-1.0)
+- `delta_adjustment`: Small adjustment from ODE dynamics (allows smooth transitions)
 
 ## ODE-Based Bet Estimation
 

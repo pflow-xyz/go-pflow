@@ -32,6 +32,58 @@ func TestCreatePokerPetriNet(t *testing.T) {
 	}
 }
 
+func TestHandStrengthODEPlaces(t *testing.T) {
+	net := CreatePokerPetriNet(2)
+
+	// Check that hand strength ODE places exist
+	odePlaces := []string{
+		"p1_rank_input", "p1_highcard_input", "p1_str_delta",
+		"p2_rank_input", "p2_highcard_input", "p2_str_delta",
+	}
+	for _, place := range odePlaces {
+		if _, ok := net.Places[place]; !ok {
+			t.Errorf("Missing hand strength ODE place: %s", place)
+		}
+	}
+}
+
+func TestHandStrengthODETransitions(t *testing.T) {
+	net := CreatePokerPetriNet(2)
+
+	// Check that hand strength ODE transitions exist
+	odeTransitions := []string{
+		"p1_compute_str", "p2_compute_str",
+		"p1_update_str", "p2_update_str",
+	}
+	for _, trans := range odeTransitions {
+		if _, ok := net.Transitions[trans]; !ok {
+			t.Errorf("Missing hand strength ODE transition: %s", trans)
+		}
+	}
+}
+
+func TestHandStrengthODERates(t *testing.T) {
+	rates := DefaultRates()
+
+	// Check that hand strength ODE rates are present
+	odeRates := []string{
+		"p1_compute_str", "p2_compute_str",
+		"p1_update_str", "p2_update_str",
+	}
+	for _, rate := range odeRates {
+		if _, ok := rates[rate]; !ok {
+			t.Errorf("Missing hand strength ODE rate: %s", rate)
+		}
+	}
+
+	// Check that ODE rates are 1.0 (enabled by default)
+	for _, rate := range odeRates {
+		if rates[rate] != 1.0 {
+			t.Errorf("Hand strength ODE rate %s should be 1.0, got %f", rate, rates[rate])
+		}
+	}
+}
+
 func TestDefaultRates(t *testing.T) {
 	rates := DefaultRates()
 
