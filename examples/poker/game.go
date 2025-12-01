@@ -190,7 +190,7 @@ func (g *PokerGame) UpdateHandStrengths() {
 	// Score formula: (HandRank * 1000) + (HighCard * 10) + kickers
 	// Max score: 9140 (Royal Flush with Ace)
 	p1RankNorm := float64(p1Result.Rank) / 9.0           // Normalize rank (0-9) to (0-1)
-	p1HighNorm := float64(p1Result.HighCard) / 14.0      // Normalize highcard (2-14) to (0.14-1)
+	p1HighNorm := float64(p1Result.HighCard) / 14.0      // Normalize highcard (2-14) to (~0.14-1)
 	p2RankNorm := float64(p2Result.Rank) / 9.0
 	p2HighNorm := float64(p2Result.HighCard) / 14.0
 
@@ -226,6 +226,12 @@ func (g *PokerGame) UpdateHandStrengths() {
 // computeHandStrengthsViaODE runs an ODE simulation to compute hand strengths.
 // This models hand strength as a continuous flow through the Petri net,
 // where rank and highcard inputs flow through transitions to produce the final strength.
+//
+// Design note: While the final strength formula is simple arithmetic that could be
+// computed directly, we intentionally use ODE simulation here to demonstrate how
+// hand strength can be integrated into the Petri net dynamics. This allows the
+// strength computation to be part of the same ODE framework used for game simulation,
+// enabling future extensions like dynamic strength adjustments based on game state.
 func (g *PokerGame) computeHandStrengthsViaODE() (p1Strength, p2Strength float64) {
 	state := g.engine.GetState()
 

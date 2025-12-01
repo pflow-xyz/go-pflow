@@ -67,7 +67,8 @@ func TestODEHandStrengthComputation(t *testing.T) {
 	if p1RankInput < 0 || p1RankInput > 1 {
 		t.Errorf("P1 rank input out of range: %f", p1RankInput)
 	}
-	if p1HighInput < 0 || p1HighInput > 1.1 { // highcard can be slightly > 1 for Ace
+	// Highcard is normalized: min 2/14 (~0.14), max 14/14 (1.0)
+	if p1HighInput < 0 || p1HighInput > 1.0 {
 		t.Errorf("P1 highcard input out of range: %f", p1HighInput)
 	}
 }
