@@ -1,6 +1,8 @@
 package poker
 
 import (
+	"fmt"
+
 	"github.com/pflow-xyz/go-pflow/petri"
 )
 
@@ -42,212 +44,339 @@ func (a Action) String() string {
 	return [...]string{"Fold", "Check", "Call", "Raise", "All-in"}[a]
 }
 
+// CardPlaceName returns the place name for a card in the deck
+// Format: "deck_<suit>_<rank>" e.g., "deck_c_2" for 2 of clubs
+func CardPlaceName(suit Suit, rank Rank) string {
+	suitChar := []string{"c", "d", "h", "s"}[suit]
+	return fmt.Sprintf("deck_%s_%d", suitChar, int(rank))
+}
+
+// P1CardPlaceName returns the place name for a card in player 1's hand
+func P1CardPlaceName(suit Suit, rank Rank) string {
+	suitChar := []string{"c", "d", "h", "s"}[suit]
+	return fmt.Sprintf("p1_card_%s_%d", suitChar, int(rank))
+}
+
+// P2CardPlaceName returns the place name for a card in player 2's hand
+func P2CardPlaceName(suit Suit, rank Rank) string {
+	suitChar := []string{"c", "d", "h", "s"}[suit]
+	return fmt.Sprintf("p2_card_%s_%d", suitChar, int(rank))
+}
+
+// CommunityCardPlaceName returns the place name for a community card
+func CommunityCardPlaceName(suit Suit, rank Rank) string {
+	suitChar := []string{"c", "d", "h", "s"}[suit]
+	return fmt.Sprintf("comm_card_%s_%d", suitChar, int(rank))
+}
+
 // CreatePokerPetriNet creates a Petri net model for Texas Hold'em
 // The model captures:
+// - Complete 52-card deck with places for each card
+// - Card memory for player hands and community cards
 // - Game phases (pre-flop, flop, turn, river, showdown)
 // - Betting rounds within each phase
 // - Player actions (fold, check, call, raise, all-in)
 // - Win conditions and pot distribution
-// - Hand strength computation via ODE
+// - Hand strength computation via ODE with draw potential
 func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
-	net := petri.Build().
-		// === GAME PHASE PLACES ===
-		Place("phase_preflop", 1).
-		Place("phase_flop", 0).
-		Place("phase_turn", 0).
-		Place("phase_river", 0).
-		Place("phase_showdown", 0).
-		Place("phase_complete", 0).
+	net := petri.NewPetriNet()
 
-		// === PLAYER STATE PLACES (per player) ===
-		// Player 1 (dealer position / button)
-		Place("p1_active", 1).     // Player is still in hand
-		Place("p1_folded", 0).     // Player has folded
-		Place("p1_acted", 0).      // Player has acted this round
-		Place("p1_turn", 0).       // It's player 1's turn
-		Place("p1_bet", 0).        // Amount bet this round
-		Place("p1_chips", 1000).   // Stack size
-		Place("p1_pot_share", 0).  // Accumulated pot contributions
-		Place("p1_hand_str", 0.5). // Normalized hand strength (0-1) - computed via ODE
-		Place("p1_wins", 0).       // Win accumulator
+	// === DECK PLACES ===
+	// Each card in the 52-card deck has a place
+	// Token value 1 = card available in deck, 0 = card dealt
+	for suit := Clubs; suit <= Spades; suit++ {
+		for rank := Two; rank <= Ace; rank++ {
+			placeName := CardPlaceName(suit, rank)
+			net.AddPlace(placeName, 1.0, nil, float64(rank)*30, float64(suit)*30, nil)
+		}
+	}
 
-		// === PLAYER 1 HAND STRENGTH ODE PLACES ===
-		// These places hold the components of hand strength that flow through ODE
-		Place("p1_rank_input", 0).     // Raw hand rank score (0-9) normalized
-		Place("p1_highcard_input", 0). // High card contribution normalized
-		Place("p1_str_delta", 0).      // Change in hand strength (for ODE update)
+	// === PLAYER 1 CARD MEMORY PLACES ===
+	// Each card can be in P1's hand (hole cards)
+	// Token value 1 = P1 has this card, 0 = P1 doesn't have it
+	for suit := Clubs; suit <= Spades; suit++ {
+		for rank := Two; rank <= Ace; rank++ {
+			placeName := P1CardPlaceName(suit, rank)
+			net.AddPlace(placeName, 0.0, nil, float64(rank)*30+500, float64(suit)*30, nil)
+		}
+	}
 
-		// Player 2
-		Place("p2_active", 1).
-		Place("p2_folded", 0).
-		Place("p2_acted", 0).
-		Place("p2_turn", 0).
-		Place("p2_bet", 0).
-		Place("p2_chips", 1000).
-		Place("p2_pot_share", 0).
-		Place("p2_hand_str", 0.5). // Normalized hand strength (0-1) - computed via ODE
-		Place("p2_wins", 0).
+	// === PLAYER 2 CARD MEMORY PLACES ===
+	for suit := Clubs; suit <= Spades; suit++ {
+		for rank := Two; rank <= Ace; rank++ {
+			placeName := P2CardPlaceName(suit, rank)
+			net.AddPlace(placeName, 0.0, nil, float64(rank)*30+1000, float64(suit)*30, nil)
+		}
+	}
 
-		// === PLAYER 2 HAND STRENGTH ODE PLACES ===
-		Place("p2_rank_input", 0).
-		Place("p2_highcard_input", 0).
-		Place("p2_str_delta", 0).
+	// === COMMUNITY CARD MEMORY PLACES ===
+	for suit := Clubs; suit <= Spades; suit++ {
+		for rank := Two; rank <= Ace; rank++ {
+			placeName := CommunityCardPlaceName(suit, rank)
+			net.AddPlace(placeName, 0.0, nil, float64(rank)*30+1500, float64(suit)*30, nil)
+		}
+	}
 
-		// === POT AND BETTING PLACES ===
-		Place("pot", 0).            // Current pot size
-		Place("bet_to_call", 0).    // Current bet amount to call
-		Place("min_raise", 2).      // Minimum raise amount (big blind)
-		Place("round_complete", 0). // All active players have acted
+	// === DRAW POTENTIAL PLACES ===
+	// These places track drawing possibilities for ODE computation
+	// P1 draw potential
+	net.AddPlace("p1_flush_draw", 0.0, nil, 100, 200, nil)     // 4 to a flush
+	net.AddPlace("p1_straight_draw", 0.0, nil, 100, 230, nil)  // Open-ended straight draw
+	net.AddPlace("p1_gutshot_draw", 0.0, nil, 100, 260, nil)   // Gutshot straight draw
+	net.AddPlace("p1_pair_draw", 0.0, nil, 100, 290, nil)      // Drawing to a pair
+	net.AddPlace("p1_overcards", 0.0, nil, 100, 320, nil)      // Overcards to board
 
-		// === PHASE TRANSITIONS ===
-		Transition("deal_hole").
-		Transition("deal_flop").
-		Transition("deal_turn").
-		Transition("deal_river").
-		Transition("to_showdown").
-		Transition("end_hand").
+	// P2 draw potential
+	net.AddPlace("p2_flush_draw", 0.0, nil, 200, 200, nil)
+	net.AddPlace("p2_straight_draw", 0.0, nil, 200, 230, nil)
+	net.AddPlace("p2_gutshot_draw", 0.0, nil, 200, 260, nil)
+	net.AddPlace("p2_pair_draw", 0.0, nil, 200, 290, nil)
+	net.AddPlace("p2_overcards", 0.0, nil, 200, 320, nil)
 
-		// === PLAYER 1 ACTION TRANSITIONS ===
-		Transition("p1_fold").
-		Transition("p1_check").
-		Transition("p1_call").
-		Transition("p1_raise").
-		Transition("p1_all_in").
+	// === CARD COUNT MEMORY PLACES ===
+	// Track the number of cards in each location
+	net.AddPlace("deck_count", 52.0, nil, 100, 400, nil)      // Cards remaining in deck
+	net.AddPlace("p1_hole_count", 0.0, nil, 100, 430, nil)    // P1's hole cards
+	net.AddPlace("p2_hole_count", 0.0, nil, 100, 460, nil)    // P2's hole cards
+	net.AddPlace("community_count", 0.0, nil, 100, 490, nil)  // Community cards
 
-		// === PLAYER 2 ACTION TRANSITIONS ===
-		Transition("p2_fold").
-		Transition("p2_check").
-		Transition("p2_call").
-		Transition("p2_raise").
-		Transition("p2_all_in").
+	// === SUIT COUNT PLACES (for flush draws) ===
+	// P1 suit counts (hole cards)
+	net.AddPlace("p1_clubs", 0.0, nil, 300, 200, nil)
+	net.AddPlace("p1_diamonds", 0.0, nil, 300, 230, nil)
+	net.AddPlace("p1_hearts", 0.0, nil, 300, 260, nil)
+	net.AddPlace("p1_spades", 0.0, nil, 300, 290, nil)
 
-		// === BETTING ROUND TRANSITIONS ===
-		Transition("start_p1_turn").
-		Transition("start_p2_turn").
-		Transition("complete_round").
+	// P2 suit counts (hole cards)
+	net.AddPlace("p2_clubs", 0.0, nil, 400, 200, nil)
+	net.AddPlace("p2_diamonds", 0.0, nil, 400, 230, nil)
+	net.AddPlace("p2_hearts", 0.0, nil, 400, 260, nil)
+	net.AddPlace("p2_spades", 0.0, nil, 400, 290, nil)
 
-		// === WIN TRANSITIONS ===
-		Transition("p1_wins_pot").
-		Transition("p2_wins_pot").
+	// Community suit counts
+	net.AddPlace("comm_clubs", 0.0, nil, 500, 200, nil)
+	net.AddPlace("comm_diamonds", 0.0, nil, 500, 230, nil)
+	net.AddPlace("comm_hearts", 0.0, nil, 500, 260, nil)
+	net.AddPlace("comm_spades", 0.0, nil, 500, 290, nil)
 
-		// === HAND STRENGTH ODE TRANSITIONS ===
-		// These transitions compute hand strength through ODE dynamics
-		// The rank and highcard inputs flow into the hand strength place
-		Transition("p1_compute_str"). // Computes P1 hand strength from inputs
-		Transition("p2_compute_str"). // Computes P2 hand strength from inputs
-		Transition("p1_update_str").  // Updates P1 hand strength from delta
-		Transition("p2_update_str").  // Updates P2 hand strength from delta
+	// === GAME PHASE PLACES ===
+	net.AddPlace("phase_preflop", 1.0, nil, 100, 500, nil)
+	net.AddPlace("phase_flop", 0.0, nil, 200, 500, nil)
+	net.AddPlace("phase_turn", 0.0, nil, 300, 500, nil)
+	net.AddPlace("phase_river", 0.0, nil, 400, 500, nil)
+	net.AddPlace("phase_showdown", 0.0, nil, 500, 500, nil)
+	net.AddPlace("phase_complete", 0.0, nil, 600, 500, nil)
 
-		// === ARCS ===
-		// Phase transitions
-		Flow("phase_preflop", "deal_hole", "phase_preflop", 1).
-		Flow("phase_preflop", "deal_flop", "phase_flop", 1).
-		Flow("phase_flop", "deal_turn", "phase_turn", 1).
-		Flow("phase_turn", "deal_river", "phase_river", 1).
-		Flow("phase_river", "to_showdown", "phase_showdown", 1).
-		Flow("phase_showdown", "end_hand", "phase_complete", 1).
+	// === PLAYER STATE PLACES ===
+	// Player 1
+	net.AddPlace("p1_active", 1.0, nil, 100, 600, nil)
+	net.AddPlace("p1_folded", 0.0, nil, 100, 630, nil)
+	net.AddPlace("p1_acted", 0.0, nil, 100, 660, nil)
+	net.AddPlace("p1_turn", 0.0, nil, 100, 690, nil)
+	net.AddPlace("p1_bet", 0.0, nil, 100, 720, nil)
+	net.AddPlace("p1_chips", 1000.0, nil, 100, 750, nil)
+	net.AddPlace("p1_pot_share", 0.0, nil, 100, 780, nil)
+	net.AddPlace("p1_hand_str", 0.5, nil, 100, 810, nil)
+	net.AddPlace("p1_wins", 0.0, nil, 100, 840, nil)
 
-		// Player 1 fold
-		Arc("p1_turn", "p1_fold", 1).
-		Arc("p1_active", "p1_fold", 1).
-		Arc("p1_fold", "p1_folded", 1).
-		Arc("p1_fold", "p1_acted", 1).
+	// Player 2
+	net.AddPlace("p2_active", 1.0, nil, 200, 600, nil)
+	net.AddPlace("p2_folded", 0.0, nil, 200, 630, nil)
+	net.AddPlace("p2_acted", 0.0, nil, 200, 660, nil)
+	net.AddPlace("p2_turn", 0.0, nil, 200, 690, nil)
+	net.AddPlace("p2_bet", 0.0, nil, 200, 720, nil)
+	net.AddPlace("p2_chips", 1000.0, nil, 200, 750, nil)
+	net.AddPlace("p2_pot_share", 0.0, nil, 200, 780, nil)
+	net.AddPlace("p2_hand_str", 0.5, nil, 200, 810, nil)
+	net.AddPlace("p2_wins", 0.0, nil, 200, 840, nil)
 
-		// Player 1 check (when bet_to_call == 0)
-		Arc("p1_turn", "p1_check", 1).
-		Arc("p1_active", "p1_check", 1).
-		Arc("p1_check", "p1_active", 1).
-		Arc("p1_check", "p1_acted", 1).
+	// === HAND STRENGTH ODE INPUT PLACES ===
+	// P1 ODE inputs
+	net.AddPlace("p1_rank_input", 0.0, nil, 300, 600, nil)
+	net.AddPlace("p1_highcard_input", 0.0, nil, 300, 630, nil)
+	net.AddPlace("p1_str_delta", 0.0, nil, 300, 660, nil)
+	net.AddPlace("p1_draw_potential", 0.0, nil, 300, 690, nil)  // Combined draw value
+	net.AddPlace("p1_completion_odds", 0.0, nil, 300, 720, nil) // Odds of completing draws
 
-		// Player 1 call
-		Arc("p1_turn", "p1_call", 1).
-		Arc("p1_active", "p1_call", 1).
-		Arc("p1_call", "p1_active", 1).
-		Arc("p1_call", "p1_acted", 1).
+	// P2 ODE inputs
+	net.AddPlace("p2_rank_input", 0.0, nil, 400, 600, nil)
+	net.AddPlace("p2_highcard_input", 0.0, nil, 400, 630, nil)
+	net.AddPlace("p2_str_delta", 0.0, nil, 400, 660, nil)
+	net.AddPlace("p2_draw_potential", 0.0, nil, 400, 690, nil)
+	net.AddPlace("p2_completion_odds", 0.0, nil, 400, 720, nil)
 
-		// Player 1 raise
-		Arc("p1_turn", "p1_raise", 1).
-		Arc("p1_active", "p1_raise", 1).
-		Arc("p1_raise", "p1_active", 1).
-		Arc("p1_raise", "p1_acted", 1).
+	// === POT AND BETTING PLACES ===
+	net.AddPlace("pot", 0.0, nil, 300, 500, nil)
+	net.AddPlace("bet_to_call", 0.0, nil, 350, 500, nil)
+	net.AddPlace("min_raise", 2.0, nil, 400, 500, nil)
+	net.AddPlace("round_complete", 0.0, nil, 450, 500, nil)
 
-		// Player 1 all-in
-		Arc("p1_turn", "p1_all_in", 1).
-		Arc("p1_active", "p1_all_in", 1).
-		Arc("p1_all_in", "p1_active", 1).
-		Arc("p1_all_in", "p1_acted", 1).
+	// === TRANSITIONS ===
+	// Phase transitions
+	net.AddTransition("deal_hole", "default", 150, 500, nil)
+	net.AddTransition("deal_flop", "default", 250, 500, nil)
+	net.AddTransition("deal_turn", "default", 350, 500, nil)
+	net.AddTransition("deal_river", "default", 450, 500, nil)
+	net.AddTransition("to_showdown", "default", 550, 500, nil)
+	net.AddTransition("end_hand", "default", 650, 500, nil)
 
-		// Player 2 fold
-		Arc("p2_turn", "p2_fold", 1).
-		Arc("p2_active", "p2_fold", 1).
-		Arc("p2_fold", "p2_folded", 1).
-		Arc("p2_fold", "p2_acted", 1).
+	// Player 1 actions
+	net.AddTransition("p1_fold", "default", 100, 900, nil)
+	net.AddTransition("p1_check", "default", 150, 900, nil)
+	net.AddTransition("p1_call", "default", 200, 900, nil)
+	net.AddTransition("p1_raise", "default", 250, 900, nil)
+	net.AddTransition("p1_all_in", "default", 300, 900, nil)
 
-		// Player 2 check
-		Arc("p2_turn", "p2_check", 1).
-		Arc("p2_active", "p2_check", 1).
-		Arc("p2_check", "p2_active", 1).
-		Arc("p2_check", "p2_acted", 1).
+	// Player 2 actions
+	net.AddTransition("p2_fold", "default", 100, 950, nil)
+	net.AddTransition("p2_check", "default", 150, 950, nil)
+	net.AddTransition("p2_call", "default", 200, 950, nil)
+	net.AddTransition("p2_raise", "default", 250, 950, nil)
+	net.AddTransition("p2_all_in", "default", 300, 950, nil)
 
-		// Player 2 call
-		Arc("p2_turn", "p2_call", 1).
-		Arc("p2_active", "p2_call", 1).
-		Arc("p2_call", "p2_active", 1).
-		Arc("p2_call", "p2_acted", 1).
+	// Betting round transitions
+	net.AddTransition("start_p1_turn", "default", 350, 900, nil)
+	net.AddTransition("start_p2_turn", "default", 350, 950, nil)
+	net.AddTransition("complete_round", "default", 400, 900, nil)
 
-		// Player 2 raise
-		Arc("p2_turn", "p2_raise", 1).
-		Arc("p2_active", "p2_raise", 1).
-		Arc("p2_raise", "p2_active", 1).
-		Arc("p2_raise", "p2_acted", 1).
+	// Win transitions
+	net.AddTransition("p1_wins_pot", "default", 450, 900, nil)
+	net.AddTransition("p2_wins_pot", "default", 450, 950, nil)
 
-		// Player 2 all-in
-		Arc("p2_turn", "p2_all_in", 1).
-		Arc("p2_active", "p2_all_in", 1).
-		Arc("p2_all_in", "p2_active", 1).
-		Arc("p2_all_in", "p2_acted", 1).
+	// Hand strength ODE transitions
+	net.AddTransition("p1_compute_str", "default", 300, 750, nil)
+	net.AddTransition("p2_compute_str", "default", 400, 750, nil)
+	net.AddTransition("p1_update_str", "default", 300, 780, nil)
+	net.AddTransition("p2_update_str", "default", 400, 780, nil)
 
-		// Turn management
-		Arc("p1_acted", "start_p2_turn", 1).
-		Arc("p2_active", "start_p2_turn", 1).
-		Arc("start_p2_turn", "p2_turn", 1).
-		Arc("start_p2_turn", "p2_active", 1).
+	// Draw potential computation transitions
+	net.AddTransition("p1_compute_draws", "default", 300, 810, nil)
+	net.AddTransition("p2_compute_draws", "default", 400, 810, nil)
 
-		Arc("p2_acted", "start_p1_turn", 1).
-		Arc("p1_active", "start_p1_turn", 1).
-		Arc("start_p1_turn", "p1_turn", 1).
-		Arc("start_p1_turn", "p1_active", 1).
+	// === ARCS ===
+	// Phase transitions
+	net.AddArc("phase_preflop", "deal_hole", 1.0, false)
+	net.AddArc("deal_hole", "phase_preflop", 1.0, false)
+	net.AddArc("phase_preflop", "deal_flop", 1.0, false)
+	net.AddArc("deal_flop", "phase_flop", 1.0, false)
+	net.AddArc("phase_flop", "deal_turn", 1.0, false)
+	net.AddArc("deal_turn", "phase_turn", 1.0, false)
+	net.AddArc("phase_turn", "deal_river", 1.0, false)
+	net.AddArc("deal_river", "phase_river", 1.0, false)
+	net.AddArc("phase_river", "to_showdown", 1.0, false)
+	net.AddArc("to_showdown", "phase_showdown", 1.0, false)
+	net.AddArc("phase_showdown", "end_hand", 1.0, false)
+	net.AddArc("end_hand", "phase_complete", 1.0, false)
 
-		// Win detection - Player 1 wins when Player 2 folds
-		Arc("p2_folded", "p1_wins_pot", 1).
-		Arc("p1_active", "p1_wins_pot", 1).
-		Arc("pot", "p1_wins_pot", 1).
-		Arc("p1_wins_pot", "p1_wins", 1).
+	// Player 1 fold
+	net.AddArc("p1_turn", "p1_fold", 1.0, false)
+	net.AddArc("p1_active", "p1_fold", 1.0, false)
+	net.AddArc("p1_fold", "p1_folded", 1.0, false)
+	net.AddArc("p1_fold", "p1_acted", 1.0, false)
 
-		// Win detection - Player 2 wins when Player 1 folds
-		Arc("p1_folded", "p2_wins_pot", 1).
-		Arc("p2_active", "p2_wins_pot", 1).
-		Arc("pot", "p2_wins_pot", 1).
-		Arc("p2_wins_pot", "p2_wins", 1).
+	// Player 1 check
+	net.AddArc("p1_turn", "p1_check", 1.0, false)
+	net.AddArc("p1_active", "p1_check", 1.0, false)
+	net.AddArc("p1_check", "p1_active", 1.0, false)
+	net.AddArc("p1_check", "p1_acted", 1.0, false)
 
-		// === HAND STRENGTH ODE ARCS ===
-		// Player 1 hand strength computation
-		// rank_input and highcard_input flow into str_delta through p1_compute_str
-		Arc("p1_rank_input", "p1_compute_str", 1).
-		Arc("p1_highcard_input", "p1_compute_str", 1).
-		Arc("p1_compute_str", "p1_str_delta", 1).
-		// str_delta flows into hand_str through p1_update_str
-		Arc("p1_str_delta", "p1_update_str", 1).
-		Arc("p1_update_str", "p1_hand_str", 1).
+	// Player 1 call
+	net.AddArc("p1_turn", "p1_call", 1.0, false)
+	net.AddArc("p1_active", "p1_call", 1.0, false)
+	net.AddArc("p1_call", "p1_active", 1.0, false)
+	net.AddArc("p1_call", "p1_acted", 1.0, false)
 
-		// Player 2 hand strength computation
-		Arc("p2_rank_input", "p2_compute_str", 1).
-		Arc("p2_highcard_input", "p2_compute_str", 1).
-		Arc("p2_compute_str", "p2_str_delta", 1).
-		Arc("p2_str_delta", "p2_update_str", 1).
-		Arc("p2_update_str", "p2_hand_str", 1).
+	// Player 1 raise
+	net.AddArc("p1_turn", "p1_raise", 1.0, false)
+	net.AddArc("p1_active", "p1_raise", 1.0, false)
+	net.AddArc("p1_raise", "p1_active", 1.0, false)
+	net.AddArc("p1_raise", "p1_acted", 1.0, false)
 
-		Done()
+	// Player 1 all-in
+	net.AddArc("p1_turn", "p1_all_in", 1.0, false)
+	net.AddArc("p1_active", "p1_all_in", 1.0, false)
+	net.AddArc("p1_all_in", "p1_active", 1.0, false)
+	net.AddArc("p1_all_in", "p1_acted", 1.0, false)
+
+	// Player 2 fold
+	net.AddArc("p2_turn", "p2_fold", 1.0, false)
+	net.AddArc("p2_active", "p2_fold", 1.0, false)
+	net.AddArc("p2_fold", "p2_folded", 1.0, false)
+	net.AddArc("p2_fold", "p2_acted", 1.0, false)
+
+	// Player 2 check
+	net.AddArc("p2_turn", "p2_check", 1.0, false)
+	net.AddArc("p2_active", "p2_check", 1.0, false)
+	net.AddArc("p2_check", "p2_active", 1.0, false)
+	net.AddArc("p2_check", "p2_acted", 1.0, false)
+
+	// Player 2 call
+	net.AddArc("p2_turn", "p2_call", 1.0, false)
+	net.AddArc("p2_active", "p2_call", 1.0, false)
+	net.AddArc("p2_call", "p2_active", 1.0, false)
+	net.AddArc("p2_call", "p2_acted", 1.0, false)
+
+	// Player 2 raise
+	net.AddArc("p2_turn", "p2_raise", 1.0, false)
+	net.AddArc("p2_active", "p2_raise", 1.0, false)
+	net.AddArc("p2_raise", "p2_active", 1.0, false)
+	net.AddArc("p2_raise", "p2_acted", 1.0, false)
+
+	// Player 2 all-in
+	net.AddArc("p2_turn", "p2_all_in", 1.0, false)
+	net.AddArc("p2_active", "p2_all_in", 1.0, false)
+	net.AddArc("p2_all_in", "p2_active", 1.0, false)
+	net.AddArc("p2_all_in", "p2_acted", 1.0, false)
+
+	// Turn management
+	net.AddArc("p1_acted", "start_p2_turn", 1.0, false)
+	net.AddArc("p2_active", "start_p2_turn", 1.0, false)
+	net.AddArc("start_p2_turn", "p2_turn", 1.0, false)
+	net.AddArc("start_p2_turn", "p2_active", 1.0, false)
+
+	net.AddArc("p2_acted", "start_p1_turn", 1.0, false)
+	net.AddArc("p1_active", "start_p1_turn", 1.0, false)
+	net.AddArc("start_p1_turn", "p1_turn", 1.0, false)
+	net.AddArc("start_p1_turn", "p1_active", 1.0, false)
+
+	// Win detection
+	net.AddArc("p2_folded", "p1_wins_pot", 1.0, false)
+	net.AddArc("p1_active", "p1_wins_pot", 1.0, false)
+	net.AddArc("pot", "p1_wins_pot", 1.0, false)
+	net.AddArc("p1_wins_pot", "p1_wins", 1.0, false)
+
+	net.AddArc("p1_folded", "p2_wins_pot", 1.0, false)
+	net.AddArc("p2_active", "p2_wins_pot", 1.0, false)
+	net.AddArc("pot", "p2_wins_pot", 1.0, false)
+	net.AddArc("p2_wins_pot", "p2_wins", 1.0, false)
+
+	// Hand strength ODE arcs
+	net.AddArc("p1_rank_input", "p1_compute_str", 1.0, false)
+	net.AddArc("p1_highcard_input", "p1_compute_str", 1.0, false)
+	net.AddArc("p1_draw_potential", "p1_compute_str", 1.0, false)
+	net.AddArc("p1_compute_str", "p1_str_delta", 1.0, false)
+	net.AddArc("p1_str_delta", "p1_update_str", 1.0, false)
+	net.AddArc("p1_update_str", "p1_hand_str", 1.0, false)
+
+	net.AddArc("p2_rank_input", "p2_compute_str", 1.0, false)
+	net.AddArc("p2_highcard_input", "p2_compute_str", 1.0, false)
+	net.AddArc("p2_draw_potential", "p2_compute_str", 1.0, false)
+	net.AddArc("p2_compute_str", "p2_str_delta", 1.0, false)
+	net.AddArc("p2_str_delta", "p2_update_str", 1.0, false)
+	net.AddArc("p2_update_str", "p2_hand_str", 1.0, false)
+
+	// Draw potential computation arcs
+	// P1 draw inputs
+	net.AddArc("p1_flush_draw", "p1_compute_draws", 1.0, false)
+	net.AddArc("p1_straight_draw", "p1_compute_draws", 1.0, false)
+	net.AddArc("p1_overcards", "p1_compute_draws", 1.0, false)
+	net.AddArc("p1_compute_draws", "p1_draw_potential", 1.0, false)
+
+	// P2 draw inputs
+	net.AddArc("p2_flush_draw", "p2_compute_draws", 1.0, false)
+	net.AddArc("p2_straight_draw", "p2_compute_draws", 1.0, false)
+	net.AddArc("p2_overcards", "p2_compute_draws", 1.0, false)
+	net.AddArc("p2_compute_draws", "p2_draw_potential", 1.0, false)
 
 	return net
 }
@@ -288,11 +417,14 @@ func DefaultRates() map[string]float64 {
 		"p2_wins_pot": 0.0,
 
 		// Hand strength ODE transitions
-		// These rates control how quickly hand strength flows through the ODE
-		"p1_compute_str": 1.0, // Rate at which P1 hand strength is computed
-		"p2_compute_str": 1.0, // Rate at which P2 hand strength is computed
-		"p1_update_str":  1.0, // Rate at which P1 hand strength is updated
-		"p2_update_str":  1.0, // Rate at which P2 hand strength is updated
+		"p1_compute_str": 1.0,
+		"p2_compute_str": 1.0,
+		"p1_update_str":  1.0,
+		"p2_update_str":  1.0,
+
+		// Draw potential computation transitions
+		"p1_compute_draws": 1.0,
+		"p2_compute_draws": 1.0,
 	}
 }
 

@@ -62,6 +62,34 @@ The game is modeled as a Petri net with the following structure:
 
 ### Places
 
+**Deck Card Places** (52 total):
+- `deck_<suit>_<rank>`: Each card in the 52-card deck (e.g., `deck_h_14` for Ace of Hearts)
+  - Token = 1 means card is available in deck
+  - Token = 0 means card has been dealt
+
+**Player Card Memory Places** (52 per player + 52 for community):
+- `p1_card_<suit>_<rank>`: Cards in Player 1's hand
+- `p2_card_<suit>_<rank>`: Cards in Player 2's hand
+- `comm_card_<suit>_<rank>`: Community cards
+
+**Card Count Places**:
+- `deck_count`: Number of cards remaining in deck
+- `p1_hole_count`: Number of P1's hole cards (2)
+- `p2_hole_count`: Number of P2's hole cards (2)
+- `community_count`: Number of community cards (0-5)
+
+**Suit Count Places** (for flush detection):
+- `p1_clubs`, `p1_diamonds`, `p1_hearts`, `p1_spades`: P1's suit counts
+- `p2_clubs`, `p2_diamonds`, `p2_hearts`, `p2_spades`: P2's suit counts
+- `comm_clubs`, `comm_diamonds`, `comm_hearts`, `comm_spades`: Community suit counts
+
+**Draw Potential Places** (for each player):
+- `p*_flush_draw`: Flush draw strength (0-1)
+- `p*_straight_draw`: Straight draw strength (0-1)
+- `p*_overcards`: Overcard strength (0-1)
+- `p*_draw_potential`: Combined draw potential value
+- `p*_completion_odds`: Probability of completing draws
+
 **Phase Places**:
 - `phase_preflop`: Pre-flop betting
 - `phase_flop`: Post-flop betting
@@ -110,29 +138,51 @@ The game is modeled as a Petri net with the following structure:
 **Hand Strength ODE Transitions** (per player):
 - `p*_compute_str`: Computes hand strength from rank and highcard inputs
 - `p*_update_str`: Updates hand strength from delta
+- `p*_compute_draws`: Computes draw potential from flush/straight draws
 
 **Win Transitions**:
 - `p1_wins_pot`: Player 1 wins pot
 - `p2_wins_pot`: Player 2 wins pot
 
-## ODE-Based Hand Strength Computation
+## Card Memory and ODE-Based Hand Strength
 
-A key feature is that hand strength is computed through the ODE dynamics rather than
-being set directly. This models hand strength as a continuous flow through the Petri net:
+The Petri net now includes a complete 52-card deck representation, with memory places
+tracking which cards are in each location (deck, player hands, community). This enables
+the ODE to consider possible completions when computing hand strength.
 
-1. **Input Places**: `p*_rank_input` and `p*_highcard_input` receive normalized values from card evaluation
-2. **Computation Transitions**: `p*_compute_str` combines inputs using mass-action kinetics
-3. **Update Transitions**: `p*_update_str` flows the computed strength to `p*_hand_str`
+### Card Memory
 
-The ODE-based computation uses the formula:
+Each card has places tracking its location:
+- `deck_<suit>_<rank>`: Token = 1 if card is in deck, 0 if dealt
+- `p1_card_<suit>_<rank>`: Token = 1 if card is in P1's hand
+- `p2_card_<suit>_<rank>`: Token = 1 if card is in P2's hand
+- `comm_card_<suit>_<rank>`: Token = 1 if card is in community
+
+When cards are dealt, tokens flow from deck places to hand/community places.
+
+### Draw Potential Computation
+
+The ODE computes draw potential based on:
+1. **Flush Draws**: 4 cards of same suit = 9 outs (35% with 2 cards to come)
+2. **Straight Draws**: Open-ended = 8 outs, Gutshot = 4 outs
+3. **Overcards**: Cards higher than board = 6 outs
+
+Draw potential flows through `p*_compute_draws` transitions to `p*_draw_potential`.
+
+### Hand Strength Formula
+
+The ODE computes strength with draw consideration:
 ```
-strength = (rank_norm × 0.9) + (highcard_norm × 0.1) + delta_adjustment
+base_strength = (rank_norm × 0.75) + (highcard_norm × 0.1)
+draw_bonus = draw_potential × completion_odds × 0.15
+total_strength = base_strength + draw_bonus
 ```
 
 Where:
 - `rank_norm`: Normalized hand rank (0 = High Card, 1 = Royal Flush)
 - `highcard_norm`: Normalized high card value (2-14 → 0.14-1.0)
-- `delta_adjustment`: Small adjustment from ODE dynamics (allows smooth transitions)
+- `draw_potential`: Combined draw strength from flush/straight/overcards
+- `completion_odds`: Probability of completing draws based on remaining cards
 
 ## ODE-Based Bet Estimation
 
