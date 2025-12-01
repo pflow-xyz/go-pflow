@@ -870,22 +870,13 @@ func (g *PokerGame) computeDrawPotentials(state map[string]float64) {
 
 		// Approximate odds = 1 - (no hit on any card)
 		if deckSize > 0 {
-			state["p1_completion_odds"] = 1.0 - pow((deckSize-p1Outs)/deckSize, float64(cardsTocome))
-			state["p2_completion_odds"] = 1.0 - pow((deckSize-p2Outs)/deckSize, float64(cardsTocome))
+			state["p1_completion_odds"] = 1.0 - math.Pow((deckSize-p1Outs)/deckSize, float64(cardsTocome))
+			state["p2_completion_odds"] = 1.0 - math.Pow((deckSize-p2Outs)/deckSize, float64(cardsTocome))
 		}
 	} else {
 		state["p1_completion_odds"] = 0
 		state["p2_completion_odds"] = 0
 	}
-}
-
-// pow is a simple power function
-func pow(base, exp float64) float64 {
-	result := 1.0
-	for i := 0; i < int(exp); i++ {
-		result *= base
-	}
-	return result
 }
 
 // analyzeDraws analyzes draw potential for a hand
@@ -960,35 +951,66 @@ func (g *PokerGame) analyzeDraws(hole []Card) (flushDraw, straightDraw, overcard
 }
 
 // checkStraightDraw checks for open-ended or gutshot straight draws
+// Open-ended: 4 consecutive cards that can complete on either end (8 outs)
+// Gutshot: 4 cards with one gap in a 5-card range (4 outs)
 func (g *PokerGame) checkStraightDraw(cards []Card) float64 {
 	if len(cards) < 4 {
 		return 0
 	}
 
-	// Get unique ranks
+	// Get unique ranks and convert to sorted slice
 	ranks := make(map[Rank]bool)
 	for _, c := range cards {
 		ranks[c.Rank] = true
 	}
 
-	// Check for consecutive sequences
+	// Check for straight draws by looking at 5-card windows
+	// For a valid straight, we need 5 consecutive ranks (e.g., 5-6-7-8-9)
 	for start := Two; start <= Ten; start++ {
+		// Count cards in this 5-card window
 		count := 0
-		for r := start; r <= start+4; r++ {
+		var gaps []Rank
+		for r := start; r <= start+4 && r <= Ace; r++ {
 			if ranks[r] {
 				count++
+			} else {
+				gaps = append(gaps, r)
 			}
 		}
-		if count == 4 {
-			// Check if open-ended (both ends available)
-			lowOpen := start > Two && !ranks[start-1]
-			highOpen := start+4 < Ace && !ranks[start+5]
-			if lowOpen && highOpen {
-				return 1.0 // Open-ended
+
+		if count == 4 && len(gaps) == 1 {
+			// We have 4 of 5 cards needed for a straight
+			gap := gaps[0]
+
+			// Check if it's open-ended (gap is at end) or gutshot (gap in middle)
+			if gap == start || gap == start+4 {
+				// Open-ended: missing card is at one end
+				// Check if the other end is also available (true open-ended = 8 outs)
+				if gap == start && start > Two && !ranks[start-1] {
+					return 1.0 // Can complete on both ends
+				}
+				if gap == start+4 && start+5 <= Ace && !ranks[start+5] {
+					return 1.0 // Can complete on both ends
+				}
+				// One-ended straight draw (4 outs)
+				return 0.7
 			}
-			return 0.5 // Gutshot
+			// Gutshot: missing card is in the middle (4 outs)
+			return 0.5
 		}
 	}
+
+	// Special case: wheel draw (A-2-3-4-5)
+	wheelCards := 0
+	for _, r := range []Rank{Ace, Two, Three, Four, Five} {
+		if ranks[r] {
+			wheelCards++
+		}
+	}
+	if wheelCards == 4 {
+		return 0.5 // Gutshot wheel draw
+	}
+
 	return 0
 }
 

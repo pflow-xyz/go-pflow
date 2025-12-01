@@ -69,6 +69,15 @@ func CommunityCardPlaceName(suit Suit, rank Rank) string {
 	return fmt.Sprintf("comm_card_%s_%d", suitChar, int(rank))
 }
 
+// Layout constants for Petri net visualization
+const (
+	cardSpacing     = 30  // Spacing between card places
+	deckXOffset     = 0   // X offset for deck cards
+	p1CardXOffset   = 500 // X offset for P1 card memory
+	p2CardXOffset   = 1000 // X offset for P2 card memory
+	commCardXOffset = 1500 // X offset for community cards
+)
+
 // CreatePokerPetriNet creates a Petri net model for Texas Hold'em
 // The model captures:
 // - Complete 52-card deck with places for each card
@@ -87,7 +96,9 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 	for suit := Clubs; suit <= Spades; suit++ {
 		for rank := Two; rank <= Ace; rank++ {
 			placeName := CardPlaceName(suit, rank)
-			net.AddPlace(placeName, 1.0, nil, float64(rank)*30, float64(suit)*30, nil)
+			x := float64(rank)*cardSpacing + deckXOffset
+			y := float64(suit) * cardSpacing
+			net.AddPlace(placeName, 1.0, nil, x, y, nil)
 		}
 	}
 
@@ -97,7 +108,9 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 	for suit := Clubs; suit <= Spades; suit++ {
 		for rank := Two; rank <= Ace; rank++ {
 			placeName := P1CardPlaceName(suit, rank)
-			net.AddPlace(placeName, 0.0, nil, float64(rank)*30+500, float64(suit)*30, nil)
+			x := float64(rank)*cardSpacing + p1CardXOffset
+			y := float64(suit) * cardSpacing
+			net.AddPlace(placeName, 0.0, nil, x, y, nil)
 		}
 	}
 
@@ -105,7 +118,9 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 	for suit := Clubs; suit <= Spades; suit++ {
 		for rank := Two; rank <= Ace; rank++ {
 			placeName := P2CardPlaceName(suit, rank)
-			net.AddPlace(placeName, 0.0, nil, float64(rank)*30+1000, float64(suit)*30, nil)
+			x := float64(rank)*cardSpacing + p2CardXOffset
+			y := float64(suit) * cardSpacing
+			net.AddPlace(placeName, 0.0, nil, x, y, nil)
 		}
 	}
 
@@ -113,7 +128,9 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 	for suit := Clubs; suit <= Spades; suit++ {
 		for rank := Two; rank <= Ace; rank++ {
 			placeName := CommunityCardPlaceName(suit, rank)
-			net.AddPlace(placeName, 0.0, nil, float64(rank)*30+1500, float64(suit)*30, nil)
+			x := float64(rank)*cardSpacing + commCardXOffset
+			y := float64(suit) * cardSpacing
+			net.AddPlace(placeName, 0.0, nil, x, y, nil)
 		}
 	}
 
