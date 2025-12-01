@@ -1,4 +1,4 @@
-// Catacombs of Pflow - A roguelike dungeon crawler
+// Catacombs - A roguelike dungeon crawler
 package main
 
 import (
@@ -34,7 +34,7 @@ func main() {
 	http.Handle("/health", srv)
 
 	addr := fmt.Sprintf(":%d", *port)
-	log.Printf("Catacombs of Pflow server starting on http://localhost%s", addr)
+	log.Printf("Catacombs server starting on http://localhost%s", addr)
 	log.Printf("Open http://localhost%s in your browser to play", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }

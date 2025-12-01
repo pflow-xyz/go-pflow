@@ -210,7 +210,7 @@ run-doom-server:
 run-catacombs: run-catacombs-server
 
 run-catacombs-server:
-	@echo "Starting Catacombs of Pflow server..."
+	@echo "Starting Catacombs server..."
 	@echo "Open http://localhost:8082 in your browser"
 	@echo "Supports NES controller via USB!"
 	@go run ./examples/catacombs/cmd -port 8082

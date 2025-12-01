@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catacombs of Pflow</title>
+    <title>Catacombs</title>
     <style>
         * {
             margin: 0;
@@ -268,16 +268,268 @@
         .entity-enemy { color: #ff0000; }
         .entity-npc { color: #00ffff; }
         .entity-item { color: #ffff00; }
+
+        /* Combat UI */
+        #combat-panel {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #16213e;
+            border: 3px solid #e94560;
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 150;
+            min-width: 600px;
+            box-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
+        }
+        .combat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e94560;
+            padding-bottom: 8px;
+        }
+        .combat-title {
+            color: #e94560;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .combat-round {
+            color: #4ecca3;
+            font-size: 12px;
+        }
+        .ap-bar-container {
+            margin-bottom: 15px;
+        }
+        .ap-bar-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+        .ap-bar {
+            height: 24px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+        }
+        .ap-pip {
+            flex: 1;
+            background: #4ecca3;
+            margin: 2px 1px;
+            border-radius: 2px;
+            transition: background 0.2s;
+        }
+        .ap-pip.used {
+            background: #333;
+        }
+        .combat-main {
+            display: flex;
+            gap: 15px;
+        }
+        .combat-targets {
+            flex: 1;
+        }
+        .combat-targets h3, .combat-bodyparts h3, .combat-actions h3 {
+            color: #e94560;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .target-list {
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .target-item {
+            padding: 6px 10px;
+            margin: 3px 0;
+            background: #0f3460;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .target-item:hover {
+            background: #1a4a7e;
+        }
+        .target-item.selected {
+            background: #e94560;
+        }
+        .target-health {
+            font-size: 10px;
+            color: #4ecca3;
+        }
+        .combat-bodyparts {
+            flex: 1;
+        }
+        .bodypart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px;
+        }
+        .bodypart-btn {
+            padding: 6px;
+            background: #0f3460;
+            border: none;
+            color: #eee;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: left;
+        }
+        .bodypart-btn:hover {
+            background: #1a4a7e;
+        }
+        .bodypart-btn.selected {
+            background: #e94560;
+        }
+        .bodypart-btn .hit-chance {
+            float: right;
+            color: #4ecca3;
+        }
+        .combat-actions {
+            flex: 1;
+        }
+        .action-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .combat-action-btn {
+            padding: 8px 12px;
+            background: #0f3460;
+            border: none;
+            color: #eee;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 11px;
+            text-align: left;
+            transition: background 0.2s;
+        }
+        .combat-action-btn:hover:not(:disabled) {
+            background: #e94560;
+        }
+        .combat-action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .combat-action-btn .ap-cost {
+            float: right;
+            color: #ffd700;
+        }
+        .combat-log {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #0f3460;
+            max-height: 80px;
+            overflow-y: auto;
+            font-size: 10px;
+        }
+        .combat-log-entry {
+            padding: 2px 0;
+            color: #aaa;
+        }
+        .combat-log-entry.damage {
+            color: #ff6b6b;
+        }
+        .combat-log-entry.crit {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .combat-log-entry.miss {
+            color: #666;
+        }
+        .combat-log-entry.info {
+            color: #4ecca3;
+        }
+        /* AI Mode UI */
+        #ai-panel {
+            display: none;
+            background: #1a3a1a;
+            border: 2px solid #4ecca3;
+        }
+        #ai-panel h2 {
+            color: #4ecca3;
+        }
+        #ai-toggle {
+            padding: 8px 16px;
+            background: #0f3460;
+            border: 2px solid #4ecca3;
+            color: #4ecca3;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        #ai-toggle:hover {
+            background: #1a4a7e;
+        }
+        #ai-toggle.active {
+            background: #4ecca3;
+            color: #000;
+        }
+        .ai-stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+        .ai-stat-label { color: #888; }
+        .ai-stat-value { color: #4ecca3; }
+        .ai-mode {
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            background: #0f3460;
+            border-radius: 3px;
+        }
+        .ai-mode.explore { color: #4ecca3; }
+        .ai-mode.combat { color: #e94560; }
+        .ai-mode.interact { color: #ffd700; }
+        .ai-mode.heal { color: #ff6b6b; }
+        .ai-mode.loot { color: #ffaa00; }
+        .ai-speed-control {
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+        }
+        .ai-speed-control input {
+            flex: 1;
+        }
+        #demo-btn {
+            padding: 8px 16px;
+            background: #4ecca3;
+            border: none;
+            color: #000;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: inherit;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        #demo-btn:hover {
+            background: #6fddbb;
+        }
     </style>
 </head>
 <body>
-    <h1>Catacombs of Pflow</h1>
+    <h1>Catacombs</h1>
 
     <div class="game-container">
         <div class="main-view">
             <div id="view-toggle" class="panel">
                 <button id="btn-ascii" class="active">ASCII View</button>
                 <button id="btn-raycast">3D View</button>
+                <button id="ai-toggle">🤖 AI Mode</button>
+                <button id="demo-btn">▶ Demo</button>
             </div>
 
             <div class="panel" id="map-panel">
@@ -339,16 +591,52 @@
                 <div id="quest-list"></div>
             </div>
 
+            <div class="panel" id="ai-panel">
+                <h2>🤖 AI Player</h2>
+                <div class="ai-stat-row">
+                    <span class="ai-stat-label">Mode</span>
+                    <span class="ai-stat-value ai-mode" id="ai-mode">explore</span>
+                </div>
+                <div class="ai-stat-row">
+                    <span class="ai-stat-label">Target</span>
+                    <span class="ai-stat-value" id="ai-target">-</span>
+                </div>
+                <div class="ai-stat-row">
+                    <span class="ai-stat-label">Last Action</span>
+                    <span class="ai-stat-value" id="ai-last-action">-</span>
+                </div>
+                <div class="ai-stat-row">
+                    <span class="ai-stat-label">Actions</span>
+                    <span class="ai-stat-value" id="ai-action-count">0</span>
+                </div>
+                <div class="ai-speed-control">
+                    <span>Speed:</span>
+                    <input type="range" id="ai-speed" min="100" max="2000" value="500" step="100">
+                    <span id="ai-speed-label">500ms</span>
+                </div>
+            </div>
+
             <div class="panel" id="controls-panel">
                 <h2>Controls</h2>
                 <div id="controls-help-ascii">
                     <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or <kbd>Arrows</kbd> - Move</div>
                     <div><kbd>Space</kbd> - Attack</div>
                     <div><kbd>E</kbd> - Interact/Talk</div>
+                    <div><kbd>Tab</kbd> - Start combat mode</div>
                     <div><kbd>X</kbd> - Look mode (examine tiles)</div>
                     <div><kbd>.</kbd> - Wait</div>
                     <div><kbd>&gt;</kbd> - Descend  <kbd>&lt;</kbd> - Ascend</div>
                     <div><kbd>1-9</kbd> - Use inventory</div>
+                </div>
+                <div id="controls-help-combat" style="display:none; margin-top:10px; padding:8px; background:#0f3460; border-radius:4px;">
+                    <div style="color:#e94560; font-weight:bold;">⚔️ COMBAT CONTROLS</div>
+                    <div><kbd>A</kbd> - Attack (4 AP)</div>
+                    <div><kbd>S</kbd> - Aimed shot (6 AP)</div>
+                    <div><kbd>E</kbd> - End turn</div>
+                    <div><kbd>F</kbd> - Flee</div>
+                    <div><kbd>Tab</kbd> - Cycle targets</div>
+                    <div><kbd>1-8</kbd> - Select body part</div>
+                    <div><kbd>Arrows</kbd> - Move (1 AP)</div>
                 </div>
                 <div id="look-info" style="display:none; margin-top:10px; padding:8px; background:#0f3460; border-radius:4px;">
                     <div style="color:#e94560; font-weight:bold;">LOOK MODE</div>
@@ -377,6 +665,41 @@
         <div id="dialogue-choices"></div>
     </div>
 
+    <div id="combat-panel">
+        <div class="combat-header">
+            <span class="combat-title">⚔️ COMBAT</span>
+            <span class="combat-round" id="combat-round">Round 1</span>
+            <span class="combat-turn" id="combat-turn">Your Turn</span>
+        </div>
+
+        <div class="ap-bar-container">
+            <div class="ap-bar-label">
+                <span>Action Points</span>
+                <span id="ap-text">10/10</span>
+            </div>
+            <div class="ap-bar" id="ap-bar"></div>
+        </div>
+
+        <div class="combat-main">
+            <div class="combat-targets">
+                <h3>Targets</h3>
+                <div class="target-list" id="target-list"></div>
+            </div>
+
+            <div class="combat-bodyparts">
+                <h3>Target Body Part</h3>
+                <div class="bodypart-grid" id="bodypart-grid"></div>
+            </div>
+
+            <div class="combat-actions">
+                <h3>Actions</h3>
+                <div class="action-grid" id="action-grid"></div>
+            </div>
+        </div>
+
+        <div class="combat-log" id="combat-log"></div>
+    </div>
+
     <div class="game-over-overlay" id="game-over-overlay">
         <div class="game-over-box" id="game-over-box">
             <h2 id="game-over-title">GAME OVER</h2>
@@ -390,6 +713,11 @@
         let ws = null;
         let gameState = null;
         let currentView = 'ascii';
+
+        // AI mode state
+        let aiEnabled = false;
+        let aiTickInterval = null;
+        let aiSpeed = 500; // ms between AI actions
 
         // Raycast rendering state
         let raycastCanvas, raycastCtx;
@@ -484,6 +812,28 @@
             5: 'Sage - keeper of ancient knowledge'
         };
 
+        // Combat constants (must match server)
+        const BODY_PARTS = [
+            { id: 0, name: 'Torso', hitPenalty: 0 },
+            { id: 1, name: 'Head', hitPenalty: 40 },
+            { id: 2, name: 'Left Arm', hitPenalty: 30 },
+            { id: 3, name: 'Right Arm', hitPenalty: 30 },
+            { id: 4, name: 'Left Leg', hitPenalty: 20 },
+            { id: 5, name: 'Right Leg', hitPenalty: 20 },
+            { id: 6, name: 'Eyes', hitPenalty: 60 },
+            { id: 7, name: 'Groin', hitPenalty: 30 }
+        ];
+
+        const COMBAT_ACTIONS = [
+            { id: 'attack', name: 'Attack', apCost: 4 },
+            { id: 'aimed_shot', name: 'Aimed Shot', apCost: 6 },
+            { id: 'combat_move', name: 'Move', apCost: 1 },
+            { id: 'end_turn', name: 'End Turn', apCost: 0 },
+            { id: 'flee', name: 'Flee', apCost: 0 }
+        ];
+
+        let selectedBodyPart = 0; // Default to torso
+
         // NES Gamepad mappings
         // Standard mapping uses buttons 12-15 for D-pad
         // Some controllers use axes instead (axis 0 for left/right, axis 1 for up/down)
@@ -529,6 +879,118 @@
             ws.onerror = (error) => {
                 console.error('WebSocket error:', error);
             };
+        }
+
+        function connectDemo() {
+            // Connect with demo mode (AI enabled from start)
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                console.log('Connected to server (demo mode)');
+                ws.send(JSON.stringify({ type: 'join_demo', timestamp: Date.now() }));
+                // Auto-start AI ticking
+                startAITick();
+            };
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                handleMessage(msg);
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from server');
+                setTimeout(connect, 2000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        // AI control functions
+        function toggleAI() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+            aiEnabled = !aiEnabled;
+            ws.send(JSON.stringify({
+                type: 'ai_toggle',
+                payload: { enabled: aiEnabled },
+                timestamp: Date.now()
+            }));
+
+            if (aiEnabled) {
+                startAITick();
+            } else {
+                stopAITick();
+            }
+
+            updateAIButton();
+        }
+
+        function startAITick() {
+            if (aiTickInterval) clearInterval(aiTickInterval);
+            aiEnabled = true;
+            updateAIButton();
+
+            aiTickInterval = setInterval(() => {
+                if (!ws || ws.readyState !== WebSocket.OPEN) return;
+                if (!aiEnabled) return;
+                if (gameState && gameState.game_over) {
+                    stopAITick();
+                    return;
+                }
+
+                ws.send(JSON.stringify({
+                    type: 'ai_tick',
+                    timestamp: Date.now()
+                }));
+            }, aiSpeed);
+        }
+
+        function stopAITick() {
+            if (aiTickInterval) {
+                clearInterval(aiTickInterval);
+                aiTickInterval = null;
+            }
+            aiEnabled = false;
+            updateAIButton();
+        }
+
+        function updateAIButton() {
+            const btn = document.getElementById('ai-toggle');
+            if (aiEnabled) {
+                btn.classList.add('active');
+                btn.textContent = '🤖 AI ON';
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = '🤖 AI Mode';
+            }
+        }
+
+        function updateAIPanel() {
+            const panel = document.getElementById('ai-panel');
+            if (!gameState || !gameState.ai) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            const ai = gameState.ai;
+            if (ai.enabled) {
+                panel.style.display = 'block';
+
+                // Update mode with color class
+                const modeElem = document.getElementById('ai-mode');
+                modeElem.textContent = ai.mode || 'explore';
+                modeElem.className = 'ai-stat-value ai-mode ' + (ai.mode || 'explore');
+
+                // Update other stats
+                document.getElementById('ai-target').textContent = ai.target || '-';
+                document.getElementById('ai-last-action').textContent = ai.last_action || '-';
+                document.getElementById('ai-action-count').textContent = ai.action_count || 0;
+            } else {
+                panel.style.display = 'none';
+            }
         }
 
         function handleMessage(msg) {
@@ -615,6 +1077,12 @@
             } else {
                 hideDialogue();
             }
+
+            // Handle combat UI
+            updateCombatUI();
+
+            // Update AI panel
+            updateAIPanel();
 
             // Handle game over
             if (gameState.game_over) {
@@ -811,6 +1279,186 @@
             const char = TILE_CHARS[tile] || '?';
             document.getElementById('look-description').innerHTML =
                 `<strong>${char}</strong> - ${desc}`;
+        }
+
+        // ============================================
+        // COMBAT UI FUNCTIONS
+        // ============================================
+
+        function updateCombatUI() {
+            const combatHelp = document.getElementById('controls-help-combat');
+
+            if (!gameState || !gameState.combat || !gameState.combat.active) {
+                document.getElementById('combat-panel').style.display = 'none';
+                if (combatHelp) combatHelp.style.display = 'none';
+                return;
+            }
+
+            const combat = gameState.combat;
+            document.getElementById('combat-panel').style.display = 'block';
+            if (combatHelp) combatHelp.style.display = 'block';
+
+            // Update round and turn
+            document.getElementById('combat-round').textContent = `Round ${combat.round_number}`;
+            document.getElementById('combat-turn').textContent = combat.player_turn ? 'Your Turn' : 'Enemy Turn';
+            document.getElementById('combat-turn').style.color = combat.player_turn ? '#4ecca3' : '#e94560';
+
+            // Update AP bar
+            updateAPBar(combat.current_ap, combat.max_ap);
+
+            // Update targets
+            updateTargetList(combat);
+
+            // Update body part selector
+            updateBodyPartSelector(combat);
+
+            // Update action buttons
+            updateActionButtons(combat);
+
+            // Update combat log
+            updateCombatLog(combat.combat_log || []);
+        }
+
+        function updateAPBar(current, max) {
+            document.getElementById('ap-text').textContent = `${current}/${max}`;
+            const bar = document.getElementById('ap-bar');
+            bar.innerHTML = '';
+            for (let i = 0; i < max; i++) {
+                const pip = document.createElement('div');
+                pip.className = 'ap-pip' + (i >= current ? ' used' : '');
+                bar.appendChild(pip);
+            }
+        }
+
+        function updateTargetList(combat) {
+            const list = document.getElementById('target-list');
+            list.innerHTML = '';
+
+            const enemies = gameState.enemies || [];
+            const combatants = combat.combatants || [];
+
+            for (const enemyId of combatants) {
+                const enemy = enemies.find(e => e.id === enemyId);
+                if (!enemy || enemy.state === 6) continue; // Skip dead
+
+                const div = document.createElement('div');
+                div.className = 'target-item' + (combat.selected_enemy === enemyId ? ' selected' : '');
+
+                const healthPct = Math.round((enemy.health / enemy.max_health) * 100);
+                div.innerHTML = `
+                    <span>${enemy.name}</span>
+                    <span class="target-health">${healthPct}% HP</span>
+                `;
+                div.onclick = () => selectTarget(enemyId);
+                list.appendChild(div);
+            }
+
+            if (list.children.length === 0) {
+                list.innerHTML = '<div style="color:#666;padding:8px;">No targets</div>';
+            }
+        }
+
+        function updateBodyPartSelector(combat) {
+            const grid = document.getElementById('bodypart-grid');
+            grid.innerHTML = '';
+
+            // Get base accuracy from player
+            const baseAccuracy = gameState.player.accuracy || 75;
+
+            for (const part of BODY_PARTS) {
+                const btn = document.createElement('button');
+                btn.className = 'bodypart-btn' + (combat.target_part === part.id ? ' selected' : '');
+
+                // Calculate approximate hit chance
+                const hitChance = Math.max(5, baseAccuracy - part.hitPenalty);
+                btn.innerHTML = `${part.name} <span class="hit-chance">${hitChance}%</span>`;
+                btn.onclick = () => selectBodyPart(part.id);
+                grid.appendChild(btn);
+            }
+        }
+
+        function updateActionButtons(combat) {
+            const grid = document.getElementById('action-grid');
+            grid.innerHTML = '';
+
+            for (const action of COMBAT_ACTIONS) {
+                const btn = document.createElement('button');
+                btn.className = 'combat-action-btn';
+
+                const canAfford = combat.current_ap >= action.apCost;
+                const isPlayerTurn = combat.player_turn;
+                btn.disabled = !canAfford || !isPlayerTurn;
+
+                const apText = action.apCost > 0 ? `${action.apCost} AP` : '';
+                btn.innerHTML = `${action.name} <span class="ap-cost">${apText}</span>`;
+                btn.onclick = () => sendCombatAction(action.id);
+                grid.appendChild(btn);
+            }
+        }
+
+        function updateCombatLog(log) {
+            const logDiv = document.getElementById('combat-log');
+            logDiv.innerHTML = '';
+
+            // Show last 6 entries
+            const recentLog = log.slice(-6);
+            for (const entry of recentLog) {
+                const div = document.createElement('div');
+                div.className = 'combat-log-entry';
+
+                // Color code based on content
+                if (entry.includes('CRITICAL')) {
+                    div.className += ' crit';
+                } else if (entry.includes('miss') || entry.includes('Miss')) {
+                    div.className += ' miss';
+                } else if (entry.includes('damage') || entry.includes('hit')) {
+                    div.className += ' damage';
+                } else {
+                    div.className += ' info';
+                }
+
+                div.textContent = entry;
+                logDiv.appendChild(div);
+            }
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function selectTarget(enemyId) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({
+                type: 'set_target',
+                payload: { enemy_id: enemyId },
+                timestamp: Date.now()
+            }));
+        }
+
+        function selectBodyPart(partId) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            selectedBodyPart = partId;
+            ws.send(JSON.stringify({
+                type: 'set_body_part',
+                payload: { body_part: partId },
+                timestamp: Date.now()
+            }));
+        }
+
+        function sendCombatAction(action) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            if (gameState && gameState.combat && !gameState.combat.player_turn) return;
+
+            ws.send(JSON.stringify({
+                type: 'combat_action',
+                payload: { action: action },
+                timestamp: Date.now()
+            }));
+        }
+
+        function initiateCombat() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({
+                type: 'initiate_combat',
+                timestamp: Date.now()
+            }));
         }
 
         function renderRaycast() {
@@ -1144,7 +1792,7 @@
             if (victory) {
                 box.className = 'game-over-box victory';
                 title.textContent = 'VICTORY!';
-                text.textContent = 'You have conquered the Catacombs of Pflow!';
+                text.textContent = 'You have conquered the Catacombs!';
             } else {
                 box.className = 'game-over-box defeat';
                 title.textContent = 'GAME OVER';
@@ -1282,6 +1930,59 @@
                 return;
             }
 
+            // Combat controls
+            if (gameState && gameState.combat && gameState.combat.active) {
+                e.preventDefault();
+                switch (e.key.toLowerCase()) {
+                    case 'a':
+                        sendCombatAction('attack');
+                        break;
+                    case 's':
+                        sendCombatAction('aimed_shot');
+                        break;
+                    case 'e':
+                        sendCombatAction('end_turn');
+                        break;
+                    case 'f':
+                        sendCombatAction('flee');
+                        break;
+                    case 'tab':
+                        // Cycle targets
+                        if (gameState.combat.combatants && gameState.combat.combatants.length > 1) {
+                            const combatants = gameState.combat.combatants;
+                            const currentIdx = combatants.indexOf(gameState.combat.selected_enemy);
+                            const nextIdx = (currentIdx + 1) % combatants.length;
+                            selectTarget(combatants[nextIdx]);
+                        }
+                        break;
+                    case '1': case '2': case '3': case '4':
+                    case '5': case '6': case '7': case '8':
+                        // Select body part
+                        const partIdx = parseInt(e.key) - 1;
+                        if (partIdx < BODY_PARTS.length) {
+                            selectBodyPart(partIdx);
+                        }
+                        break;
+                    case 'arrowup':
+                    case 'arrowdown':
+                    case 'arrowleft':
+                    case 'arrowright':
+                    case 'w':
+                    case 'd':
+                        // Movement in combat costs AP
+                        const moveDir = {
+                            'arrowup': 'move_up', 'w': 'move_up',
+                            'arrowdown': 'move_down',
+                            'arrowleft': 'move_left',
+                            'arrowright': 'move_right', 'd': 'move_right'
+                        };
+                        // Just send regular action - server handles AP cost
+                        sendAction(moveDir[e.key.toLowerCase()] || 'wait');
+                        break;
+                }
+                return;
+            }
+
             // Look mode controls (only in ASCII view)
             if (lookMode && currentView === 'ascii') {
                 e.preventDefault();
@@ -1366,6 +2067,11 @@
                 case 'x':
                     // Enter look mode
                     enterLookMode();
+                    break;
+                case 'tab':
+                    // Initiate combat with nearby enemies
+                    e.preventDefault();
+                    initiateCombat();
                     break;
                 case 'w':
                 case 'arrowup':
@@ -1599,6 +2305,27 @@
             document.getElementById('controls-help-3d').style.display = 'block';
             updateDirectionDisplay();
             if (gameState) renderRaycast();
+        };
+
+        // AI toggle button
+        document.getElementById('ai-toggle').onclick = toggleAI;
+
+        // Demo button
+        document.getElementById('demo-btn').onclick = () => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
+            connectDemo();
+        };
+
+        // Speed slider
+        document.getElementById('ai-speed').oninput = (e) => {
+            aiSpeed = parseInt(e.target.value);
+            document.getElementById('ai-speed-label').textContent = aiSpeed + 'ms';
+            // Restart interval with new speed if AI is running
+            if (aiEnabled && aiTickInterval) {
+                startAITick();
+            }
         };
 
         // Initialize

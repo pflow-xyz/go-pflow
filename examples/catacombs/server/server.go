@@ -51,6 +51,7 @@ type MessageType string
 
 const (
 	MsgTypeJoin           MessageType = "join"
+	MsgTypeJoinDemo       MessageType = "join_demo"
 	MsgTypeGameState      MessageType = "game_state"
 	MsgTypeAction         MessageType = "action"
 	MsgTypeDialogueChoice MessageType = "dialogue_choice"
@@ -60,6 +61,14 @@ const (
 	MsgTypePong           MessageType = "pong"
 	MsgTypeLeave          MessageType = "leave"
 	MsgTypeReset          MessageType = "reset"
+	// Combat message types
+	MsgTypeCombatAction   MessageType = "combat_action"
+	MsgTypeSetTarget      MessageType = "set_target"
+	MsgTypeSetBodyPart    MessageType = "set_body_part"
+	MsgTypeInitiateCombat MessageType = "initiate_combat"
+	// AI mode message types
+	MsgTypeAIToggle MessageType = "ai_toggle"
+	MsgTypeAITick   MessageType = "ai_tick"
 )
 
 // Message envelope
@@ -88,6 +97,26 @@ type ItemPayload struct {
 type ErrorPayload struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
+}
+
+// CombatActionPayload for combat actions
+type CombatActionPayload struct {
+	Action string `json:"action"` // "attack", "aimed_shot", "move", "use_item", "end_turn", "flee"
+}
+
+// SetTargetPayload for selecting enemy target
+type SetTargetPayload struct {
+	EnemyID string `json:"enemy_id"`
+}
+
+// SetBodyPartPayload for selecting body part to target
+type SetBodyPartPayload struct {
+	BodyPart int `json:"body_part"` // 0=torso, 1=head, 2=left_arm, etc.
+}
+
+// AITogglePayload for enabling/disabling AI mode
+type AITogglePayload struct {
+	Enabled bool `json:"enabled"`
 }
 
 // NewServer creates a new game server
@@ -188,7 +217,10 @@ func (s *Server) handleClient(client *Client) {
 func (s *Server) handleMessage(client *Client, msg *Message) {
 	switch msg.Type {
 	case MsgTypeJoin:
-		s.handleJoin(client)
+		s.handleJoin(client, false)
+
+	case MsgTypeJoinDemo:
+		s.handleJoin(client, true)
 
 	case MsgTypeAction:
 		s.handleAction(client, msg.Payload)
@@ -208,17 +240,39 @@ func (s *Server) handleMessage(client *Client, msg *Message) {
 	case MsgTypeLeave:
 		s.handleLeave(client)
 
+	case MsgTypeCombatAction:
+		s.handleCombatAction(client, msg.Payload)
+
+	case MsgTypeSetTarget:
+		s.handleSetTarget(client, msg.Payload)
+
+	case MsgTypeSetBodyPart:
+		s.handleSetBodyPart(client, msg.Payload)
+
+	case MsgTypeInitiateCombat:
+		s.handleInitiateCombat(client)
+
+	case MsgTypeAIToggle:
+		s.handleAIToggle(client, msg.Payload)
+
+	case MsgTypeAITick:
+		s.handleAITick(client)
+
 	default:
 		s.sendError(client, "unknown_type", fmt.Sprintf("Unknown message type: %s", msg.Type))
 	}
 }
 
-func (s *Server) handleJoin(client *Client) {
+func (s *Server) handleJoin(client *Client, demoMode bool) {
 	// Create a new game session
-	session := s.createSession(client)
+	session := s.createSession(client, demoMode)
 	client.Session = session
 
-	log.Printf("Client %s started game session %s", client.ID, session.ID)
+	modeStr := "NORMAL"
+	if demoMode {
+		modeStr = "DEMO"
+	}
+	log.Printf("Client %s started %s game session %s", client.ID, modeStr, session.ID)
 
 	// Log initial state
 	state := session.Game.GetState()
@@ -339,13 +393,168 @@ func (s *Server) handleLeave(client *Client) {
 	}
 }
 
-func (s *Server) createSession(client *Client) *GameSession {
+func (s *Server) handleCombatAction(client *Client, payload json.RawMessage) {
+	if client.Session == nil {
+		s.sendError(client, "no_session", "Not in a game session")
+		return
+	}
+
+	var action CombatActionPayload
+	if err := json.Unmarshal(payload, &action); err != nil {
+		s.sendError(client, "invalid_payload", fmt.Sprintf("Invalid combat action payload: %v", err))
+		return
+	}
+
+	session := client.Session
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	// Convert string action to ActionType and process
+	actionType := catacombs.ActionType(action.Action)
+	if err := session.Game.ProcessCombatAction(actionType, nil); err != nil {
+		s.sendError(client, "combat_error", err.Error())
+		return
+	}
+
+	state := session.Game.GetState()
+	logGameState(session.ID, fmt.Sprintf("combat_%s", action.Action), state, session.Game)
+
+	s.sendGameState(client)
+}
+
+func (s *Server) handleSetTarget(client *Client, payload json.RawMessage) {
+	if client.Session == nil {
+		s.sendError(client, "no_session", "Not in a game session")
+		return
+	}
+
+	var target SetTargetPayload
+	if err := json.Unmarshal(payload, &target); err != nil {
+		s.sendError(client, "invalid_payload", fmt.Sprintf("Invalid target payload: %v", err))
+		return
+	}
+
+	session := client.Session
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	session.Game.SetTargetEnemy(target.EnemyID)
+
+	state := session.Game.GetState()
+	logGameState(session.ID, fmt.Sprintf("set_target_%s", target.EnemyID), state, session.Game)
+
+	s.sendGameState(client)
+}
+
+func (s *Server) handleSetBodyPart(client *Client, payload json.RawMessage) {
+	if client.Session == nil {
+		s.sendError(client, "no_session", "Not in a game session")
+		return
+	}
+
+	var part SetBodyPartPayload
+	if err := json.Unmarshal(payload, &part); err != nil {
+		s.sendError(client, "invalid_payload", fmt.Sprintf("Invalid body part payload: %v", err))
+		return
+	}
+
+	session := client.Session
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	session.Game.SetTargetPart(catacombs.BodyPart(part.BodyPart))
+
+	state := session.Game.GetState()
+	logGameState(session.ID, fmt.Sprintf("set_bodypart_%d", part.BodyPart), state, session.Game)
+
+	s.sendGameState(client)
+}
+
+func (s *Server) handleInitiateCombat(client *Client) {
+	if client.Session == nil {
+		s.sendError(client, "no_session", "Not in a game session")
+		return
+	}
+
+	session := client.Session
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	session.Game.InitiateCombat()
+
+	state := session.Game.GetState()
+	logGameState(session.ID, "initiate_combat", state, session.Game)
+
+	s.sendGameState(client)
+}
+
+func (s *Server) handleAIToggle(client *Client, payload json.RawMessage) {
+	if client.Session == nil {
+		s.sendError(client, "no_session", "Not in a game session")
+		return
+	}
+
+	var toggle AITogglePayload
+	if err := json.Unmarshal(payload, &toggle); err != nil {
+		s.sendError(client, "invalid_payload", fmt.Sprintf("Invalid AI toggle payload: %v", err))
+		return
+	}
+
+	session := client.Session
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	if toggle.Enabled {
+		session.Game.EnableAI()
+		log.Printf("Session %s: AI enabled", session.ID[:8])
+	} else {
+		session.Game.DisableAI()
+		log.Printf("Session %s: AI disabled", session.ID[:8])
+	}
+
+	s.sendGameState(client)
+}
+
+func (s *Server) handleAITick(client *Client) {
+	if client.Session == nil {
+		s.sendError(client, "no_session", "Not in a game session")
+		return
+	}
+
+	session := client.Session
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	// Only tick if AI is enabled
+	if !session.Game.AI.Enabled {
+		return
+	}
+
+	// Execute one AI action
+	action := session.Game.AITick()
+
+	state := session.Game.GetState()
+	if action != "" {
+		logGameState(session.ID, fmt.Sprintf("ai_%s", action), state, session.Game)
+	}
+
+	s.sendGameState(client)
+}
+
+func (s *Server) createSession(client *Client, demoMode bool) *GameSession {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	var game *catacombs.Game
+	if demoMode {
+		game = catacombs.NewDemoGame()
+	} else {
+		game = catacombs.NewGame()
+	}
+
 	session := &GameSession{
 		ID:        generateID(),
-		Game:      catacombs.NewGame(),
+		Game:      game,
 		Client:    client,
 		CreatedAt: time.Now(),
 	}
