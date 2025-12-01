@@ -164,6 +164,67 @@ rates["p1_raise"] = baseRate × handStrength × 2.0
 rates["p1_call"] = baseRate × (0.5 + handStrength × 0.5)
 ```
 
+## Adversarial Monitoring
+
+The model includes card tracking and opponent range estimation:
+
+### Card Tracking
+
+The `CardTracker` monitors:
+- **Known cards**: Community cards and our hole cards
+- **Dead cards**: Cards that can't be in opponent's hand
+- **Remaining deck**: All possible cards opponent might hold
+
+### Opponent Hand Range Estimation
+
+Based on visible cards, the AI estimates:
+- **Hand type probabilities**: Likelihood of opponent having pair, two pair, flush, etc.
+- **Estimated strength**: Weighted average of possible opponent hands
+- **Danger cards**: Cards that would significantly improve opponent's hand
+
+```go
+// Estimate opponent's likely range
+estimate := tracker.EstimateOpponentRange(aggressionFactor)
+fmt.Printf("Opponent est. strength: %.1f%%\n", estimate.EstimatedStrength*100)
+fmt.Printf("Pair probability: %.1f%%\n", estimate.OnePairProb*100)
+```
+
+### Aggression Tracking
+
+Opponent betting patterns are tracked to refine range estimates:
+- **Fold** = 0.0 (very weak)
+- **Check** = 0.4 (slightly weak or trapping)  
+- **Call** = 0.5 (neutral)
+- **Raise** = 0.5-0.8 (based on bet size vs pot)
+- **All-in** = 1.0 (maximum strength or bluff)
+
+### Board Texture Analysis
+
+The board is analyzed for:
+- **Flush draws**: 3+ cards of same suit
+- **Straight draws**: Connected cards
+- **Paired boards**: Increases full house/quads risk
+- **High cards**: Broadway card count (T, J, Q, K, A)
+
+### Adversarial Analysis Output
+
+When using verbose mode (`-v`), the AI shows:
+
+```
+Player 1 (ode) evaluating...
+  Hand: One Pair (K high) (strength: 0.120)
+  Pot: 100, To Call: 50, Pot Odds: 66.7%
+  Opponent aggression: 70.0%, Est. opponent strength: 8.5%
+  Equity advantage: +3.5%, Board danger: 25.0%
+  Watch for: A♥ K♦ Q♣ J♠ 10♥
+```
+
+This helps the AI make informed decisions by:
+1. Comparing our hand strength to estimated opponent strength
+2. Adjusting fold equity based on opponent tendencies
+3. Penalizing plays on dangerous boards
+4. Identifying specific cards that could hurt us
+
 ## Example Games
 
 ### ODE vs Random
@@ -181,10 +242,12 @@ Player 2: 7♣ 4♦ | Chips: 998 | Bet: 2 | High Card (7 high)
 Player 1 (ode) evaluating...
   Hand: High Card (K high) (strength: 0.016)
   Pot: 3, To Call: 1, Pot Odds: 75.0%
-    Fold: EV = -1 (lost investment)
-    Call: EV = 0.1 (0.016 × 4 - 0.984 × 1)
-    Raise 3: EV = 0.5 (fold equity 29.5%, pot after 6)
-  Best action: Raise (3) with score 0.500
+  Opponent aggression: 50.0%, Est. opponent strength: 1.2%
+  Equity advantage: +0.4%, Board danger: 0.0%
+    Fold: EV = -1 (adjusted for danger 0.0%)
+    Call: EV = 1.8 (win prob 52.3% vs opp strength 0.012)
+    Raise 3: EV = 2.5 (fold equity 60.0%, win prob 52.3%)
+  Best action: Raise (3) with score 2.500
 ```
 
 ### Benchmark Results
@@ -204,6 +267,9 @@ The ODE-based AI significantly outperforms random play by:
 - Value betting strong hands
 - Using pot odds correctly
 - Applying appropriate aggression
+- **Tracking opponent tendencies** (aggression factor)
+- **Estimating opponent hand ranges** based on visible cards
+- **Analyzing board danger** to avoid traps
 
 ## Hand Evaluation
 
@@ -232,6 +298,8 @@ Special cases handled:
 poker/
 ├── cards.go        # Card, Deck, Hand evaluation
 ├── cards_test.go   # Card tests
+├── tracker.go      # Card tracking and opponent range estimation
+├── tracker_test.go # Tracker tests
 ├── model.go        # Petri net model creation
 ├── model_test.go   # Model tests  
 ├── game.go         # Game logic and AI

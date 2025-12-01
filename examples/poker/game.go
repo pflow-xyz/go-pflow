@@ -53,6 +53,12 @@ type PokerGame struct {
 	smallBlind    float64
 	bigBlind      float64
 	evaluator     *hypothesis.Evaluator
+	
+	// Card tracking for adversarial analysis
+	p1Tracker     *CardTracker // Player 1's view (sees own hole cards + community)
+	p2Tracker     *CardTracker // Player 2's view
+	p1Aggression  float64      // Running aggression factor for player 1
+	p2Aggression  float64      // Running aggression factor for player 2
 }
 
 // NewPokerGame creates a new Texas Hold'em game
@@ -104,6 +110,10 @@ func NewPokerGame(initialChips, smallBlind, bigBlind float64) *PokerGame {
 		smallBlind:     smallBlind,
 		bigBlind:       bigBlind,
 		evaluator:      eval,
+		p1Tracker:      NewCardTracker(),
+		p2Tracker:      NewCardTracker(),
+		p1Aggression:   0.5, // Start at neutral
+		p2Aggression:   0.5,
 	}
 
 	return game
@@ -129,6 +139,18 @@ func (g *PokerGame) StartHand() {
 	g.p1Folded = false
 	g.p2Folded = false
 	g.actedThisRound = make(map[Player]bool)
+
+	// Reset card trackers
+	g.p1Tracker = NewCardTracker()
+	g.p2Tracker = NewCardTracker()
+	g.p1Tracker.SetOurHoleCards(g.p1Hole)
+	g.p2Tracker.SetOurHoleCards(g.p2Hole)
+	g.p1Tracker.SetPhase(PhasePreflop)
+	g.p2Tracker.SetPhase(PhasePreflop)
+	
+	// Reset aggression factors
+	g.p1Aggression = 0.5
+	g.p2Aggression = 0.5
 
 	// Update hand strengths in state
 	g.UpdateHandStrengths()
@@ -230,6 +252,17 @@ func (g *PokerGame) MakeAction(action Action, amount float64) error {
 	}
 
 	toCall := g.currentBet - *playerBet
+
+	// Update opponent's aggression factor (for the OTHER player's tracker)
+	// This allows us to estimate opponent's range based on their betting
+	aggFactor := g.p1Tracker.UpdateFromBettingAction(action, amount, g.pot)
+	if player == Player1 {
+		// Player 1 acted, update P2's view of P1's aggression
+		g.p1Aggression = (g.p1Aggression + aggFactor) / 2.0
+	} else {
+		// Player 2 acted, update P1's view of P2's aggression
+		g.p2Aggression = (g.p2Aggression + aggFactor) / 2.0
+	}
 
 	switch action {
 	case ActionFold:
@@ -339,6 +372,7 @@ func (g *PokerGame) advancePhase() {
 		g.communityCards = append(g.communityCards, g.deck.DealN(3)...)
 		g.phase = PhaseFlop
 		g.UpdateHandStrengths()
+		g.updateTrackersCommunity()
 
 	case PhaseFlop:
 		// Deal turn
@@ -346,6 +380,7 @@ func (g *PokerGame) advancePhase() {
 		g.communityCards = append(g.communityCards, g.deck.Deal())
 		g.phase = PhaseTurn
 		g.UpdateHandStrengths()
+		g.updateTrackersCommunity()
 
 	case PhaseTurn:
 		// Deal river
@@ -353,12 +388,21 @@ func (g *PokerGame) advancePhase() {
 		g.communityCards = append(g.communityCards, g.deck.Deal())
 		g.phase = PhaseRiver
 		g.UpdateHandStrengths()
+		g.updateTrackersCommunity()
 
 	case PhaseRiver:
 		// Showdown
 		g.phase = PhaseShowdown
 		g.determineWinner()
 	}
+}
+
+// updateTrackersCommunity updates both player's trackers with community cards
+func (g *PokerGame) updateTrackersCommunity() {
+	g.p1Tracker.SetCommunityCards(g.communityCards)
+	g.p2Tracker.SetCommunityCards(g.communityCards)
+	g.p1Tracker.SetPhase(g.phase)
+	g.p2Tracker.SetPhase(g.phase)
 }
 
 // determineWinner compares hands at showdown
@@ -436,6 +480,31 @@ func (g *PokerGame) GetToCall() float64 {
 func (g *PokerGame) GetHandResult(p Player) HandResult {
 	hole := g.GetPlayerHole(p)
 	return EvaluateHand(hole, g.communityCards)
+}
+
+// GetAdversarialAnalysis returns adversarial analysis for the current player
+// This estimates what hands the opponent likely has based on visible cards and betting
+func (g *PokerGame) GetAdversarialAnalysis(p Player) AdversarialAnalysis {
+	if p == Player1 {
+		return g.p1Tracker.GetAdversarialAnalysis(g.p2Aggression)
+	}
+	return g.p2Tracker.GetAdversarialAnalysis(g.p1Aggression)
+}
+
+// GetOpponentAggression returns the tracked aggression factor for the opponent
+func (g *PokerGame) GetOpponentAggression(p Player) float64 {
+	if p == Player1 {
+		return g.p2Aggression // P1 wants to know P2's aggression
+	}
+	return g.p1Aggression // P2 wants to know P1's aggression
+}
+
+// GetBoardTexture returns the board texture analysis
+func (g *PokerGame) GetBoardTexture(p Player) BoardTexture {
+	if p == Player1 {
+		return g.p1Tracker.AnalyzeBoard()
+	}
+	return g.p2Tracker.AnalyzeBoard()
 }
 
 // syncToEngine updates the Petri net engine state
@@ -548,6 +617,9 @@ func (g *PokerGame) GetODEAction(verbose bool) BettingDecision {
 	result := g.GetHandResult(g.currentPlayer)
 	strength := result.Strength()
 
+	// Get adversarial analysis
+	analysis := g.GetAdversarialAnalysis(g.currentPlayer)
+
 	// Simple strategy based on hand strength
 	toCall := g.GetToCall()
 	potOdds := g.pot / (g.pot + toCall)
@@ -555,6 +627,13 @@ func (g *PokerGame) GetODEAction(verbose bool) BettingDecision {
 	if verbose {
 		fmt.Printf("  Hand: %s (strength: %.3f)\n", result.String(), strength)
 		fmt.Printf("  Pot: %.0f, To Call: %.0f, Pot Odds: %.1f%%\n", g.pot, toCall, potOdds*100)
+		fmt.Printf("  Opponent aggression: %.1f%%, Est. opponent strength: %.1f%%\n",
+			g.GetOpponentAggression(g.currentPlayer)*100, analysis.OpponentEstimate.EstimatedStrength*100)
+		fmt.Printf("  Equity advantage: %+.1f%%, Board danger: %.1f%%\n",
+			analysis.EquityAdvantage*100, analysis.DangerLevel*100)
+		if len(analysis.OpponentEstimate.DangerCards) > 0 {
+			fmt.Printf("  Watch for: %s\n", FormatCards(analysis.OpponentEstimate.DangerCards))
+		}
 	}
 
 	// Create hypothetical states for each action and simulate
@@ -578,7 +657,7 @@ func (g *PokerGame) GetODEAction(verbose bool) BettingDecision {
 				if amt > chips {
 					continue
 				}
-				score := g.evaluateAction(baseState, action, amt, verbose)
+				score := g.evaluateActionWithAnalysis(baseState, action, amt, analysis, verbose)
 				if score > bestScore {
 					bestScore = score
 					bestAction = action
@@ -587,14 +666,14 @@ func (g *PokerGame) GetODEAction(verbose bool) BettingDecision {
 			}
 		} else if action == ActionAllIn {
 			amount = g.GetPlayerChips(g.currentPlayer)
-			score := g.evaluateAction(baseState, action, amount, verbose)
+			score := g.evaluateActionWithAnalysis(baseState, action, amount, analysis, verbose)
 			if score > bestScore {
 				bestScore = score
 				bestAction = action
 				bestAmount = amount
 			}
 		} else {
-			score := g.evaluateAction(baseState, action, 0, verbose)
+			score := g.evaluateActionWithAnalysis(baseState, action, 0, analysis, verbose)
 			if score > bestScore {
 				bestScore = score
 				bestAction = action
@@ -684,6 +763,105 @@ func (g *PokerGame) evaluateAction(baseState map[string]float64, action Action, 
 		if verbose {
 			fmt.Printf("    %s: EV = %.1f (strength %.3f × pot %.0f × %.1f variance penalty)\n",
 				action, ev, strength, potAfter, allInVariancePenalty)
+		}
+		return ev
+	}
+
+	return 0
+}
+
+// evaluateActionWithAnalysis evaluates an action using adversarial analysis
+func (g *PokerGame) evaluateActionWithAnalysis(baseState map[string]float64, action Action, amount float64, analysis AdversarialAnalysis, verbose bool) float64 {
+	// Get current hand strength (using our actual strength vs estimated opponent strength)
+	strength := analysis.OurStrength
+	oppStrength := analysis.OpponentEstimate.EstimatedStrength
+	dangerLevel := analysis.DangerLevel
+	
+	// Adjust our effective strength based on equity advantage
+	// If we have an advantage, we're effectively stronger
+	effectiveStrength := strength
+	if analysis.EquityAdvantage > 0 {
+		effectiveStrength = strength + analysis.EquityAdvantage * 0.5
+	} else {
+		effectiveStrength = strength + analysis.EquityAdvantage * 0.3
+	}
+	if effectiveStrength > 1.0 {
+		effectiveStrength = 1.0
+	}
+	if effectiveStrength < 0 {
+		effectiveStrength = 0
+	}
+
+	// Calculate pot odds
+	toCall := g.GetToCall()
+	potAfter := g.pot
+
+	switch action {
+	case ActionFold:
+		// Fold EV is higher when board is dangerous or opponent is aggressive
+		foldPenalty := foldPenaltyFactor
+		// If board is dangerous and opponent is aggressive, folding is less bad
+		if dangerLevel > 0.5 && g.GetOpponentAggression(g.currentPlayer) > 0.6 {
+			foldPenalty *= 0.5
+		}
+		ev := -g.pot * foldPenalty
+		if verbose {
+			fmt.Printf("    %s: EV = %.0f (adjusted for danger %.1f%%)\n", action, ev, dangerLevel*100)
+		}
+		return ev
+
+	case ActionCheck:
+		// Expected value based on effective strength and danger
+		ev := effectiveStrength * g.pot * (1.0 - dangerLevel*0.3)
+		if verbose {
+			fmt.Printf("    %s: EV = %.1f (eff. strength %.3f × pot %.0f × danger adj)\n", action, ev, effectiveStrength, g.pot)
+		}
+		return ev
+
+	case ActionCall:
+		// Pot odds calculation using estimated winning probability
+		potAfter = g.pot + toCall
+		// Win prob is based on our strength vs opponent's estimated strength
+		winProb := effectiveStrength / (effectiveStrength + oppStrength + 0.001)
+		ev := winProb*potAfter - (1-winProb)*toCall
+		if verbose {
+			fmt.Printf("    %s: EV = %.1f (win prob %.1f%% vs opp strength %.3f)\n", action, ev, winProb*100, oppStrength)
+		}
+		return ev
+
+	case ActionRaise:
+		// Fold equity is higher when opponent is weak/passive and board is dry
+		foldEquity := baseFoldEquity
+		if oppStrength < 0.3 {
+			foldEquity += 0.2 // Weak opponents fold more
+		}
+		if dangerLevel < 0.3 {
+			foldEquity += 0.1 // Dry boards have more fold equity
+		}
+		if g.GetOpponentAggression(g.currentPlayer) < 0.4 {
+			foldEquity += 0.1 // Passive opponents fold more
+		}
+		if foldEquity > 0.7 {
+			foldEquity = 0.7 // Cap fold equity
+		}
+		
+		potAfter = g.pot + amount
+		winProb := effectiveStrength / (effectiveStrength + oppStrength + 0.001)
+		ev := foldEquity*g.pot + (1-foldEquity)*(winProb*potAfter-(1-winProb)*amount)
+		if verbose {
+			fmt.Printf("    %s %.0f: EV = %.1f (fold equity %.1f%%, win prob %.1f%%)\n", action, amount, ev, foldEquity*100, winProb*100)
+		}
+		return ev
+
+	case ActionAllIn:
+		// All-in is riskier when board is dangerous
+		potAfter = g.pot + amount
+		winProb := effectiveStrength / (effectiveStrength + oppStrength + 0.001)
+		variancePenalty := allInVariancePenalty - dangerLevel*0.1 // More penalty on dangerous boards
+		ev := winProb * potAfter * variancePenalty
+		if verbose {
+			fmt.Printf("    %s: EV = %.1f (win prob %.1f%%, danger-adjusted variance %.2f)\n",
+				action, ev, winProb*100, variancePenalty)
 		}
 		return ev
 	}
