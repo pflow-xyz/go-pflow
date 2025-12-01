@@ -50,3 +50,4 @@ temp/
 
 # gameserver
 cli
+*.log

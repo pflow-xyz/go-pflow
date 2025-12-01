@@ -152,6 +152,8 @@ const (
 type Player struct {
 	X          int             `json:"x"`
 	Y          int             `json:"y"`
+	FacingX    int             `json:"facing_x"` // Direction player is facing (-1, 0, or 1)
+	FacingY    int             `json:"facing_y"` // Direction player is facing (-1, 0, or 1)
 	Health     int             `json:"health"`
 	MaxHealth  int             `json:"max_health"`
 	Mana       int             `json:"mana"`
@@ -189,6 +191,8 @@ type AIState struct {
 	LastY         int               `json:"-"`              // Last position Y
 	LockedDoors   [][2]int          `json:"-"`              // Known locked door positions
 	AvoidDoors    map[[2]int]bool   `json:"-"`              // Doors to avoid (no key yet)
+	RecentPos     [][2]int          `json:"-"`              // Recent positions for oscillation detection
+	TargetTicks   int               `json:"-"`              // Ticks spent pursuing current target
 }
 
 // Game represents the complete game state
@@ -395,26 +399,75 @@ func NewGameWithParams(params DungeonParams) *Game {
 		rng:        rng,
 	}
 
-	// Generate first dungeon level
-	g.Dungeon = GenerateDungeon(params, 1)
-	g.Player.X = g.Dungeon.SpawnX
-	g.Player.Y = g.Dungeon.SpawnY
+	// Generate dungeon with reachability validation
+	// Try up to 10 times with different seeds to find a valid dungeon
+	maxAttempts := 10
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		// Generate dungeon
+		g.Dungeon = GenerateDungeon(params, 1)
+		g.Player.X = g.Dungeon.SpawnX
+		g.Player.Y = g.Dungeon.SpawnY
+		g.Player.FacingX = 0
+		g.Player.FacingY = 1
 
-	// Populate with enemies
-	g.populateEnemies(params)
+		// Clear previous items/NPCs/enemies for regeneration attempts
+		g.Enemies = make([]*Enemy, 0)
+		g.NPCs = make([]*NPC, 0)
+		g.Items = make([]*GroundItem, 0)
 
-	// Add NPCs
-	g.populateNPCs(params)
+		// Populate
+		g.populateEnemies(params)
+		g.populateNPCs(params)
+		g.populateItems(params)
 
-	// Add ground items
-	g.populateItems(params)
+		// Validate dungeon reachability using Petri net analysis
+		keyLocations := g.getKeyLocations()
+		valid, reason := ValidateDungeon(g.Dungeon, keyLocations)
+
+		if valid {
+			break // Dungeon is valid
+		}
+
+		// If last attempt, force fix the dungeon
+		if attempt == maxAttempts-1 {
+			g.fixUnreachableDungeon(reason)
+			break
+		}
+
+		// Try with a different seed
+		params.Seed = seed + int64(attempt+1)
+		g.rng = rand.New(rand.NewSource(params.Seed))
+	}
 
 	// Build Petri net for resource tracking
 	g.buildPetriNet()
 
-	g.addMessage("You descend into the Catacombs of Pflow...")
+	g.addMessage("You descend into the dark catacombs...")
 
 	return g
+}
+
+// getKeyLocations returns positions of all keys on the ground
+func (g *Game) getKeyLocations() [][2]int {
+	var keys [][2]int
+	for _, item := range g.Items {
+		if item.Item.Type == ItemKey {
+			keys = append(keys, [2]int{item.X, item.Y})
+		}
+	}
+	return keys
+}
+
+// fixUnreachableDungeon attempts to make the dungeon playable
+func (g *Game) fixUnreachableDungeon(reason string) {
+	// If stairs are unreachable, remove all locked doors as a fallback
+	for y := 0; y < g.Dungeon.Height; y++ {
+		for x := 0; x < g.Dungeon.Width; x++ {
+			if g.Dungeon.Tiles[y][x] == TileLockedDoor {
+				g.Dungeon.Tiles[y][x] = TileDoor // Convert to regular door
+			}
+		}
+	}
 }
 
 func (g *Game) populateEnemies(params DungeonParams) {
@@ -578,6 +631,176 @@ func (g *Game) populateItems(params DungeonParams) {
 			})
 		}
 	}
+
+	// Ensure a key exists if there are locked doors blocking stairs
+	g.ensureKeyForLockedDoors()
+}
+
+// ensureKeyForLockedDoors checks if locked doors block the path to stairs
+// and places a key in a reachable location if needed
+func (g *Game) ensureKeyForLockedDoors() {
+	// Check if there are any locked doors
+	hasLockedDoor := false
+	for y := 0; y < g.Dungeon.Height; y++ {
+		for x := 0; x < g.Dungeon.Width; x++ {
+			if g.Dungeon.Tiles[y][x] == TileLockedDoor {
+				hasLockedDoor = true
+				break
+			}
+		}
+		if hasLockedDoor {
+			break
+		}
+	}
+
+	if !hasLockedDoor {
+		return
+	}
+
+	// Check if an accessible key already exists on the ground
+	// A key is only accessible if there's no enemy or NPC standing on it
+	for _, item := range g.Items {
+		if item.Item.Type == ItemKey {
+			if g.getNPCAt(item.X, item.Y) == nil && g.getEnemyAt(item.X, item.Y) == nil {
+				return // Accessible key already exists
+			}
+			// Key exists but is blocked by NPC/enemy - remove it and place a new one
+			g.removeItemAt(item.X, item.Y)
+			break
+		}
+	}
+
+	// Find all tiles reachable from spawn without going through locked doors
+	reachable := g.findReachableFromSpawn()
+
+	// Check if stairs are reachable without a key
+	stairsReachable := false
+	for y := 0; y < g.Dungeon.Height; y++ {
+		for x := 0; x < g.Dungeon.Width; x++ {
+			if g.Dungeon.Tiles[y][x] == TileStairsDown {
+				if reachable[[2]int{x, y}] {
+					stairsReachable = true
+				}
+			}
+		}
+	}
+
+	if stairsReachable {
+		return // Stairs are reachable without key, no need to place one
+	}
+
+	// Place a key in a reachable room (not the spawn room for more interest)
+	keyItem := Item{ID: "rusty_key", Name: "Rusty Key", Type: ItemKey, Value: 0, Effect: 0, Description: "Opens locked doors"}
+
+	// Find a good location - prefer treasure rooms, then any room
+	var keyX, keyY int
+	placed := false
+
+	// Helper to find an unoccupied spot in a room
+	findUnoccupiedSpot := func(room *Room) (int, int, bool) {
+		// Try room center first
+		cx := room.X + room.Width/2
+		cy := room.Y + room.Height/2
+		if reachable[[2]int{cx, cy}] && g.getNPCAt(cx, cy) == nil && g.getEnemyAt(cx, cy) == nil {
+			return cx, cy, true
+		}
+		// Try other positions in the room
+		for dy := 1; dy < room.Height-1; dy++ {
+			for dx := 1; dx < room.Width-1; dx++ {
+				x := room.X + dx
+				y := room.Y + dy
+				if reachable[[2]int{x, y}] && g.getNPCAt(x, y) == nil && g.getEnemyAt(x, y) == nil {
+					return x, y, true
+				}
+			}
+		}
+		return 0, 0, false
+	}
+
+	// First try treasure rooms
+	for _, room := range g.Dungeon.Rooms {
+		if room.Type == RoomTreasure {
+			if x, y, found := findUnoccupiedSpot(room); found {
+				keyX, keyY = x, y
+				placed = true
+				break
+			}
+		}
+	}
+
+	// If no treasure room works, try any reachable room (skip spawn room)
+	if !placed {
+		for i, room := range g.Dungeon.Rooms {
+			if i == 0 {
+				continue // Skip spawn room
+			}
+			if x, y, found := findUnoccupiedSpot(room); found {
+				keyX, keyY = x, y
+				placed = true
+				break
+			}
+		}
+	}
+
+	// Last resort: place in spawn room
+	if !placed {
+		if len(g.Dungeon.Rooms) > 0 {
+			room := g.Dungeon.Rooms[0]
+			if x, y, found := findUnoccupiedSpot(room); found {
+				keyX, keyY = x, y
+				placed = true
+			} else {
+				// Truly last resort - place anywhere reachable
+				keyX = room.X + 1 + g.rng.Intn(room.Width-2)
+				keyY = room.Y + 1 + g.rng.Intn(room.Height-2)
+				placed = true
+			}
+		}
+	}
+
+	if placed {
+		g.Items = append(g.Items, &GroundItem{
+			Item: keyItem,
+			X:    keyX,
+			Y:    keyY,
+		})
+	}
+}
+
+// findReachableFromSpawn returns all positions reachable from spawn without using locked doors
+func (g *Game) findReachableFromSpawn() map[[2]int]bool {
+	reachable := make(map[[2]int]bool)
+	queue := [][2]int{{g.Dungeon.SpawnX, g.Dungeon.SpawnY}}
+	reachable[[2]int{g.Dungeon.SpawnX, g.Dungeon.SpawnY}] = true
+
+	dirs := [][2]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+
+		for _, d := range dirs {
+			nx, ny := current[0]+d[0], current[1]+d[1]
+			pos := [2]int{nx, ny}
+
+			if reachable[pos] {
+				continue
+			}
+			if nx < 0 || ny < 0 || nx >= g.Dungeon.Width || ny >= g.Dungeon.Height {
+				continue
+			}
+
+			tile := g.Dungeon.Tiles[ny][nx]
+			// Can walk on floor, door, stairs, but NOT locked door, wall, void
+			if tile == TileFloor || tile == TileDoor || tile == TileStairsDown ||
+				tile == TileStairsUp || tile == TileChest || tile == TileAltar {
+				reachable[pos] = true
+				queue = append(queue, pos)
+			}
+		}
+	}
+
+	return reachable
 }
 
 func (g *Game) buildPetriNet() {
@@ -649,6 +872,10 @@ func (g *Game) ProcessAction(action ActionType) error {
 }
 
 func (g *Game) tryMove(dx, dy int) {
+	// Always update facing direction when trying to move
+	g.Player.FacingX = dx
+	g.Player.FacingY = dy
+
 	newX := g.Player.X + dx
 	newY := g.Player.Y + dy
 
@@ -703,6 +930,10 @@ func (g *Game) pickupItems() {
 			} else if item.Item.Type == ItemKey {
 				g.Player.Keys[item.Item.ID] = true
 				g.addMessage(fmt.Sprintf("You pick up %s.", item.Item.Name))
+				// Clear AI door avoidance since we now have a key
+				if g.AI.Enabled {
+					g.AI.AvoidDoors = nil
+				}
 			} else {
 				g.Player.Inventory = append(g.Player.Inventory, item.Item)
 				g.addMessage(fmt.Sprintf("You pick up %s.", item.Item.Name))
@@ -1709,6 +1940,16 @@ func (g *Game) getNPCByID(id string) *NPC {
 	return nil
 }
 
+// removeItemAt removes an item at the given position
+func (g *Game) removeItemAt(x, y int) {
+	for i, item := range g.Items {
+		if item.X == x && item.Y == y {
+			g.Items = append(g.Items[:i], g.Items[i+1:]...)
+			return
+		}
+	}
+}
+
 func (g *Game) addMessage(msg string) {
 	g.Message = msg
 	g.MessageLog = append(g.MessageLog, msg)
@@ -2253,6 +2494,15 @@ func (g *Game) AITick() ActionType {
 
 	g.AI.ActionCount++
 
+	// Periodically reset NPC conversation cooldowns to allow re-talking (every 50 ticks)
+	if g.AI.ActionCount%50 == 0 {
+		for key := range g.AI.GoalsComplete {
+			if len(key) > 5 && key[:5] == "talk_" {
+				delete(g.AI.GoalsComplete, key)
+			}
+		}
+	}
+
 	// Track if we're stuck in the same position
 	if g.Player.X == g.AI.LastX && g.Player.Y == g.AI.LastY {
 		g.AI.StuckCounter++
@@ -2305,9 +2555,20 @@ func (g *Game) AITick() ActionType {
 
 // aiDecideMode chooses what the AI should focus on
 func (g *Game) aiDecideMode() {
+	// Helper to check if an enemy is marked as unreachable
+	isUnreachable := func(enemy *Enemy) bool {
+		if enemy == nil {
+			return true
+		}
+		stuckKey := "stuck_enemy_" + enemy.ID
+		return g.AI.GoalsComplete[stuckKey]
+	}
+
 	// Priority 0: Fight adjacent enemies (in combat or attacking us)
 	adjacentEnemy := g.findNearestEnemy(1)
 	if adjacentEnemy != nil {
+		// Always fight adjacent enemies, clear unreachable flag
+		delete(g.AI.GoalsComplete, "stuck_enemy_"+adjacentEnemy.ID)
 		g.AI.Mode = "combat"
 		g.AI.Target = adjacentEnemy.ID
 		return
@@ -2323,7 +2584,7 @@ func (g *Game) aiDecideMode() {
 
 	// Priority 2: Fight nearby aggressive enemies (within 5 tiles, chasing us)
 	nearbyEnemy := g.findNearestEnemy(5)
-	if nearbyEnemy != nil && nearbyEnemy.State == StateChasing {
+	if nearbyEnemy != nil && nearbyEnemy.State == StateChasing && !isUnreachable(nearbyEnemy) {
 		g.AI.Mode = "combat"
 		g.AI.Target = nearbyEnemy.ID
 		return
@@ -2337,33 +2598,100 @@ func (g *Game) aiDecideMode() {
 	}
 
 	// Priority 3.5: If we found locked doors and don't have a key, look for keys
+	// If already in find_key mode, check for oscillation or timeout
+	// Keys are critical so give more time (60 ticks) before giving up
+	if g.AI.Mode == "find_key" && g.AI.Target != "" {
+		if g.aiIsOscillating() || g.AI.TargetTicks > 60 {
+			// Mark this key location as unreachable
+			g.AI.GoalsComplete["unreachable_key_"+g.AI.Target] = true
+			g.AI.Mode = "explore"
+			g.AI.Target = ""
+			g.AI.TargetTicks = 0
+			// Fall through to explore
+		} else {
+			g.AI.TargetTicks++
+			return // Keep trying for the key
+		}
+	}
 	if g.aiNeedsKey() {
 		keyItem := g.aiFindKey()
 		if keyItem != nil {
-			g.AI.Mode = "find_key"
-			g.AI.Target = fmt.Sprintf("%d,%d", keyItem.X, keyItem.Y)
-			return
+			keyTarget := fmt.Sprintf("%d,%d", keyItem.X, keyItem.Y)
+			if !g.AI.GoalsComplete["unreachable_key_"+keyTarget] {
+				g.AI.Mode = "find_key"
+				g.AI.Target = keyTarget
+				g.AI.TargetTicks = 0
+				return
+			}
 		}
 	}
 
-	// Priority 4: Talk to nearby NPCs we haven't talked to (within 3 tiles only)
-	nearbyNPC := g.findNearestNPC(3)
-	if nearbyNPC != nil && !g.AI.GoalsComplete["talk_"+nearbyNPC.ID] {
+	// Priority 4: Talk to nearby NPCs we haven't talked to (within 8 tiles)
+	// If already interacting with a valid NPC, keep that target to avoid oscillation
+	// BUT if we're oscillating or taking too long, give up
+	if g.AI.Mode == "interact" && g.AI.Target != "" {
+		currentNPC := g.getNPCByID(g.AI.Target)
+		if currentNPC != nil && !g.AI.GoalsComplete["talk_"+currentNPC.ID] && !g.AI.GoalsComplete["unreachable_npc_"+currentNPC.ID] {
+			// Check if we're stuck trying to reach this NPC (oscillating or taking too long)
+			if g.aiIsOscillating() || g.AI.TargetTicks > 25 {
+				// Mark as unreachable permanently on this level (separate from talk_ which resets)
+				g.AI.GoalsComplete["unreachable_npc_"+currentNPC.ID] = true
+				g.AI.Mode = "explore"
+				g.AI.Target = ""
+				g.AI.TargetTicks = 0
+				// Don't return - fall through to explore
+			} else {
+				// Keep current target, increment tick counter
+				g.AI.TargetTicks++
+				return
+			}
+		}
+	}
+	nearbyNPC := g.findNearestNPC(8)
+	if nearbyNPC != nil && !g.AI.GoalsComplete["talk_"+nearbyNPC.ID] && !g.AI.GoalsComplete["unreachable_npc_"+nearbyNPC.ID] {
 		g.AI.Mode = "interact"
 		g.AI.Target = nearbyNPC.ID
+		g.AI.TargetTicks = 0 // Reset counter for new target
 		return
 	}
 
-	// Priority 5: Fight nearby visible enemies (within 8 tiles) - don't chase across map
-	visibleEnemy := g.findNearestEnemy(8)
-	if visibleEnemy != nil {
+	// Priority 5: Fight nearby visible enemies (within 5 tiles) - don't chase across map
+	// If already in combat and oscillating or taking too long, mark enemy as unreachable
+	if g.AI.Mode == "combat" && g.AI.Target != "" {
+		if g.aiIsOscillating() || g.AI.TargetTicks > 30 {
+			// Mark current target as temporarily unreachable using GoalsComplete map
+			g.AI.GoalsComplete["stuck_enemy_"+g.AI.Target] = true
+			g.AI.Mode = "explore"
+			g.AI.Target = ""
+			g.AI.TargetTicks = 0
+			// Fall through to explore
+		} else {
+			// Keep fighting current target
+			g.AI.TargetTicks++
+			return
+		}
+	}
+	visibleEnemy := g.findNearestEnemy(5)
+	if visibleEnemy != nil && !isUnreachable(visibleEnemy) {
 		g.AI.Mode = "combat"
 		g.AI.Target = visibleEnemy.ID
+		g.AI.TargetTicks = 0
 		return
+	}
+
+	// Priority 6: Loot mode - if oscillating while looting, give up
+	if g.AI.Mode == "loot" && g.aiIsOscillating() {
+		g.AI.Mode = "explore"
+		g.AI.Target = ""
 	}
 
 	// Default: Explore (find stairs, wander)
+	// If oscillating in explore mode, clear target and let wander logic take over
+	if g.AI.Mode == "explore" && g.aiIsOscillating() {
+		g.AI.Target = ""
+	}
 	g.AI.Mode = "explore"
+	g.AI.Target = "" // Clear target when entering explore mode
 }
 
 // aiHeal uses a healing item
@@ -2407,7 +2735,25 @@ func (g *Game) aiEngageCombat() ActionType {
 		return ""
 	}
 
-	// Move toward enemy using smart pathing
+	// Try BFS to find path to enemy
+	if action := g.aiFindPathBFS(enemy.X, enemy.Y); action != "" {
+		g.ProcessAction(action)
+		g.AI.LastAction = string(action)
+		return action
+	}
+
+	// No path found - check if we've been stuck trying to reach this enemy
+	stuckKey := "stuck_enemy_" + enemy.ID
+	if g.AI.GoalsComplete[stuckKey] {
+		// Already failed once to reach this enemy, give up
+		g.AI.Mode = "explore"
+		g.AI.Target = ""
+		delete(g.AI.GoalsComplete, stuckKey)
+		return ""
+	}
+
+	// Mark that we failed to find a path, try once more with greedy/random
+	g.AI.GoalsComplete[stuckKey] = true
 	return g.aiMoveTowardSmart(enemy.X, enemy.Y)
 }
 
@@ -2415,6 +2761,37 @@ func (g *Game) aiEngageCombat() ActionType {
 func (g *Game) aiHandleCombat() ActionType {
 	if !g.Combat.PlayerTurn {
 		return "" // Wait for enemy turn
+	}
+
+	// Check if all combatants are dead - if so, end combat
+	allDead := true
+	var firstLivingEnemy string
+	for _, enemyID := range g.Combat.Combatants {
+		enemy := g.getEnemyByID(enemyID)
+		if enemy != nil && enemy.State != StateDead {
+			allDead = false
+			if firstLivingEnemy == "" {
+				firstLivingEnemy = enemyID
+			}
+		}
+	}
+	if allDead || len(g.Combat.Combatants) == 0 {
+		g.EndCombat()
+		return ""
+	}
+
+	// Make sure we're targeting a living enemy in the combat
+	targetEnemy := g.getEnemyByID(g.AI.Target)
+	if targetEnemy == nil || targetEnemy.State == StateDead {
+		// Switch to a living combatant
+		g.AI.Target = firstLivingEnemy
+		g.SetTargetEnemy(firstLivingEnemy)
+		targetEnemy = g.getEnemyByID(firstLivingEnemy)
+	}
+
+	// Turn to face the enemy during combat
+	if targetEnemy != nil {
+		g.turnToward(targetEnemy.X, targetEnemy.Y)
 	}
 
 	// If low health and have healing, use it
@@ -2435,11 +2812,107 @@ func (g *Game) aiHandleCombat() ActionType {
 		return ActionFlee
 	}
 
-	// Attack if we have AP
+	// Check if we're adjacent to target enemy - if not, move closer
+	targetEnemy = g.getEnemyByID(g.AI.Target)
+	if targetEnemy != nil {
+		dx := abs(g.Player.X - targetEnemy.X)
+		dy := abs(g.Player.Y - targetEnemy.Y)
+		dist := dx + dy
+		if dist > 1 && g.Combat.CurrentAP >= APCostMove {
+			// Try to move toward enemy - first try preferred direction, then alternatives
+			directions := [][2]int{}
+			// Prefer X movement if farther in X, else Y
+			if dx > dy {
+				if targetEnemy.X < g.Player.X {
+					directions = append(directions, [2]int{-1, 0})
+				} else {
+					directions = append(directions, [2]int{1, 0})
+				}
+				if targetEnemy.Y < g.Player.Y {
+					directions = append(directions, [2]int{0, -1})
+				} else if targetEnemy.Y > g.Player.Y {
+					directions = append(directions, [2]int{0, 1})
+				}
+			} else {
+				if targetEnemy.Y < g.Player.Y {
+					directions = append(directions, [2]int{0, -1})
+				} else if targetEnemy.Y > g.Player.Y {
+					directions = append(directions, [2]int{0, 1})
+				}
+				if targetEnemy.X < g.Player.X {
+					directions = append(directions, [2]int{-1, 0})
+				} else {
+					directions = append(directions, [2]int{1, 0})
+				}
+			}
+
+			// Try each direction until one succeeds
+			moved := false
+			for _, dir := range directions {
+				err := g.ProcessCombatAction(ActionCombatMove, map[string]interface{}{
+					"dx": float64(dir[0]),
+					"dy": float64(dir[1]),
+				})
+				if err == nil {
+					g.AI.LastAction = "combat_move"
+					moved = true
+					return ActionCombatMove
+				}
+			}
+
+			// If all moves failed, enemy is unreachable - flee combat
+			if !moved {
+				g.AI.GoalsComplete["stuck_enemy_"+g.AI.Target] = true
+				g.ProcessCombatAction(ActionFlee, nil)
+				g.AI.LastAction = "flee_unreachable"
+				return ActionFlee
+			}
+		}
+	}
+
+	// Attack if we have AP and target is adjacent
 	if g.Combat.CurrentAP >= APCostAttack {
-		// Pick a target if none selected
-		if g.Combat.SelectedEnemy == "" && len(g.Combat.Combatants) > 0 {
+		// Sync Combat.SelectedEnemy with AI.Target
+		if g.AI.Target != "" {
+			g.SetTargetEnemy(g.AI.Target)
+		} else if g.Combat.SelectedEnemy == "" && len(g.Combat.Combatants) > 0 {
+			// Pick closest target
 			g.SetTargetEnemy(g.Combat.Combatants[0])
+		}
+
+		// Verify target is adjacent before attacking
+		targetEnemy = g.getEnemyByID(g.Combat.SelectedEnemy)
+		if targetEnemy != nil {
+			dx := abs(g.Player.X - targetEnemy.X)
+			dy := abs(g.Player.Y - targetEnemy.Y)
+			if dx+dy > 1 {
+				// Not adjacent - try to find an adjacent enemy in combatants
+				for _, combatantID := range g.Combat.Combatants {
+					combatant := g.getEnemyByID(combatantID)
+					if combatant != nil && combatant.State != StateDead {
+						cdx := abs(g.Player.X - combatant.X)
+						cdy := abs(g.Player.Y - combatant.Y)
+						if cdx+cdy <= 1 {
+							// Found an adjacent enemy, switch to it
+							g.AI.Target = combatantID
+							g.SetTargetEnemy(combatantID)
+							targetEnemy = combatant
+							break
+						}
+					}
+				}
+				// Re-check if now adjacent
+				if targetEnemy != nil {
+					dx = abs(g.Player.X - targetEnemy.X)
+					dy = abs(g.Player.Y - targetEnemy.Y)
+					if dx+dy > 1 {
+						// Still not adjacent, end turn (can't attack)
+						g.ProcessCombatAction(ActionEndTurn, nil)
+						g.AI.LastAction = "end_turn_not_adjacent"
+						return ActionEndTurn
+					}
+				}
+			}
 		}
 
 		// Occasionally do aimed shots at head for crits
@@ -2473,6 +2946,9 @@ func (g *Game) aiInteract() ActionType {
 		return ""
 	}
 
+	// Always turn to face NPC when interacting
+	g.turnToward(npc.X, npc.Y)
+
 	// If adjacent, talk
 	dx := abs(g.Player.X - npc.X)
 	dy := abs(g.Player.Y - npc.Y)
@@ -2497,6 +2973,9 @@ func (g *Game) aiHandleDialogue() ActionType {
 		g.InDialogue = false
 		return ""
 	}
+
+	// Always face the NPC during dialogue
+	g.turnToward(npc.X, npc.Y)
 
 	dialogue := GetDialogue(npc)
 	var currentNode *DialogueNode
@@ -2600,6 +3079,17 @@ func (g *Game) aiLoot() ActionType {
 		return ""
 	}
 
+	// Check if we're stuck trying to reach this item
+	if g.aiIsOscillating() {
+		// Give up on looting, switch to explore
+		g.AI.Mode = "explore"
+		g.AI.Target = ""
+		return ""
+	}
+
+	// Always face the item we're going for
+	g.turnToward(item.X, item.Y)
+
 	// If on item, it's auto-picked up, switch to explore
 	if g.Player.X == item.X && g.Player.Y == item.Y {
 		g.AI.Mode = "explore"
@@ -2619,6 +3109,9 @@ func (g *Game) aiFindKeyAction() ActionType {
 		g.AI.LastAction = "searching for key"
 		return g.aiRandomWalk()
 	}
+
+	// Always face the key we're going for
+	g.turnToward(keyItem.X, keyItem.Y)
 
 	// If on key, it's auto-picked up, clear locked doors (we can open them now)
 	if g.Player.X == keyItem.X && g.Player.Y == keyItem.Y {
@@ -2648,6 +3141,9 @@ func (g *Game) aiExplore() ActionType {
 	}
 
 	if foundStairs {
+		// Always face the stairs when heading toward them
+		g.turnToward(stairsX, stairsY)
+
 		// If we're on the stairs, descend
 		if g.Player.X == stairsX && g.Player.Y == stairsY {
 			g.ProcessAction(ActionDescend)
@@ -2660,12 +3156,49 @@ func (g *Game) aiExplore() ActionType {
 			return g.aiRandomWalk()
 		}
 
-		// Move toward stairs
+		// Try to find path to stairs with BFS
+		action := g.aiFindPathBFS(stairsX, stairsY)
+		if action != "" {
+			// Path found, take that step
+			g.ProcessAction(action)
+			g.AI.LastAction = string(action)
+			return action
+		}
+
+		// BFS failed to find path - check if there are locked doors we need a key for
+		if !g.aiHasKey() && g.aiHasLockedDoors() {
+			// There are locked doors and no path to stairs - we need a key!
+			keyItem := g.aiFindKey()
+			if keyItem != nil {
+				keyTarget := fmt.Sprintf("%d,%d", keyItem.X, keyItem.Y)
+				if !g.AI.GoalsComplete["unreachable_key_"+keyTarget] {
+					g.AI.Mode = "find_key"
+					g.AI.Target = keyTarget
+					g.AI.TargetTicks = 0
+					g.AI.LastAction = "need key for locked doors"
+					return g.aiMoveTowardSmart(keyItem.X, keyItem.Y)
+				}
+			}
+		}
+
+		// Fall back to greedy movement toward stairs
 		return g.aiMoveTowardSmart(stairsX, stairsY)
 	}
 
 	// No stairs found, random walk
 	return g.aiRandomWalk()
+}
+
+// aiHasLockedDoors checks if there are any locked doors in the dungeon
+func (g *Game) aiHasLockedDoors() bool {
+	for y := 0; y < g.Dungeon.Height; y++ {
+		for x := 0; x < g.Dungeon.Width; x++ {
+			if g.Dungeon.Tiles[y][x] == TileLockedDoor {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // aiRandomWalk tries random directions
@@ -2736,9 +3269,17 @@ func (g *Game) aiMoveTowardSimple(targetX, targetY int) ActionType {
 
 // aiMoveTowardSmart moves one step toward target, avoiding locked doors (non-recursive)
 func (g *Game) aiMoveTowardSmart(targetX, targetY int) ActionType {
+	// Record current position for oscillation detection
+	g.aiRecordPosition()
+
 	// Already at target
 	if g.Player.X == targetX && g.Player.Y == targetY {
 		return ""
+	}
+
+	// If oscillating, use random walk to escape instead of greedy movement
+	if g.aiIsOscillating() {
+		return g.aiRandomWalk()
 	}
 
 	// Try BFS pathfinding first
@@ -2870,6 +3411,74 @@ func (g *Game) aiFindPathBFS(targetX, targetY int) ActionType {
 }
 
 // Helper functions for AI
+
+// aiRecordPosition adds current position to recent history for oscillation detection
+func (g *Game) aiRecordPosition() {
+	pos := [2]int{g.Player.X, g.Player.Y}
+	g.AI.RecentPos = append(g.AI.RecentPos, pos)
+	// Keep only last 10 positions
+	if len(g.AI.RecentPos) > 10 {
+		g.AI.RecentPos = g.AI.RecentPos[1:]
+	}
+}
+
+// aiIsOscillating checks if we're oscillating between 2-3 positions
+func (g *Game) aiIsOscillating() bool {
+	if len(g.AI.RecentPos) < 6 {
+		return false
+	}
+	// Check last 6 positions - if we only visit 2-3 unique positions, we're oscillating
+	uniquePos := make(map[[2]int]int)
+	for _, pos := range g.AI.RecentPos[len(g.AI.RecentPos)-6:] {
+		uniquePos[pos]++
+	}
+	return len(uniquePos) <= 3
+}
+
+// aiAvoidPosition checks if we should avoid going to a position to break oscillation
+func (g *Game) aiAvoidPosition(x, y int) bool {
+	if !g.aiIsOscillating() {
+		return false
+	}
+	// If oscillating, avoid positions we've visited recently
+	pos := [2]int{x, y}
+	for _, recent := range g.AI.RecentPos {
+		if recent == pos {
+			return true
+		}
+	}
+	return false
+}
+
+// turnToward makes the player face toward a target position
+func (g *Game) turnToward(targetX, targetY int) {
+	dx := targetX - g.Player.X
+	dy := targetY - g.Player.Y
+
+	// Normalize to -1, 0, or 1
+	if dx > 0 {
+		g.Player.FacingX = 1
+	} else if dx < 0 {
+		g.Player.FacingX = -1
+	} else {
+		g.Player.FacingX = 0
+	}
+
+	if dy > 0 {
+		g.Player.FacingY = 1
+	} else if dy < 0 {
+		g.Player.FacingY = -1
+	} else {
+		g.Player.FacingY = 0
+	}
+
+	// If diagonal, prefer the axis with greater distance
+	if abs(dx) > abs(dy) {
+		g.Player.FacingY = 0
+	} else if abs(dy) > abs(dx) {
+		g.Player.FacingX = 0
+	}
+}
 
 func (g *Game) hasHealingItem() bool {
 	for _, item := range g.Player.Inventory {

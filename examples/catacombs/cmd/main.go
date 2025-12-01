@@ -17,10 +17,12 @@ var clientFiles embed.FS
 
 func main() {
 	port := flag.Int("port", 8082, "Server port")
+	debug := flag.Bool("debug", false, "Enable AI debug logging")
 	flag.Parse()
 
 	// Create game server
 	srv := server.NewServer()
+	srv.SetDebug(*debug)
 
 	// Serve static files
 	clientFS, err := fs.Sub(clientFiles, "client")

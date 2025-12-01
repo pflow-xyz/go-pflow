@@ -213,7 +213,17 @@ run-catacombs-server:
 	@echo "Starting Catacombs server..."
 	@echo "Open http://localhost:8082 in your browser"
 	@echo "Supports NES controller via USB!"
-	@go run ./examples/catacombs/cmd -port 8082
+	@echo "Logs: examples/catacombs/catacombs.log"
+	@mkdir -p examples/catacombs
+	@go run ./examples/catacombs/cmd -port 8082 2>&1 | tee examples/catacombs/catacombs.log
+
+# Run Catacombs with AI logging enabled (for debugging)
+run-catacombs-debug:
+	@echo "Starting Catacombs server with AI debug logging..."
+	@echo "Open http://localhost:8082 in your browser"
+	@echo "Logs: examples/catacombs/catacombs-debug.log"
+	@mkdir -p examples/catacombs
+	@go run ./examples/catacombs/cmd -port 8082 -debug 2>&1 | tee examples/catacombs/catacombs-debug.log
 
 # Rebuild all SVG visualizations
 rebuild-all-svg:

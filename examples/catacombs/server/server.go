@@ -26,6 +26,9 @@ type Server struct {
 
 	// WebSocket upgrader
 	upgrader websocket.Upgrader
+
+	// Debug mode for AI logging
+	debug bool
 }
 
 // GameSession represents an active game
@@ -131,6 +134,14 @@ func NewServer() *Server {
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 		},
+	}
+}
+
+// SetDebug enables or disables AI debug logging
+func (s *Server) SetDebug(debug bool) {
+	s.debug = debug
+	if debug {
+		log.Println("AI debug logging enabled")
 	}
 }
 
@@ -530,8 +541,25 @@ func (s *Server) handleAITick(client *Client) {
 		return
 	}
 
+	// Log AI state before tick if debug mode enabled
+	if s.debug {
+		game := session.Game
+		log.Printf("[AI DEBUG] Level=%d ActionCount=%d Pos=(%d,%d) HP=%d/%d Mode=%s Target=%s",
+			game.Level, game.AI.ActionCount,
+			game.Player.X, game.Player.Y,
+			game.Player.Health, game.Player.MaxHealth,
+			game.AI.Mode, game.AI.Target)
+	}
+
 	// Execute one AI action
 	action := session.Game.AITick()
+
+	// Log AI action result if debug mode enabled
+	if s.debug && action != "" {
+		game := session.Game
+		log.Printf("[AI DEBUG] Action=%s NewPos=(%d,%d) NewMode=%s",
+			action, game.Player.X, game.Player.Y, game.AI.Mode)
+	}
 
 	state := session.Game.GetState()
 	if action != "" {
