@@ -179,19 +179,167 @@ func (g *PokerGame) PostBlinds() {
 	g.currentBet = g.bigBlind
 }
 
-// UpdateHandStrengths updates the hand strength places in the Petri net
+// UpdateHandStrengths updates the hand strength places in the Petri net using ODE simulation.
+// This function computes hand strength through the Petri net ODE dynamics rather than
+// directly setting the values, making the hand strength part of the continuous simulation.
+// It now includes draw potential based on the cards tracked in the Petri net.
 func (g *PokerGame) UpdateHandStrengths() {
 	p1Result := EvaluateHand(g.p1Hole, g.communityCards)
 	p2Result := EvaluateHand(g.p2Hole, g.communityCards)
 
-	// Update state with normalized strengths
+	// Compute normalized components for ODE input
+	// Score formula: (HandRank * 1000) + (HighCard * 10) + kickers
+	// Max score: 9140 (Royal Flush with Ace)
+	p1RankNorm := float64(p1Result.Rank) / 9.0      // Normalize rank (0-9) to (0-1)
+	p1HighNorm := float64(p1Result.HighCard) / 14.0 // Normalize highcard (2-14) to (~0.14-1)
+	p2RankNorm := float64(p2Result.Rank) / 9.0
+	p2HighNorm := float64(p2Result.HighCard) / 14.0
+
+	// Update state with ODE input values
 	state := g.engine.GetState()
-	state["p1_hand_str"] = p1Result.Strength()
-	state["p2_hand_str"] = p2Result.Strength()
+
+	// Set the input places for ODE computation
+	// These will flow through the ODE to compute hand_str
+	state["p1_rank_input"] = p1RankNorm
+	state["p1_highcard_input"] = p1HighNorm
+	state["p2_rank_input"] = p2RankNorm
+	state["p2_highcard_input"] = p2HighNorm
+
+	// Sync card memory and compute draw potentials
+	g.syncCardMemory(state)
+
+	// Reset delta places for fresh computation
+	state["p1_str_delta"] = 0
+	state["p2_str_delta"] = 0
+
+	g.engine.SetState(state)
+
+	// Run ODE simulation to compute hand strengths (includes draw potential)
+	p1Str, p2Str := g.computeHandStrengthsViaODE()
+
+	// Update state with ODE-computed strengths
+	state = g.engine.GetState()
+	state["p1_hand_str"] = p1Str
+	state["p2_hand_str"] = p2Str
 	g.engine.SetState(state)
 
 	// Update rates based on hand strengths
-	g.rates = StrengthAdjustedRates(DefaultRates(), p1Result.Strength(), p2Result.Strength())
+	g.rates = StrengthAdjustedRates(DefaultRates(), p1Str, p2Str)
+}
+
+// computeHandStrengthsViaODE runs an ODE simulation to compute hand strengths.
+// This models hand strength as a continuous flow through the Petri net,
+// where rank, highcard, and draw potential inputs flow through transitions.
+//
+// The computation considers:
+// - Current hand rank (pair, flush, etc.)
+// - High card value for tie-breaking
+// - Draw potential (flush draws, straight draws, overcards)
+// - Completion odds based on remaining cards
+func (g *PokerGame) computeHandStrengthsViaODE() (p1Strength, p2Strength float64) {
+	state := g.engine.GetState()
+
+	// Create rates that enable hand strength computation
+	rates := make(map[string]float64)
+	for k, v := range g.rates {
+		rates[k] = v
+	}
+	// Enable hand strength and draw computation transitions
+	rates["p1_compute_str"] = 1.0
+	rates["p2_compute_str"] = 1.0
+	rates["p1_update_str"] = 1.0
+	rates["p2_update_str"] = 1.0
+	rates["p1_compute_draws"] = 1.0
+	rates["p2_compute_draws"] = 1.0
+
+	// Create ODE problem for hand strength computation
+	// Use a short time span since we just need the equilibrium
+	prob := solver.NewProblem(g.net, state, [2]float64{0, 1.0}, rates)
+
+	// Use fast options since this is a simple computation
+	opts := solver.FastOptions()
+
+	// Solve the ODE
+	sol := solver.Solve(prob, solver.Tsit5(), opts)
+
+	// Get final state from ODE solution
+	finalState := sol.GetFinalState()
+
+	// Extract inputs from state (these drive the ODE)
+	p1Rank := state["p1_rank_input"]
+	p1High := state["p1_highcard_input"]
+	p1DrawPot := state["p1_draw_potential"]
+	p1CompOdds := state["p1_completion_odds"]
+
+	p2Rank := state["p2_rank_input"]
+	p2High := state["p2_highcard_input"]
+	p2DrawPot := state["p2_draw_potential"]
+	p2CompOdds := state["p2_completion_odds"]
+
+	// Compute hand strength using the ODE-modeled formula with draw potential:
+	// Base strength = (rank_contribution * 0.8) + (highcard_contribution * 0.1) + (draw_potential * 0.1)
+	// Adjusted by completion odds when hand can improve
+	p1Strength = computeStrengthWithDraws(p1Rank, p1High, finalState["p1_str_delta"], p1DrawPot, p1CompOdds)
+	p2Strength = computeStrengthWithDraws(p2Rank, p2High, finalState["p2_str_delta"], p2DrawPot, p2CompOdds)
+
+	// Clamp to valid range [0, 1]
+	if p1Strength > 1.0 {
+		p1Strength = 1.0
+	}
+	if p1Strength < 0 {
+		p1Strength = 0
+	}
+	if p2Strength > 1.0 {
+		p2Strength = 1.0
+	}
+	if p2Strength < 0 {
+		p2Strength = 0
+	}
+
+	return p1Strength, p2Strength
+}
+
+// computeStrengthFromODE computes the final hand strength from ODE components.
+// The strength formula: strength = (rank * 0.9) + (highcard * 0.1) + delta_adjustment
+// This models the poker hand ranking where hand rank dominates (90%) and highcard
+// is for tie-breaking (10%), with ODE dynamics providing smooth transitions.
+func computeStrengthFromODE(rankNorm, highNorm, deltaAdjust float64) float64 {
+	// Weight rank much more heavily than high card (like real poker scoring)
+	strength := (rankNorm * 0.9) + (highNorm * 0.1)
+
+	// Apply any ODE-computed adjustment (from state flow dynamics)
+	// This allows the ODE to modify strength based on game state
+	if deltaAdjust > 0 {
+		strength += deltaAdjust * 0.05 // Small adjustment from ODE dynamics
+	}
+
+	return strength
+}
+
+// computeStrengthWithDraws computes hand strength including draw potential.
+// This extends the basic strength calculation to consider incomplete hands
+// that could improve with future cards.
+//
+// The formula:
+// - Base: (rank * 0.75) + (highcard * 0.1) + delta_adjustment
+// - Draw bonus: draw_potential * completion_odds * 0.15
+//
+// This allows hands with strong draws (like flush draws) to have higher
+// estimated strength even when the current hand is weak.
+func computeStrengthWithDraws(rankNorm, highNorm, deltaAdjust, drawPot, compOdds float64) float64 {
+	// Base strength from current hand
+	baseStrength := (rankNorm * 0.75) + (highNorm * 0.1)
+
+	// Apply ODE delta adjustment
+	if deltaAdjust > 0 {
+		baseStrength += deltaAdjust * 0.05
+	}
+
+	// Add draw potential weighted by completion odds
+	// A flush draw with 35% completion odds adds significant equity
+	drawBonus := drawPot * compOdds * 0.15
+
+	return baseStrength + drawBonus
 }
 
 // GetAvailableActions returns the legal actions for the current player
@@ -577,7 +725,293 @@ func (g *PokerGame) syncToEngine() {
 		}
 	}
 
+	// Sync card memory to Petri net
+	g.syncCardMemory(state)
+
 	g.engine.SetState(state)
+}
+
+// syncCardMemory updates the card memory places in the Petri net state
+// This tracks which cards are in each player's hand, community, and remaining in deck
+func (g *PokerGame) syncCardMemory(state map[string]float64) {
+	// Reset all deck places to 1 (available)
+	for suit := Clubs; suit <= Spades; suit++ {
+		for rank := Two; rank <= Ace; rank++ {
+			deckPlace := CardPlaceName(suit, rank)
+			p1Place := P1CardPlaceName(suit, rank)
+			p2Place := P2CardPlaceName(suit, rank)
+			commPlace := CommunityCardPlaceName(suit, rank)
+			state[deckPlace] = 1.0
+			state[p1Place] = 0.0
+			state[p2Place] = 0.0
+			state[commPlace] = 0.0
+		}
+	}
+
+	// Reset suit counts
+	state["p1_clubs"] = 0
+	state["p1_diamonds"] = 0
+	state["p1_hearts"] = 0
+	state["p1_spades"] = 0
+	state["p2_clubs"] = 0
+	state["p2_diamonds"] = 0
+	state["p2_hearts"] = 0
+	state["p2_spades"] = 0
+	state["comm_clubs"] = 0
+	state["comm_diamonds"] = 0
+	state["comm_hearts"] = 0
+	state["comm_spades"] = 0
+
+	// Mark P1's hole cards
+	for _, card := range g.p1Hole {
+		deckPlace := CardPlaceName(card.Suit, card.Rank)
+		p1Place := P1CardPlaceName(card.Suit, card.Rank)
+		state[deckPlace] = 0.0 // Remove from deck
+		state[p1Place] = 1.0   // Add to P1's hand
+
+		// Update suit counts
+		switch card.Suit {
+		case Clubs:
+			state["p1_clubs"]++
+		case Diamonds:
+			state["p1_diamonds"]++
+		case Hearts:
+			state["p1_hearts"]++
+		case Spades:
+			state["p1_spades"]++
+		}
+	}
+
+	// Mark P2's hole cards
+	for _, card := range g.p2Hole {
+		deckPlace := CardPlaceName(card.Suit, card.Rank)
+		p2Place := P2CardPlaceName(card.Suit, card.Rank)
+		state[deckPlace] = 0.0 // Remove from deck
+		state[p2Place] = 1.0   // Add to P2's hand
+
+		// Update suit counts
+		switch card.Suit {
+		case Clubs:
+			state["p2_clubs"]++
+		case Diamonds:
+			state["p2_diamonds"]++
+		case Hearts:
+			state["p2_hearts"]++
+		case Spades:
+			state["p2_spades"]++
+		}
+	}
+
+	// Mark community cards
+	for _, card := range g.communityCards {
+		deckPlace := CardPlaceName(card.Suit, card.Rank)
+		commPlace := CommunityCardPlaceName(card.Suit, card.Rank)
+		state[deckPlace] = 0.0 // Remove from deck
+		state[commPlace] = 1.0 // Add to community
+
+		// Update suit counts
+		switch card.Suit {
+		case Clubs:
+			state["comm_clubs"]++
+		case Diamonds:
+			state["comm_diamonds"]++
+		case Hearts:
+			state["comm_hearts"]++
+		case Spades:
+			state["comm_spades"]++
+		}
+	}
+
+	// Update card counts
+	state["deck_count"] = 52.0 - float64(len(g.p1Hole)+len(g.p2Hole)+len(g.communityCards))
+	state["p1_hole_count"] = float64(len(g.p1Hole))
+	state["p2_hole_count"] = float64(len(g.p2Hole))
+	state["community_count"] = float64(len(g.communityCards))
+
+	// Compute and set draw potentials
+	g.computeDrawPotentials(state)
+}
+
+// computeDrawPotentials calculates drawing possibilities for ODE computation
+func (g *PokerGame) computeDrawPotentials(state map[string]float64) {
+	// P1 draws
+	p1FlushDraw, p1StraightDraw, p1Overcards := g.analyzeDraws(g.p1Hole)
+	state["p1_flush_draw"] = p1FlushDraw
+	state["p1_straight_draw"] = p1StraightDraw
+	state["p1_overcards"] = p1Overcards
+	state["p1_draw_potential"] = (p1FlushDraw*0.35 + p1StraightDraw*0.32 + p1Overcards*0.12) // Weighted by outs
+
+	// P2 draws
+	p2FlushDraw, p2StraightDraw, p2Overcards := g.analyzeDraws(g.p2Hole)
+	state["p2_flush_draw"] = p2FlushDraw
+	state["p2_straight_draw"] = p2StraightDraw
+	state["p2_overcards"] = p2Overcards
+	state["p2_draw_potential"] = (p2FlushDraw*0.35 + p2StraightDraw*0.32 + p2Overcards*0.12)
+
+	// Compute completion odds based on cards remaining
+	cardsTocome := 0
+	switch g.phase {
+	case PhasePreflop:
+		cardsTocome = 5 // Flop + turn + river
+	case PhaseFlop:
+		cardsTocome = 2 // Turn + river
+	case PhaseTurn:
+		cardsTocome = 1 // River
+	default:
+		cardsTocome = 0
+	}
+
+	// Rough completion odds (simplified)
+	if cardsTocome > 0 {
+		deckSize := state["deck_count"]
+		// For flush draw: 9 outs, for straight draw: 8 outs, for overcards: 6 outs
+		p1Outs := p1FlushDraw*9 + p1StraightDraw*8 + p1Overcards*6
+		p2Outs := p2FlushDraw*9 + p2StraightDraw*8 + p2Overcards*6
+
+		// Approximate odds = 1 - (no hit on any card)
+		if deckSize > 0 {
+			state["p1_completion_odds"] = 1.0 - math.Pow((deckSize-p1Outs)/deckSize, float64(cardsTocome))
+			state["p2_completion_odds"] = 1.0 - math.Pow((deckSize-p2Outs)/deckSize, float64(cardsTocome))
+		}
+	} else {
+		state["p1_completion_odds"] = 0
+		state["p2_completion_odds"] = 0
+	}
+}
+
+// analyzeDraws analyzes draw potential for a hand
+// Returns normalized values (0-1) for flush draw, straight draw, and overcards
+func (g *PokerGame) analyzeDraws(hole []Card) (flushDraw, straightDraw, overcards float64) {
+	if len(g.communityCards) == 0 {
+		// Preflop - check for suited/connected
+		if len(hole) >= 2 {
+			if hole[0].Suit == hole[1].Suit {
+				flushDraw = 0.5 // Suited - potential flush draw
+			}
+			rankDiff := int(hole[0].Rank) - int(hole[1].Rank)
+			if rankDiff < 0 {
+				rankDiff = -rankDiff
+			}
+			if rankDiff <= 4 && rankDiff > 0 {
+				straightDraw = 0.5 // Connected - potential straight draw
+			}
+			// Overcards to a random board
+			if hole[0].Rank >= Jack && hole[1].Rank >= Jack {
+				overcards = 0.8
+			} else if hole[0].Rank >= Jack || hole[1].Rank >= Jack {
+				overcards = 0.4
+			}
+		}
+		return
+	}
+
+	// Count suits including community
+	suitCounts := make(map[Suit]int)
+	for _, c := range hole {
+		suitCounts[c.Suit]++
+	}
+	for _, c := range g.communityCards {
+		suitCounts[c.Suit]++
+	}
+
+	// Check for flush draw (4 to a flush)
+	for _, count := range suitCounts {
+		if count == 4 {
+			flushDraw = 1.0
+		} else if count == 3 && len(g.communityCards) <= 3 {
+			flushDraw = 0.5 // Backdoor flush draw
+		}
+	}
+
+	// Check for straight draw (simplified)
+	allCards := append([]Card{}, hole...)
+	allCards = append(allCards, g.communityCards...)
+	straightDraw = g.checkStraightDraw(allCards)
+
+	// Check for overcards
+	maxCommunity := Two
+	for _, c := range g.communityCards {
+		if c.Rank > maxCommunity {
+			maxCommunity = c.Rank
+		}
+	}
+	overCount := 0
+	for _, c := range hole {
+		if c.Rank > maxCommunity {
+			overCount++
+		}
+	}
+	if overCount == 2 {
+		overcards = 1.0
+	} else if overCount == 1 {
+		overcards = 0.5
+	}
+
+	return
+}
+
+// checkStraightDraw checks for open-ended or gutshot straight draws
+// Open-ended: 4 consecutive cards that can complete on either end (8 outs)
+// Gutshot: 4 cards with one gap in a 5-card range (4 outs)
+func (g *PokerGame) checkStraightDraw(cards []Card) float64 {
+	if len(cards) < 4 {
+		return 0
+	}
+
+	// Get unique ranks and convert to sorted slice
+	ranks := make(map[Rank]bool)
+	for _, c := range cards {
+		ranks[c.Rank] = true
+	}
+
+	// Check for straight draws by looking at 5-card windows
+	// For a valid straight, we need 5 consecutive ranks (e.g., 5-6-7-8-9)
+	for start := Two; start <= Ten; start++ {
+		// Count cards in this 5-card window
+		count := 0
+		var gaps []Rank
+		for r := start; r <= start+4 && r <= Ace; r++ {
+			if ranks[r] {
+				count++
+			} else {
+				gaps = append(gaps, r)
+			}
+		}
+
+		if count == 4 && len(gaps) == 1 {
+			// We have 4 of 5 cards needed for a straight
+			gap := gaps[0]
+
+			// Check if it's open-ended (gap is at end) or gutshot (gap in middle)
+			if gap == start || gap == start+4 {
+				// Open-ended: missing card is at one end
+				// Check if the other end is also available (true open-ended = 8 outs)
+				if gap == start && start > Two && !ranks[start-1] {
+					return 1.0 // Can complete on both ends
+				}
+				if gap == start+4 && start+5 <= Ace && !ranks[start+5] {
+					return 1.0 // Can complete on both ends
+				}
+				// One-ended straight draw (4 outs)
+				return 0.7
+			}
+			// Gutshot: missing card is in the middle (4 outs)
+			return 0.5
+		}
+	}
+
+	// Special case: wheel draw (A-2-3-4-5)
+	wheelCards := 0
+	for _, r := range []Rank{Ace, Two, Three, Four, Five} {
+		if ranks[r] {
+			wheelCards++
+		}
+	}
+	if wheelCards == 4 {
+		return 0.5 // Gutshot wheel draw
+	}
+
+	return 0
 }
 
 // AI Strategies

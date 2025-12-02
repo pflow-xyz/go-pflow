@@ -1,6 +1,7 @@
 package poker
 
 import (
+	"math"
 	"testing"
 )
 
@@ -39,6 +40,111 @@ func TestStartHand(t *testing.T) {
 	// Check phase is pre-flop
 	if game.GetPhase() != PhasePreflop {
 		t.Errorf("Expected phase to be Pre-flop, got %s", game.GetPhase())
+	}
+}
+
+func TestODEHandStrengthComputation(t *testing.T) {
+	game := NewPokerGame(1000, 1, 2)
+	game.StartHand()
+
+	// Get hand strength computed via ODE
+	state := game.engine.GetState()
+	p1Str := state["p1_hand_str"]
+	p2Str := state["p2_hand_str"]
+
+	// Strengths should be in valid range [0, 1]
+	if p1Str < 0 || p1Str > 1 {
+		t.Errorf("P1 ODE hand strength out of range: %f", p1Str)
+	}
+	if p2Str < 0 || p2Str > 1 {
+		t.Errorf("P2 ODE hand strength out of range: %f", p2Str)
+	}
+
+	// Check that ODE input places were set
+	p1RankInput := state["p1_rank_input"]
+	p1HighInput := state["p1_highcard_input"]
+
+	if p1RankInput < 0 || p1RankInput > 1 {
+		t.Errorf("P1 rank input out of range: %f", p1RankInput)
+	}
+	// Highcard is normalized: min 2/14 (~0.14), max 14/14 (1.0)
+	if p1HighInput < 0 || p1HighInput > 1.0 {
+		t.Errorf("P1 highcard input out of range: %f", p1HighInput)
+	}
+}
+
+func TestODEHandStrengthConsistency(t *testing.T) {
+	// Test that the ODE-computed strength is consistent with the formula
+	// strength = (rank * 0.9) + (highcard * 0.1) + small adjustment
+
+	// Test with known values
+	testCases := []struct {
+		rankNorm  float64
+		highNorm  float64
+		minExpect float64 // Minimum expected strength
+		maxExpect float64 // Maximum expected strength
+	}{
+		{0.0, 0.14, 0.0, 0.2},    // High card with 2 high
+		{0.0, 1.0, 0.05, 0.15},   // High card with Ace
+		{0.11, 0.5, 0.1, 0.2},    // One pair
+		{1.0, 1.0, 0.9, 1.0},     // Royal flush with Ace high
+	}
+
+	for _, tc := range testCases {
+		strength := computeStrengthFromODE(tc.rankNorm, tc.highNorm, 0)
+		if strength < tc.minExpect || strength > tc.maxExpect {
+			t.Errorf("computeStrengthFromODE(%f, %f, 0) = %f, expected between %f and %f",
+				tc.rankNorm, tc.highNorm, strength, tc.minExpect, tc.maxExpect)
+		}
+	}
+}
+
+func TestODEHandStrengthUpdatesWithCommunity(t *testing.T) {
+	game := NewPokerGame(1000, 1, 2)
+	game.StartHand()
+
+	// Get initial hand strength
+	state := game.engine.GetState()
+	initialP1Str := state["p1_hand_str"]
+
+	// Advance to flop
+	game.MakeAction(ActionCall, 0)
+	game.MakeAction(ActionCheck, 0)
+
+	// Hand strength may have changed (community cards affect hand)
+	state = game.engine.GetState()
+	flopP1Str := state["p1_hand_str"]
+
+	// Both should still be valid
+	if flopP1Str < 0 || flopP1Str > 1 {
+		t.Errorf("P1 hand strength out of range after flop: %f", flopP1Str)
+	}
+
+	// Note: We don't require strength to change, as it depends on the random cards
+	// Just verify it's still a valid value computed via ODE
+	_ = initialP1Str // Mark as used
+}
+
+func TestComputeStrengthFromODE(t *testing.T) {
+	// Test the ODE strength computation function
+	tests := []struct {
+		rank   float64
+		high   float64
+		delta  float64
+		expect float64
+	}{
+		{0.0, 0.0, 0.0, 0.0},     // Minimum
+		{1.0, 1.0, 0.0, 1.0},     // Maximum (rank 1.0 * 0.9 + high 1.0 * 0.1)
+		{0.5, 0.5, 0.0, 0.5},     // Middle
+		{0.5, 0.5, 1.0, 0.55},    // With delta adjustment
+	}
+
+	for _, tt := range tests {
+		got := computeStrengthFromODE(tt.rank, tt.high, tt.delta)
+		if math.Abs(got-tt.expect) > 0.01 {
+			t.Errorf("computeStrengthFromODE(%f, %f, %f) = %f, want %f",
+				tt.rank, tt.high, tt.delta, got, tt.expect)
+		}
 	}
 }
 
@@ -229,5 +335,103 @@ func TestPlayerString(t *testing.T) {
 	}
 	if Player2.String() != "Player 2" {
 		t.Errorf("Expected 'Player 2', got '%s'", Player2.String())
+	}
+}
+
+func TestCardMemorySync(t *testing.T) {
+	game := NewPokerGame(1000, 1, 2)
+	game.StartHand()
+
+	state := game.engine.GetState()
+
+	// Check that deck count decreased by 4 (2 hole cards per player)
+	if state["deck_count"] != 48.0 {
+		t.Errorf("Expected deck_count of 48, got %f", state["deck_count"])
+	}
+
+	// Check hole card counts
+	if state["p1_hole_count"] != 2.0 {
+		t.Errorf("Expected p1_hole_count of 2, got %f", state["p1_hole_count"])
+	}
+	if state["p2_hole_count"] != 2.0 {
+		t.Errorf("Expected p2_hole_count of 2, got %f", state["p2_hole_count"])
+	}
+
+	// Check community count (should be 0 at preflop)
+	if state["community_count"] != 0.0 {
+		t.Errorf("Expected community_count of 0 at preflop, got %f", state["community_count"])
+	}
+
+	// Advance to flop
+	game.MakeAction(ActionCall, 0)
+	game.MakeAction(ActionCheck, 0)
+
+	state = game.engine.GetState()
+
+	// Check community count (should be 3 at flop)
+	if state["community_count"] != 3.0 {
+		t.Errorf("Expected community_count of 3 at flop, got %f", state["community_count"])
+	}
+
+	// Check deck count (52 - 4 hole cards - 3 community = 45)
+	if state["deck_count"] != 45.0 {
+		t.Errorf("Expected deck_count of 45 at flop, got %f", state["deck_count"])
+	}
+}
+
+func TestDrawPotentialComputation(t *testing.T) {
+	game := NewPokerGame(1000, 1, 2)
+	game.StartHand()
+
+	state := game.engine.GetState()
+
+	// Draw potentials should be computed
+	p1Draw := state["p1_draw_potential"]
+	p2Draw := state["p2_draw_potential"]
+
+	// At preflop, draw potential is based on suited/connected hole cards
+	// Values should be in valid range [0, 1]
+	if p1Draw < 0 || p1Draw > 1 {
+		t.Errorf("P1 draw potential out of range: %f", p1Draw)
+	}
+	if p2Draw < 0 || p2Draw > 1 {
+		t.Errorf("P2 draw potential out of range: %f", p2Draw)
+	}
+
+	// Completion odds should be set (preflop has 5 cards to come)
+	p1Odds := state["p1_completion_odds"]
+	p2Odds := state["p2_completion_odds"]
+
+	if p1Odds < 0 || p1Odds > 1 {
+		t.Errorf("P1 completion odds out of range: %f", p1Odds)
+	}
+	if p2Odds < 0 || p2Odds > 1 {
+		t.Errorf("P2 completion odds out of range: %f", p2Odds)
+	}
+}
+
+func TestComputeStrengthWithDraws(t *testing.T) {
+	// Test the new strength computation with draws
+	tests := []struct {
+		rank       float64
+		high       float64
+		delta      float64
+		drawPot    float64
+		compOdds   float64
+		minExpect  float64
+		maxExpect  float64
+	}{
+		{0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.1},     // Weak hand, no draws
+		{0.5, 0.5, 0.0, 0.0, 0.0, 0.35, 0.45},   // Medium hand, no draws
+		{0.5, 0.5, 0.0, 1.0, 0.5, 0.40, 0.55},   // Medium hand with flush draw
+		{0.0, 0.5, 0.0, 1.0, 0.35, 0.05, 0.15},  // Weak hand with strong draw
+	}
+
+	for _, tt := range tests {
+		got := computeStrengthWithDraws(tt.rank, tt.high, tt.delta, tt.drawPot, tt.compOdds)
+		if got < tt.minExpect || got > tt.maxExpect {
+			t.Errorf("computeStrengthWithDraws(%f, %f, %f, %f, %f) = %f, expected between %f and %f",
+				tt.rank, tt.high, tt.delta, tt.drawPot, tt.compOdds, got, tt.minExpect, tt.maxExpect)
+		}
 	}
 }
