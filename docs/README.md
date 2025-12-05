@@ -39,6 +39,9 @@ And you'll be able to:
 
 Understand the foundational ideas:
 
+- [**How go-pflow Differs From Modern AI**](concepts/not-ai.md)
+  What go-pflow is (and isn't) - structural dynamics vs. machine learning
+
 - [**Petri Nets Explained**](concepts/petri-nets.md)
   What they are, why we use them, how they represent processes
 
@@ -87,6 +90,9 @@ For those who want the details:
   All the equations, derivations, and theory
 
 ## Quick Links by Interest
+
+### "Is this AI or machine learning?"
+→ No! Read [How go-pflow Differs From Modern AI](concepts/not-ai.md) to understand what go-pflow actually is
 
 ### "I want to understand the big picture"
 → Start with [Petri Nets](concepts/petri-nets.md), then [ODE Simulation](concepts/ode-simulation.md)

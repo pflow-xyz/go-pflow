@@ -396,7 +396,7 @@ func TestPredictRunout(t *testing.T) {
 
 func TestRunDaySimulation(t *testing.T) {
 	// Quick day simulation
-	peakHours := []int{8, 12, 17} // Morning, lunch, evening
+	peakHours := []int{8, 12, 17}              // Morning, lunch, evening
 	result := RunDaySimulation(peakHours, 0.1) // Low rate for fast test
 
 	if result == nil {
@@ -847,12 +847,12 @@ func TestSimulatorMiningAnalysis(t *testing.T) {
 func TestSimulatorPresetConfigs(t *testing.T) {
 	// Test all preset configs compile and have valid values
 	configs := map[string]*SimulatorConfig{
-		"default":   DefaultSimulatorConfig(),
-		"quick":     QuickTestConfig(),
-		"rush":      RushHourConfig(),
-		"slow":      SlowDayConfig(),
-		"stress":    StressTestConfig(),
-		"observer":  ObserverTestConfig("latte", 5),
+		"default":  DefaultSimulatorConfig(),
+		"quick":    QuickTestConfig(),
+		"rush":     RushHourConfig(),
+		"slow":     SlowDayConfig(),
+		"stress":   StressTestConfig(),
+		"observer": ObserverTestConfig("latte", 5),
 	}
 
 	for name, config := range configs {

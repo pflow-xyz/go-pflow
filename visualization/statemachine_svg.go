@@ -666,11 +666,11 @@ func transitionKey(trans *statemachine.Transition) string {
 
 // transitionInfo holds pre-calculated info about a transition for offset calculation
 type transitionInfo struct {
-	trans    *statemachine.Transition
-	side     string  // "left", "right", or "none" (for horizontal)
-	midY     float64 // midpoint Y for vertical transitions
-	srcY     float64 // source Y position
-	trgY     float64 // target Y position
+	trans *statemachine.Transition
+	side  string  // "left", "right", or "none" (for horizontal)
+	midY  float64 // midpoint Y for vertical transitions
+	srcY  float64 // source Y position
+	trgY  float64 // target Y position
 }
 
 // transitionOffset holds both the curve offset and any Y adjustment for the label

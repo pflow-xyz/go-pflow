@@ -13,19 +13,19 @@ import (
 
 // Ingredient capacities
 const (
-	MaxCoffeeBeans   = 1000 // grams
-	MaxMilk          = 5000 // ml
-	MaxWater         = 10000 // ml
-	MaxCups          = 100
-	MaxSugarPackets  = 200
-	MaxSyrupPumps    = 500 // pumps worth
+	MaxCoffeeBeans  = 1000  // grams
+	MaxMilk         = 5000  // ml
+	MaxWater        = 10000 // ml
+	MaxCups         = 100
+	MaxSugarPackets = 200
+	MaxSyrupPumps   = 500 // pumps worth
 )
 
 // Recipe requirements per drink (approximate)
 var Recipes = map[string]map[string]float64{
 	"espresso": {
-		"coffee_beans": 18,  // grams
-		"water":        30,  // ml
+		"coffee_beans": 18, // grams
+		"water":        30, // ml
 		"cups":         1,
 	},
 	"americano": {
