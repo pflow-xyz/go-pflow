@@ -84,10 +84,10 @@ func TestODEHandStrengthConsistency(t *testing.T) {
 		minExpect float64 // Minimum expected strength
 		maxExpect float64 // Maximum expected strength
 	}{
-		{0.0, 0.14, 0.0, 0.2},    // High card with 2 high
-		{0.0, 1.0, 0.05, 0.15},   // High card with Ace
-		{0.11, 0.5, 0.1, 0.2},    // One pair
-		{1.0, 1.0, 0.9, 1.0},     // Royal flush with Ace high
+		{0.0, 0.14, 0.0, 0.2},  // High card with 2 high
+		{0.0, 1.0, 0.05, 0.15}, // High card with Ace
+		{0.11, 0.5, 0.1, 0.2},  // One pair
+		{1.0, 1.0, 0.9, 1.0},   // Royal flush with Ace high
 	}
 
 	for _, tc := range testCases {
@@ -133,10 +133,10 @@ func TestComputeStrengthFromODE(t *testing.T) {
 		delta  float64
 		expect float64
 	}{
-		{0.0, 0.0, 0.0, 0.0},     // Minimum
-		{1.0, 1.0, 0.0, 1.0},     // Maximum (rank 1.0 * 0.9 + high 1.0 * 0.1)
-		{0.5, 0.5, 0.0, 0.5},     // Middle
-		{0.5, 0.5, 1.0, 0.55},    // With delta adjustment
+		{0.0, 0.0, 0.0, 0.0},  // Minimum
+		{1.0, 1.0, 0.0, 1.0},  // Maximum (rank 1.0 * 0.9 + high 1.0 * 0.1)
+		{0.5, 0.5, 0.0, 0.5},  // Middle
+		{0.5, 0.5, 1.0, 0.55}, // With delta adjustment
 	}
 
 	for _, tt := range tests {
@@ -413,18 +413,18 @@ func TestDrawPotentialComputation(t *testing.T) {
 func TestComputeStrengthWithDraws(t *testing.T) {
 	// Test the new strength computation with draws
 	tests := []struct {
-		rank       float64
-		high       float64
-		delta      float64
-		drawPot    float64
-		compOdds   float64
-		minExpect  float64
-		maxExpect  float64
+		rank      float64
+		high      float64
+		delta     float64
+		drawPot   float64
+		compOdds  float64
+		minExpect float64
+		maxExpect float64
 	}{
-		{0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.1},     // Weak hand, no draws
-		{0.5, 0.5, 0.0, 0.0, 0.0, 0.35, 0.45},   // Medium hand, no draws
-		{0.5, 0.5, 0.0, 1.0, 0.5, 0.40, 0.55},   // Medium hand with flush draw
-		{0.0, 0.5, 0.0, 1.0, 0.35, 0.05, 0.15},  // Weak hand with strong draw
+		{0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.1},    // Weak hand, no draws
+		{0.5, 0.5, 0.0, 0.0, 0.0, 0.35, 0.45},  // Medium hand, no draws
+		{0.5, 0.5, 0.0, 1.0, 0.5, 0.40, 0.55},  // Medium hand with flush draw
+		{0.0, 0.5, 0.0, 1.0, 0.35, 0.05, 0.15}, // Weak hand with strong draw
 	}
 
 	for _, tt := range tests {

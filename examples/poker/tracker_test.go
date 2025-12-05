@@ -98,7 +98,7 @@ func TestOpponentRangeEstimation(t *testing.T) {
 
 func TestBoardTextureAnalysis(t *testing.T) {
 	tracker := NewCardTracker()
-	
+
 	// Test flush draw board
 	community := []Card{
 		{Rank: Two, Suit: Hearts},
@@ -107,7 +107,7 @@ func TestBoardTextureAnalysis(t *testing.T) {
 		{Rank: King, Suit: Diamonds},
 	}
 	tracker.SetCommunityCards(community)
-	
+
 	texture := tracker.AnalyzeBoard()
 	if !texture.FlushDraw {
 		t.Error("Expected flush draw to be detected")
@@ -116,7 +116,7 @@ func TestBoardTextureAnalysis(t *testing.T) {
 
 func TestBoardTexturePaired(t *testing.T) {
 	tracker := NewCardTracker()
-	
+
 	// Test paired board
 	community := []Card{
 		{Rank: King, Suit: Hearts},
@@ -124,7 +124,7 @@ func TestBoardTexturePaired(t *testing.T) {
 		{Rank: Seven, Suit: Clubs},
 	}
 	tracker.SetCommunityCards(community)
-	
+
 	texture := tracker.AnalyzeBoard()
 	if !texture.PairedBoard {
 		t.Error("Expected paired board to be detected")
@@ -133,32 +133,32 @@ func TestBoardTexturePaired(t *testing.T) {
 
 func TestAdversarialAnalysis(t *testing.T) {
 	tracker := NewCardTracker()
-	
+
 	hole := []Card{
 		{Rank: Ace, Suit: Spades},
 		{Rank: Ace, Suit: Hearts},
 	}
 	tracker.SetOurHoleCards(hole)
-	
+
 	community := []Card{
 		{Rank: Ace, Suit: Diamonds},
 		{Rank: King, Suit: Clubs},
 		{Rank: Two, Suit: Hearts},
 	}
 	tracker.SetCommunityCards(community)
-	
+
 	analysis := tracker.GetAdversarialAnalysis(0.5)
-	
+
 	// With trip aces, we should have high strength
 	if analysis.OurStrength < 0.3 {
 		t.Errorf("Expected high strength with trip aces, got %.3f", analysis.OurStrength)
 	}
-	
+
 	// We should have positive equity advantage
 	if analysis.EquityAdvantage < 0 {
 		t.Error("Expected positive equity advantage with trip aces")
 	}
-	
+
 	// Should have a recommendation
 	if analysis.RecommendedAction == "" {
 		t.Error("Expected a recommendation")
@@ -167,23 +167,23 @@ func TestAdversarialAnalysis(t *testing.T) {
 
 func TestAggressionTracking(t *testing.T) {
 	tracker := NewCardTracker()
-	
+
 	// Test different actions
 	foldAgg := tracker.UpdateFromBettingAction(ActionFold, 0, 100)
 	if foldAgg != 0.0 {
 		t.Errorf("Fold should have 0 aggression, got %.2f", foldAgg)
 	}
-	
+
 	checkAgg := tracker.UpdateFromBettingAction(ActionCheck, 0, 100)
 	if checkAgg < 0.3 || checkAgg > 0.5 {
 		t.Errorf("Check should have moderate aggression, got %.2f", checkAgg)
 	}
-	
+
 	raiseAgg := tracker.UpdateFromBettingAction(ActionRaise, 100, 100)
 	if raiseAgg < 0.7 {
 		t.Errorf("Pot-sized raise should have high aggression, got %.2f", raiseAgg)
 	}
-	
+
 	allInAgg := tracker.UpdateFromBettingAction(ActionAllIn, 1000, 100)
 	if allInAgg != 1.0 {
 		t.Errorf("All-in should have max aggression, got %.2f", allInAgg)
@@ -192,22 +192,22 @@ func TestAggressionTracking(t *testing.T) {
 
 func TestDangerCards(t *testing.T) {
 	tracker := NewCardTracker()
-	
+
 	hole := []Card{
 		{Rank: Seven, Suit: Spades},
 		{Rank: Eight, Suit: Spades},
 	}
 	tracker.SetOurHoleCards(hole)
-	
+
 	community := []Card{
 		{Rank: Nine, Suit: Hearts},
 		{Rank: Ten, Suit: Diamonds},
 		{Rank: Two, Suit: Clubs},
 	}
 	tracker.SetCommunityCards(community)
-	
+
 	estimate := tracker.EstimateOpponentRange(0.5)
-	
+
 	// Should identify some danger cards (cards that help opponent)
 	// Not checking specific cards as it depends on combinations
 	if len(estimate.DangerCards) == 0 && estimate.SampleSize > 100 {
@@ -225,7 +225,7 @@ func TestHandRangeEstimateString(t *testing.T) {
 		StraightProb:      0.03,
 		FlushProb:         0.04,
 	}
-	
+
 	str := estimate.String()
 	if str == "" {
 		t.Error("Expected non-empty string representation")
@@ -234,13 +234,13 @@ func TestHandRangeEstimateString(t *testing.T) {
 
 func TestAdversarialAnalysisString(t *testing.T) {
 	analysis := AdversarialAnalysis{
-		OurHand:         HandResult{Rank: OnePair, HighCard: Ace},
-		OurStrength:     0.15,
-		EquityAdvantage: 0.05,
-		DangerLevel:     0.3,
+		OurHand:           HandResult{Rank: OnePair, HighCard: Ace},
+		OurStrength:       0.15,
+		EquityAdvantage:   0.05,
+		DangerLevel:       0.3,
 		RecommendedAction: "Check/call",
 	}
-	
+
 	str := analysis.String()
 	if str == "" {
 		t.Error("Expected non-empty string representation")

@@ -71,9 +71,9 @@ func CommunityCardPlaceName(suit Suit, rank Rank) string {
 
 // Layout constants for Petri net visualization
 const (
-	cardSpacing     = 30  // Spacing between card places
-	deckXOffset     = 0   // X offset for deck cards
-	p1CardXOffset   = 500 // X offset for P1 card memory
+	cardSpacing     = 30   // Spacing between card places
+	deckXOffset     = 0    // X offset for deck cards
+	p1CardXOffset   = 500  // X offset for P1 card memory
 	p2CardXOffset   = 1000 // X offset for P2 card memory
 	commCardXOffset = 1500 // X offset for community cards
 )
@@ -137,11 +137,11 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 	// === DRAW POTENTIAL PLACES ===
 	// These places track drawing possibilities for ODE computation
 	// P1 draw potential
-	net.AddPlace("p1_flush_draw", 0.0, nil, 100, 200, nil)     // 4 to a flush
-	net.AddPlace("p1_straight_draw", 0.0, nil, 100, 230, nil)  // Open-ended straight draw
-	net.AddPlace("p1_gutshot_draw", 0.0, nil, 100, 260, nil)   // Gutshot straight draw
-	net.AddPlace("p1_pair_draw", 0.0, nil, 100, 290, nil)      // Drawing to a pair
-	net.AddPlace("p1_overcards", 0.0, nil, 100, 320, nil)      // Overcards to board
+	net.AddPlace("p1_flush_draw", 0.0, nil, 100, 200, nil)    // 4 to a flush
+	net.AddPlace("p1_straight_draw", 0.0, nil, 100, 230, nil) // Open-ended straight draw
+	net.AddPlace("p1_gutshot_draw", 0.0, nil, 100, 260, nil)  // Gutshot straight draw
+	net.AddPlace("p1_pair_draw", 0.0, nil, 100, 290, nil)     // Drawing to a pair
+	net.AddPlace("p1_overcards", 0.0, nil, 100, 320, nil)     // Overcards to board
 
 	// P2 draw potential
 	net.AddPlace("p2_flush_draw", 0.0, nil, 200, 200, nil)
@@ -152,10 +152,10 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 
 	// === CARD COUNT MEMORY PLACES ===
 	// Track the number of cards in each location
-	net.AddPlace("deck_count", 52.0, nil, 100, 400, nil)      // Cards remaining in deck
-	net.AddPlace("p1_hole_count", 0.0, nil, 100, 430, nil)    // P1's hole cards
-	net.AddPlace("p2_hole_count", 0.0, nil, 100, 460, nil)    // P2's hole cards
-	net.AddPlace("community_count", 0.0, nil, 100, 490, nil)  // Community cards
+	net.AddPlace("deck_count", 52.0, nil, 100, 400, nil)     // Cards remaining in deck
+	net.AddPlace("p1_hole_count", 0.0, nil, 100, 430, nil)   // P1's hole cards
+	net.AddPlace("p2_hole_count", 0.0, nil, 100, 460, nil)   // P2's hole cards
+	net.AddPlace("community_count", 0.0, nil, 100, 490, nil) // Community cards
 
 	// === SUIT COUNT PLACES (for flush draws) ===
 	// P1 suit counts (hole cards)
@@ -403,12 +403,12 @@ func CreatePokerPetriNet(numPlayers int) *petri.PetriNet {
 func DefaultRates() map[string]float64 {
 	return map[string]float64{
 		// Phase transitions (controlled by game logic)
-		"deal_hole":    0.0,
-		"deal_flop":    0.0,
-		"deal_turn":    0.0,
-		"deal_river":   0.0,
-		"to_showdown":  0.0,
-		"end_hand":     0.0,
+		"deal_hole":   0.0,
+		"deal_flop":   0.0,
+		"deal_turn":   0.0,
+		"deal_river":  0.0,
+		"to_showdown": 0.0,
+		"end_hand":    0.0,
 
 		// Player 1 actions (base rates, modified by hand strength)
 		"p1_fold":   0.2,  // Fold rate decreases with hand strength

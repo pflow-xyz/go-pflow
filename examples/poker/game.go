@@ -31,34 +31,34 @@ type BettingDecision struct {
 
 // PokerGame represents a Texas Hold'em poker game
 type PokerGame struct {
-	net           *petri.PetriNet
-	engine        *engine.Engine
-	rates         map[string]float64
-	deck          *Deck
+	net            *petri.PetriNet
+	engine         *engine.Engine
+	rates          map[string]float64
+	deck           *Deck
 	communityCards []Card
-	p1Hole        []Card
-	p2Hole        []Card
-	phase         GamePhase
-	pot           float64
-	currentBet    float64
-	p1Chips       float64
-	p2Chips       float64
-	p1Bet         float64 // Amount bet this round
-	p2Bet         float64
-	p1Folded      bool
-	p2Folded      bool
-	currentPlayer Player
+	p1Hole         []Card
+	p2Hole         []Card
+	phase          GamePhase
+	pot            float64
+	currentBet     float64
+	p1Chips        float64
+	p2Chips        float64
+	p1Bet          float64 // Amount bet this round
+	p2Bet          float64
+	p1Folded       bool
+	p2Folded       bool
+	currentPlayer  Player
 	actedThisRound map[Player]bool
-	winner        *Player
-	smallBlind    float64
-	bigBlind      float64
-	evaluator     *hypothesis.Evaluator
-	
+	winner         *Player
+	smallBlind     float64
+	bigBlind       float64
+	evaluator      *hypothesis.Evaluator
+
 	// Card tracking for adversarial analysis
-	p1Tracker     *CardTracker // Player 1's view (sees own hole cards + community)
-	p2Tracker     *CardTracker // Player 2's view
-	p1Aggression  float64      // Running aggression factor for player 1
-	p2Aggression  float64      // Running aggression factor for player 2
+	p1Tracker    *CardTracker // Player 1's view (sees own hole cards + community)
+	p2Tracker    *CardTracker // Player 2's view
+	p1Aggression float64      // Running aggression factor for player 1
+	p2Aggression float64      // Running aggression factor for player 2
 }
 
 // NewPokerGame creates a new Texas Hold'em game
@@ -147,7 +147,7 @@ func (g *PokerGame) StartHand() {
 	g.p2Tracker.SetOurHoleCards(g.p2Hole)
 	g.p1Tracker.SetPhase(PhasePreflop)
 	g.p2Tracker.SetPhase(PhasePreflop)
-	
+
 	// Reset aggression factors
 	g.p1Aggression = 0.5
 	g.p2Aggression = 0.5
@@ -666,7 +666,7 @@ func (g *PokerGame) syncToEngine() {
 	state["phase_river"] = 0
 	state["phase_showdown"] = 0
 	state["phase_complete"] = 0
-	
+
 	switch g.phase {
 	case PhasePreflop:
 		state["phase_preflop"] = 1
@@ -1057,7 +1057,7 @@ func (g *PokerGame) GetODEAction(verbose bool) BettingDecision {
 	// Simple strategy based on hand strength
 	toCall := g.GetToCall()
 	potOdds := g.pot / (g.pot + toCall)
-	
+
 	if verbose {
 		fmt.Printf("  Hand: %s (strength: %.3f)\n", result.String(), strength)
 		fmt.Printf("  Pot: %.0f, To Call: %.0f, Pot Odds: %.1f%%\n", g.pot, toCall, potOdds*100)
@@ -1083,9 +1083,9 @@ func (g *PokerGame) GetODEAction(verbose bool) BettingDecision {
 			toCall := g.GetToCall()
 			chips := g.GetPlayerChips(g.currentPlayer)
 			amounts := []float64{
-				toCall + g.bigBlind,           // Min raise
-				toCall + g.pot*0.5,            // Half pot
-				toCall + g.pot,                // Pot
+				toCall + g.bigBlind, // Min raise
+				toCall + g.pot*0.5,  // Half pot
+				toCall + g.pot,      // Pot
 			}
 			for _, amt := range amounts {
 				if amt > chips {
@@ -1210,14 +1210,14 @@ func (g *PokerGame) evaluateActionWithAnalysis(baseState map[string]float64, act
 	strength := analysis.OurStrength
 	oppStrength := analysis.OpponentEstimate.EstimatedStrength
 	dangerLevel := analysis.DangerLevel
-	
+
 	// Adjust our effective strength based on equity advantage
 	// If we have an advantage, we're effectively stronger
 	effectiveStrength := strength
 	if analysis.EquityAdvantage > 0 {
-		effectiveStrength = strength + analysis.EquityAdvantage * 0.5
+		effectiveStrength = strength + analysis.EquityAdvantage*0.5
 	} else {
-		effectiveStrength = strength + analysis.EquityAdvantage * 0.3
+		effectiveStrength = strength + analysis.EquityAdvantage*0.3
 	}
 	if effectiveStrength > 1.0 {
 		effectiveStrength = 1.0
@@ -1278,7 +1278,7 @@ func (g *PokerGame) evaluateActionWithAnalysis(baseState map[string]float64, act
 		if foldEquity > 0.7 {
 			foldEquity = 0.7 // Cap fold equity
 		}
-		
+
 		potAfter = g.pot + amount
 		winProb := effectiveStrength / (effectiveStrength + oppStrength + 0.001)
 		ev := foldEquity*g.pot + (1-foldEquity)*(winProb*potAfter-(1-winProb)*amount)

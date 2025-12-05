@@ -7,11 +7,11 @@ import (
 
 // CardTracker tracks visible cards and estimates opponent hand ranges
 type CardTracker struct {
-	knownCards   map[Card]bool // Cards that are visible (community + our hole)
-	deadCards    map[Card]bool // Cards that can't be in opponent's hand
+	knownCards     map[Card]bool // Cards that are visible (community + our hole)
+	deadCards      map[Card]bool // Cards that can't be in opponent's hand
 	communityCards []Card
-	ourHole      []Card
-	phase        GamePhase
+	ourHole        []Card
+	phase          GamePhase
 }
 
 // NewCardTracker creates a new card tracker
@@ -64,23 +64,23 @@ func (ct *CardTracker) GetRemainingDeck() []Card {
 // HandRangeEstimate represents an estimate of possible hands with probabilities
 type HandRangeEstimate struct {
 	// Probability distribution over hand types
-	HighCardProb     float64
-	OnePairProb      float64
-	TwoPairProb      float64
-	ThreeOfAKindProb float64
-	StraightProb     float64
-	FlushProb        float64
-	FullHouseProb    float64
-	FourOfAKindProb  float64
+	HighCardProb      float64
+	OnePairProb       float64
+	TwoPairProb       float64
+	ThreeOfAKindProb  float64
+	StraightProb      float64
+	FlushProb         float64
+	FullHouseProb     float64
+	FourOfAKindProb   float64
 	StraightFlushProb float64
-	RoyalFlushProb   float64
-	
+	RoyalFlushProb    float64
+
 	// Expected hand strength (0-1)
 	EstimatedStrength float64
-	
+
 	// Key cards that would help opponent (danger cards)
 	DangerCards []Card
-	
+
 	// Sample size used for estimation
 	SampleSize int
 }
@@ -102,25 +102,25 @@ func (hr HandRangeEstimate) String() string {
 // 3. Betting behavior (aggression factor)
 func (ct *CardTracker) EstimateOpponentRange(aggressionFactor float64) HandRangeEstimate {
 	remaining := ct.GetRemainingDeck()
-	
+
 	// If not enough cards for analysis, return empty estimate
 	if len(remaining) < 2 {
 		return HandRangeEstimate{}
 	}
-	
+
 	// Sample opponent hole card combinations
 	combinations := getCardCombinations(remaining, 2)
-	
+
 	// Track hand type frequencies
 	handCounts := make(map[HandRank]int)
 	totalStrength := 0.0
 	dangerCards := make(map[Card]int)
-	
+
 	for _, oppHole := range combinations {
 		result := EvaluateHand(oppHole, ct.communityCards)
 		handCounts[result.Rank]++
 		totalStrength += result.Strength()
-		
+
 		// Track which cards contribute to strong hands
 		if result.Rank >= OnePair {
 			for _, c := range oppHole {
@@ -128,16 +128,16 @@ func (ct *CardTracker) EstimateOpponentRange(aggressionFactor float64) HandRange
 			}
 		}
 	}
-	
+
 	total := float64(len(combinations))
 	if total == 0 {
 		return HandRangeEstimate{}
 	}
-	
+
 	// Apply aggression factor adjustment
 	// Higher aggression suggests stronger range
 	strengthAdjustment := 1.0 + (aggressionFactor-0.5)*0.2
-	
+
 	estimate := HandRangeEstimate{
 		HighCardProb:      float64(handCounts[HighCard]) / total,
 		OnePairProb:       float64(handCounts[OnePair]) / total,
@@ -152,15 +152,15 @@ func (ct *CardTracker) EstimateOpponentRange(aggressionFactor float64) HandRange
 		EstimatedStrength: (totalStrength / total) * strengthAdjustment,
 		SampleSize:        len(combinations),
 	}
-	
+
 	// Cap estimated strength at 1.0
 	if estimate.EstimatedStrength > 1.0 {
 		estimate.EstimatedStrength = 1.0
 	}
-	
+
 	// Find top danger cards
 	estimate.DangerCards = ct.findDangerCards(dangerCards)
-	
+
 	return estimate
 }
 
@@ -170,65 +170,65 @@ func (ct *CardTracker) findDangerCards(cardCounts map[Card]int) []Card {
 		card  Card
 		count int
 	}
-	
+
 	counts := make([]cardCount, 0, len(cardCounts))
 	for card, count := range cardCounts {
 		counts = append(counts, cardCount{card, count})
 	}
-	
+
 	// Sort by count descending
 	sort.Slice(counts, func(i, j int) bool {
 		return counts[i].count > counts[j].count
 	})
-	
+
 	// Return top 5 danger cards
 	result := make([]Card, 0, 5)
 	for i := 0; i < len(counts) && i < 5; i++ {
 		result = append(result, counts[i].card)
 	}
-	
+
 	return result
 }
 
 // AnalyzeBoardTexture analyzes what drawing possibilities exist on the board
 type BoardTexture struct {
 	// Flush potential
-	FlushDraw     bool   // 4 to a flush possible
-	FlushComplete bool   // 5 of same suit on board
-	FlushSuit     Suit   // Dominant suit if flush draw
-	
+	FlushDraw     bool // 4 to a flush possible
+	FlushComplete bool // 5 of same suit on board
+	FlushSuit     Suit // Dominant suit if flush draw
+
 	// Straight potential
 	StraightDraw     bool // 4 to a straight possible (OESD or gutshot)
 	StraightComplete bool // Straight possible on board
-	
+
 	// Pairing
 	PairedBoard  bool // Board has a pair
 	TripsOnBoard bool // Board has trips
-	
+
 	// High cards
-	HighCards    int  // Number of broadway cards (T,J,Q,K,A)
-	HasAce       bool
-	HasKing      bool
-	
+	HighCards int // Number of broadway cards (T,J,Q,K,A)
+	HasAce    bool
+	HasKing   bool
+
 	// Connectivity
-	Connected    bool // Cards are within 4 ranks
-	Rainbow      bool // All different suits
+	Connected bool // Cards are within 4 ranks
+	Rainbow   bool // All different suits
 }
 
 // AnalyzeBoard analyzes the texture of community cards
 func (ct *CardTracker) AnalyzeBoard() BoardTexture {
 	texture := BoardTexture{}
-	
+
 	if len(ct.communityCards) == 0 {
 		return texture
 	}
-	
+
 	// Count suits
 	suitCounts := make(map[Suit]int)
 	for _, c := range ct.communityCards {
 		suitCounts[c.Suit]++
 	}
-	
+
 	// Check flush potential
 	for suit, count := range suitCounts {
 		if count >= 5 {
@@ -239,16 +239,16 @@ func (ct *CardTracker) AnalyzeBoard() BoardTexture {
 			texture.FlushSuit = suit
 		}
 	}
-	
+
 	// Check rainbow
 	texture.Rainbow = len(suitCounts) == len(ct.communityCards)
-	
+
 	// Count ranks
 	rankCounts := make(map[Rank]int)
 	for _, c := range ct.communityCards {
 		rankCounts[c.Rank]++
 	}
-	
+
 	// Check pairing
 	for _, count := range rankCounts {
 		if count >= 3 {
@@ -258,7 +258,7 @@ func (ct *CardTracker) AnalyzeBoard() BoardTexture {
 			texture.PairedBoard = true
 		}
 	}
-	
+
 	// Check high cards
 	highRanks := []Rank{Ten, Jack, Queen, King, Ace}
 	for _, c := range ct.communityCards {
@@ -275,7 +275,7 @@ func (ct *CardTracker) AnalyzeBoard() BoardTexture {
 			}
 		}
 	}
-	
+
 	// Check connectivity (simplified - check if max - min rank <= 4)
 	if len(ct.communityCards) >= 3 {
 		ranks := make([]Rank, len(ct.communityCards))
@@ -283,7 +283,7 @@ func (ct *CardTracker) AnalyzeBoard() BoardTexture {
 			ranks[i] = c.Rank
 		}
 		sort.Slice(ranks, func(i, j int) bool { return ranks[i] < ranks[j] })
-		
+
 		// Check for straight draw potential
 		maxRank := ranks[len(ranks)-1]
 		minRank := ranks[0]
@@ -291,14 +291,14 @@ func (ct *CardTracker) AnalyzeBoard() BoardTexture {
 			texture.Connected = true
 			texture.StraightDraw = true
 		}
-		
+
 		// Check if straight is possible on board
 		if len(ranks) >= 5 {
 			isStraight, _ := checkStraight(ct.communityCards)
 			texture.StraightComplete = isStraight
 		}
 	}
-	
+
 	return texture
 }
 
@@ -307,7 +307,7 @@ func getCardCombinations(cards []Card, n int) [][]Card {
 	if n != 2 {
 		return getCombinations(cards, n)
 	}
-	
+
 	// Optimized for n=2 case (most common for opponent hole cards)
 	combinations := make([][]Card, 0, len(cards)*(len(cards)-1)/2)
 	for i := 0; i < len(cards); i++ {
@@ -354,33 +354,33 @@ type AdversarialAnalysis struct {
 // GetAdversarialAnalysis provides full analysis considering opponent's likely range
 func (ct *CardTracker) GetAdversarialAnalysis(aggressionFactor float64) AdversarialAnalysis {
 	analysis := AdversarialAnalysis{}
-	
+
 	// Evaluate our hand
 	analysis.OurHand = EvaluateHand(ct.ourHole, ct.communityCards)
 	analysis.OurStrength = analysis.OurHand.Strength()
-	
+
 	// Estimate opponent range
 	analysis.OpponentEstimate = ct.EstimateOpponentRange(aggressionFactor)
-	
+
 	// Analyze board texture
 	analysis.BoardTexture = ct.AnalyzeBoard()
-	
+
 	// Calculate equity advantage
 	analysis.EquityAdvantage = analysis.OurStrength - analysis.OpponentEstimate.EstimatedStrength
-	
+
 	// Calculate danger level
 	analysis.DangerLevel = ct.calculateDangerLevel(analysis.BoardTexture, analysis.OpponentEstimate)
-	
+
 	// Generate recommendation
 	analysis.RecommendedAction = ct.generateRecommendation(analysis)
-	
+
 	return analysis
 }
 
 // calculateDangerLevel determines how dangerous the board is for our hand
 func (ct *CardTracker) calculateDangerLevel(texture BoardTexture, oppEstimate HandRangeEstimate) float64 {
 	danger := 0.0
-	
+
 	// Flush draws are dangerous
 	if texture.FlushDraw {
 		danger += 0.15
@@ -388,7 +388,7 @@ func (ct *CardTracker) calculateDangerLevel(texture BoardTexture, oppEstimate Ha
 	if texture.FlushComplete {
 		danger += 0.25
 	}
-	
+
 	// Straight possibilities
 	if texture.StraightDraw {
 		danger += 0.1
@@ -396,7 +396,7 @@ func (ct *CardTracker) calculateDangerLevel(texture BoardTexture, oppEstimate Ha
 	if texture.StraightComplete {
 		danger += 0.2
 	}
-	
+
 	// Paired boards help trips/full houses
 	if texture.PairedBoard {
 		danger += 0.15
@@ -404,24 +404,24 @@ func (ct *CardTracker) calculateDangerLevel(texture BoardTexture, oppEstimate Ha
 	if texture.TripsOnBoard {
 		danger += 0.3
 	}
-	
+
 	// High cards favor opponents with broadway
 	danger += float64(texture.HighCards) * 0.05
-	
+
 	// Opponent's estimated made hand probability
 	madeHandProb := oppEstimate.OnePairProb + oppEstimate.TwoPairProb +
 		oppEstimate.ThreeOfAKindProb + oppEstimate.StraightProb +
 		oppEstimate.FlushProb + oppEstimate.FullHouseProb +
 		oppEstimate.FourOfAKindProb + oppEstimate.StraightFlushProb +
 		oppEstimate.RoyalFlushProb
-	
+
 	danger += madeHandProb * 0.3
-	
+
 	// Cap at 1.0
 	if danger > 1.0 {
 		danger = 1.0
 	}
-	
+
 	return danger
 }
 
@@ -430,7 +430,7 @@ func (ct *CardTracker) generateRecommendation(analysis AdversarialAnalysis) stri
 	advantage := analysis.EquityAdvantage
 	danger := analysis.DangerLevel
 	strength := analysis.OurStrength
-	
+
 	// Strong hand with advantage
 	if strength > 0.5 && advantage > 0.1 {
 		if danger > 0.5 {
@@ -438,12 +438,12 @@ func (ct *CardTracker) generateRecommendation(analysis AdversarialAnalysis) stri
 		}
 		return "Value bet for max extraction"
 	}
-	
+
 	// Strong hand but dangerous board
 	if strength > 0.3 && danger > 0.6 {
 		return "Check/call - let opponent bluff"
 	}
-	
+
 	// Medium hand with slight advantage
 	if advantage > 0 && strength > 0.15 {
 		if danger < 0.4 {
@@ -451,7 +451,7 @@ func (ct *CardTracker) generateRecommendation(analysis AdversarialAnalysis) stri
 		}
 		return "Check/fold to aggression"
 	}
-	
+
 	// Weak hand with disadvantage
 	if advantage < -0.1 {
 		if strength < 0.1 {
@@ -459,7 +459,7 @@ func (ct *CardTracker) generateRecommendation(analysis AdversarialAnalysis) stri
 		}
 		return "Check/fold unless getting good pot odds"
 	}
-	
+
 	// Marginal situation
 	return "Check and evaluate opponent action"
 }
@@ -472,10 +472,10 @@ func (a AdversarialAnalysis) String() string {
 	result += fmt.Sprintf("Equity Advantage: %+.1f%%\n", a.EquityAdvantage*100)
 	result += fmt.Sprintf("Board Danger: %.1f%%\n", a.DangerLevel*100)
 	result += fmt.Sprintf("Recommendation: %s\n", a.RecommendedAction)
-	
+
 	if len(a.OpponentEstimate.DangerCards) > 0 {
 		result += fmt.Sprintf("Watch for: %s\n", FormatCards(a.OpponentEstimate.DangerCards))
 	}
-	
+
 	return result
 }

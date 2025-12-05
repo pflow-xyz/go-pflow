@@ -10,17 +10,17 @@ func NewBaristaStateMachine(baristaID string) *statemachine.Chart {
 	return statemachine.NewChart("barista_" + baristaID).
 		// Main work state region
 		Region("work").
-			State("available").Initial().
-			State("making_drink").
-			State("cleaning").
-			State("restocking").
+		State("available").Initial().
+		State("making_drink").
+		State("cleaning").
+		State("restocking").
 		EndRegion().
 
 		// Break status region (parallel)
 		Region("break_status").
-			State("on_duty").Initial().
-			State("on_break").
-			State("shift_ended").
+		State("on_duty").Initial().
+		State("on_break").
+		State("shift_ended").
 		EndRegion().
 
 		// Skill level tracking (affects drink quality)
@@ -29,9 +29,9 @@ func NewBaristaStateMachine(baristaID string) *statemachine.Chart {
 
 		// Work state transitions
 		When("order_assigned").In("work:available").GoTo("work:making_drink").
-			Do(statemachine.Increment("drinks_made")).
+		Do(statemachine.Increment("drinks_made")).
 		When("drink_complete").In("work:making_drink").GoTo("work:available").
-			Do(statemachine.Increment("quality_score")).
+		Do(statemachine.Increment("quality_score")).
 		When("cleaning_needed").In("work:available").GoTo("work:cleaning").
 		When("cleaning_done").In("work:cleaning").GoTo("work:available").
 		When("restock_needed").In("work:available").GoTo("work:restocking").
@@ -42,7 +42,6 @@ func NewBaristaStateMachine(baristaID string) *statemachine.Chart {
 		When("return_from_break").In("break_status:on_break").GoTo("break_status:on_duty").
 		When("end_shift").In("break_status:on_duty").GoTo("break_status:shift_ended").
 		When("end_shift").In("break_status:on_break").GoTo("break_status:shift_ended").
-
 		Build()
 }
 
@@ -52,24 +51,24 @@ func NewEspressoMachineStateMachine() *statemachine.Chart {
 	return statemachine.NewChart("espresso_machine").
 		// Operational state
 		Region("status").
-			State("ready").Initial().
-			State("brewing").
-			State("steaming_milk").
-			State("dispensing").
+		State("ready").Initial().
+		State("brewing").
+		State("steaming_milk").
+		State("dispensing").
 		EndRegion().
 
 		// Maintenance state (parallel)
 		Region("maintenance").
-			State("clean").Initial().
-			State("needs_cleaning").
-			State("cleaning_in_progress").
+		State("clean").Initial().
+		State("needs_cleaning").
+		State("cleaning_in_progress").
 		EndRegion().
 
 		// Health state (parallel)
 		Region("health").
-			State("operational").Initial().
-			State("warning").
-			State("error").
+		State("operational").Initial().
+		State("warning").
+		State("error").
 		EndRegion().
 
 		// Usage counters
@@ -79,11 +78,11 @@ func NewEspressoMachineStateMachine() *statemachine.Chart {
 
 		// Operational transitions
 		When("start_brew").In("status:ready").GoTo("status:brewing").
-			Do(statemachine.Increment("shots_pulled")).
-			Do(statemachine.Increment("since_last_clean")).
+		Do(statemachine.Increment("shots_pulled")).
+		Do(statemachine.Increment("since_last_clean")).
 		When("brew_complete").In("status:brewing").GoTo("status:ready").
 		When("start_steam").In("status:ready").GoTo("status:steaming_milk").
-			Do(statemachine.Increment("milk_steamed")).
+		Do(statemachine.Increment("milk_steamed")).
 		When("steam_complete").In("status:steaming_milk").GoTo("status:ready").
 		When("start_dispense").In("status:brewing").GoTo("status:dispensing").
 		When("dispense_complete").In("status:dispensing").GoTo("status:ready").
@@ -92,7 +91,7 @@ func NewEspressoMachineStateMachine() *statemachine.Chart {
 		When("cleaning_required").In("maintenance:clean").GoTo("maintenance:needs_cleaning").
 		When("start_cleaning").In("maintenance:needs_cleaning").GoTo("maintenance:cleaning_in_progress").
 		When("cleaning_complete").In("maintenance:cleaning_in_progress").GoTo("maintenance:clean").
-			Do(statemachine.Set("since_last_clean", 0)).
+		Do(statemachine.Set("since_last_clean", 0)).
 
 		// Health transitions
 		When("pressure_warning").In("health:operational").GoTo("health:warning").
@@ -101,7 +100,6 @@ func NewEspressoMachineStateMachine() *statemachine.Chart {
 		When("critical_error").In("health:warning").GoTo("health:error").
 		When("critical_error").In("health:operational").GoTo("health:error").
 		When("error_resolved").In("health:error").GoTo("health:operational").
-
 		Build()
 }
 
@@ -109,23 +107,21 @@ func NewEspressoMachineStateMachine() *statemachine.Chart {
 func NewGrinderStateMachine() *statemachine.Chart {
 	return statemachine.NewChart("grinder").
 		Region("status").
-			State("idle").Initial().
-			State("grinding").
-			State("dosing").
+		State("idle").Initial().
+		State("grinding").
+		State("dosing").
 		EndRegion().
-
 		Region("hopper").
-			State("full").Initial().
-			State("low").
-			State("empty").
+		State("full").Initial().
+		State("low").
+		State("empty").
 		EndRegion().
-
 		Counter("grinds_today").
 		Counter("beans_remaining").
 
 		// Status transitions
 		When("start_grind").In("status:idle").GoTo("status:grinding").
-			Do(statemachine.Increment("grinds_today")).
+		Do(statemachine.Increment("grinds_today")).
 		When("grind_complete").In("status:grinding").GoTo("status:dosing").
 		When("dose_complete").In("status:dosing").GoTo("status:idle").
 
@@ -134,7 +130,6 @@ func NewGrinderStateMachine() *statemachine.Chart {
 		When("beans_empty").In("hopper:low").GoTo("hopper:empty").
 		When("beans_refilled").In("hopper:low").GoTo("hopper:full").
 		When("beans_refilled").In("hopper:empty").GoTo("hopper:full").
-
 		Build()
 }
 
@@ -144,44 +139,43 @@ func NewCustomerStateMachine(customerID string) *statemachine.Chart {
 	return statemachine.NewChart("customer_" + customerID).
 		// Main journey state
 		Region("journey").
-			State("approaching").Initial().
-			State("at_kiosk").
-			State("browsing_menu").
-			State("ordering").
-			State("paying").
-			State("waiting").
-			State("served").
-			State("departed").
-			State("departed_no_purchase"). // Alternative exit
+		State("approaching").Initial().
+		State("at_kiosk").
+		State("browsing_menu").
+		State("ordering").
+		State("paying").
+		State("waiting").
+		State("served").
+		State("departed").
+		State("departed_no_purchase"). // Alternative exit
 		EndRegion().
 
 		// Engagement level (parallel) - affects behavior
 		Region("engagement").
-			State("undecided").Initial().
-			State("interested").
-			State("committed").
-			State("frustrated").
+		State("undecided").Initial().
+		State("interested").
+		State("committed").
+		State("frustrated").
 		EndRegion().
 
 		// Loyalty status (parallel)
 		Region("loyalty").
-			State("new_customer").Initial().
-			State("returning").
-			State("vip").
+		State("new_customer").Initial().
+		State("returning").
+		State("vip").
 		EndRegion().
-
 		Counter("visits").
 		Counter("purchases").
 		Counter("wait_time").
 
 		// Journey transitions
 		When("detected").In("journey:approaching").GoTo("journey:at_kiosk").
-			Do(statemachine.Increment("visits")).
+		Do(statemachine.Increment("visits")).
 		When("view_menu").In("journey:at_kiosk").GoTo("journey:browsing_menu").
 		When("start_order").In("journey:browsing_menu").GoTo("journey:ordering").
 		When("confirm_order").In("journey:ordering").GoTo("journey:paying").
 		When("payment_complete").In("journey:paying").GoTo("journey:waiting").
-			Do(statemachine.Increment("purchases")).
+		Do(statemachine.Increment("purchases")).
 		When("order_ready").In("journey:waiting").GoTo("journey:served").
 		When("leave_happy").In("journey:served").GoTo("journey:departed").
 
@@ -205,7 +199,6 @@ func NewCustomerStateMachine(customerID string) *statemachine.Chart {
 		When("recognize_returning").In("loyalty:new_customer").GoTo("loyalty:returning").
 		When("recognize_vip").In("loyalty:returning").GoTo("loyalty:vip").
 		When("recognize_vip").In("loyalty:new_customer").GoTo("loyalty:vip").
-
 		Build()
 }
 
@@ -214,28 +207,27 @@ func NewShopStateMachine() *statemachine.Chart {
 	return statemachine.NewChart("shop").
 		// Operating state
 		Region("operating").
-			State("closed").Initial().
-			State("opening").
-			State("open").
-			State("closing").
+		State("closed").Initial().
+		State("opening").
+		State("open").
+		State("closing").
 		EndRegion().
 
 		// Capacity state (parallel)
 		Region("capacity").
-			State("empty").Initial().
-			State("normal").
-			State("busy").
-			State("at_capacity").
+		State("empty").Initial().
+		State("normal").
+		State("busy").
+		State("at_capacity").
 		EndRegion().
 
 		// Alert state (parallel)
 		Region("alerts").
-			State("all_clear").Initial().
-			State("low_inventory").
-			State("equipment_issue").
-			State("staffing_issue").
+		State("all_clear").Initial().
+		State("low_inventory").
+		State("equipment_issue").
+		State("staffing_issue").
 		EndRegion().
-
 		Counter("customers_today").
 		Counter("drinks_sold").
 		Counter("revenue").
@@ -248,7 +240,7 @@ func NewShopStateMachine() *statemachine.Chart {
 
 		// Capacity transitions
 		When("customer_entered").In("capacity:empty").GoTo("capacity:normal").
-			Do(statemachine.Increment("customers_today")).
+		Do(statemachine.Increment("customers_today")).
 		When("customer_entered").In("capacity:normal").GoTo("capacity:normal"). // Stay in normal
 		When("getting_busy").In("capacity:normal").GoTo("capacity:busy").
 		When("reached_capacity").In("capacity:busy").GoTo("capacity:at_capacity").
@@ -264,6 +256,5 @@ func NewShopStateMachine() *statemachine.Chart {
 		When("alert_resolved").In("alerts:low_inventory").GoTo("alerts:all_clear").
 		When("alert_resolved").In("alerts:equipment_issue").GoTo("alerts:all_clear").
 		When("alert_resolved").In("alerts:staffing_issue").GoTo("alerts:all_clear").
-
 		Build()
 }

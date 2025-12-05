@@ -28,24 +28,24 @@ type ConformanceResult struct {
 	TraceResults []TraceReplayResult
 
 	// Summary statistics
-	FittingTraces    int     // Number of traces that fit perfectly
-	TotalTraces      int     // Total number of traces
-	FittingPercent   float64 // Percentage of fitting traces
-	AvgTraceFitness  float64 // Average fitness across all traces
+	FittingTraces   int     // Number of traces that fit perfectly
+	TotalTraces     int     // Total number of traces
+	FittingPercent  float64 // Percentage of fitting traces
+	AvgTraceFitness float64 // Average fitness across all traces
 }
 
 // TraceReplayResult contains the result of replaying a single trace.
 type TraceReplayResult struct {
-	CaseID          string
-	Fitness         float64
-	Fitting         bool     // True if trace fits perfectly
-	MissingTokens   int      // Tokens needed but not available
-	RemainingTokens int      // Tokens left after replay
-	ProducedTokens  int      // Total tokens produced
-	ConsumedTokens  int      // Total tokens consumed
-	FiredTransitions []string // Transitions successfully fired
+	CaseID            string
+	Fitness           float64
+	Fitting           bool     // True if trace fits perfectly
+	MissingTokens     int      // Tokens needed but not available
+	RemainingTokens   int      // Tokens left after replay
+	ProducedTokens    int      // Total tokens produced
+	ConsumedTokens    int      // Total tokens consumed
+	FiredTransitions  []string // Transitions successfully fired
 	MissingActivities []string // Activities that couldn't fire
-	Activities      []string // Original activity sequence
+	Activities        []string // Original activity sequence
 }
 
 // TokenState tracks token counts during replay.
@@ -318,7 +318,7 @@ func CheckPrecision(log *eventlog.EventLog, net *petri.PetriNet) *PrecisionResul
 	initialMarking := getInitialMarking(net)
 
 	// Track enabled transitions at each state
-	stateVisits := make(map[string]map[string]bool) // state -> set of taken transitions
+	stateVisits := make(map[string]map[string]bool)  // state -> set of taken transitions
 	stateEnabled := make(map[string]map[string]bool) // state -> set of enabled transitions
 
 	// Replay all traces and collect state/transition information
