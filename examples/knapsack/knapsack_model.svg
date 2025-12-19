@@ -65,9 +65,6 @@
 <path d="M 274.4 193.9 L 281.3 188.5 L 283.1 195.4 Z" fill="#000000"/>
 <circle cx="404.0" cy="161.5" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
 <text x="404.0" y="161.5" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">18</text>
-<circle cx="100.0" cy="50.0" r="16.0" class="place"/>
-<circle cx="100.0" cy="50.0" r="3" class="token-dot"/>
-<text x="100.0" y="72.0" class="label-text">item0 (w=2,v=10)</text>
 <circle cx="250.0" cy="50.0" r="16.0" class="place"/>
 <circle cx="250.0" cy="50.0" r="3" class="token-dot"/>
 <text x="250.0" y="72.0" class="label-text">item1 (w=4,v=10)</text>
@@ -84,12 +81,15 @@
 <circle cx="400.0" cy="200.0" r="16.0" class="place"/>
 <text x="400.0" y="200.0" class="token-text">15</text>
 <text x="400.0" y="222.0" class="label-text">Remaining Capacity</text>
-<rect x="85.0" y="110.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="100.0" y="146.0" class="label-text">Take item0</text>
+<circle cx="100.0" cy="50.0" r="16.0" class="place"/>
+<circle cx="100.0" cy="50.0" r="3" class="token-dot"/>
+<text x="100.0" y="72.0" class="label-text">item0 (w=2,v=10)</text>
 <rect x="235.0" y="110.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="250.0" y="146.0" class="label-text">Take item1</text>
 <rect x="385.0" y="110.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="400.0" y="146.0" class="label-text">Take item2</text>
 <rect x="535.0" y="110.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
 <text x="550.0" y="146.0" class="label-text">Take item3</text>
+<rect x="85.0" y="110.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="100.0" y="146.0" class="label-text">Take item0</text>
 </svg>

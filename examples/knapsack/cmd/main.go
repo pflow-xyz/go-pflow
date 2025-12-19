@@ -115,6 +115,36 @@ func main() {
 		fmt.Printf("  %-8s   %11.2f   %6.1f%%\n", exclude, values[exclude], pct)
 	}
 
+	// Convergence demo - excluding item2 converges to discrete optimal
+	fmt.Println("\n=== Convergence to Optimal ===")
+	fmt.Println("Running with item2 excluded at longer time horizons...")
+	fmt.Println("(Discrete optimal without item2: items 0,1,3 → value=38)")
+	fmt.Println()
+
+	timeHorizons := []float64{10, 100, 1000}
+	fmt.Println("  Time      Value     Gap to Optimal")
+	fmt.Println("  ------    ------    --------------")
+	for _, t := range timeHorizons {
+		sol := runSimulationWithTime(problem, "item2", t)
+		val := sol.GetFinalState()["value"]
+		gap := 38.0 - val
+		fmt.Printf("  t=%-6.0f  %6.2f    %.4f\n", t, val, gap)
+	}
+	fmt.Println()
+	fmt.Println("The ODE converges to the discrete optimal when the")
+	fmt.Println("suboptimal item (item2) is excluded from competition.")
+
+	// Save convergence plot
+	solLong := runSimulationWithTime(problem, "item2", 100)
+	convPlaces := []string{"value", "item0", "item1", "item3"}
+	svgConv, _ := plotter.PlotSolution(solLong, convPlaces, 800, 400,
+		"Convergence to Optimal (item2 excluded)", "Time", "Tokens")
+	if err := os.WriteFile("../knapsack_convergence.svg", []byte(svgConv), 0644); err != nil {
+		fmt.Printf("Error saving convergence plot: %v\n", err)
+	} else {
+		fmt.Println("\nSaved convergence plot to knapsack_convergence.svg")
+	}
+
 	// Key insights
 	fmt.Println("\n=== Key Insights ===")
 	fmt.Println()
@@ -187,6 +217,11 @@ func createKnapsackNet(problem KnapsackProblem) *petri.PetriNet {
 
 // runSimulation runs a knapsack simulation excluding a specific item
 func runSimulation(problem KnapsackProblem, exclude string) *solver.Solution {
+	return runSimulationWithTime(problem, exclude, 10.0)
+}
+
+// runSimulationWithTime runs a knapsack simulation with a specific time horizon
+func runSimulationWithTime(problem KnapsackProblem, exclude string, tEnd float64) *solver.Solution {
 	net := createKnapsackNet(problem)
 
 	// Set up initial state
@@ -209,14 +244,14 @@ func runSimulation(problem KnapsackProblem, exclude string) *solver.Solution {
 	}
 
 	// Create and solve ODE problem
-	prob := solver.NewProblem(net, initialState, [2]float64{0, 10.0}, rates)
+	prob := solver.NewProblem(net, initialState, [2]float64{0, tEnd}, rates)
 	opts := &solver.Options{
 		Dt:       0.01,
 		Dtmin:    1e-6,
 		Dtmax:    1.0,
 		Abstol:   1e-6,
 		Reltol:   1e-3,
-		Maxiters: 100000,
+		Maxiters: 1000000,
 		Adaptive: true,
 	}
 

@@ -76,6 +76,22 @@ Note: item3 has the highest impact when excluded (drops to 89.6%).
 - **ODE approximation**: Continuous relaxation ≈35.71
 - The ODE reveals relative item contributions through dynamics
 
+### Convergence to Optimal
+
+When the suboptimal item (item2) is excluded, the ODE converges to the discrete optimal:
+
+```
+  Time      Value     Gap to Optimal
+  ------    ------    --------------
+  t=10       37.75    0.2517
+  t=100      37.97    0.0253
+  t=1000     38.00    0.0025
+```
+
+![Convergence Plot](knapsack_convergence.svg)
+
+This demonstrates that exclusion analysis + longer simulation can recover exact solutions.
+
 ## Packages Used
 
 - `petri` - Knapsack Petri net model
