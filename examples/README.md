@@ -9,9 +9,9 @@ This directory contains example implementations demonstrating different aspects 
 | **basic** | Workflow | Simple | Sequential processes, producer-consumer patterns | [workflow](basic/workflow_small.svg), [producer-consumer](basic/pc_small.svg) |
 | **coffeeshop** | Integration | Complex | Actors, workflows, state machines, process mining | [inventory](coffeeshop/cmd/output/inventory_net.svg), [workflow](coffeeshop/cmd/output/order_workflow.svg) |
 | **sudoku** | Puzzle | Simple | Constraint satisfaction, ODE analysis, colored nets | [4x4](sudoku/sudoku-4x4.svg) |
-| **knapsack** | Optimization | Medium | 0/1 Knapsack, mass-action kinetics, exclusion analysis | [model](knapsack/knapsack_model.svg) |
-| **tictactoe** | Game AI | Medium | Minimax, perfect play, ODE-guided decisions | [model](tictactoe/cmd/tictactoe_model.svg) |
-| **nim** | Game Theory | Medium | Discrete state spaces, optimal strategy, position evaluation | [15 stones](nim/cmd/nim_15_model.svg) |
+| **knapsack** | Optimization | Medium | 0/1 Knapsack, mass-action kinetics, exclusion analysis | [model](knapsack/cmd/knapsack_model.svg) |
+| **tictactoe** | Game AI | Medium | Minimax, perfect play, ODE-guided decisions | [flow](tictactoe/tictactoe_flow.svg) |
+| **nim** | Game Theory | Medium | Discrete state spaces, optimal strategy, position evaluation | [10 stones](nim/nim_10.svg) |
 | **connect4** | Game AI | Complex | Pattern recognition, lookahead, multi-dimensional evaluation | [flow](connect4/connect4_flow.svg) |
 | **chess** | Classic Problems | Complex | N-Queens, Knight's Tour, ODE heuristics, backtracking | [8-queens](chess/cmd/nqueens_8_model.svg) |
 
@@ -253,7 +253,7 @@ go build -o ttt ./cmd
 ./ttt --player-x minimax --player-o minimax --v
 ```
 
-**Visualization**: ![Tic-Tac-Toe Model](tictactoe/cmd/tictactoe_model.svg)
+**Visualization**: ![Tic-Tac-Toe Flow](tictactoe/tictactoe_flow.svg)
 
 ---
 

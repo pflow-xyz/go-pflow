@@ -1,0 +1,28 @@
+{
+  "name": "go-pflow",
+  "version": "1.0.0",
+  "description": "A Go library for Petri net modeling, ODE simulation, process mining, and predictive monitoring.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pflow-xyz/go-pflow.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/pflow-xyz/go-pflow/issues"
+  },
+  "homepage": "https://github.com/pflow-xyz/go-pflow#readme",
+  "dependencies": {
+    "puppeteer": "^24.31.0"
+  }
+}

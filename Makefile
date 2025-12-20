@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all
+.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy run-karate run-karate-server run-karate-cli run-doom run-doom-server run-catacombs run-catacombs-server rebuild-all-svg check all kill-servers
 
 # Default target
 help:
@@ -25,7 +25,15 @@ help:
 	@echo "  make run-coffeeshop-sla - Run coffee shop SLA stress test"
 	@echo "  make run-coffeeshop-inventory - Run coffee shop inventory stress test"
 	@echo "  make run-coffeeshop-happy - Run coffee shop happy customer scenario (90%+ satisfied)"
+	@echo "  make run-karate       - Run karate game AI demo"
+	@echo "  make run-karate-server - Start karate game server (http://localhost:8080)"
+	@echo "  make run-karate-cli   - Play karate interactively in terminal"
+	@echo "  make run-doom         - Run DOOM game (alias for run-doom-server)"
+	@echo "  make run-doom-server  - Start DOOM game server (http://localhost:8081)"
+	@echo "  make run-catacombs    - Run Catacombs roguelike (alias for run-catacombs-server)"
+	@echo "  make run-catacombs-server - Start Catacombs game server (http://localhost:8082)"
 	@echo "  make rebuild-all-svg - Regenerate all SVG visualizations"
+	@echo "  make kill-servers    - Kill any running go-pflow servers"
 
 # Build the main CLI tool
 build:
@@ -113,6 +121,14 @@ examples:
 	@go build -o bin/chess examples/chess/cmd/*.go
 	@echo "  - Knapsack example"
 	@go build -o bin/knapsack examples/knapsack/cmd/*.go
+	@echo "  - Karate game server"
+	@go build -o bin/karate examples/karate/cmd/*.go
+	@echo "  - Karate CLI client"
+	@go build -o bin/karate-cli examples/karate/cmd/cli/*.go
+	@echo "  - DOOM game server"
+	@go build -o bin/doom examples/doom/cmd/*.go
+	@echo "  - Catacombs roguelike server"
+	@go build -o bin/catacombs examples/catacombs/cmd/*.go
 	@echo "  - Visualization demo"
 	@go build -o bin/visualization_demo examples/visualization_demo/main.go
 	@echo "Done building examples!"
@@ -165,6 +181,50 @@ run-coffeeshop-happy:
 	@echo "Running coffee shop happy customer scenario (targeting 90%+ satisfaction)..."
 	@go run ./examples/coffeeshop/cmd/sim -config happy
 
+# Run karate game AI demo
+run-karate:
+	@echo "Running karate game AI demo..."
+	@go run ./examples/karate/cmd -demo
+
+# Run karate game server
+run-karate-server:
+	@echo "Starting karate game server..."
+	@echo "Open http://localhost:8080 in your browser"
+	@go run ./examples/karate/cmd -port 8080
+
+# Run karate CLI client (interactive terminal game)
+run-karate-cli:
+	@echo "Starting karate CLI game..."
+	@go run ./examples/karate/cmd/cli
+
+# Run DOOM game server
+run-doom: run-doom-server
+
+run-doom-server:
+	@echo "Starting DOOM game server..."
+	@echo "Open http://localhost:8081 in your browser"
+	@echo "Supports NES controller via USB!"
+	@go run ./examples/doom/cmd -port 8081
+
+# Run Catacombs roguelike server
+run-catacombs: run-catacombs-server
+
+run-catacombs-server:
+	@echo "Starting Catacombs server..."
+	@echo "Open http://localhost:8082 in your browser"
+	@echo "Supports NES controller via USB!"
+	@echo "Logs: examples/catacombs/catacombs.log"
+	@mkdir -p examples/catacombs
+	@go run ./examples/catacombs/cmd -port 8082 2>&1 | tee examples/catacombs/catacombs.log
+
+# Run Catacombs with AI logging enabled (for debugging)
+run-catacombs-debug:
+	@echo "Starting Catacombs server with AI debug logging..."
+	@echo "Open http://localhost:8082 in your browser"
+	@echo "Logs: examples/catacombs/catacombs-debug.log"
+	@mkdir -p examples/catacombs
+	@go run ./examples/catacombs/cmd -port 8082 -debug 2>&1 | tee examples/catacombs/catacombs-debug.log
+
 # Rebuild all SVG visualizations
 rebuild-all-svg:
 	@echo "Regenerating all SVG visualizations..."
@@ -204,6 +264,12 @@ rebuild-all-svg:
 	@echo "=== Knapsack Example ==="
 	@cd examples/knapsack/cmd && go run *.go
 	@echo ""
+	@echo "=== Karate Game Example ==="
+	@cd examples/karate && go run ./cmd -svg
+	@echo ""
+	@echo "=== DOOM Game Example ==="
+	@cd examples/doom && go run ./cmd -svg
+	@echo ""
 	@echo "=== Visualization Demo (Workflow & StateMachine) ==="
 	@cd examples/visualization_demo && go run main.go
 	@echo ""
@@ -220,3 +286,11 @@ publish-check: clean check
 	@echo "  1. git add ."
 	@echo "  2. git commit -m 'Prepare for publication'"
 	@echo "  3. git push"
+
+# Kill any running go-pflow servers
+kill-servers:
+	@echo "Killing go-pflow servers..."
+	@-lsof -ti:8080 | xargs -r kill -9 2>/dev/null
+	@-lsof -ti:8081 | xargs -r kill -9 2>/dev/null
+	@-lsof -ti:8082 | xargs -r kill -9 2>/dev/null
+	@echo "Done."

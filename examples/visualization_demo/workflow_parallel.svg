@@ -9,6 +9,9 @@
 <path d="M 240.0 80.0 C 267.0 80.0 267.0 8.0 294.0 8.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <path d="M 240.0 160.0 C 268.2 160.0 268.2 9.4 296.5 9.4" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
 <line x1="420.0" y1="0.0" x2="470.0" y2="0.0" class="dependency dependency-fs" marker-end="url(#arrowhead)"/>
+<rect x="300.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-automatic"/>
+<text x="360.0" y="0.0" class="task-label">Synchronize</text>
+<text x="360.0" y="35.0" class="task-type">automatic</text>
 <rect x="480.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-end"/>
 <text x="540.0" y="0.0" class="task-label">Finish</text>
 <text x="540.0" y="35.0" class="task-type">automatic</text>
@@ -24,7 +27,4 @@
 <rect x="120.0" y="135.0" width="120.0" height="50.0" rx="5.0" class="task task-automatic"/>
 <text x="180.0" y="160.0" class="task-label">Process C</text>
 <text x="180.0" y="195.0" class="task-type">automatic</text>
-<rect x="300.0" y="-25.0" width="120.0" height="50.0" rx="5.0" class="task task-automatic"/>
-<text x="360.0" y="0.0" class="task-label">Synchronize</text>
-<text x="360.0" y="35.0" class="task-type">automatic</text>
 </svg>

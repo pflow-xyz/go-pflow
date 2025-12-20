@@ -12,11 +12,11 @@ import (
 
 // SimulationResult holds results from running ODE simulation on the inventory net
 type SimulationResult struct {
-	InitialState       map[string]float64
-	FinalState         map[string]float64
-	DrinksProduced     map[string]float64
-	IngredientsUsed    map[string]float64
-	SimulationTime     float64
+	InitialState     map[string]float64
+	FinalState       map[string]float64
+	DrinksProduced   map[string]float64
+	IngredientsUsed  map[string]float64
+	SimulationTime   float64
 	ReachedEquilibrium bool
 }
 
@@ -262,8 +262,8 @@ func RunDaySimulation(peakHours []int, baseRate float64) *DaySimulationResult {
 
 		// Calculate hourly stats
 		stats := &HourlyStats{
-			Hour:         hour,
-			Multiplier:   multiplier,
+			Hour:       hour,
+			Multiplier: multiplier,
 			DrinksServed: int(newState["cups_used"] - currentState["cups_used"]),
 			BeansUsed:    newState["beans_used"] - currentState["beans_used"],
 			MilkUsed:     newState["milk_used"] - currentState["milk_used"],

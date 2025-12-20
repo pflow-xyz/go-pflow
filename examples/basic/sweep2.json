@@ -1,0 +1,420 @@
+{
+  "version": "1.0.0",
+  "baseModel": "sir_model.json",
+  "objective": "minimize_peak",
+  "parameters": [
+    {
+      "name": "infection",
+      "type": "rate",
+      "values": [
+        0.0002,
+        0.00030000000000000003,
+        0.00039999999999999996,
+        0.0005,
+        0.0006
+      ],
+      "min": 0.0002,
+      "max": 0.0006
+    },
+    {
+      "name": "recovery",
+      "type": "rate",
+      "values": [
+        0.08,
+        0.1,
+        0.12
+      ],
+      "min": 0.08,
+      "max": 0.12
+    }
+  ],
+  "variants": [
+    {
+      "id": 3,
+      "parameters": {
+        "infection": 0.0002,
+        "recovery": 0.12
+      },
+      "metrics": {
+        "maxPeak": 99.52708183266633,
+        "maxPeakVar": "I",
+        "maxPeakTime": 46.546450212710766,
+        "finalState": {
+          "I": 14.166127549769792,
+          "R": 651.7026029555952,
+          "S": 334.131269494637
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 99.52708183266633,
+      "rank": 1
+    },
+    {
+      "id": 2,
+      "parameters": {
+        "infection": 0.0002,
+        "recovery": 0.1
+      },
+      "metrics": {
+        "maxPeak": 158.4513816669273,
+        "maxPeakVar": "I",
+        "maxPeakTime": 43.759749825876405,
+        "finalState": {
+          "I": 14.47282270632229,
+          "R": 775.6925096040693,
+          "S": 209.83466768960866
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 158.4513816669273,
+      "rank": 2
+    },
+    {
+      "id": 6,
+      "parameters": {
+        "infection": 0.00030000000000000003,
+        "recovery": 0.12
+      },
+      "metrics": {
+        "maxPeak": 237.3672050004647,
+        "maxPeakVar": "I",
+        "maxPeakTime": 27.883671490159173,
+        "finalState": {
+          "I": 0.9555751739746272,
+          "R": 892.805409198303,
+          "S": 106.23901562772228
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 237.3672050004647,
+      "rank": 3
+    },
+    {
+      "id": 1,
+      "parameters": {
+        "infection": 0.0002,
+        "recovery": 0.08
+      },
+      "metrics": {
+        "maxPeak": 237.4814267933768,
+        "maxPeakVar": "I",
+        "maxPeakTime": 41.050248955343065,
+        "finalState": {
+          "I": 17.714645825560225,
+          "R": 869.7402107164105,
+          "S": 112.54514345803037
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 237.4814267933768,
+      "rank": 4
+    },
+    {
+      "id": 5,
+      "parameters": {
+        "infection": 0.00030000000000000003,
+        "recovery": 0.1
+      },
+      "metrics": {
+        "maxPeak": 303.74961589208857,
+        "maxPeakVar": "I",
+        "maxPeakTime": 26.846715314737068,
+        "finalState": {
+          "I": 1.5512015083770032,
+          "R": 939.3180697698119,
+          "S": 59.130728721808914
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 303.74961589208857,
+      "rank": 5
+    },
+    {
+      "id": 9,
+      "parameters": {
+        "infection": 0.00039999999999999996,
+        "recovery": 0.12
+      },
+      "metrics": {
+        "maxPeak": 341.39081161696134,
+        "maxPeakVar": "I",
+        "maxPeakTime": 19.31306459263794,
+        "finalState": {
+          "I": 0.16458342241523125,
+          "R": 959.4000516774516,
+          "S": 40.435364900131496
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 341.39081161696134,
+      "rank": 6
+    },
+    {
+      "id": 4,
+      "parameters": {
+        "infection": 0.00030000000000000003,
+        "recovery": 0.08
+      },
+      "metrics": {
+        "maxPeak": 383.5448893296791,
+        "maxPeakVar": "I",
+        "maxPeakTime": 25.952262990208485,
+        "finalState": {
+          "I": 3.3831836749889885,
+          "R": 970.6227114945076,
+          "S": 25.994104830499253
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 383.5448893296791,
+      "rank": 7
+    },
+    {
+      "id": 8,
+      "parameters": {
+        "infection": 0.00039999999999999996,
+        "recovery": 0.1
+      },
+      "metrics": {
+        "maxPeak": 405.93488808800174,
+        "maxPeakVar": "I",
+        "maxPeakTime": 19.41327997321138,
+        "finalState": {
+          "I": 0.4317391624145776,
+          "R": 979.9192298449201,
+          "S": 19.64903099266309
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 405.93488808800174,
+      "rank": 8
+    },
+    {
+      "id": 12,
+      "parameters": {
+        "infection": 0.0005,
+        "recovery": 0.12
+      },
+      "metrics": {
+        "maxPeak": 419.81025307166004,
+        "maxPeakVar": "I",
+        "maxPeakTime": 15.59507471683475,
+        "finalState": {
+          "I": 0.057758490090416885,
+          "R": 983.501155227567,
+          "S": 16.441086282345147
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 419.81025307166004,
+      "rank": 9
+    },
+    {
+      "id": 7,
+      "parameters": {
+        "infection": 0.00039999999999999996,
+        "recovery": 0.08
+      },
+      "metrics": {
+        "maxPeak": 479.3648138842843,
+        "maxPeakVar": "I",
+        "maxPeakTime": 19.63382163169646,
+        "finalState": {
+          "I": 1.4629529576852687,
+          "R": 991.5796407958665,
+          "S": 6.957406246449532
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 479.3648138842843,
+      "rank": 10
+    },
+    {
+      "id": 15,
+      "parameters": {
+        "infection": 0.0006,
+        "recovery": 0.12
+      },
+      "metrics": {
+        "maxPeak": 479.7519461063375,
+        "maxPeakVar": "I",
+        "maxPeakTime": 12.99597160735551,
+        "finalState": {
+          "I": 0.030771094907427583,
+          "R": 993.0632417830761,
+          "S": 6.905987122016923
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 479.7519461063375,
+      "rank": 11
+    },
+    {
+      "id": 11,
+      "parameters": {
+        "infection": 0.0005,
+        "recovery": 0.1
+      },
+      "metrics": {
+        "maxPeak": 479.86557183548445,
+        "maxPeakVar": "I",
+        "maxPeakTime": 15.129524021117701,
+        "finalState": {
+          "I": 0.21219237587698495,
+          "R": 992.8753288307676,
+          "S": 6.912478793355214
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 479.86557183548445,
+      "rank": 12
+    },
+    {
+      "id": 14,
+      "parameters": {
+        "infection": 0.0006,
+        "recovery": 0.1
+      },
+      "metrics": {
+        "maxPeak": 536.3578552402612,
+        "maxPeakVar": "I",
+        "maxPeakTime": 12.802649841480736,
+        "finalState": {
+          "I": 0.14114877421098307,
+          "R": 997.3657929363536,
+          "S": 2.493058289437615
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 536.3578552402612,
+      "rank": 13
+    },
+    {
+      "id": 10,
+      "parameters": {
+        "infection": 0.0005,
+        "recovery": 0.08
+      },
+      "metrics": {
+        "maxPeak": 547.7587179291918,
+        "maxPeakVar": "I",
+        "maxPeakTime": 15.63074802112803,
+        "finalState": {
+          "I": 0.9463366676525135,
+          "R": 997.1076513873854,
+          "S": 1.9460119449616307
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 547.7587179291918,
+      "rank": 14
+    },
+    {
+      "id": 13,
+      "parameters": {
+        "infection": 0.0006,
+        "recovery": 0.08
+      },
+      "metrics": {
+        "maxPeak": 599.3427843051182,
+        "maxPeakVar": "I",
+        "maxPeakTime": 12.816936676033675,
+        "finalState": {
+          "I": 0.7413092862347392,
+          "R": 998.7057964665121,
+          "S": 0.5528942472537495
+        },
+        "steadyReached": false,
+        "conserved": false,
+        "computeTime": 0
+      },
+      "score": 599.3427843051182,
+      "rank": 15
+    }
+  ],
+  "best": {
+    "id": 3,
+    "parameters": {
+      "infection": 0.0002,
+      "recovery": 0.12
+    },
+    "metrics": {
+      "maxPeak": 99.52708183266633,
+      "maxPeakVar": "I",
+      "maxPeakTime": 46.546450212710766,
+      "finalState": {
+        "I": 14.166127549769792,
+        "R": 651.7026029555952,
+        "S": 334.131269494637
+      },
+      "steadyReached": false,
+      "conserved": false,
+      "computeTime": 0
+    },
+    "score": 99.52708183266633,
+    "rank": 1
+  },
+  "worst": {
+    "id": 13,
+    "parameters": {
+      "infection": 0.0006,
+      "recovery": 0.08
+    },
+    "metrics": {
+      "maxPeak": 599.3427843051182,
+      "maxPeakVar": "I",
+      "maxPeakTime": 12.816936676033675,
+      "finalState": {
+        "I": 0.7413092862347392,
+        "R": 998.7057964665121,
+        "S": 0.5528942472537495
+      },
+      "steadyReached": false,
+      "conserved": false,
+      "computeTime": 0
+    },
+    "score": 599.3427843051182,
+    "rank": 15
+  },
+  "summary": {
+    "totalVariants": 15,
+    "successCount": 15,
+    "failureCount": 0,
+    "bestScore": 99.52708183266633,
+    "worstScore": 599.3427843051182,
+    "scoreRange": 499.8157024724519
+  },
+  "recommended": {
+    "improvement": "83.4% reduction in peak (599.34 → 99.53)",
+    "infection": "decrease by 66.7% (0.000600 → 0.000200)",
+    "recovery": "increase by 50.0% (0.080000 → 0.120000)"
+  }
+}

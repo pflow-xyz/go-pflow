@@ -18,9 +18,9 @@ This is **unique** - no other process mining tool combines:
 package main
 
 import (
-    "github.com/pflow-xyz/go-pflow/eventlog"
-    "github.com/pflow-xyz/go-pflow/mining"
-    "github.com/pflow-xyz/go-pflow/solver"
+    "github.com/stackdump/go-pflow/eventlog"
+    "github.com/stackdump/go-pflow/mining"
+    "github.com/stackdump/go-pflow/solver"
 )
 
 func main() {

@@ -1,0 +1,77 @@
+{
+  "arcs": [
+    {
+      "source": "S",
+      "target": "infection",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "I",
+      "target": "infection",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "infection",
+      "target": "I",
+      "weight": [
+        2
+      ]
+    },
+    {
+      "source": "I",
+      "target": "recovery",
+      "weight": [
+        1
+      ]
+    },
+    {
+      "source": "recovery",
+      "target": "R",
+      "weight": [
+        1
+      ]
+    }
+  ],
+  "places": {
+    "I": {
+      "initial": [
+        10
+      ],
+      "label": "Infected",
+      "x": 200,
+      "y": 100
+    },
+    "R": {
+      "initial": [
+        0
+      ],
+      "label": "Recovered",
+      "x": 300,
+      "y": 100
+    },
+    "S": {
+      "initial": [
+        4990
+      ],
+      "label": "Susceptible",
+      "x": 100,
+      "y": 100
+    }
+  },
+  "transitions": {
+    "infection": {
+      "label": "Infection",
+      "x": 150,
+      "y": 100
+    },
+    "recovery": {
+      "label": "Recovery",
+      "x": 250,
+      "y": 100
+    }
+  }
+}

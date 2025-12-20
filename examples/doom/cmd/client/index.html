@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOOM - Petri Net Powered</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        #header {
+            width: 100%;
+            background: linear-gradient(to bottom, #8B0000, #4a0000);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid #ff0000;
+        }
+
+        #header h1 {
+            font-size: 2rem;
+            color: #ff0000;
+            text-shadow: 2px 2px 0 #000;
+            letter-spacing: 4px;
+        }
+
+        #connection-status {
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .connected { background: #2ecc71; color: #000; }
+        .disconnected { background: #e74c3c; }
+        .connecting { background: #f39c12; color: #000; }
+
+        #gamepad-status {
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            background: #333;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #gamepad-status.connected {
+            background: #9b59b6;
+        }
+
+        #viewport {
+            width: 640px;
+            height: 400px;
+            background: #000;
+            position: relative;
+        }
+
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        #minimap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 128px;
+            height: 128px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+        }
+
+        #hud {
+            width: 640px;
+            height: 80px;
+            background: linear-gradient(to bottom, #3a3a3a, #1a1a1a);
+            border-top: 4px solid #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .hud-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff0000;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .hud-label {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .hud-value.health { color: #e74c3c; }
+        .hud-value.armor { color: #3498db; }
+        .hud-value.ammo { color: #f1c40f; }
+        .hud-value.kills { color: #2ecc71; }
+
+        #face {
+            width: 60px;
+            height: 60px;
+            background: #8B4513;
+            border: 3px solid #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            color: #ff0;
+            text-shadow: 2px 2px 0 #000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #message.visible {
+            opacity: 1;
+        }
+
+        #keys-display {
+            display: flex;
+            gap: 5px;
+        }
+
+        .key-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            opacity: 0.3;
+        }
+
+        .key-icon.red { background: #e74c3c; }
+        .key-icon.blue { background: #3498db; }
+        .key-icon.active { opacity: 1; }
+
+        #weapon-display {
+            font-size: 1rem;
+            color: #888;
+        }
+
+        #controls-hint {
+            width: 640px;
+            background: #1a1a1a;
+            padding: 10px;
+            font-size: 0.75rem;
+            color: #666;
+            text-align: center;
+            border-top: 1px solid #333;
+        }
+
+        #controller-hint {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.9);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            border: 1px solid #9b59b6;
+            display: none;
+        }
+
+        #controller-hint h4 {
+            color: #9b59b6;
+            margin-bottom: 8px;
+        }
+
+        #controller-hint .mapping {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 3px 10px;
+        }
+
+        #controller-hint .btn-label { color: #f39c12; }
+        #controller-hint .action-label { color: #ecf0f1; }
+
+        #game-over-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: linear-gradient(to bottom, #3a3a3a, #1a1a1a);
+            padding: 40px;
+            border: 4px solid #ff0000;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            font-size: 3rem;
+            color: #ff0000;
+            margin-bottom: 20px;
+        }
+
+        .modal-content.victory h2 {
+            color: #2ecc71;
+        }
+
+        .modal-content p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .modal-content button {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-family: inherit;
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background: #cc0000;
+        }
+
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #start-screen h1 {
+            font-size: 5rem;
+            color: #ff0000;
+            text-shadow: 4px 4px 0 #8B0000;
+            margin-bottom: 40px;
+            letter-spacing: 10px;
+        }
+
+        #start-screen p {
+            font-size: 1.5rem;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        #start-screen .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <h1>DOOM</h1>
+        <p>Petri Net Powered</p>
+        <p class="blink">Press any key or button to start</p>
+    </div>
+
+    <div id="game-container" style="display: none;">
+        <div id="header">
+            <h1>DOOM</h1>
+            <div style="display: flex; gap: 10px;">
+                <div id="gamepad-status">
+                    <span>🎮</span>
+                    <span id="gamepad-text">No Controller</span>
+                </div>
+                <div id="connection-status" class="disconnected">Disconnected</div>
+            </div>
+        </div>
+
+        <div id="viewport">
+            <canvas id="game-canvas" width="640" height="400"></canvas>
+            <canvas id="minimap" width="128" height="128"></canvas>
+            <div id="message"></div>
+        </div>
+
+        <div id="hud">
+            <div class="hud-stat">
+                <span class="hud-value health" id="health-value">100</span>
+                <span class="hud-label">HEALTH</span>
+            </div>
+
+            <div class="hud-stat">
+                <span class="hud-value armor" id="armor-value">0</span>
+                <span class="hud-label">ARMOR</span>
+            </div>
+
+            <div id="face">😐</div>
+
+            <div class="hud-stat">
+                <div id="keys-display">
+                    <div class="key-icon red" id="key-red"></div>
+                    <div class="key-icon blue" id="key-blue"></div>
+                </div>
+                <span class="hud-label">KEYS</span>
+            </div>
+
+            <div class="hud-stat">
+                <span id="weapon-display">PISTOL</span>
+                <span class="hud-label">WEAPON</span>
+            </div>
+
+            <div class="hud-stat">
+                <span class="hud-value ammo" id="ammo-value">20</span>
+                <span class="hud-label">AMMO</span>
+            </div>
+
+            <div class="hud-stat">
+                <span class="hud-value kills" id="kills-value">0</span>
+                <span class="hud-label">KILLS</span>
+            </div>
+        </div>
+
+        <div id="controls-hint">
+            WASD/Arrows: Move | Q/E: Strafe | Space: Shoot | F: Use
+        </div>
+    </div>
+
+    <div id="controller-hint">
+        <h4>🎮 NES Controller</h4>
+        <div class="mapping">
+            <span class="btn-label">D-Pad</span><span class="action-label">Move/Turn</span>
+            <span class="btn-label">A</span><span class="action-label">Shoot</span>
+            <span class="btn-label">B</span><span class="action-label">Use/Open</span>
+            <span class="btn-label">Select</span><span class="action-label">Strafe Left</span>
+            <span class="btn-label">Start</span><span class="action-label">Strafe Right</span>
+        </div>
+    </div>
+
+    <div id="game-over-modal">
+        <div class="modal-content">
+            <h2 id="game-over-text">GAME OVER</h2>
+            <p id="game-over-message"></p>
+            <button onclick="resetGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Game Client
+        // ============================================
+
+        let ws = null;
+        let connected = false;
+        let gameState = null;
+        let gameStarted = false;
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const minimapCanvas = document.getElementById('minimap');
+        const minimapCtx = minimapCanvas.getContext('2d');
+
+        // Raycasting constants
+        const FOV = Math.PI / 3; // 60 degrees
+        const NUM_RAYS = 320;
+        const MAX_DEPTH = 20;
+
+        // Colors
+        const WALL_COLORS = ['#4a4a4a', '#3a3a3a', '#5a5a5a', '#2a2a2a'];
+        const FLOOR_COLOR = '#1a1a1a';
+        const CEILING_COLOR = '#333';
+        const DOOR_COLOR = '#8B4513';
+        const EXIT_COLOR = '#00ff00';
+
+        // Tile types (must match server)
+        const TILE_FLOOR = 0;
+        const TILE_WALL = 1;
+        const TILE_DOOR = 2;
+        const TILE_LOCKED_DOOR = 3;
+        const TILE_EXIT = 4;
+
+        // Enemy states
+        const ENEMY_IDLE = 0;
+        const ENEMY_ALERT = 1;
+        const ENEMY_ATTACKING = 2;
+        const ENEMY_DEAD = 3;
+
+        // ============================================
+        // WebSocket Connection
+        // ============================================
+
+        function connect() {
+            const wsUrl = `ws://${window.location.host}/ws`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                connected = true;
+                updateConnectionStatus('connected');
+                console.log('Connected to server');
+                // Join game
+                ws.send(JSON.stringify({ type: 'join', timestamp: Date.now() }));
+            };
+
+            ws.onclose = () => {
+                connected = false;
+                updateConnectionStatus('disconnected');
+                console.log('Disconnected from server');
+                // Reconnect after delay
+                setTimeout(connect, 2000);
+            };
+
+            ws.onerror = (err) => {
+                console.error('WebSocket error:', err);
+            };
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                handleMessage(msg);
+            };
+        }
+
+        function handleMessage(msg) {
+            switch (msg.type) {
+                case 'game_state':
+                    // payload is already an object after JSON.parse of the message
+                    const payload = msg.payload;
+                    gameState = payload.state;
+                    render();
+                    updateHUD();
+
+                    if (gameState.message) {
+                        showMessage(gameState.message);
+                    }
+
+                    if (gameState.game_over) {
+                        showGameOver(gameState.victory);
+                    }
+                    break;
+
+                case 'error':
+                    console.error('Server error:', msg.payload);
+                    break;
+            }
+        }
+
+        function sendAction(action) {
+            if (!connected || !ws) return;
+            ws.send(JSON.stringify({
+                type: 'action',
+                payload: { action: action },
+                timestamp: Date.now()
+            }));
+        }
+
+        function resetGame() {
+            if (!connected || !ws) return;
+            ws.send(JSON.stringify({
+                type: 'reset',
+                timestamp: Date.now()
+            }));
+            hideGameOver();
+        }
+
+        function updateConnectionStatus(status) {
+            const el = document.getElementById('connection-status');
+            el.className = status;
+            el.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        }
+
+        // ============================================
+        // Rendering - Raycasting
+        // ============================================
+
+        function render() {
+            if (!gameState) return;
+
+            // Clear canvas
+            ctx.fillStyle = CEILING_COLOR;
+            ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            ctx.fillStyle = FLOOR_COLOR;
+            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+
+            const player = gameState.player;
+
+            // Cast rays
+            for (let i = 0; i < NUM_RAYS; i++) {
+                const rayAngle = player.Angle - FOV / 2 + (i / NUM_RAYS) * FOV;
+                const hit = castRay(player.X, player.Y, rayAngle);
+
+                if (hit) {
+                    // Fix fisheye effect
+                    const correctedDist = hit.distance * Math.cos(rayAngle - player.Angle);
+
+                    // Calculate wall height
+                    const wallHeight = Math.min(canvas.height * 2, canvas.height / correctedDist);
+                    const wallTop = (canvas.height - wallHeight) / 2;
+
+                    // Choose color based on hit type and side
+                    let color = WALL_COLORS[hit.side % 4];
+                    if (hit.type === TILE_DOOR || hit.type === TILE_LOCKED_DOOR) {
+                        color = hit.type === TILE_LOCKED_DOOR ? '#8B0000' : DOOR_COLOR;
+                    } else if (hit.type === TILE_EXIT) {
+                        color = EXIT_COLOR;
+                    }
+
+                    // Apply distance shading
+                    const shade = Math.max(0.2, 1 - correctedDist / MAX_DEPTH);
+                    ctx.fillStyle = shadeColor(color, shade);
+
+                    // Draw wall slice
+                    const sliceWidth = canvas.width / NUM_RAYS;
+                    ctx.fillRect(i * sliceWidth, wallTop, sliceWidth + 1, wallHeight);
+                }
+            }
+
+            // Render enemies (sprites)
+            renderEnemies(player);
+
+            // Render items (sprites)
+            renderItems(player);
+
+            // Render minimap
+            renderMinimap();
+
+            // Render weapon
+            renderWeapon();
+        }
+
+        function castRay(x, y, angle) {
+            const sinA = Math.sin(angle);
+            const cosA = Math.cos(angle);
+
+            let dist = 0;
+            const step = 0.05;
+
+            while (dist < MAX_DEPTH) {
+                const testX = x + cosA * dist;
+                const testY = y + sinA * dist;
+
+                const mapX = Math.floor(testX);
+                const mapY = Math.floor(testY);
+
+                if (mapX < 0 || mapX >= gameState.map_width ||
+                    mapY < 0 || mapY >= gameState.map_height) {
+                    break;
+                }
+
+                const tile = gameState.tiles[mapY][mapX];
+                if (tile !== TILE_FLOOR && tile !== TILE_EXIT) {
+                    // Determine which side was hit
+                    const dx = testX - mapX;
+                    const dy = testY - mapY;
+                    let side = 0;
+                    if (dx < 0.1) side = 0;
+                    else if (dx > 0.9) side = 1;
+                    else if (dy < 0.1) side = 2;
+                    else if (dy > 0.9) side = 3;
+
+                    return { distance: dist, type: tile, side: side };
+                }
+
+                dist += step;
+            }
+
+            return null;
+        }
+
+        function renderEnemies(player) {
+            if (!gameState.enemies) return;
+
+            // Sort enemies by distance (far to near)
+            const sortedEnemies = [...gameState.enemies]
+                .filter(e => e.State !== ENEMY_DEAD)
+                .map(e => ({
+                    ...e,
+                    dist: Math.sqrt((e.X - player.X) ** 2 + (e.Y - player.Y) ** 2)
+                }))
+                .sort((a, b) => b.dist - a.dist);
+
+            for (const enemy of sortedEnemies) {
+                renderSprite(player, enemy.X, enemy.Y, getEnemySprite(enemy), enemy.dist);
+            }
+        }
+
+        function renderItems(player) {
+            if (!gameState.items) return;
+
+            for (const item of gameState.items) {
+                if (item.Picked) continue;
+
+                const dist = Math.sqrt((item.X - player.X) ** 2 + (item.Y - player.Y) ** 2);
+                renderSprite(player, item.X, item.Y, getItemSprite(item), dist);
+            }
+        }
+
+        function renderSprite(player, spriteX, spriteY, sprite, dist) {
+            // Calculate angle to sprite
+            const dx = spriteX - player.X;
+            const dy = spriteY - player.Y;
+            const angleToSprite = Math.atan2(dy, dx);
+
+            // Calculate angle difference
+            let angleDiff = angleToSprite - player.Angle;
+            while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+            // Check if sprite is in view
+            if (Math.abs(angleDiff) > FOV / 2 + 0.2) return;
+
+            // Check line of sight
+            if (!hasLineOfSight(player.X, player.Y, spriteX, spriteY)) return;
+
+            // Calculate screen position
+            const screenX = canvas.width / 2 + (angleDiff / FOV) * canvas.width;
+            const size = Math.min(canvas.height, canvas.height / dist);
+
+            // Apply distance shading
+            const shade = Math.max(0.3, 1 - dist / MAX_DEPTH);
+
+            // Draw sprite (simple colored rectangle for now)
+            ctx.fillStyle = shadeColor(sprite.color, shade);
+            ctx.fillRect(
+                screenX - size / 4,
+                canvas.height / 2 - size / 2,
+                size / 2,
+                size
+            );
+
+            // Draw sprite icon
+            ctx.fillStyle = '#fff';
+            ctx.font = `${size / 2}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(sprite.icon, screenX, canvas.height / 2 + size / 6);
+        }
+
+        function hasLineOfSight(x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const steps = Math.ceil(dist * 10);
+
+            for (let i = 0; i < steps; i++) {
+                const t = i / steps;
+                const x = x1 + dx * t;
+                const y = y1 + dy * t;
+
+                const mapX = Math.floor(x);
+                const mapY = Math.floor(y);
+
+                if (mapX >= 0 && mapX < gameState.map_width &&
+                    mapY >= 0 && mapY < gameState.map_height) {
+                    const tile = gameState.tiles[mapY][mapX];
+                    if (tile === TILE_WALL) return false;
+                }
+            }
+            return true;
+        }
+
+        function getEnemySprite(enemy) {
+            const sprites = {
+                0: { icon: '👹', color: '#8B4513' }, // Imp
+                1: { icon: '👿', color: '#ff4444' }, // Demon
+                2: { icon: '💀', color: '#666666' }, // Soldier
+            };
+            return sprites[enemy.Type] || sprites[0];
+        }
+
+        function getItemSprite(item) {
+            const sprites = {
+                0: { icon: '❤️', color: '#e74c3c' },  // Health
+                1: { icon: '🛡️', color: '#3498db' },  // Armor
+                2: { icon: '🔫', color: '#f1c40f' },  // Ammo
+                3: { icon: '💥', color: '#e67e22' },  // Shotgun
+                4: { icon: '🔑', color: '#e74c3c' },  // Red Key
+                5: { icon: '🔑', color: '#3498db' },  // Blue Key
+            };
+            return sprites[item.Type] || sprites[0];
+        }
+
+        function renderMinimap() {
+            minimapCtx.fillStyle = '#000';
+            minimapCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+
+            if (!gameState) return;
+
+            const scale = minimapCanvas.width / gameState.map_width;
+            const player = gameState.player;
+
+            // Draw tiles
+            for (let y = 0; y < gameState.map_height; y++) {
+                for (let x = 0; x < gameState.map_width; x++) {
+                    const tile = gameState.tiles[y][x];
+                    if (tile === TILE_WALL) {
+                        minimapCtx.fillStyle = '#666';
+                    } else if (tile === TILE_DOOR || tile === TILE_LOCKED_DOOR) {
+                        minimapCtx.fillStyle = tile === TILE_LOCKED_DOOR ? '#800' : '#840';
+                    } else if (tile === TILE_EXIT) {
+                        minimapCtx.fillStyle = '#0f0';
+                    } else {
+                        continue;
+                    }
+                    minimapCtx.fillRect(x * scale, y * scale, scale, scale);
+                }
+            }
+
+            // Draw enemies
+            if (gameState.enemies) {
+                for (const enemy of gameState.enemies) {
+                    if (enemy.State === ENEMY_DEAD) continue;
+                    minimapCtx.fillStyle = '#f00';
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(enemy.X * scale, enemy.Y * scale, 3, 0, Math.PI * 2);
+                    minimapCtx.fill();
+                }
+            }
+
+            // Draw items
+            if (gameState.items) {
+                for (const item of gameState.items) {
+                    if (item.Picked) continue;
+                    minimapCtx.fillStyle = '#ff0';
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(item.X * scale, item.Y * scale, 2, 0, Math.PI * 2);
+                    minimapCtx.fill();
+                }
+            }
+
+            // Draw player
+            minimapCtx.fillStyle = '#0f0';
+            minimapCtx.beginPath();
+            minimapCtx.arc(player.X * scale, player.Y * scale, 4, 0, Math.PI * 2);
+            minimapCtx.fill();
+
+            // Draw player direction
+            const dirX = Math.cos(player.Angle) * 10;
+            const dirY = Math.sin(player.Angle) * 10;
+            minimapCtx.strokeStyle = '#0f0';
+            minimapCtx.lineWidth = 2;
+            minimapCtx.beginPath();
+            minimapCtx.moveTo(player.X * scale, player.Y * scale);
+            minimapCtx.lineTo(player.X * scale + dirX, player.Y * scale + dirY);
+            minimapCtx.stroke();
+        }
+
+        function renderWeapon() {
+            // Simple weapon rendering at bottom of screen
+            ctx.fillStyle = '#333';
+            const weaponWidth = 80;
+            const weaponHeight = 100;
+            const x = canvas.width / 2 - weaponWidth / 2;
+            const y = canvas.height - weaponHeight + 20;
+
+            // Gun shape
+            ctx.fillStyle = '#555';
+            ctx.fillRect(x + 30, y, 20, 80);
+            ctx.fillRect(x, y + 60, 80, 20);
+        }
+
+        function shadeColor(color, shade) {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+
+            const newR = Math.floor(r * shade);
+            const newG = Math.floor(g * shade);
+            const newB = Math.floor(b * shade);
+
+            return `rgb(${newR}, ${newG}, ${newB})`;
+        }
+
+        // ============================================
+        // HUD Updates
+        // ============================================
+
+        function updateHUD() {
+            if (!gameState) return;
+
+            const player = gameState.player;
+
+            document.getElementById('health-value').textContent = Math.floor(player.Health);
+            document.getElementById('armor-value').textContent = Math.floor(player.Armor);
+            document.getElementById('ammo-value').textContent = Math.floor(player.Ammo);
+            document.getElementById('kills-value').textContent = gameState.kill_count || 0;
+
+            // Update weapon display
+            document.getElementById('weapon-display').textContent =
+                player.HasShotgun ? 'SHOTGUN' : 'PISTOL';
+
+            // Update keys
+            document.getElementById('key-red').classList.toggle('active', player.HasKeyRed);
+            document.getElementById('key-blue').classList.toggle('active', player.HasKeyBlue);
+
+            // Update face based on health
+            const face = document.getElementById('face');
+            if (player.Health > 75) face.textContent = '😐';
+            else if (player.Health > 50) face.textContent = '😟';
+            else if (player.Health > 25) face.textContent = '😨';
+            else face.textContent = '😵';
+        }
+
+        function showMessage(text) {
+            const msgEl = document.getElementById('message');
+            msgEl.textContent = text;
+            msgEl.classList.add('visible');
+            setTimeout(() => msgEl.classList.remove('visible'), 1500);
+        }
+
+        function showGameOver(victory) {
+            const modal = document.getElementById('game-over-modal');
+            const content = modal.querySelector('.modal-content');
+            const text = document.getElementById('game-over-text');
+            const message = document.getElementById('game-over-message');
+
+            if (victory) {
+                content.classList.add('victory');
+                text.textContent = 'LEVEL COMPLETE';
+                message.textContent = `Kills: ${gameState.kill_count}`;
+            } else {
+                content.classList.remove('victory');
+                text.textContent = 'GAME OVER';
+                message.textContent = 'You died!';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function hideGameOver() {
+            document.getElementById('game-over-modal').style.display = 'none';
+        }
+
+        // ============================================
+        // Keyboard Input
+        // ============================================
+
+        const keys = {};
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameStarted) {
+                startGame();
+                return;
+            }
+
+            keys[e.key.toLowerCase()] = true;
+
+            // Single-press actions
+            if (e.key === ' ') {
+                sendAction('shoot');
+                e.preventDefault();
+            } else if (e.key.toLowerCase() === 'f') {
+                sendAction('use');
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Continuous movement
+        setInterval(() => {
+            if (!gameStarted || !connected) return;
+
+            if (keys['w'] || keys['arrowup']) sendAction('move_forward');
+            if (keys['s'] || keys['arrowdown']) sendAction('move_backward');
+            if (keys['a'] || keys['arrowleft']) sendAction('turn_left');
+            if (keys['d'] || keys['arrowright']) sendAction('turn_right');
+            if (keys['q']) sendAction('strafe_left');
+            if (keys['e']) sendAction('strafe_right');
+        }, 50);
+
+        // ============================================
+        // NES Controller / Gamepad Support
+        // ============================================
+
+        let gamepadIndex = null;
+        let gamepadPollInterval = null;
+        let lastButtonStates = {};
+        let lastAxisStates = { x: 0, y: 0 };
+
+        const NES_BUTTONS = {
+            A: 0,
+            B: 1,
+            SELECT: 8,
+            START: 9,
+            DPAD_UP: 12,
+            DPAD_DOWN: 13,
+            DPAD_LEFT: 14,
+            DPAD_RIGHT: 15
+        };
+
+        const BUTTON_ACTION_MAP = {
+            [NES_BUTTONS.A]: 'shoot',
+            [NES_BUTTONS.B]: 'use',
+            [NES_BUTTONS.SELECT]: 'strafe_left',
+            [NES_BUTTONS.START]: 'strafe_right',
+            [NES_BUTTONS.DPAD_UP]: 'move_forward',
+            [NES_BUTTONS.DPAD_DOWN]: 'move_backward',
+            [NES_BUTTONS.DPAD_LEFT]: 'turn_left',
+            [NES_BUTTONS.DPAD_RIGHT]: 'turn_right'
+        };
+
+        const AXIS_THRESHOLD = 0.5;
+
+        // Continuous actions (hold to repeat)
+        const CONTINUOUS_ACTIONS = ['move_forward', 'move_backward', 'turn_left', 'turn_right', 'strafe_left', 'strafe_right'];
+
+        function handleGamepadConnected(e) {
+            if (!gameStarted) {
+                startGame();
+            }
+
+            gamepadIndex = e.gamepad.index;
+            updateGamepadStatus(true, e.gamepad.id);
+            document.getElementById('controller-hint').style.display = 'block';
+
+            if (!gamepadPollInterval) {
+                gamepadPollInterval = setInterval(pollGamepad, 50);
+            }
+
+            console.log('Gamepad connected:', e.gamepad.id);
+        }
+
+        function handleGamepadDisconnected(e) {
+            if (e.gamepad.index === gamepadIndex) {
+                gamepadIndex = null;
+                updateGamepadStatus(false);
+                document.getElementById('controller-hint').style.display = 'none';
+
+                if (gamepadPollInterval) {
+                    clearInterval(gamepadPollInterval);
+                    gamepadPollInterval = null;
+                }
+            }
+        }
+
+        function updateGamepadStatus(connected, name = '') {
+            const statusEl = document.getElementById('gamepad-status');
+            const textEl = document.getElementById('gamepad-text');
+
+            if (connected) {
+                statusEl.classList.add('connected');
+                textEl.textContent = name.length > 15 ? name.substring(0, 15) + '...' : name;
+            } else {
+                statusEl.classList.remove('connected');
+                textEl.textContent = 'No Controller';
+            }
+        }
+
+        function pollGamepad() {
+            if (gamepadIndex === null || !gameStarted) return;
+
+            const gamepads = navigator.getGamepads();
+            const gamepad = gamepads[gamepadIndex];
+            if (!gamepad) return;
+
+            // Check buttons
+            for (let i = 0; i < gamepad.buttons.length; i++) {
+                const button = gamepad.buttons[i];
+                const pressed = button.pressed || button.value > 0.5;
+                const wasPressed = lastButtonStates[i] || false;
+
+                const action = BUTTON_ACTION_MAP[i];
+                if (!action) continue;
+
+                if (CONTINUOUS_ACTIONS.includes(action)) {
+                    // Continuous action - send while held
+                    if (pressed) {
+                        sendAction(action);
+                    }
+                } else {
+                    // Single press action
+                    if (pressed && !wasPressed) {
+                        sendAction(action);
+                    }
+                }
+
+                lastButtonStates[i] = pressed;
+            }
+
+            // Check axes for D-pad
+            if (gamepad.axes.length >= 2) {
+                const xAxis = gamepad.axes[0];
+                const yAxis = gamepad.axes[1];
+
+                // Continuous axis movement
+                if (yAxis < -AXIS_THRESHOLD) {
+                    sendAction('move_forward');
+                } else if (yAxis > AXIS_THRESHOLD) {
+                    sendAction('move_backward');
+                }
+
+                if (xAxis < -AXIS_THRESHOLD) {
+                    sendAction('turn_left');
+                } else if (xAxis > AXIS_THRESHOLD) {
+                    sendAction('turn_right');
+                }
+
+                lastAxisStates.x = xAxis;
+                lastAxisStates.y = yAxis;
+            }
+        }
+
+        window.addEventListener('gamepadconnected', handleGamepadConnected);
+        window.addEventListener('gamepaddisconnected', handleGamepadDisconnected);
+
+        // ============================================
+        // Game Start
+        // ============================================
+
+        function startGame() {
+            if (gameStarted) return;
+            gameStarted = true;
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+
+            connect();
+        }
+
+        // Start on any key or click
+        document.addEventListener('keydown', () => {
+            if (!gameStarted) startGame();
+        });
+
+        document.addEventListener('click', () => {
+            if (!gameStarted) startGame();
+        });
+
+        // Check for existing gamepad on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const gamepads = navigator.getGamepads();
+                for (let i = 0; i < gamepads.length; i++) {
+                    if (gamepads[i]) {
+                        gamepadIndex = i;
+                        // Don't auto-start, wait for button press
+                        break;
+                    }
+                }
+            }, 100);
+        });
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>

@@ -1,7 +1,5 @@
 # go-pflow
 
-> **Note:** go-pflow is **not** an AI or machine learning library. It implements structural, dynamical computation based on Petri nets and ODE simulation. See [How go-pflow Differs From Modern AI](docs/concepts/not-ai.md) for details.
-
 A Go library for Petri net modeling, ODE simulation, process mining, and predictive monitoring. 
 
 Port of the JavaScript [pflow.xyz](https://pflow.xyz) library with additional features:
@@ -104,7 +102,6 @@ Comprehensive documentation for learning and reference:
 Learn the fundamentals and build real systems:
 
 - **[Documentation Hub](docs/README.md)** - Complete learning path for undergraduates and practitioners
-  - [How go-pflow Differs From Modern AI](docs/concepts/not-ai.md) - **What go-pflow is (and isn't)**
   - [Petri Nets Explained](docs/concepts/petri-nets.md) - What they are and why we use them
   - [ODE Simulation](docs/concepts/ode-simulation.md) - Why differential equations for discrete systems
   - [Process Mining](docs/concepts/process-mining.md) - Discover processes from event logs

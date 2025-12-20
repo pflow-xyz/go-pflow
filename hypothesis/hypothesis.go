@@ -4,7 +4,10 @@
 package hypothesis
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
 	"math"
+	"sort"
 	"sync"
 
 	"github.com/pflow-xyz/go-pflow/petri"
@@ -20,6 +23,117 @@ type Scorer func(finalState map[string]float64) float64
 // Returns true if the state is infeasible or evaluation should be skipped.
 type EarlyTerminator func(state map[string]float64) bool
 
+// ScoreCache caches evaluation scores keyed by state hash.
+// Thread-safe for concurrent access.
+type ScoreCache struct {
+	mu      sync.RWMutex
+	cache   map[string]float64
+	maxSize int
+	hits    int64
+	misses  int64
+}
+
+// NewScoreCache creates a score cache with the given maximum size.
+// Set maxSize to 0 for unlimited cache.
+func NewScoreCache(maxSize int) *ScoreCache {
+	return &ScoreCache{
+		cache:   make(map[string]float64),
+		maxSize: maxSize,
+	}
+}
+
+// hashState creates a deterministic hash of a state map.
+func hashState(state map[string]float64) string {
+	keys := make([]string, 0, len(state))
+	for k := range state {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	h := sha256.New()
+	buf := make([]byte, 8)
+	for _, k := range keys {
+		h.Write([]byte(k))
+		binary.BigEndian.PutUint64(buf, math.Float64bits(state[k]))
+		h.Write(buf)
+	}
+	return string(h.Sum(nil))
+}
+
+// Get retrieves a cached score. Returns (score, true) if found.
+func (c *ScoreCache) Get(state map[string]float64) (float64, bool) {
+	key := hashState(state)
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if score, ok := c.cache[key]; ok {
+		c.hits++
+		return score, true
+	}
+	c.misses++
+	return 0, false
+}
+
+// Put stores a score in the cache.
+func (c *ScoreCache) Put(state map[string]float64, score float64) {
+	key := hashState(state)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Simple eviction: remove a random entry if at capacity
+	if c.maxSize > 0 && len(c.cache) >= c.maxSize {
+		for k := range c.cache {
+			delete(c.cache, k)
+			break
+		}
+	}
+	c.cache[key] = score
+}
+
+// Size returns the current number of cached entries.
+func (c *ScoreCache) Size() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return len(c.cache)
+}
+
+// Clear removes all entries from the cache.
+func (c *ScoreCache) Clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.cache = make(map[string]float64)
+	c.hits = 0
+	c.misses = 0
+}
+
+// CacheStats holds cache performance statistics.
+type CacheStats struct {
+	Size    int
+	MaxSize int
+	Hits    int64
+	Misses  int64
+	HitRate float64
+}
+
+// Stats returns cache statistics.
+func (c *ScoreCache) Stats() CacheStats {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	total := c.hits + c.misses
+	hitRate := 0.0
+	if total > 0 {
+		hitRate = float64(c.hits) / float64(total)
+	}
+	return CacheStats{
+		Size:    len(c.cache),
+		MaxSize: c.maxSize,
+		Hits:    c.hits,
+		Misses:  c.misses,
+		HitRate: hitRate,
+	}
+}
+
 // Evaluator evaluates hypothetical states by running ODE simulations.
 type Evaluator struct {
 	net             *petri.PetriNet
@@ -29,6 +143,9 @@ type Evaluator struct {
 	scorer          Scorer
 	earlyTerminator EarlyTerminator
 	infeasibleScore float64
+
+	// Optional caching
+	cache *ScoreCache
 }
 
 // NewEvaluator creates a new hypothesis evaluator.
@@ -85,6 +202,41 @@ func (e *Evaluator) WithInfeasibleScore(score float64) *Evaluator {
 	return e
 }
 
+// WithCache enables caching of evaluation scores.
+// The cache size determines maximum entries; use 0 for unlimited.
+// Caching can significantly speed up repeated evaluations of similar states.
+//
+// Example:
+//
+//	eval := hypothesis.NewEvaluator(net, rates, scorer).
+//	    WithCache(10000)  // Cache up to 10k states
+func (e *Evaluator) WithCache(maxSize int) *Evaluator {
+	e.cache = NewScoreCache(maxSize)
+	return e
+}
+
+// WithSharedCache uses an existing cache (useful for sharing across evaluators).
+func (e *Evaluator) WithSharedCache(cache *ScoreCache) *Evaluator {
+	e.cache = cache
+	return e
+}
+
+// CacheStats returns cache statistics, or nil if caching is disabled.
+func (e *Evaluator) CacheStats() *CacheStats {
+	if e.cache == nil {
+		return nil
+	}
+	stats := e.cache.Stats()
+	return &stats
+}
+
+// ClearCache clears the cache if enabled.
+func (e *Evaluator) ClearCache() {
+	if e.cache != nil {
+		e.cache.Clear()
+	}
+}
+
 // Evaluate runs a simulation with the given state updates and returns the score.
 // The base state is copied and updates are applied before simulation.
 func (e *Evaluator) Evaluate(base map[string]float64, updates map[string]float64) float64 {
@@ -93,10 +245,18 @@ func (e *Evaluator) Evaluate(base map[string]float64, updates map[string]float64
 }
 
 // EvaluateState runs a simulation with the given state and returns the score.
+// If caching is enabled, returns cached result when available.
 func (e *Evaluator) EvaluateState(state map[string]float64) float64 {
-	// Check early termination
+	// Check early termination first (before cache lookup)
 	if e.earlyTerminator != nil && e.earlyTerminator(state) {
 		return e.infeasibleScore
+	}
+
+	// Check cache
+	if e.cache != nil {
+		if score, ok := e.cache.Get(state); ok {
+			return score
+		}
 	}
 
 	// Run simulation
@@ -104,7 +264,14 @@ func (e *Evaluator) EvaluateState(state map[string]float64) float64 {
 	sol := solver.Solve(prob, solver.Tsit5(), e.opts)
 
 	// Score final state
-	return e.scorer(sol.GetFinalState())
+	score := e.scorer(sol.GetFinalState())
+
+	// Store in cache
+	if e.cache != nil {
+		e.cache.Put(state, score)
+	}
+
+	return score
 }
 
 // Result holds the result of evaluating a single candidate.

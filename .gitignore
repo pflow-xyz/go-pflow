@@ -47,3 +47,13 @@ results.json
 # Temporary files
 tmp/
 temp/
+
+# gameserver
+cli
+*.log
+node_modules
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal

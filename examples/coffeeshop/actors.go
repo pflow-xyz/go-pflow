@@ -12,50 +12,50 @@ import (
 // Signal types for the coffee shop
 const (
 	// Customer signals
-	SignalCustomerDetected = "customer.detected"
-	SignalCustomerLeft     = "customer.left"
-	SignalOrderPlaced      = "order.placed"
-	SignalOrderCancelled   = "order.cancelled"
-	SignalPaymentReceived  = "payment.received"
-	SignalPaymentFailed    = "payment.failed"
+	SignalCustomerDetected   = "customer.detected"
+	SignalCustomerLeft       = "customer.left"
+	SignalOrderPlaced        = "order.placed"
+	SignalOrderCancelled     = "order.cancelled"
+	SignalPaymentReceived    = "payment.received"
+	SignalPaymentFailed      = "payment.failed"
 
 	// Order signals
-	SignalOrderQueued   = "order.queued"
-	SignalOrderStarted  = "order.started"
-	SignalOrderComplete = "order.complete"
-	SignalOrderReady    = "order.ready"
-	SignalOrderPickedUp = "order.picked_up"
+	SignalOrderQueued        = "order.queued"
+	SignalOrderStarted       = "order.started"
+	SignalOrderComplete      = "order.complete"
+	SignalOrderReady         = "order.ready"
+	SignalOrderPickedUp      = "order.picked_up"
 
 	// Inventory signals
-	SignalInventoryLow      = "inventory.low"
-	SignalInventoryRefilled = "inventory.refilled"
-	SignalInventoryCheck    = "inventory.check"
+	SignalInventoryLow       = "inventory.low"
+	SignalInventoryRefilled  = "inventory.refilled"
+	SignalInventoryCheck     = "inventory.check"
 
 	// Equipment signals
-	SignalMachineReady     = "machine.ready"
-	SignalMachineBusy      = "machine.busy"
-	SignalMachineError     = "machine.error"
-	SignalCleaningNeeded   = "cleaning.needed"
-	SignalCleaningComplete = "cleaning.complete"
+	SignalMachineReady       = "machine.ready"
+	SignalMachineBusy        = "machine.busy"
+	SignalMachineError       = "machine.error"
+	SignalCleaningNeeded     = "cleaning.needed"
+	SignalCleaningComplete   = "cleaning.complete"
 
 	// Staff signals
-	SignalBaristaAvailable = "barista.available"
-	SignalBaristaBusy      = "barista.busy"
-	SignalBreakRequested   = "break.requested"
-	SignalShiftChange      = "shift.change"
+	SignalBaristaAvailable   = "barista.available"
+	SignalBaristaBusy        = "barista.busy"
+	SignalBreakRequested     = "break.requested"
+	SignalShiftChange        = "shift.change"
 )
 
 // Order represents a customer order
 type Order struct {
-	ID             string
-	CustomerID     string
-	DrinkType      string
+	ID           string
+	CustomerID   string
+	DrinkType    string
 	Customizations map[string]string
-	Priority       OrderPriority
-	CreatedAt      time.Time
-	StartedAt      time.Time
-	CompletedAt    time.Time
-	Status         string
+	Priority     OrderPriority
+	CreatedAt    time.Time
+	StartedAt    time.Time
+	CompletedAt  time.Time
+	Status       string
 }
 
 // CoffeeShop is the main orchestrator actor that coordinates all subsystems
@@ -63,22 +63,22 @@ type CoffeeShop struct {
 	mu sync.RWMutex
 
 	// Actor infrastructure
-	bus    *actor.Bus
-	actors map[string]*actor.Actor
+	bus     *actor.Bus
+	actors  map[string]*actor.Actor
 
 	// State machines
-	shopState      *statemachine.Machine
-	machineState   *statemachine.Machine
-	grinderState   *statemachine.Machine
-	baristaStates  map[string]*statemachine.Machine
+	shopState    *statemachine.Machine
+	machineState *statemachine.Machine
+	grinderState *statemachine.Machine
+	baristaStates map[string]*statemachine.Machine
 	customerStates map[string]*statemachine.Machine
 
 	// Inventory state (from Petri net simulation)
 	inventoryState map[string]float64
 
 	// Order management
-	orderQueue      []*Order
-	activeOrders    map[string]*Order
+	orderQueue []*Order
+	activeOrders map[string]*Order
 	completedOrders []*Order
 
 	// Metrics
@@ -92,12 +92,12 @@ type CoffeeShop struct {
 type ShopMetrics struct {
 	mu sync.RWMutex
 
-	CustomersToday       int
-	OrdersToday          int
-	DrinksServed         int
-	AverageWaitTime      time.Duration
-	Revenue              float64
-	InventoryAlerts      int
+	CustomersToday     int
+	OrdersToday        int
+	DrinksServed       int
+	AverageWaitTime    time.Duration
+	Revenue            float64
+	InventoryAlerts    int
 	CustomerSatisfaction float64
 
 	// Per-drink metrics
@@ -110,12 +110,12 @@ type ShopMetrics struct {
 // NewCoffeeShop creates a new coffee shop orchestrator
 func NewCoffeeShop() *CoffeeShop {
 	shop := &CoffeeShop{
-		actors:          make(map[string]*actor.Actor),
-		baristaStates:   make(map[string]*statemachine.Machine),
-		customerStates:  make(map[string]*statemachine.Machine),
-		inventoryState:  make(map[string]float64),
-		orderQueue:      make([]*Order, 0),
-		activeOrders:    make(map[string]*Order),
+		actors:         make(map[string]*actor.Actor),
+		baristaStates:  make(map[string]*statemachine.Machine),
+		customerStates: make(map[string]*statemachine.Machine),
+		inventoryState: make(map[string]float64),
+		orderQueue:     make([]*Order, 0),
+		activeOrders:   make(map[string]*Order),
 		completedOrders: make([]*Order, 0),
 		metrics: &ShopMetrics{
 			DrinkCounts:    make(map[string]int),

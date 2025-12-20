@@ -11,8 +11,8 @@ type OrderPriority int
 
 const (
 	PriorityNormal OrderPriority = iota
-	PriorityMobile               // Pre-ordered via app
-	PriorityVIP                  // Loyalty members
+	PriorityMobile              // Pre-ordered via app
+	PriorityVIP                 // Loyalty members
 )
 
 // NewOrderWorkflow creates a workflow for processing a coffee order.
@@ -35,87 +35,87 @@ func NewOrderWorkflow(orderID string, priority OrderPriority) *workflow.Workflow
 
 		// Customer detection and greeting
 		Task("detect_customer").
-		Name("Detect Customer").
-		Duration(5*time.Second).
-		Description("Sensor detects customer presence").
-		Done().
+			Name("Detect Customer").
+			Duration(5 * time.Second).
+			Description("Sensor detects customer presence").
+			Done().
 		Task("greet_customer").
-		Name("Greet Customer").
-		Duration(3*time.Second).
-		Description("Welcome message displayed").
-		Done().
+			Name("Greet Customer").
+			Duration(3 * time.Second).
+			Description("Welcome message displayed").
+			Done().
 
 		// Order phase
 		Task("show_menu").
-		Name("Show Menu").
-		Duration(2*time.Second).
-		Description("Display menu on screen").
-		Done().
+			Name("Show Menu").
+			Duration(2 * time.Second).
+			Description("Display menu on screen").
+			Done().
 		Task("await_selection").
-		Name("Await Selection").
-		Duration(30*time.Second).
-		Description("Wait for customer to select or leave").
-		Done().
+			Name("Await Selection").
+			Duration(30 * time.Second).
+			Description("Wait for customer to select or leave").
+			Done().
 
 		// Order placement
 		Task("take_order").
-		Name("Take Order").
-		Duration(10*time.Second).
-		Description("Record drink selection and customizations").
-		Done().
+			Name("Take Order").
+			Duration(10 * time.Second).
+			Description("Record drink selection and customizations").
+			Done().
 		Task("process_payment").
-		Name("Process Payment").
-		Duration(8*time.Second).
-		Description("Handle payment via card/mobile/cash").
-		Done().
+			Name("Process Payment").
+			Duration(8 * time.Second).
+			Description("Handle payment via card/mobile/cash").
+			Done().
 		Task("confirm_order").
-		Name("Confirm Order").
-		Duration(2*time.Second).
-		Description("Display order confirmation and estimated time").
-		Done().
+			Name("Confirm Order").
+			Duration(2 * time.Second).
+			Description("Display order confirmation and estimated time").
+			Done().
 
 		// Preparation phase
 		Task("queue_order").
-		Name("Queue Order").
-		Duration(1*time.Second).
-		Description("Add order to preparation queue").
-		Done().
+			Name("Queue Order").
+			Duration(1 * time.Second).
+			Description("Add order to preparation queue").
+			Done().
 		Task("prepare_drink").
-		Name("Prepare Drink").
-		Duration(90*time.Second).
-		RequireResource("barista", 1).
-		RequireResource("espresso_machine", 1).
-		Description("Barista prepares the drink").
-		Done().
+			Name("Prepare Drink").
+			Duration(90 * time.Second).
+			RequireResource("barista", 1).
+			RequireResource("espresso_machine", 1).
+			Description("Barista prepares the drink").
+			Done().
 		Task("quality_check").
-		Name("Quality Check").
-		Duration(5*time.Second).
-		Description("Verify drink meets standards").
-		Done().
+			Name("Quality Check").
+			Duration(5 * time.Second).
+			Description("Verify drink meets standards").
+			Done().
 
 		// Serving phase
 		Task("call_customer").
-		Name("Call Customer").
-		Duration(3*time.Second).
-		Description("Announce order ready").
-		Done().
+			Name("Call Customer").
+			Duration(3 * time.Second).
+			Description("Announce order ready").
+			Done().
 		Task("serve_drink").
-		Name("Serve Drink").
-		Duration(5*time.Second).
-		Description("Hand drink to customer").
-		Done().
+			Name("Serve Drink").
+			Duration(5 * time.Second).
+			Description("Hand drink to customer").
+			Done().
 		Task("complete_order").
-		Name("Complete Order").
-		Duration(1*time.Second).
-		Description("Order fulfilled").
-		Done().
+			Name("Complete Order").
+			Duration(1 * time.Second).
+			Description("Order fulfilled").
+			Done().
 
 		// Alternative exit (customer leaves without ordering)
 		Task("customer_exits").
-		Name("Customer Exits").
-		Duration(1*time.Second).
-		Description("Customer leaves without ordering").
-		Done().
+			Name("Customer Exits").
+			Duration(1 * time.Second).
+			Description("Customer leaves without ordering").
+			Done().
 
 		// Define flow
 		Connect("detect_customer", "greet_customer").
@@ -134,13 +134,13 @@ func NewOrderWorkflow(orderID string, priority OrderPriority) *workflow.Workflow
 
 		// Resources
 		Resource("barista").
-		Name("Barista").
-		Capacity(2).
-		Done().
+			Name("Barista").
+			Capacity(2).
+			Done().
 		Resource("espresso_machine").
-		Name("Espresso Machine").
-		Capacity(1).
-		Done().
+			Name("Espresso Machine").
+			Capacity(1).
+			Done().
 
 		// Start and end
 		Start("detect_customer").
@@ -152,6 +152,7 @@ func NewOrderWorkflow(orderID string, priority OrderPriority) *workflow.Workflow
 			WarningAt:  0.8,
 			CriticalAt: 0.95,
 		}).
+
 		Build()
 
 	return wf
@@ -166,53 +167,53 @@ func NewMobileOrderWorkflow(orderID string) *workflow.Workflow {
 
 		// Mobile order tasks
 		Task("receive_mobile_order").
-		Name("Receive Mobile Order").
-		Duration(1*time.Second).
-		Description("Mobile order received from app").
-		Done().
+			Name("Receive Mobile Order").
+			Duration(1 * time.Second).
+			Description("Mobile order received from app").
+			Done().
 		Task("validate_payment").
-		Name("Validate Payment").
-		Duration(2*time.Second).
-		Description("Verify payment processed").
-		Done().
+			Name("Validate Payment").
+			Duration(2 * time.Second).
+			Description("Verify payment processed").
+			Done().
 
 		// Preparation
 		Task("queue_order").
-		Name("Queue Order").
-		Duration(1*time.Second).
-		Done().
+			Name("Queue Order").
+			Duration(1 * time.Second).
+			Done().
 		Task("prepare_drink").
-		Name("Prepare Drink").
-		Duration(90*time.Second).
-		RequireResource("barista", 1).
-		RequireResource("espresso_machine", 1).
-		Done().
+			Name("Prepare Drink").
+			Duration(90 * time.Second).
+			RequireResource("barista", 1).
+			RequireResource("espresso_machine", 1).
+			Done().
 		Task("quality_check").
-		Name("Quality Check").
-		Duration(5*time.Second).
-		Done().
+			Name("Quality Check").
+			Duration(5 * time.Second).
+			Done().
 
 		// Pickup
 		Task("stage_for_pickup").
-		Name("Stage for Pickup").
-		Duration(3*time.Second).
-		Description("Place drink in pickup area").
-		Done().
+			Name("Stage for Pickup").
+			Duration(3 * time.Second).
+			Description("Place drink in pickup area").
+			Done().
 		Task("detect_customer").
-		Name("Detect Customer").
-		Duration(60*time.Second).
-		Description("Wait for customer to arrive").
-		Done().
+			Name("Detect Customer").
+			Duration(60 * time.Second).
+			Description("Wait for customer to arrive").
+			Done().
 		Task("verify_customer").
-		Name("Verify Customer").
-		Duration(5*time.Second).
-		Description("Verify customer identity via app").
-		Done().
+			Name("Verify Customer").
+			Duration(5 * time.Second).
+			Description("Verify customer identity via app").
+			Done().
 		Task("complete_pickup").
-		Name("Complete Pickup").
-		Duration(3*time.Second).
-		Description("Customer takes drink").
-		Done().
+			Name("Complete Pickup").
+			Duration(3 * time.Second).
+			Description("Customer takes drink").
+			Done().
 
 		// Flow
 		Connect("receive_mobile_order", "validate_payment").
@@ -227,6 +228,7 @@ func NewMobileOrderWorkflow(orderID string) *workflow.Workflow {
 		// Resources
 		Resource("barista").Capacity(2).Done().
 		Resource("espresso_machine").Capacity(1).Done().
+
 		Start("receive_mobile_order").
 		End("complete_pickup").
 		SLA(&workflow.WorkflowSLA{
@@ -239,47 +241,51 @@ func NewMobileOrderWorkflow(orderID string) *workflow.Workflow {
 
 // NewRefillWorkflow creates a workflow for restocking ingredients
 func NewRefillWorkflow(ingredient string) *workflow.Workflow {
-	return workflow.New("refill_"+ingredient).
-		Name("Refill "+ingredient).
+	return workflow.New("refill_" + ingredient).
+		Name("Refill " + ingredient).
 		Description("Restock ingredient when low").
+
 		Task("detect_low_stock").
-		Name("Detect Low Stock").
-		Duration(1*time.Second).
-		Description("Inventory alert triggered").
-		Done().
+			Name("Detect Low Stock").
+			Duration(1 * time.Second).
+			Description("Inventory alert triggered").
+			Done().
 		Task("notify_staff").
-		Name("Notify Staff").
-		Duration(5*time.Second).
-		Description("Alert sent to staff").
-		Done().
+			Name("Notify Staff").
+			Duration(5 * time.Second).
+			Description("Alert sent to staff").
+			Done().
 		Task("fetch_supplies").
-		Name("Fetch Supplies").
-		Duration(60*time.Second).
-		RequireResource("staff", 1).
-		Description("Staff retrieves supplies from storage").
-		Done().
+			Name("Fetch Supplies").
+			Duration(60 * time.Second).
+			RequireResource("staff", 1).
+			Description("Staff retrieves supplies from storage").
+			Done().
 		Task("refill_station").
-		Name("Refill Station").
-		Duration(30*time.Second).
-		RequireResource("staff", 1).
-		Description("Refill the ingredient station").
-		Done().
+			Name("Refill Station").
+			Duration(30 * time.Second).
+			RequireResource("staff", 1).
+			Description("Refill the ingredient station").
+			Done().
 		Task("verify_levels").
-		Name("Verify Levels").
-		Duration(5*time.Second).
-		Description("Confirm stock levels restored").
-		Done().
+			Name("Verify Levels").
+			Duration(5 * time.Second).
+			Description("Confirm stock levels restored").
+			Done().
 		Task("clear_alert").
-		Name("Clear Alert").
-		Duration(1*time.Second).
-		Description("Dismiss inventory alert").
-		Done().
+			Name("Clear Alert").
+			Duration(1 * time.Second).
+			Description("Dismiss inventory alert").
+			Done().
+
 		Connect("detect_low_stock", "notify_staff").
 		Connect("notify_staff", "fetch_supplies").
 		Connect("fetch_supplies", "refill_station").
 		Connect("refill_station", "verify_levels").
 		Connect("verify_levels", "clear_alert").
+
 		Resource("staff").Capacity(1).Done().
+
 		Start("detect_low_stock").
 		End("clear_alert").
 		SLA(&workflow.WorkflowSLA{
@@ -292,48 +298,52 @@ func NewRefillWorkflow(ingredient string) *workflow.Workflow {
 
 // NewCleaningWorkflow creates a workflow for equipment cleaning cycles
 func NewCleaningWorkflow(equipment string) *workflow.Workflow {
-	return workflow.New("clean_"+equipment).
-		Name("Clean "+equipment).
+	return workflow.New("clean_" + equipment).
+		Name("Clean " + equipment).
 		Description("Equipment cleaning cycle").
+
 		Task("pause_production").
-		Name("Pause Production").
-		Duration(10*time.Second).
-		Description("Complete current orders").
-		Done().
+			Name("Pause Production").
+			Duration(10 * time.Second).
+			Description("Complete current orders").
+			Done().
 		Task("flush_system").
-		Name("Flush System").
-		Duration(30*time.Second).
-		RequireResource("espresso_machine", 1).
-		Description("Run cleaning cycle").
-		Done().
+			Name("Flush System").
+			Duration(30 * time.Second).
+			RequireResource("espresso_machine", 1).
+			Description("Run cleaning cycle").
+			Done().
 		Task("backflush").
-		Name("Backflush").
-		Duration(45*time.Second).
-		RequireResource("espresso_machine", 1).
-		Description("Backflush with cleaner").
-		Done().
+			Name("Backflush").
+			Duration(45 * time.Second).
+			RequireResource("espresso_machine", 1).
+			Description("Backflush with cleaner").
+			Done().
 		Task("rinse").
-		Name("Rinse").
-		Duration(20*time.Second).
-		RequireResource("espresso_machine", 1).
-		Description("Rinse system").
-		Done().
+			Name("Rinse").
+			Duration(20 * time.Second).
+			RequireResource("espresso_machine", 1).
+			Description("Rinse system").
+			Done().
 		Task("verify_clean").
-		Name("Verify Clean").
-		Duration(10*time.Second).
-		Description("Check cleaning complete").
-		Done().
+			Name("Verify Clean").
+			Duration(10 * time.Second).
+			Description("Check cleaning complete").
+			Done().
 		Task("resume_production").
-		Name("Resume Production").
-		Duration(5*time.Second).
-		Description("Machine ready for use").
-		Done().
+			Name("Resume Production").
+			Duration(5 * time.Second).
+			Description("Machine ready for use").
+			Done().
+
 		Connect("pause_production", "flush_system").
 		Connect("flush_system", "backflush").
 		Connect("backflush", "rinse").
 		Connect("rinse", "verify_clean").
 		Connect("verify_clean", "resume_production").
+
 		Resource("espresso_machine").Capacity(1).Done().
+
 		Start("pause_production").
 		End("resume_production").
 		SLA(&workflow.WorkflowSLA{

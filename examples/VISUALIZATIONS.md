@@ -24,16 +24,16 @@ This document provides links to all generated SVG visualizations for the go-pflo
 ### Game Examples
 
 **Tic-Tac-Toe** - Game flow model
-- File: [tictactoe/cmd/tictactoe_model.svg](tictactoe/cmd/tictactoe_model.svg)
+- File: [tictactoe/tictactoe_flow.svg](tictactoe/tictactoe_flow.svg)
 - Shows: Turn alternation and win conditions
-- Places: Game state places for X, O, and board positions
-- Transitions: Move transitions for game play
+- Places: 7 (Start, XTurn, OTurn, XWins, OWins, Draw, MoveCount)
+- Transitions: 8 (game flow transitions)
 
-**Nim** - 15 stones game tree
-- File: [nim/cmd/nim_15_model.svg](nim/cmd/nim_15_model.svg)
-- Shows: State progression from 15 stones to 0
-- Places: 16 (one per stone count 0-15)
-- Transitions: All valid take-1/2/3 moves
+**Nim** - 10 stones game tree
+- File: [nim/nim_10.svg](nim/nim_10.svg)
+- Shows: State progression from 10 stones to 0
+- Places: 11 (one per stone count)
+- Transitions: 27 (all valid take-1/2/3 moves)
 
 **Connect Four** - Game flow model
 - File: [connect4/connect4_flow.svg](connect4/connect4_flow.svg)
@@ -96,9 +96,9 @@ Each plot shows:
 | **workflow_small** | Tokens moving from Stage0 → Stage3 | Sequential processing |
 | **pc_small** | Oscillating buffer levels | Producer-consumer balance |
 | **sir_model** | S decreasing, I rising then falling, R increasing | Epidemic curve |
-| **nim_15_model** | Token moving through stone counts | Game state progression |
+| **nim_10** | Token moving through stone counts | Game state progression |
 | **connect4_flow** | Game state transitions | Turn alternation |
-| **tictactoe_model** | Game state transitions | Turn alternation and outcomes |
+| **tictactoe_flow** | Game state transitions | Turn alternation and outcomes |
 
 ## Understanding the Plots
 
@@ -176,9 +176,9 @@ pflow plot -output plot.svg -vars "S,I,R" results.json
 |--------------|------|------------|
 | workflow_small.svg | ~10KB | Simple (3 places) |
 | pc_small.svg | ~12KB | Medium (4 places) |
-| nim_15_model.svg | ~25KB | Complex (16 places) |
+| nim_10.svg | ~25KB | Complex (11 places) |
 | connect4_flow.svg | ~15KB | Medium (7 places) |
-| tictactoe_model.svg | ~15KB | Medium (9+ places) |
+| tictactoe_flow.svg | ~15KB | Medium (7 places) |
 
 ## Notes
 

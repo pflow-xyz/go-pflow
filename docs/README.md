@@ -39,9 +39,6 @@ And you'll be able to:
 
 Understand the foundational ideas:
 
-- [**How go-pflow Differs From Modern AI**](concepts/not-ai.md)
-  What go-pflow is (and isn't) - structural dynamics vs. machine learning
-
 - [**Petri Nets Explained**](concepts/petri-nets.md)
   What they are, why we use them, how they represent processes
 
@@ -61,26 +58,30 @@ Learn by doing:
 - [**Getting Started**](tutorials/getting-started.md)
   Install, run your first example, see results
 
-*Additional tutorials for event logs, process mining, and real-time monitoring coming soon. See package README files for current documentation:*
-- [eventlog/README.md](../eventlog/README.md) - Working with event logs
-- [mining/README.md](../mining/README.md) - Process discovery
-- [monitoring/README.md](../monitoring/README.md) - Real-time monitoring
+- [**Working with Event Logs**](tutorials/event-logs.md)
+  Parse CSV files, analyze process data
+
+- [**Discovering Processes**](tutorials/mining.md)
+  Learn models from historical data automatically
+
+- [**Real-Time Monitoring**](tutorials/monitoring.md)
+  Build a live prediction system
 
 ### 3. Technical Deep-Dives
 
-Understand the implementation by exploring the package documentation:
+Understand the implementation:
 
-- [**Event Log Package**](../eventlog/README.md)
-  Data structures, CSV/JSONL parsing, statistics
+- [**The ODE Solver**](technical/solver.md)
+  How Tsit5 works, adaptive timestepping, mass-action kinetics
 
-- [**Mining Package**](../mining/README.md)
+- [**Event Log Package**](technical/eventlog.md)
+  Data structures, CSV parsing, statistics
+
+- [**Mining Package**](technical/mining.md)
   Discovery algorithms, timing extraction, rate learning
 
-- [**Monitoring Package**](../monitoring/README.md)
+- [**Monitoring Package**](technical/monitoring.md)
   Case tracking, prediction engine, alert system
-
-- [**Schema Package**](../schema/README.md)
-  JSON schema definitions for models and results
 
 ### 4. Mathematical Foundations
 
@@ -91,9 +92,6 @@ For those who want the details:
 
 ## Quick Links by Interest
 
-### "Is this AI or machine learning?"
-→ No! Read [How go-pflow Differs From Modern AI](concepts/not-ai.md) to understand what go-pflow actually is
-
 ### "I want to understand the big picture"
 → Start with [Petri Nets](concepts/petri-nets.md), then [ODE Simulation](concepts/ode-simulation.md)
 
@@ -101,7 +99,7 @@ For those who want the details:
 → Jump to [Getting Started](tutorials/getting-started.md)
 
 ### "I want to build a real system"
-→ Read [Process Mining](concepts/process-mining.md) then see [monitoring/README.md](../monitoring/README.md)
+→ Read [Process Mining](concepts/process-mining.md) then [Real-Time Monitoring](tutorials/monitoring.md)
 
 ### "I want to understand the math"
 → Go directly to [Mathematics Reference](mathematics.md)

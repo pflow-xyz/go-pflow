@@ -11,11 +11,11 @@ import (
 
 // JSONLConfig configures JSONL parsing behavior.
 type JSONLConfig struct {
-	CaseIDField      string   // JSON field for case ID (required)
-	ActivityField    string   // JSON field for activity (required)
-	TimestampField   string   // JSON field for timestamp (required)
-	ResourceField    string   // JSON field for resource (optional)
-	LifecycleField   string   // JSON field for lifecycle (optional)
+	CaseIDField     string   // JSON field for case ID (required)
+	ActivityField   string   // JSON field for activity (required)
+	TimestampField  string   // JSON field for timestamp (required)
+	ResourceField   string   // JSON field for resource (optional)
+	LifecycleField  string   // JSON field for lifecycle (optional)
 	TimestampFormats []string // Date/time formats to try (optional)
 }
 

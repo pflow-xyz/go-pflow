@@ -21,13 +21,13 @@ type SimulatorConfig struct {
 	MaxSimulatedTime   time.Duration // Maximum simulated time (0 = unlimited)
 
 	// Customer generation
-	BaseCustomerRate  float64 // Average customers per simulated minute
-	PeakHours         []int   // Hours with higher traffic (24h format)
-	PeakMultiplier    float64 // Traffic multiplier during peak hours
-	BrowseOnlyChance  float64 // Probability customer leaves without ordering (0.0-1.0)
-	CancelOrderChance float64 // Probability customer cancels after ordering (0.0-1.0)
-	MobileOrderChance float64 // Probability of mobile order vs walk-in
-	VIPChance         float64 // Probability customer is VIP
+	BaseCustomerRate    float64 // Average customers per simulated minute
+	PeakHours           []int   // Hours with higher traffic (24h format)
+	PeakMultiplier      float64 // Traffic multiplier during peak hours
+	BrowseOnlyChance    float64 // Probability customer leaves without ordering (0.0-1.0)
+	CancelOrderChance   float64 // Probability customer cancels after ordering (0.0-1.0)
+	MobileOrderChance   float64 // Probability of mobile order vs walk-in
+	VIPChance           float64 // Probability customer is VIP
 
 	// Drink preferences (should sum to 1.0)
 	DrinkPreferences map[string]float64
@@ -38,9 +38,9 @@ type SimulatorConfig struct {
 	ReducedBaristaMode bool          // Simulate understaffing (1 barista instead of 2)
 
 	// Inventory settings
-	InitialInventory        map[string]float64 // Starting inventory levels (nil = full)
-	InventoryWarningWindow  time.Duration      // Warn if projected runout within this window (default: 30 min)
-	EnableInventoryTracking bool               // Track and warn about inventory levels
+	InitialInventory    map[string]float64 // Starting inventory levels (nil = full)
+	InventoryWarningWindow time.Duration   // Warn if projected runout within this window (default: 30 min)
+	EnableInventoryTracking bool           // Track and warn about inventory levels
 
 	// Observer settings
 	EnableObservers bool
@@ -68,13 +68,13 @@ type SimulatorState struct {
 	ElapsedSimulated   time.Duration
 
 	// Counters
-	TotalCustomers      int
-	TotalOrders         int
-	CompletedOrders     int
-	CancelledOrders     int
-	BrowseOnlyCustomers int
-	MobileOrders        int
-	VIPOrders           int
+	TotalCustomers       int
+	TotalOrders          int
+	CompletedOrders      int
+	CancelledOrders      int
+	BrowseOnlyCustomers  int
+	MobileOrders         int
+	VIPOrders            int
 
 	// Customer disposition tracking
 	CustomersServedHappy   int // Completed within SLA
@@ -86,10 +86,10 @@ type SimulatorState struct {
 	DrinkCounts map[string]int
 
 	// Timing metrics
-	TotalWaitTime    time.Duration
-	AverageWaitTime  time.Duration
-	LongestWaitTime  time.Duration
-	ShortestWaitTime time.Duration
+	TotalWaitTime     time.Duration
+	AverageWaitTime   time.Duration
+	LongestWaitTime   time.Duration
+	ShortestWaitTime  time.Duration
 
 	// Current state
 	ActiveCustomers   int
@@ -98,17 +98,17 @@ type SimulatorState struct {
 	AvailableBaristas int
 
 	// Alerts/Issues
-	SLABreaches     int
-	InventoryAlerts int
-	EquipmentIssues int
+	SLABreaches       int
+	InventoryAlerts   int
+	EquipmentIssues   int
 
 	// Inventory tracking
-	Inventory         map[string]float64 // Current inventory levels
-	InventoryUsage    map[string]float64 // Total usage since start
-	InventoryWarnings []InventoryWarning // Active warnings
-	StockoutsLogged   map[string]bool    // Track which stockouts have been logged
-	MenuEmpty         bool               // True if no drinks can be made
-	MenuEmptyTime     time.Time          // When the menu became empty
+	Inventory           map[string]float64   // Current inventory levels
+	InventoryUsage      map[string]float64   // Total usage since start
+	InventoryWarnings   []InventoryWarning   // Active warnings
+	StockoutsLogged     map[string]bool      // Track which stockouts have been logged
+	MenuEmpty           bool                 // True if no drinks can be made
+	MenuEmptyTime       time.Time            // When the menu became empty
 
 	// Event log
 	Events []*SimEvent
@@ -116,11 +116,11 @@ type SimulatorState struct {
 
 // InventoryWarning represents a projected inventory runout warning
 type InventoryWarning struct {
-	Ingredient      string
-	CurrentLevel    float64
-	UsageRate       float64       // units per minute
+	Ingredient     string
+	CurrentLevel   float64
+	UsageRate      float64        // units per minute
 	ProjectedRunout time.Duration // time until runout at current rate
-	Timestamp       time.Time
+	Timestamp      time.Time
 }
 
 // SimEvent represents a simulation event (for process mining)
@@ -893,10 +893,10 @@ func (s *Simulator) generateCustomer() {
 	orderID := s.shop.SimulateOrderAt(customerID, drink, priority, s.state.CurrentSimTime)
 
 	s.recordEvent(customerID, "order_placed", "kiosk", map[string]any{
-		"order_id":  orderID,
-		"drink":     drink,
-		"priority":  priority,
-		"is_vip":    isVIP,
+		"order_id": orderID,
+		"drink":    drink,
+		"priority": priority,
+		"is_vip":   isVIP,
 		"is_mobile": isMobile,
 	})
 
@@ -979,10 +979,10 @@ func (s *Simulator) processOrders() {
 
 		// Record completion event
 		s.recordEvent(order.customerID, "order_completed", "barista_1", map[string]any{
-			"order_id":   order.orderID,
-			"drink":      order.drink,
-			"wait_time":  waitTime.String(),
-			"sla_breach": breachedSLA,
+			"order_id":    order.orderID,
+			"drink":       order.drink,
+			"wait_time":   waitTime.String(),
+			"sla_breach":  breachedSLA,
 		})
 
 		if s.config.VerboseLogging && breachedSLA {
@@ -1669,7 +1669,7 @@ func RushHourConfig() *SimulatorConfig {
 	config := DefaultSimulatorConfig()
 	config.BaseCustomerRate = 5.0
 	config.PeakMultiplier = 3.0
-	config.BrowseOnlyChance = 0.05  // Less browsing during rush
+	config.BrowseOnlyChance = 0.05 // Less browsing during rush
 	config.MobileOrderChance = 0.40 // More mobile orders during rush
 	config.StopConditions = []StopCondition{
 		&OrderCountCondition{Target: 100},
@@ -1719,15 +1719,15 @@ func ObserverTestConfig(drinkType string, targetCount int) *SimulatorConfig {
 // High customer rate + reduced staff + strict SLA = guaranteed breaches
 func SLAStressConfig() *SimulatorConfig {
 	config := DefaultSimulatorConfig()
-	config.SimulatedTimeScale = 300.0 // Fast simulation
+	config.SimulatedTimeScale = 300.0      // Fast simulation
 	config.MaxSimulatedTime = 2 * time.Hour
-	config.BaseCustomerRate = 8.0      // Very high traffic
-	config.PeakMultiplier = 3.0        // Even higher during peaks
-	config.BrowseOnlyChance = 0.05     // Most people order
-	config.MobileOrderChance = 0.40    // Lots of mobile orders
-	config.SLATarget = 3 * time.Minute // Strict 3 minute SLA
-	config.BaristaSpeed = 0.3          // Slower baristas (0.3 orders/min each)
-	config.ReducedBaristaMode = true   // Only 1 barista!
+	config.BaseCustomerRate = 8.0          // Very high traffic
+	config.PeakMultiplier = 3.0            // Even higher during peaks
+	config.BrowseOnlyChance = 0.05         // Most people order
+	config.MobileOrderChance = 0.40        // Lots of mobile orders
+	config.SLATarget = 3 * time.Minute     // Strict 3 minute SLA
+	config.BaristaSpeed = 0.3              // Slower baristas (0.3 orders/min each)
+	config.ReducedBaristaMode = true       // Only 1 barista!
 	config.VerboseLogging = true
 	config.StopConditions = []StopCondition{
 		&SLABreachCondition{Threshold: 10}, // Stop after 10 breaches
@@ -1739,15 +1739,15 @@ func SLAStressConfig() *SimulatorConfig {
 // Tuned: capacity slightly exceeds demand to maintain ~90% SLA compliance
 func HappyCustomerConfig() *SimulatorConfig {
 	config := DefaultSimulatorConfig()
-	config.SimulatedTimeScale = 300.0 // Fast simulation
+	config.SimulatedTimeScale = 300.0       // Fast simulation
 	config.MaxSimulatedTime = 1 * time.Hour
-	config.BaseCustomerRate = 2.0  // Moderate traffic
-	config.PeakMultiplier = 1.5    // Mild peaks
-	config.BrowseOnlyChance = 0.10 // Some browsers
+	config.BaseCustomerRate = 2.0           // Moderate traffic
+	config.PeakMultiplier = 1.5             // Mild peaks
+	config.BrowseOnlyChance = 0.10          // Some browsers
 	config.MobileOrderChance = 0.25
-	config.SLATarget = 3 * time.Minute // Tight 3 minute SLA
-	config.BaristaSpeed = 0.80         // Good baristas: 2 * 0.80 = 1.6 orders/min capacity
-	config.ReducedBaristaMode = false  // Full staff (2 baristas)
+	config.SLATarget = 3 * time.Minute      // Tight 3 minute SLA
+	config.BaristaSpeed = 0.80              // Good baristas: 2 * 0.80 = 1.6 orders/min capacity
+	config.ReducedBaristaMode = false       // Full staff (2 baristas)
 	config.VerboseLogging = true
 	config.EnableObservers = true
 	config.StopConditions = []StopCondition{
@@ -1760,23 +1760,23 @@ func HappyCustomerConfig() *SimulatorConfig {
 // Low starting inventory + high order rate + fast baristas = quick depletion
 func InventoryStressConfig() *SimulatorConfig {
 	config := DefaultSimulatorConfig()
-	config.SimulatedTimeScale = 300.0 // Fast simulation
+	config.SimulatedTimeScale = 300.0       // Fast simulation
 	config.MaxSimulatedTime = 2 * time.Hour
-	config.BaseCustomerRate = 6.0 // High traffic
+	config.BaseCustomerRate = 6.0           // High traffic
 	config.PeakMultiplier = 2.0
-	config.BrowseOnlyChance = 0.05 // Most people order
+	config.BrowseOnlyChance = 0.05          // Most people order
 	config.MobileOrderChance = 0.30
-	config.BaristaSpeed = 0.8                        // Fast baristas = more inventory burn
-	config.EnableInventoryTracking = true            // Track inventory!
+	config.BaristaSpeed = 0.8               // Fast baristas = more inventory burn
+	config.EnableInventoryTracking = true   // Track inventory!
 	config.InventoryWarningWindow = 20 * time.Minute // Warn 20 min before runout
 	config.VerboseLogging = true
-	config.EnableObservers = true // Enable stop conditions
+	config.EnableObservers = true           // Enable stop conditions
 	// Start with low inventory to trigger warnings faster
 	config.InitialInventory = map[string]float64{
 		"coffee_beans":  200,  // Only 200g (normally 1000)
 		"milk":          1000, // Only 1L (normally 5L)
 		"water":         10000,
-		"cups":          30, // Only 30 cups (normally 100)
+		"cups":          30,   // Only 30 cups (normally 100)
 		"sugar_packets": 200,
 		"syrup":         100,
 	}
