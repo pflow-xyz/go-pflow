@@ -1,0 +1,48 @@
+package main
+
+import (
+	"fmt"
+	"github.com/pflow-xyz/go-pflow/petri"
+)
+
+func main() {
+	// Create a new Petri net builder
+	builder := petri.Build()
+
+	// Define places for the traffic light states
+	builder.Place("Red", 1)
+	builder.Place("Yellow", 0)
+	builder.Place("Green", 0)
+	builder.Place("PedestrianWait", 1)
+	builder.Place("PedestrianCrossing", 0)
+
+	// Define transitions for state changes
+	builder.Transition("RedToGreen")
+	builder.Transition("GreenToYellow")
+	builder.Transition("YellowToRed")
+	builder.Transition("AllowPedestrianCrossing")
+	builder.Transition("StopPedestrianCrossing")
+
+	// Define arcs between places and transitions
+	builder.Arc("Red", "RedToGreen", 1)
+	builder.Arc("RedToGreen", "Green", 1)
+
+	builder.Arc("Green", "GreenToYellow", 1)
+	builder.Arc("GreenToYellow", "Yellow", 1)
+
+	builder.Arc("Yellow", "YellowToRed", 1)
+	builder.Arc("YellowToRed", "Red", 1)
+
+	builder.Arc("Green", "AllowPedestrianCrossing", 1)
+	builder.Arc("AllowPedestrianCrossing", "PedestrianCrossing", 1)
+	builder.Arc("PedestrianCrossing", "StopPedestrianCrossing", 1)
+	builder.Arc("StopPedestrianCrossing", "Green", 1)
+
+	// Build the Petri net
+	net := builder.Done()
+
+	// Print the Petri net structure
+	fmt.Println("Places:", net.Places)
+	fmt.Println("Transitions:", net.Transitions)
+	fmt.Println("Arcs:", net.Arcs)
+}
