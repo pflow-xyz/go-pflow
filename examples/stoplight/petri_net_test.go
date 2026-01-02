@@ -2,7 +2,7 @@ package main
 
 import (
 	"testing"
-	"github.com/yourusername/yourrepo/petri"
+	"github.com/pflow-xyz/go-pflow/petri"
 )
 
 func TestStopLightPetriNet(t *testing.T) {
