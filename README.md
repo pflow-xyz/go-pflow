@@ -33,6 +33,7 @@ Port of the JavaScript [pflow.xyz](https://pflow.xyz) library with additional fe
 - **Equilibrium Detection**: Automatic steady-state detection with configurable tolerances
 
 ### Higher-Level Abstractions
+- **Metamodel DSL**: Declarative schema language for defining state machines as Petri nets with guard expressions
 - **Workflow Framework**: Task dependencies, resource management, SLA tracking, and case monitoring
 - **State Machine Engine**: Hierarchical states, parallel regions, guards, and actions compiled to Petri nets
 - **Actor Model**: Message-passing actors with Petri net behaviors, signal bus, and middleware
@@ -115,6 +116,10 @@ Learn the fundamentals and build real systems:
 ### 📦 Package Documentation
 Detailed API and implementation documentation:
 
+- **[metamodel](metamodel/README.md)** - Declarative schema DSL for state machines
+  - S-expression DSL and fluent builder API
+  - Guard expressions for transition preconditions
+  - Petri net execution semantics
 - **[eventlog](eventlog/README.md)** - Event log parsing, analysis, and statistics
 - **[mining](mining/README.md)** - Process discovery and rate learning from logs
 - **[monitoring](monitoring/README.md)** - Real-time case tracking and prediction
