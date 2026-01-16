@@ -34,6 +34,7 @@ Port of the JavaScript [pflow.xyz](https://pflow.xyz) library with additional fe
 
 ### Higher-Level Abstractions
 - **Metamodel DSL**: Declarative schema language for defining state machines as Petri nets with guard expressions
+- **Solidity Codegen**: Generate audit-ready Solidity smart contracts from metamodel schemas
 - **Workflow Framework**: Task dependencies, resource management, SLA tracking, and case monitoring
 - **State Machine Engine**: Hierarchical states, parallel regions, guards, and actions compiled to Petri nets
 - **Actor Model**: Message-passing actors with Petri net behaviors, signal bus, and middleware
@@ -120,6 +121,10 @@ Detailed API and implementation documentation:
   - S-expression DSL and fluent builder API
   - Guard expressions for transition preconditions
   - Petri net execution semantics
+- **[codegen/solidity](codegen/solidity/)** - Solidity smart contract generation
+  - Generate contracts from metamodel schemas
+  - Guard expressions to require statements
+  - ERC token standards (ERC-20, ERC-721, ERC-1155)
 - **[eventlog](eventlog/README.md)** - Event log parsing, analysis, and statistics
 - **[mining](mining/README.md)** - Process discovery and rate learning from logs
 - **[monitoring](monitoring/README.md)** - Real-time case tracking and prediction
@@ -156,6 +161,15 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - Sequential token flow and resource management
 - Your first Petri net simulation
 - **Run**: `cd examples/basic && go run main.go`
+
+### Blockchain & Smart Contracts
+
+**[examples/erc/](examples/erc/)** - ERC Token Standards ⭐
+- Define token standards as Petri net schemas
+- ERC-20 (fungible), ERC-721 (NFT), ERC-1155 (multi-token)
+- Generate Solidity contracts from schemas
+- Guard expressions, flows, and invariants
+- **Run**: `go run ./examples/erc`
 
 ### Integration Example (Kitchen Sink)
 
@@ -281,6 +295,7 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 | Example | Type | Complexity | Key Concepts | Best For Learning |
 |---------|------|------------|--------------|-------------------|
 | **basic** | Workflow | Simple | Token flow, sequential processes | Petri net fundamentals |
+| **erc** | Blockchain | Medium | Token standards, guards, Solidity codegen | Smart contract modeling ⭐ |
 | **coffeeshop** | Integration | Complex | Actors, workflows, state machines, mining | All features together ⭐ |
 | **eventlog_demo** | Analysis | Simple | CSV parsing, statistics | Event log basics |
 | **mining_demo** | Discovery | Medium | Process discovery, rate learning | Process mining |
@@ -829,6 +844,9 @@ petri/             Core data structures (places, transitions, arcs)
 ├── engine/        Continuous simulation with triggers
 │
 Higher-Level Abstractions
+├── metamodel/     Declarative schema DSL for state machines
+├── codegen/       Code generation from schemas
+│   └── solidity/  Solidity smart contract generation
 ├── workflow/      Task dependencies, resources, SLA tracking
 ├── statemachine/  Hierarchical states compiled to Petri nets
 ├── actor/         Message-passing actors with Petri net behaviors
