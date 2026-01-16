@@ -6,12 +6,70 @@ A declarative schema system for defining state machines as Petri nets.
 
 The metamodel package provides:
 - **Schema Definition** - Declarative state machine specification
-- **S-Expression DSL** - Human-readable schema language
+- **Struct Tag DSL** - Define schemas as Go types with morphisms (categorical style)
 - **Fluent Builder** - Programmatic schema construction
+- **S-Expression DSL** - Human-readable schema language
 - **Guard Expressions** - Transition preconditions
 - **Petri Net Execution** - Formal execution semantics
 
 ## Quick Start
+
+Three equivalent syntaxes for defining schemas:
+
+| Syntax | Speed | Best For |
+|--------|-------|----------|
+| Struct Tags | ~5.5μs | Static schemas, type safety, categorical style |
+| Fluent Builder | ~1.5μs | Dynamic schemas, runtime generation |
+| S-Expression | ~2μs | Human-readable config files |
+
+### Using Struct Tags (Categorical Style)
+
+Define schemas as types with their morphisms:
+
+```go
+import "github.com/pflow-xyz/go-pflow/metamodel/dsl"
+
+type ERC20 struct {
+    _ struct{} `meta:"name:ERC-20,version:v1.0.0"`
+
+    TotalSupply dsl.DataState `meta:"type:uint256"`
+    Balances    dsl.DataState `meta:"type:map[address]uint256,exported"`
+    Allowances  dsl.DataState `meta:"type:map[address]map[address]uint256,exported"`
+
+    Transfer     dsl.Action `meta:"guard:balances[from] >= amount && to != address(0)"`
+    Approve      dsl.Action `meta:""`
+    TransferFrom dsl.Action `meta:"guard:balances[from] >= amount && allowances[from][caller] >= amount"`
+}
+
+// Define morphisms (flows between objects)
+func (ERC20) Flows() []dsl.Flow {
+    return []dsl.Flow{
+        {From: "Balances", To: "Transfer", Keys: []string{"from"}},
+        {From: "Transfer", To: "Balances", Keys: []string{"to"}},
+        {From: "Approve", To: "Allowances", Keys: []string{"owner", "spender"}},
+    }
+}
+
+// Define constraints (equations/relations)
+func (ERC20) Constraints() []dsl.Invariant {
+    return []dsl.Invariant{
+        {ID: "conservation", Expr: "sum(balances) == totalSupply"},
+    }
+}
+
+schema, _ := dsl.SchemaFromStruct(ERC20{})
+```
+
+**Marker Types:**
+- `dsl.DataState` — data container (maps, values)
+- `dsl.TokenState` — discrete counter
+- `dsl.Action` — state transformation
+
+**Tag Format:** `meta:"key:value,key2:value2,flag"`
+- `type:T` — type schema
+- `initial:V` — initial value
+- `exported` — include in state root
+- `guard:EXPR` — precondition
 
 ### Using the Fluent Builder
 
@@ -26,6 +84,15 @@ schema := dsl.Build("ERC-20").
     Flow("balances", "transfer").Keys("from").
     Flow("transfer", "balances").Keys("to").
     Constraint("conservation", "sum(balances) == totalSupply").
+    MustSchema()
+```
+
+### Hybrid: Struct Tags + Builder
+
+```go
+// Start with static structure, add dynamic elements
+schema := dsl.BuilderFromStruct(ERC20{}).
+    Action("emergencyPause").Guard("caller == admin").
     MustSchema()
 ```
 
@@ -60,10 +127,11 @@ metamodel/
 ├── snapshot.go     # State snapshots
 ├── validate.go     # Schema validation
 ├── errors.go       # Error types
-├── dsl/            # S-expression DSL
-│   ├── lexer.go    # Tokenizer
-│   ├── parser.go   # S-expression parser
+├── dsl/            # Schema definition DSLs
+│   ├── tags.go     # Struct tag dialect (categorical style)
 │   ├── builder.go  # Fluent schema builder
+│   ├── lexer.go    # S-expression tokenizer
+│   ├── parser.go   # S-expression parser
 │   ├── interpret.go# DSL interpreter
 │   ├── ast.go      # AST types
 │   └── codegen.go  # Code generation
