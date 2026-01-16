@@ -1,6 +1,9 @@
 package petri
 
-import "github.com/pflow-xyz/go-pflow/metamodel"
+import (
+	"github.com/pflow-xyz/go-pflow/metamodel"
+	mainpetri "github.com/pflow-xyz/go-pflow/petri"
+)
 
 // ToSchema converts a Petri net Model to a metamodel Schema.
 func (m *Model) ToSchema() *metamodel.Schema {
@@ -154,4 +157,40 @@ func InvariantToConstraint(inv Invariant) metamodel.Constraint {
 		ID:   inv.ID,
 		Expr: inv.Expr,
 	}
+}
+
+// ToPetriNet converts the metamodel Model to a petri.PetriNet for ODE simulation.
+// This bridges the metamodel representation to the solver-compatible format.
+func (m *Model) ToPetriNet() *mainpetri.PetriNet {
+	net := mainpetri.NewPetriNet()
+
+	// Add places with initial tokens and layout
+	yOffset := 100.0
+	for _, p := range m.Places {
+		net.AddPlace(p.ID, float64(p.Initial), nil, 100, yOffset, nil)
+		yOffset += 50
+	}
+
+	// Add transitions
+	yOffset = 100.0
+	for _, t := range m.Transitions {
+		net.AddTransition(t.ID, "default", 200, yOffset, nil)
+		yOffset += 50
+	}
+
+	// Add arcs with weight 1.0 (standard Petri net semantics)
+	for _, a := range m.Arcs {
+		net.AddArc(a.Source, a.Target, 1.0, false)
+	}
+
+	return net
+}
+
+// DefaultRates returns a rate map with all transitions set to the given rate.
+func (m *Model) DefaultRates(rate float64) map[string]float64 {
+	rates := make(map[string]float64)
+	for _, t := range m.Transitions {
+		rates[t.ID] = rate
+	}
+	return rates
 }
