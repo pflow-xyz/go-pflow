@@ -47,3 +47,4 @@ results.json
 # Temporary files
 tmp/
 temp/
+.aider*
