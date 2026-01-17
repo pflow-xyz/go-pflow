@@ -20,6 +20,7 @@
 | `monitoring` | Real-time case tracking, SLA alerts |
 | `metamodel` | Abstract schema definitions |
 | `metamodel/dsl` | S-expression and struct tag DSL |
+| `metamodel/petri` | Metamodel to Petri net conversion, equivalence checking, sensitivity analysis |
 
 ## Quick Decision Tree
 
@@ -34,6 +35,9 @@
 | Deadlock/liveness checking | `reachability` |
 | Epidemics/populations | `petri` + `solver` |
 | General state/resource flow | `petri` |
+| Model equivalence/isomorphism | `metamodel/petri` |
+| Element importance analysis | `metamodel/petri` (sensitivity) |
+| Isolated element detection | `metamodel/petri` (sensitivity) |
 
 ## Core API
 
@@ -234,6 +238,89 @@ func (ERC20) Flows() []dsl.Flow {
 
 schema, _ := dsl.SchemaFromStruct(ERC20{})
 ```
+
+## Metamodel Equivalence & Sensitivity Analysis
+
+The `metamodel/petri` package provides tools for comparing models and analyzing element importance.
+
+### Model Equivalence
+
+```go
+import mpetri "github.com/pflow-xyz/go-pflow/metamodel/petri"
+
+// Semantic equivalence (topology fingerprinting)
+sig1 := model1.ComputeSignature()
+sig2 := model2.ComputeSignature()
+result := sig1.SemanticEquivalent(sig2)
+
+// Behavioral equivalence (ODE trajectory comparison)
+result := mpetri.VerifyBehavioralEquivalence(net1, rates1, net2, rates2, mapping, opts)
+
+// Automatic mapping discovery via trajectory matching
+mapping := mpetri.DiscoverMappingByTrajectory(net1, rates1, net2, rates2, tspan)
+```
+
+### Sensitivity Analysis (Deletion-Based)
+
+Measures behavioral impact of removing each element:
+
+```go
+// Full sensitivity analysis
+result := model.AnalyzeSensitivity(mpetri.DefaultSensitivityOptions())
+
+// Access results
+for _, elem := range result.TopElements(10) {
+    fmt.Printf("%s [%s]: impact=%.4f (%s)\n",
+        elem.ID, elem.Type, elem.Impact, elem.Category)
+}
+
+// Symmetry groups (elements with identical impact are interchangeable)
+for impact, members := range result.SymmetryGroups {
+    fmt.Printf("Impact %.4f: %v\n", impact, members)
+}
+```
+
+**Categories**: `critical` (model collapses), `important` (≥1.0), `moderate` (≥0.1), `peripheral` (<0.1)
+
+### Rate-Based Sensitivity
+
+Measures impact of varying transition rates (rate=0 is like deletion but cleaner):
+
+```go
+result := model.AnalyzeRateSensitivity(nil)
+
+for _, ts := range result.Transitions {
+    fmt.Printf("%s: rate=0 impact=%.4f\n", ts.ID, ts.AtZero)
+    if ts.AtZero < 0.001 {
+        fmt.Println("  ^ ISOLATED (unreachable/unused)")
+    }
+}
+```
+
+### Initial Marking Sensitivity
+
+Measures impact of changing initial token counts:
+
+```go
+result := model.AnalyzeMarkingSensitivity(nil)
+
+// Find "trigger" places (initial=0 but high impact if set to 1)
+for _, ps := range result.Places {
+    if ps.InitialValue == 0 && ps.AtPlus1 > 0.1 {
+        fmt.Printf("%s: trigger place (+1 impact=%.4f)\n", ps.ID, ps.AtPlus1)
+    }
+}
+```
+
+### Use Cases
+
+| Analysis | Use Case |
+|----------|----------|
+| Deletion sensitivity | Find critical elements, bottlenecks |
+| Rate sensitivity | Detect isolated/unused transitions |
+| Marking sensitivity | Find trigger places, initialization effects |
+| Symmetry groups | Identify interchangeable elements (game symmetry) |
+| Low-impact elements | Candidates for model simplification |
 
 ## Visualization
 

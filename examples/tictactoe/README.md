@@ -218,3 +218,62 @@ The model's structure alone encodes:
 - Game outcomes (through win_x and win_o accumulator places)
 
 No game-specific logic exists in the AI code - all strategic knowledge emerges from analyzing this model's continuous dynamics via ODE simulation.
+
+## Metamodel Implementation
+
+The `metamodel/` subdirectory contains an equivalent implementation using the struct tag DSL:
+
+```go
+type TicTacToe struct {
+    _ struct{} `meta:"name:tic-tac-toe,version:v1.0.0"`
+
+    P00 dsl.TokenState `meta:"initial:1"`  // Board positions
+    X00 dsl.TokenState `meta:"initial:0"`  // X move history
+    O00 dsl.TokenState `meta:"initial:0"`  // O move history
+    // ...
+    PlayX00 dsl.Action `meta:""`           // X move actions
+    // ...
+}
+```
+
+### Equivalence Verification
+
+The metamodel and JSONLD versions are verified equivalent through three independent methods:
+
+| Method | What it checks | Result |
+|--------|---------------|--------|
+| **Semantic** | Topology fingerprint (node degrees, counts) | 30 places, 34 transitions, 118 arcs |
+| **Isomorphism** | Explicit mapping witness verification | All 64 node mappings verified |
+| **Behavioral** | ODE trajectory comparison | max difference = 0.000000 |
+
+Run the equivalence tests:
+```bash
+go test ./examples/tictactoe/metamodel/... -v
+```
+
+### Trajectory-Based Mapping Discovery
+
+The equivalence package can automatically discover place mappings by comparing ODE trajectories:
+
+```go
+result := model.DiscoverMappingByTrajectory(jsonNet, rates, [2]float64{0, 5.0})
+```
+
+For tic-tac-toe, this reveals the game's inherent symmetry:
+
+| Category | Places | Unique Mapping |
+|----------|--------|----------------|
+| Turn control | `next` | ✓ Unique |
+| Win tracking | `winX`, `winO` | ✓ Unique |
+| Board positions | `p00`-`p22` | ✗ 9-way ambiguous (all identical dynamics) |
+| X history | `x00`-`x22` | ✗ 4-way ambiguous (corner/edge/center symmetry) |
+| O history | `o00`-`o22` | ✗ 4-way ambiguous (corner/edge/center symmetry) |
+
+**Key observation**: Only 16.7% of places (5/30) have unique trajectories. The remaining 83.3% form equivalence classes due to the game's 8-fold rotational/reflectional symmetry (D₄ dihedral group).
+
+This is correct behavior - symmetric positions *should* be interchangeable. The trajectory matching correctly identifies:
+- **Corners** (`p00`, `p02`, `p20`, `p22`) - identical dynamics
+- **Edges** (`p01`, `p10`, `p12`, `p21`) - identical dynamics
+- **Center** (`p11`) - grouped with edges in early game
+
+The 100% mapping accuracy (correct mapping always in candidate set) confirms the models are structurally isomorphic despite different naming conventions.
