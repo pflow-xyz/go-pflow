@@ -160,6 +160,34 @@ func InvariantToConstraint(inv Invariant) metamodel.Constraint {
 	}
 }
 
+// FromPetriNet creates a metamodel Model from a petri.PetriNet.
+// This is the inverse of ToPetriNet, enabling sensitivity analysis on builder-created nets.
+func FromPetriNet(net *mainpetri.PetriNet) *Model {
+	m := NewModel("imported")
+
+	for label, place := range net.Places {
+		m.AddPlace(Place{
+			ID:      label,
+			Initial: int(place.GetTokenCount()),
+		})
+	}
+
+	for label := range net.Transitions {
+		m.AddTransition(Transition{
+			ID: label,
+		})
+	}
+
+	for _, arc := range net.Arcs {
+		m.AddArc(Arc{
+			Source: arc.Source,
+			Target: arc.Target,
+		})
+	}
+
+	return m
+}
+
 // ToPetriNet converts the metamodel Model to a petri.PetriNet for ODE simulation.
 //
 // Arc weights are set to 1.0. The metamodel captures topology and binding semantics
