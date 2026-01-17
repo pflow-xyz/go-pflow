@@ -312,6 +312,44 @@ for _, ps := range result.Places {
 }
 ```
 
+### Deletion vs Rate Sensitivity: When to Use Which
+
+**AnalyzeSensitivity (Deletion)**
+- Completely **removes** element from model structure
+- Question: "Is this element necessary at all?"
+- Works on: places, transitions, arcs
+- Impact: 0 to ∞ (model can collapse)
+
+**AnalyzeRateSensitivity (Rate)**
+- Keeps structure, **varies transition rates** (0, 0.5x, 2x)
+- Question: "Does the speed of this transition matter?"
+- Works on: transitions only
+- Impact: typically 0 to ~1 (model stays valid)
+
+```
+Deletion:  A ──t1──> B    →    A         B     (structure broken)
+Rate=0:    A ──t1──> B    →    A ──t1──> B     (t1 never fires, but arc exists)
+```
+
+| Scenario | Use Deletion | Use Rate |
+|----------|--------------|----------|
+| Find dead code | ✓ | ✓ (rate=0) |
+| Find critical paths | ✓ | |
+| Find bottlenecks | | ✓ |
+| Structural importance | ✓ | |
+| Dynamic importance | | ✓ |
+| Symmetry detection | ✓ | ✓ |
+
+**Example insight (tic-tac-toe):**
+```
+Deletion: p01 (edge square) → impact=4.12 (critical position)
+          playX01 (move)    → impact=0.44 (action matters less)
+
+Rate:     playX01 at rate=0 → impact=0.44
+          playX01 at rate=2 → impact=0.11 (speed doesn't matter much)
+```
+The board *position* is essential; how *fast* you claim it is secondary
+
 ### Use Cases
 
 | Analysis | Use Case |
