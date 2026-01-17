@@ -3,7 +3,9 @@ package petri
 import (
 	"fmt"
 	"math"
+	"runtime"
 	"sort"
+	"sync"
 
 	mainpetri "github.com/pflow-xyz/go-pflow/petri"
 	"github.com/pflow-xyz/go-pflow/solver"
@@ -863,6 +865,8 @@ type SensitivityOptions struct {
 	BehavioralOpts *BehavioralOptions // ODE comparison options
 	SampleArcs     int                // max arcs to analyze (0 = all)
 	Thresholds     CategoryThresholds // impact thresholds for categorization
+	Parallel       bool               // enable parallel execution (default: true)
+	MaxWorkers     int                // max concurrent workers (0 = NumCPU)
 }
 
 // CategoryThresholds defines impact thresholds for categorization.
@@ -883,6 +887,8 @@ func DefaultSensitivityOptions() *SensitivityOptions {
 			Important: 1.0,
 			Moderate:  0.1,
 		},
+		Parallel:   true,
+		MaxWorkers: 0, // use NumCPU
 	}
 }
 
@@ -896,6 +902,8 @@ func FastSensitivityOptions() *SensitivityOptions {
 			Important: 1.0,
 			Moderate:  0.1,
 		},
+		Parallel:   true,
+		MaxWorkers: 0, // use NumCPU
 	}
 }
 
@@ -996,8 +1004,15 @@ func (m *Model) computeElementImpact(origNet *mainpetri.PetriNet, origRates map[
 	return result.MaxDifference
 }
 
+// elementJob represents a work item for parallel sensitivity analysis.
+type elementJob struct {
+	elemType string
+	elemID   string
+}
+
 // AnalyzeSensitivity performs sensitivity analysis on the model.
 // It measures the behavioral impact of removing each element (place, transition, arc).
+// By default, analysis runs in parallel using all available CPU cores.
 func (m *Model) AnalyzeSensitivity(opts *SensitivityOptions) *SensitivityResult {
 	if opts == nil {
 		opts = DefaultSensitivityOptions()
@@ -1011,72 +1026,64 @@ func (m *Model) AnalyzeSensitivity(opts *SensitivityOptions) *SensitivityResult 
 	origNet := m.ToPetriNet()
 	origRates := m.DefaultRates(1.0)
 
-	// Analyze places
-	var placeTotal float64
+	// Build job list
+	var jobs []elementJob
 	for _, p := range m.Places {
-		impact := m.computeElementImpact(origNet, origRates, "place", p.ID, opts.BehavioralOpts)
-		elem := ElementImportance{
-			ID:       p.ID,
-			Type:     "place",
-			Impact:   impact,
-			Category: categorizeImpact(impact, opts.Thresholds),
-		}
-		result.Elements = append(result.Elements, elem)
-		if !math.IsInf(impact, 1) {
-			placeTotal += impact
-		}
+		jobs = append(jobs, elementJob{"place", p.ID})
 	}
-	if len(m.Places) > 0 {
-		result.PlaceAvgImpact = placeTotal / float64(len(m.Places))
-	}
-
-	// Analyze transitions
-	var transTotal float64
 	for _, t := range m.Transitions {
-		impact := m.computeElementImpact(origNet, origRates, "transition", t.ID, opts.BehavioralOpts)
-		elem := ElementImportance{
-			ID:       t.ID,
-			Type:     "transition",
-			Impact:   impact,
-			Category: categorizeImpact(impact, opts.Thresholds),
-		}
-		result.Elements = append(result.Elements, elem)
-		if !math.IsInf(impact, 1) {
-			transTotal += impact
-		}
+		jobs = append(jobs, elementJob{"transition", t.ID})
 	}
-	if len(m.Transitions) > 0 {
-		result.TransitionAvgImpact = transTotal / float64(len(m.Transitions))
-	}
-
-	// Analyze arcs
-	var arcTotal float64
 	arcCount := 0
 	for _, a := range m.Arcs {
 		if opts.SampleArcs > 0 && arcCount >= opts.SampleArcs {
 			break
 		}
-		arcID := a.Source + "->" + a.Target
-		impact := m.computeElementImpact(origNet, origRates, "arc", arcID, opts.BehavioralOpts)
-		elem := ElementImportance{
-			ID:       arcID,
-			Type:     "arc",
-			Impact:   impact,
-			Category: categorizeImpact(impact, opts.Thresholds),
-		}
-		result.Elements = append(result.Elements, elem)
-		if !math.IsInf(impact, 1) {
-			arcTotal += impact
-		}
+		jobs = append(jobs, elementJob{"arc", a.Source + "->" + a.Target})
 		arcCount++
 	}
-	if arcCount > 0 {
-		result.ArcAvgImpact = arcTotal / float64(arcCount)
+
+	// Run analysis (parallel or sequential)
+	var elements []ElementImportance
+	if opts.Parallel && len(jobs) > 1 {
+		elements = m.analyzeSensitivityParallel(jobs, origNet, origRates, opts)
+	} else {
+		elements = m.analyzeSensitivitySequential(jobs, origNet, origRates, opts)
+	}
+
+	result.Elements = elements
+
+	// Compute averages by type
+	var placeTotal, transTotal, arcTotal float64
+	var placeCount, transCount, arcCountFinal int
+	for _, elem := range elements {
+		if math.IsInf(elem.Impact, 1) {
+			continue
+		}
+		switch elem.Type {
+		case "place":
+			placeTotal += elem.Impact
+			placeCount++
+		case "transition":
+			transTotal += elem.Impact
+			transCount++
+		case "arc":
+			arcTotal += elem.Impact
+			arcCountFinal++
+		}
+	}
+	if placeCount > 0 {
+		result.PlaceAvgImpact = placeTotal / float64(placeCount)
+	}
+	if transCount > 0 {
+		result.TransitionAvgImpact = transTotal / float64(transCount)
+	}
+	if arcCountFinal > 0 {
+		result.ArcAvgImpact = arcTotal / float64(arcCountFinal)
 	}
 
 	// Sort by impact (descending)
 	sort.Slice(result.Elements, func(i, j int) bool {
-		// Handle Inf specially to sort at top
 		if math.IsInf(result.Elements[i].Impact, 1) {
 			return true
 		}
@@ -1092,7 +1099,7 @@ func (m *Model) AnalyzeSensitivity(opts *SensitivityOptions) *SensitivityResult 
 	}
 
 	// Find symmetry groups (elements with identical impact)
-	impactMap := make(map[string][]string) // use string key for float precision
+	impactMap := make(map[string][]string)
 	for _, elem := range result.Elements {
 		if math.IsInf(elem.Impact, 1) {
 			continue
@@ -1109,6 +1116,74 @@ func (m *Model) AnalyzeSensitivity(opts *SensitivityOptions) *SensitivityResult 
 	}
 
 	return result
+}
+
+// analyzeSensitivitySequential runs sensitivity analysis sequentially.
+func (m *Model) analyzeSensitivitySequential(jobs []elementJob, origNet *mainpetri.PetriNet, origRates map[string]float64, opts *SensitivityOptions) []ElementImportance {
+	elements := make([]ElementImportance, 0, len(jobs))
+	for _, job := range jobs {
+		impact := m.computeElementImpact(origNet, origRates, job.elemType, job.elemID, opts.BehavioralOpts)
+		elements = append(elements, ElementImportance{
+			ID:       job.elemID,
+			Type:     job.elemType,
+			Impact:   impact,
+			Category: categorizeImpact(impact, opts.Thresholds),
+		})
+	}
+	return elements
+}
+
+// analyzeSensitivityParallel runs sensitivity analysis using a worker pool.
+func (m *Model) analyzeSensitivityParallel(jobs []elementJob, origNet *mainpetri.PetriNet, origRates map[string]float64, opts *SensitivityOptions) []ElementImportance {
+	numWorkers := opts.MaxWorkers
+	if numWorkers <= 0 {
+		numWorkers = runtime.NumCPU()
+	}
+	if numWorkers > len(jobs) {
+		numWorkers = len(jobs)
+	}
+
+	// Channels for work distribution
+	jobChan := make(chan elementJob, len(jobs))
+	resultChan := make(chan ElementImportance, len(jobs))
+
+	// Start workers
+	var wg sync.WaitGroup
+	for w := 0; w < numWorkers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for job := range jobChan {
+				impact := m.computeElementImpact(origNet, origRates, job.elemType, job.elemID, opts.BehavioralOpts)
+				resultChan <- ElementImportance{
+					ID:       job.elemID,
+					Type:     job.elemType,
+					Impact:   impact,
+					Category: categorizeImpact(impact, opts.Thresholds),
+				}
+			}
+		}()
+	}
+
+	// Send jobs
+	for _, job := range jobs {
+		jobChan <- job
+	}
+	close(jobChan)
+
+	// Wait for completion and close results
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	// Collect results
+	elements := make([]ElementImportance, 0, len(jobs))
+	for elem := range resultChan {
+		elements = append(elements, elem)
+	}
+
+	return elements
 }
 
 // TopElements returns the N most impactful elements.
@@ -1165,6 +1240,8 @@ type RateSensitivityOptions struct {
 	Multipliers    []float64 // rate multipliers to test (default: [0, 0.5, 2.0])
 	OutputPlace    string    // place to measure as output (empty = use max diff)
 	Thresholds     CategoryThresholds
+	Parallel       bool // enable parallel execution (default: true)
+	MaxWorkers     int  // max concurrent workers (0 = NumCPU)
 }
 
 // DefaultRateSensitivityOptions returns sensible defaults.
@@ -1179,6 +1256,8 @@ func DefaultRateSensitivityOptions() *RateSensitivityOptions {
 			Important: 1.0,
 			Moderate:  0.1,
 		},
+		Parallel:   true,
+		MaxWorkers: 0,
 	}
 }
 
@@ -1228,6 +1307,7 @@ func (m *Model) computeRateImpact(origNet *mainpetri.PetriNet, baseRates map[str
 
 // AnalyzeRateSensitivity performs rate-based sensitivity analysis on transitions.
 // Unlike deletion analysis, this varies transition rates to measure partial sensitivity.
+// By default, analysis runs in parallel using all available CPU cores.
 func (m *Model) AnalyzeRateSensitivity(opts *RateSensitivityOptions) *RateSensitivityResult {
 	if opts == nil {
 		opts = DefaultRateSensitivityOptions()
@@ -1240,50 +1320,26 @@ func (m *Model) AnalyzeRateSensitivity(opts *RateSensitivityOptions) *RateSensit
 	origNet := m.ToPetriNet()
 	baseRates := m.DefaultRates(opts.BaseRate)
 
-	var totalSens float64
-
-	for _, t := range m.Transitions {
-		ts := TransitionSensitivity{
-			ID:       t.ID,
-			BaseRate: opts.BaseRate,
-		}
-
-		// Compute impact at each multiplier
-		for _, mult := range opts.Multipliers {
-			impact := m.computeRateImpact(origNet, baseRates, t.ID, mult, opts.BehavioralOpts, opts.OutputPlace)
-
-			switch mult {
-			case 0:
-				ts.AtZero = impact
-			case 0.5:
-				ts.AtHalf = impact
-			case 2.0:
-				ts.AtDouble = impact
-			}
-		}
-
-		// Compute sensitivity as average rate of change
-		// Using finite differences: (f(2x) - f(0.5x)) / (2x - 0.5x)
-		if ts.AtDouble > 0 || ts.AtHalf > 0 {
-			ts.Sensitivity = math.Abs(ts.AtDouble-ts.AtHalf) / 1.5
-		}
-		// Also consider rate=0 impact
-		if ts.AtZero > ts.Sensitivity {
-			ts.Sensitivity = ts.AtZero
-		}
-
-		ts.Category = categorizeImpact(ts.Sensitivity, opts.Thresholds)
-		result.Transitions = append(result.Transitions, ts)
-		totalSens += ts.Sensitivity
-
-		if ts.Sensitivity > result.MaxSensitivity {
-			result.MaxSensitivity = ts.Sensitivity
-			result.MostSensitive = t.ID
-		}
+	var transitions []TransitionSensitivity
+	if opts.Parallel && len(m.Transitions) > 1 {
+		transitions = m.analyzeRateSensitivityParallel(origNet, baseRates, opts)
+	} else {
+		transitions = m.analyzeRateSensitivitySequential(origNet, baseRates, opts)
 	}
 
-	if len(m.Transitions) > 0 {
-		result.AvgSensitivity = totalSens / float64(len(m.Transitions))
+	result.Transitions = transitions
+
+	// Compute statistics
+	var totalSens float64
+	for _, ts := range transitions {
+		totalSens += ts.Sensitivity
+		if ts.Sensitivity > result.MaxSensitivity {
+			result.MaxSensitivity = ts.Sensitivity
+			result.MostSensitive = ts.ID
+		}
+	}
+	if len(transitions) > 0 {
+		result.AvgSensitivity = totalSens / float64(len(transitions))
 	}
 
 	// Sort by sensitivity (descending)
@@ -1297,6 +1353,91 @@ func (m *Model) AnalyzeRateSensitivity(opts *RateSensitivityOptions) *RateSensit
 	}
 
 	return result
+}
+
+// analyzeRateSensitivitySequential runs rate sensitivity analysis sequentially.
+func (m *Model) analyzeRateSensitivitySequential(origNet *mainpetri.PetriNet, baseRates map[string]float64, opts *RateSensitivityOptions) []TransitionSensitivity {
+	transitions := make([]TransitionSensitivity, 0, len(m.Transitions))
+
+	for _, t := range m.Transitions {
+		ts := m.computeTransitionSensitivity(origNet, baseRates, t.ID, opts)
+		transitions = append(transitions, ts)
+	}
+
+	return transitions
+}
+
+// analyzeRateSensitivityParallel runs rate sensitivity analysis using a worker pool.
+func (m *Model) analyzeRateSensitivityParallel(origNet *mainpetri.PetriNet, baseRates map[string]float64, opts *RateSensitivityOptions) []TransitionSensitivity {
+	numWorkers := opts.MaxWorkers
+	if numWorkers <= 0 {
+		numWorkers = runtime.NumCPU()
+	}
+	if numWorkers > len(m.Transitions) {
+		numWorkers = len(m.Transitions)
+	}
+
+	jobChan := make(chan string, len(m.Transitions))
+	resultChan := make(chan TransitionSensitivity, len(m.Transitions))
+
+	var wg sync.WaitGroup
+	for w := 0; w < numWorkers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for transID := range jobChan {
+				ts := m.computeTransitionSensitivity(origNet, baseRates, transID, opts)
+				resultChan <- ts
+			}
+		}()
+	}
+
+	for _, t := range m.Transitions {
+		jobChan <- t.ID
+	}
+	close(jobChan)
+
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	transitions := make([]TransitionSensitivity, 0, len(m.Transitions))
+	for ts := range resultChan {
+		transitions = append(transitions, ts)
+	}
+
+	return transitions
+}
+
+// computeTransitionSensitivity computes sensitivity for a single transition.
+func (m *Model) computeTransitionSensitivity(origNet *mainpetri.PetriNet, baseRates map[string]float64, transID string, opts *RateSensitivityOptions) TransitionSensitivity {
+	ts := TransitionSensitivity{
+		ID:       transID,
+		BaseRate: opts.BaseRate,
+	}
+
+	for _, mult := range opts.Multipliers {
+		impact := m.computeRateImpact(origNet, baseRates, transID, mult, opts.BehavioralOpts, opts.OutputPlace)
+		switch mult {
+		case 0:
+			ts.AtZero = impact
+		case 0.5:
+			ts.AtHalf = impact
+		case 2.0:
+			ts.AtDouble = impact
+		}
+	}
+
+	if ts.AtDouble > 0 || ts.AtHalf > 0 {
+		ts.Sensitivity = math.Abs(ts.AtDouble-ts.AtHalf) / 1.5
+	}
+	if ts.AtZero > ts.Sensitivity {
+		ts.Sensitivity = ts.AtZero
+	}
+
+	ts.Category = categorizeImpact(ts.Sensitivity, opts.Thresholds)
+	return ts
 }
 
 // -----------------------------------------------------------------------------
@@ -1327,6 +1468,7 @@ type PlaceMarkingSensitivity struct {
 }
 
 // AnalyzeMarkingSensitivity measures how sensitive the model is to initial markings.
+// By default, analysis runs in parallel using all available CPU cores.
 func (m *Model) AnalyzeMarkingSensitivity(opts *SensitivityOptions) *MarkingSensitivityResult {
 	if opts == nil {
 		opts = DefaultSensitivityOptions()
@@ -1339,81 +1481,26 @@ func (m *Model) AnalyzeMarkingSensitivity(opts *SensitivityOptions) *MarkingSens
 	origNet := m.ToPetriNet()
 	origRates := m.DefaultRates(1.0)
 
-	var totalSens float64
-
-	for _, p := range m.Places {
-		ps := PlaceMarkingSensitivity{
-			ID:           p.ID,
-			InitialValue: p.Initial,
-		}
-
-		// Test different initial markings
-		testMarkings := []struct {
-			name  string
-			value int
-			store *float64
-		}{
-			{"zero", 0, &ps.AtZero},
-			{"double", p.Initial * 2, &ps.AtDouble},
-			{"plus1", p.Initial + 1, &ps.AtPlus1},
-		}
-
-		for _, tm := range testMarkings {
-			if tm.value == p.Initial {
-				*tm.store = 0 // no change
-				continue
-			}
-
-			// Create modified model
-			modified := &Model{Name: m.Name, Version: m.Version}
-			for _, place := range m.Places {
-				initial := place.Initial
-				if place.ID == p.ID {
-					initial = tm.value
-				}
-				modified.Places = append(modified.Places, Place{ID: place.ID, Initial: initial})
-			}
-			for _, t := range m.Transitions {
-				modified.Transitions = append(modified.Transitions, Transition{ID: t.ID})
-			}
-			for _, a := range m.Arcs {
-				modified.Arcs = append(modified.Arcs, Arc{Source: a.Source, Target: a.Target, Keys: a.Keys, Value: a.Value})
-			}
-
-			modNet := modified.ToPetriNet()
-			modRates := modified.DefaultRates(1.0)
-
-			// Build identity mapping
-			mapping := &NodeMapping{
-				Places:      make(map[string]string),
-				Transitions: make(map[string]string),
-			}
-			for _, pl := range m.Places {
-				mapping.Places[pl.ID] = pl.ID
-			}
-			for _, tr := range m.Transitions {
-				mapping.Transitions[tr.ID] = tr.ID
-			}
-
-			behResult := VerifyBehavioralEquivalence(origNet, origRates, modNet, modRates, mapping, opts.BehavioralOpts)
-			*tm.store = behResult.MaxDifference
-		}
-
-		// Sensitivity is max impact from any perturbation
-		ps.Sensitivity = math.Max(ps.AtZero, math.Max(ps.AtDouble, ps.AtPlus1))
-		ps.Category = categorizeImpact(ps.Sensitivity, opts.Thresholds)
-
-		result.Places = append(result.Places, ps)
-		totalSens += ps.Sensitivity
-
-		if ps.Sensitivity > result.MaxSensitivity {
-			result.MaxSensitivity = ps.Sensitivity
-			result.MostSensitive = p.ID
-		}
+	var places []PlaceMarkingSensitivity
+	if opts.Parallel && len(m.Places) > 1 {
+		places = m.analyzeMarkingSensitivityParallel(origNet, origRates, opts)
+	} else {
+		places = m.analyzeMarkingSensitivitySequential(origNet, origRates, opts)
 	}
 
-	if len(m.Places) > 0 {
-		result.AvgSensitivity = totalSens / float64(len(m.Places))
+	result.Places = places
+
+	// Compute statistics
+	var totalSens float64
+	for _, ps := range places {
+		totalSens += ps.Sensitivity
+		if ps.Sensitivity > result.MaxSensitivity {
+			result.MaxSensitivity = ps.Sensitivity
+			result.MostSensitive = ps.ID
+		}
+	}
+	if len(places) > 0 {
+		result.AvgSensitivity = totalSens / float64(len(places))
 	}
 
 	// Sort by sensitivity
@@ -1427,4 +1514,121 @@ func (m *Model) AnalyzeMarkingSensitivity(opts *SensitivityOptions) *MarkingSens
 	}
 
 	return result
+}
+
+// analyzeMarkingSensitivitySequential runs marking sensitivity analysis sequentially.
+func (m *Model) analyzeMarkingSensitivitySequential(origNet *mainpetri.PetriNet, origRates map[string]float64, opts *SensitivityOptions) []PlaceMarkingSensitivity {
+	places := make([]PlaceMarkingSensitivity, 0, len(m.Places))
+	for _, p := range m.Places {
+		ps := m.computePlaceMarkingSensitivity(origNet, origRates, p, opts)
+		places = append(places, ps)
+	}
+	return places
+}
+
+// analyzeMarkingSensitivityParallel runs marking sensitivity analysis using a worker pool.
+func (m *Model) analyzeMarkingSensitivityParallel(origNet *mainpetri.PetriNet, origRates map[string]float64, opts *SensitivityOptions) []PlaceMarkingSensitivity {
+	numWorkers := opts.MaxWorkers
+	if numWorkers <= 0 {
+		numWorkers = runtime.NumCPU()
+	}
+	if numWorkers > len(m.Places) {
+		numWorkers = len(m.Places)
+	}
+
+	jobChan := make(chan Place, len(m.Places))
+	resultChan := make(chan PlaceMarkingSensitivity, len(m.Places))
+
+	var wg sync.WaitGroup
+	for w := 0; w < numWorkers; w++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for p := range jobChan {
+				ps := m.computePlaceMarkingSensitivity(origNet, origRates, p, opts)
+				resultChan <- ps
+			}
+		}()
+	}
+
+	for _, p := range m.Places {
+		jobChan <- p
+	}
+	close(jobChan)
+
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	places := make([]PlaceMarkingSensitivity, 0, len(m.Places))
+	for ps := range resultChan {
+		places = append(places, ps)
+	}
+
+	return places
+}
+
+// computePlaceMarkingSensitivity computes marking sensitivity for a single place.
+func (m *Model) computePlaceMarkingSensitivity(origNet *mainpetri.PetriNet, origRates map[string]float64, p Place, opts *SensitivityOptions) PlaceMarkingSensitivity {
+	ps := PlaceMarkingSensitivity{
+		ID:           p.ID,
+		InitialValue: p.Initial,
+	}
+
+	// Test values for this place
+	testValues := []struct {
+		value int
+		store *float64
+	}{
+		{0, &ps.AtZero},
+		{p.Initial * 2, &ps.AtDouble},
+		{p.Initial + 1, &ps.AtPlus1},
+	}
+
+	// Build identity mapping once
+	mapping := &NodeMapping{
+		Places:      make(map[string]string),
+		Transitions: make(map[string]string),
+	}
+	for _, pl := range m.Places {
+		mapping.Places[pl.ID] = pl.ID
+	}
+	for _, tr := range m.Transitions {
+		mapping.Transitions[tr.ID] = tr.ID
+	}
+
+	for _, tv := range testValues {
+		if tv.value == p.Initial {
+			*tv.store = 0
+			continue
+		}
+
+		// Create modified model
+		modified := &Model{Name: m.Name, Version: m.Version}
+		for _, place := range m.Places {
+			initial := place.Initial
+			if place.ID == p.ID {
+				initial = tv.value
+			}
+			modified.Places = append(modified.Places, Place{ID: place.ID, Initial: initial})
+		}
+		for _, t := range m.Transitions {
+			modified.Transitions = append(modified.Transitions, Transition{ID: t.ID})
+		}
+		for _, a := range m.Arcs {
+			modified.Arcs = append(modified.Arcs, Arc{Source: a.Source, Target: a.Target, Keys: a.Keys, Value: a.Value})
+		}
+
+		modNet := modified.ToPetriNet()
+		modRates := modified.DefaultRates(1.0)
+
+		behResult := VerifyBehavioralEquivalence(origNet, origRates, modNet, modRates, mapping, opts.BehavioralOpts)
+		*tv.store = behResult.MaxDifference
+	}
+
+	ps.Sensitivity = math.Max(ps.AtZero, math.Max(ps.AtDouble, ps.AtPlus1))
+	ps.Category = categorizeImpact(ps.Sensitivity, opts.Thresholds)
+
+	return ps
 }

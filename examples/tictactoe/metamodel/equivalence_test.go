@@ -963,6 +963,71 @@ func TestRandomDeletionDetection(t *testing.T) {
 	}
 }
 
+// TestParallelSpeedup compares parallel vs sequential sensitivity analysis.
+func TestParallelSpeedup(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping speedup test in short mode")
+	}
+
+	schema, err := dsl.SchemaFromStruct(TicTacToe{})
+	if err != nil {
+		t.Fatalf("SchemaFromStruct failed: %v", err)
+	}
+	model := mpetri.FromSchema(schema)
+
+	t.Log("=== Parallel vs Sequential Speedup ===")
+	t.Logf("Model: %d places, %d transitions, %d arcs", len(model.Places), len(model.Transitions), len(model.Arcs))
+	t.Log("")
+
+	// Sequential
+	seqOpts := mpetri.FastSensitivityOptions()
+	seqOpts.Parallel = false
+
+	seqStart := time.Now()
+	seqResult := model.AnalyzeSensitivity(seqOpts)
+	seqDuration := time.Since(seqStart)
+
+	// Parallel
+	parOpts := mpetri.FastSensitivityOptions()
+	parOpts.Parallel = true
+
+	parStart := time.Now()
+	parResult := model.AnalyzeSensitivity(parOpts)
+	parDuration := time.Since(parStart)
+
+	speedup := float64(seqDuration) / float64(parDuration)
+
+	t.Logf("Sequential: %v (%d elements)", seqDuration, len(seqResult.Elements))
+	t.Logf("Parallel:   %v (%d elements)", parDuration, len(parResult.Elements))
+	t.Logf("Speedup:    %.2fx", speedup)
+
+	// Verify same results
+	if len(seqResult.Elements) != len(parResult.Elements) {
+		t.Errorf("Element count mismatch: seq=%d, par=%d", len(seqResult.Elements), len(parResult.Elements))
+	}
+
+	// Rate sensitivity comparison
+	t.Log("")
+	t.Log("Rate Sensitivity:")
+
+	seqOpts2 := mpetri.DefaultRateSensitivityOptions()
+	seqOpts2.Parallel = false
+	seqStart = time.Now()
+	seqRateResult := model.AnalyzeRateSensitivity(seqOpts2)
+	seqDuration = time.Since(seqStart)
+
+	parOpts2 := mpetri.DefaultRateSensitivityOptions()
+	parOpts2.Parallel = true
+	parStart = time.Now()
+	parRateResult := model.AnalyzeRateSensitivity(parOpts2)
+	parDuration = time.Since(parStart)
+
+	speedup = float64(seqDuration) / float64(parDuration)
+	t.Logf("Sequential: %v (%d transitions)", seqDuration, len(seqRateResult.Transitions))
+	t.Logf("Parallel:   %v (%d transitions)", parDuration, len(parRateResult.Transitions))
+	t.Logf("Speedup:    %.2fx", speedup)
+}
+
 // TestIsolatedElementDetection tests that sensitivity analysis can detect isolated elements.
 func TestIsolatedElementDetection(t *testing.T) {
 	// Create a model with an isolated transition (not connected to any place)
