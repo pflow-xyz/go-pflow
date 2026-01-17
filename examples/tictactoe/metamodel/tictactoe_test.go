@@ -1,4 +1,4 @@
-package categorical
+package metamodel
 
 import (
 	"testing"

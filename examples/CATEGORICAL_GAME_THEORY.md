@@ -968,5 +968,4 @@ analysis := categorical.AnalyzeDynamics(strategy, initialState, 100)
 - [PRACTICAL_GUIDE.md](PRACTICAL_GUIDE.md) - Implementation workflows
 - [ODE_OPTIMIZATION_GUIDE.md](ODE_OPTIMIZATION_GUIDE.md) - Performance tuning
 - [STIFFNESS_EXPLAINER.md](STIFFNESS_EXPLAINER.md) - ODE dynamics
-- `examples/tictactoe/categorical/` - Implementation code
-- `examples/tictactoe/categorical_demo.go` - Runnable demo
+- `examples/tictactoe/metamodel/` - Metamodel implementation

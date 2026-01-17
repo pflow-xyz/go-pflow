@@ -1,11 +1,11 @@
-// Package categorical demonstrates the struct tag DSL for Tic-tac-toe.
-// The game is defined by its objects (places) and morphisms (flows).
-package categorical
+// Package metamodel demonstrates the struct tag DSL for Tic-tac-toe.
+// Defines the game using metamodel schema with states, actions, and flows.
+package metamodel
 
 import "github.com/pflow-xyz/go-pflow/metamodel/dsl"
 
-// TicTacToe defines the game as a categorical schema.
-// Objects are states, morphisms are flows between them.
+// TicTacToe defines the game as a metamodel schema.
+// States are places, actions are transitions, flows are arcs.
 type TicTacToe struct {
 	_ struct{} `meta:"name:tic-tac-toe,version:v1.0.0"`
 

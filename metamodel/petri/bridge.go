@@ -3,6 +3,7 @@ package petri
 import (
 	"github.com/pflow-xyz/go-pflow/metamodel"
 	mainpetri "github.com/pflow-xyz/go-pflow/petri"
+	"github.com/pflow-xyz/go-pflow/solver"
 )
 
 // ToSchema converts a Petri net Model to a metamodel Schema.
@@ -160,7 +161,10 @@ func InvariantToConstraint(inv Invariant) metamodel.Constraint {
 }
 
 // ToPetriNet converts the metamodel Model to a petri.PetriNet for ODE simulation.
-// This bridges the metamodel representation to the solver-compatible format.
+//
+// Arc weights are set to 1.0. The metamodel captures topology and binding semantics
+// (keys, guards, constraints) but not discrete weights. For mass-action kinetics,
+// transition rates control flow intensity; arc multiplicity is uniform.
 func (m *Model) ToPetriNet() *mainpetri.PetriNet {
 	net := mainpetri.NewPetriNet()
 
@@ -178,7 +182,7 @@ func (m *Model) ToPetriNet() *mainpetri.PetriNet {
 		yOffset += 50
 	}
 
-	// Add arcs with weight 1.0 (standard Petri net semantics)
+	// Arc weights are 1.0; rates control flow intensity
 	for _, a := range m.Arcs {
 		net.AddArc(a.Source, a.Target, 1.0, false)
 	}
@@ -193,4 +197,24 @@ func (m *Model) DefaultRates(rate float64) map[string]float64 {
 		rates[t.ID] = rate
 	}
 	return rates
+}
+
+// RateFunc is a function that returns rates for transitions.
+type RateFunc func() map[string]float64
+
+// ToODEProblem converts the metamodel to an ODE problem for continuous simulation.
+// Arc weights are 1.0; binding semantics (keys, values) are not used in the ODE model.
+// The rates parameter provides transition rates; if nil, all rates default to 1.0.
+func (m *Model) ToODEProblem(rates RateFunc, tspan [2]float64) *solver.Problem {
+	net := m.ToPetriNet()
+	initialState := net.SetState(nil)
+
+	var rateMap map[string]float64
+	if rates != nil {
+		rateMap = rates()
+	} else {
+		rateMap = m.DefaultRates(1.0)
+	}
+
+	return solver.NewProblem(net, initialState, tspan, rateMap)
 }
