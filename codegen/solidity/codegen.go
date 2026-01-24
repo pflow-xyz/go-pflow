@@ -1,4 +1,4 @@
-// Package solidity generates Solidity smart contracts from metamodel schemas.
+// Package solidity generates Solidity smart contracts from token model schemas.
 package solidity
 
 import (
@@ -6,17 +6,17 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
-// Generate produces a Solidity contract from a metamodel schema.
-func Generate(schema *metamodel.Schema) string {
+// Generate produces a Solidity contract from a token model schema.
+func Generate(schema *tokenmodel.Schema) string {
 	g := &generator{schema: schema}
 	return g.generate()
 }
 
 type generator struct {
-	schema *metamodel.Schema
+	schema *tokenmodel.Schema
 }
 
 func (g *generator) generate() string {
@@ -262,7 +262,7 @@ func (g *generator) generateEvents() string {
 	return b.String()
 }
 
-func (g *generator) inferEventParams(action metamodel.Action) string {
+func (g *generator) inferEventParams(action tokenmodel.Action) string {
 	// Collect unique parameters from arcs
 	params := make(map[string]string)
 
@@ -311,7 +311,7 @@ func (g *generator) inferEventParams(action metamodel.Action) string {
 	return strings.Join(parts, ", ")
 }
 
-func (g *generator) generateFunction(action metamodel.Action) string {
+func (g *generator) generateFunction(action tokenmodel.Action) string {
 	var b strings.Builder
 
 	funcName := action.ID
@@ -377,7 +377,7 @@ func (g *generator) generateFunction(action metamodel.Action) string {
 	return b.String()
 }
 
-func (g *generator) inferFunctionParamsWithBody(action metamodel.Action, inputs, outputs []string) string {
+func (g *generator) inferFunctionParamsWithBody(action tokenmodel.Action, inputs, outputs []string) string {
 	params := g.collectFunctionParams(action)
 
 	// Add params used in body but not declared
@@ -391,12 +391,12 @@ func (g *generator) inferFunctionParamsWithBody(action metamodel.Action, inputs,
 	return g.formatParams(params)
 }
 
-func (g *generator) inferFunctionParams(action metamodel.Action) string {
+func (g *generator) inferFunctionParams(action tokenmodel.Action) string {
 	params := g.collectFunctionParams(action)
 	return g.formatParams(params)
 }
 
-func (g *generator) collectFunctionParams(action metamodel.Action) map[string]string {
+func (g *generator) collectFunctionParams(action tokenmodel.Action) map[string]string {
 	params := make(map[string]string)
 
 	for _, arc := range g.schema.InputArcs(action.ID) {
@@ -546,7 +546,7 @@ func isWordChar(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
 }
 
-func (g *generator) inferEventArgs(action metamodel.Action) string {
+func (g *generator) inferEventArgs(action tokenmodel.Action) string {
 	params := make(map[string]bool)
 
 	for _, arc := range g.schema.InputArcs(action.ID) {
@@ -675,7 +675,7 @@ func getMapValueType(mapType string) string {
 }
 
 // inferValueType determines the Solidity type for an arc's value based on the target state
-func (g *generator) inferValueType(arc metamodel.Arc) string {
+func (g *generator) inferValueType(arc tokenmodel.Arc) string {
 	// Look up the state this arc connects to
 	stateID := arc.Target
 	if stateID == "" {

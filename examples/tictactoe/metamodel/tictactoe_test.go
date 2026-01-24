@@ -3,7 +3,7 @@ package metamodel
 import (
 	"testing"
 
-	"github.com/pflow-xyz/go-pflow/metamodel/dsl"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
 )
 
 func TestTicTacToeSchema(t *testing.T) {

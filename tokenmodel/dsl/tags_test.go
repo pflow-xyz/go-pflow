@@ -3,7 +3,7 @@ package dsl
 import (
 	"testing"
 
-	"github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
 // Test basic data state parsing
@@ -37,7 +37,7 @@ func TestTagsDataState(t *testing.T) {
 	if state.Type != "uint256" {
 		t.Errorf("expected type 'uint256', got %q", state.Type)
 	}
-	if state.Kind != metamodel.DataState {
+	if state.Kind != tokenmodel.DataState {
 		t.Errorf("expected kind DataState, got %q", state.Kind)
 	}
 	if !state.Exported {
@@ -64,7 +64,7 @@ func TestTagsTokenState(t *testing.T) {
 	if state.ID != "counter" {
 		t.Errorf("expected state ID 'counter', got %q", state.ID)
 	}
-	if state.Kind != metamodel.TokenState {
+	if state.Kind != tokenmodel.TokenState {
 		t.Errorf("expected kind TokenState, got %q", state.Kind)
 	}
 	if state.InitialTokens() != 10 {

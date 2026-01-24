@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pflow-xyz/go-pflow/metamodel/dsl"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
 )
 
 func TestGenerateERC020(t *testing.T) {

@@ -3,7 +3,7 @@ package dsl_test
 import (
 	"testing"
 
-	"github.com/pflow-xyz/go-pflow/metamodel/dsl"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
 )
 
 // Struct tag version

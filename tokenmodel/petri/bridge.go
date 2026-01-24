@@ -1,18 +1,18 @@
 package petri
 
 import (
-	"github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 	mainpetri "github.com/pflow-xyz/go-pflow/petri"
 	"github.com/pflow-xyz/go-pflow/solver"
 )
 
-// ToSchema converts a Petri net Model to a metamodel Schema.
-func (m *Model) ToSchema() *metamodel.Schema {
-	s := metamodel.NewSchema(m.Name)
+// ToSchema converts a Petri net Model to a token model Schema.
+func (m *Model) ToSchema() *tokenmodel.Schema {
+	s := tokenmodel.NewSchema(m.Name)
 	s.Version = m.Version
 
 	for _, p := range m.Places {
-		s.AddState(metamodel.State{
+		s.AddState(tokenmodel.State{
 			ID:       p.ID,
 			Type:     p.Schema,
 			Initial:  p.Initial,
@@ -21,14 +21,14 @@ func (m *Model) ToSchema() *metamodel.Schema {
 	}
 
 	for _, t := range m.Transitions {
-		s.AddAction(metamodel.Action{
+		s.AddAction(tokenmodel.Action{
 			ID:    t.ID,
 			Guard: t.Guard,
 		})
 	}
 
 	for _, a := range m.Arcs {
-		s.AddArc(metamodel.Arc{
+		s.AddArc(tokenmodel.Arc{
 			Source: a.Source,
 			Target: a.Target,
 			Keys:   a.Keys,
@@ -37,7 +37,7 @@ func (m *Model) ToSchema() *metamodel.Schema {
 	}
 
 	for _, inv := range m.Invariants {
-		s.AddConstraint(metamodel.Constraint{
+		s.AddConstraint(tokenmodel.Constraint{
 			ID:   inv.ID,
 			Expr: inv.Expr,
 		})
@@ -46,8 +46,8 @@ func (m *Model) ToSchema() *metamodel.Schema {
 	return s
 }
 
-// FromSchema creates a Petri net Model from a metamodel Schema.
-func FromSchema(s *metamodel.Schema) *Model {
+// FromSchema creates a Petri net Model from a token model Schema.
+func FromSchema(s *tokenmodel.Schema) *Model {
 	m := NewModel(s.Name)
 	m.Version = s.Version
 
@@ -97,8 +97,8 @@ func FromSchema(s *metamodel.Schema) *Model {
 	return m
 }
 
-// StateToPlace converts a metamodel.State to a Petri net Place.
-func StateToPlace(st metamodel.State) Place {
+// StateToPlace converts a tokenmodel.State to a Petri net Place.
+func StateToPlace(st tokenmodel.State) Place {
 	initial := 0
 	if st.Initial != nil {
 		switch v := st.Initial.(type) {
@@ -118,9 +118,9 @@ func StateToPlace(st metamodel.State) Place {
 	}
 }
 
-// PlaceToState converts a Petri net Place to a metamodel.State.
-func PlaceToState(p Place) metamodel.State {
-	return metamodel.State{
+// PlaceToState converts a Petri net Place to a tokenmodel.State.
+func PlaceToState(p Place) tokenmodel.State {
+	return tokenmodel.State{
 		ID:       p.ID,
 		Type:     p.Schema,
 		Initial:  p.Initial,
@@ -128,39 +128,39 @@ func PlaceToState(p Place) metamodel.State {
 	}
 }
 
-// ActionToTransition converts a metamodel.Action to a Petri net Transition.
-func ActionToTransition(a metamodel.Action) Transition {
+// ActionToTransition converts a tokenmodel.Action to a Petri net Transition.
+func ActionToTransition(a tokenmodel.Action) Transition {
 	return Transition{
 		ID:    a.ID,
 		Guard: a.Guard,
 	}
 }
 
-// TransitionToAction converts a Petri net Transition to a metamodel.Action.
-func TransitionToAction(t Transition) metamodel.Action {
-	return metamodel.Action{
+// TransitionToAction converts a Petri net Transition to a tokenmodel.Action.
+func TransitionToAction(t Transition) tokenmodel.Action {
+	return tokenmodel.Action{
 		ID:    t.ID,
 		Guard: t.Guard,
 	}
 }
 
-// ConstraintToInvariant converts a metamodel.Constraint to a Petri net Invariant.
-func ConstraintToInvariant(c metamodel.Constraint) Invariant {
+// ConstraintToInvariant converts a tokenmodel.Constraint to a Petri net Invariant.
+func ConstraintToInvariant(c tokenmodel.Constraint) Invariant {
 	return Invariant{
 		ID:   c.ID,
 		Expr: c.Expr,
 	}
 }
 
-// InvariantToConstraint converts a Petri net Invariant to a metamodel.Constraint.
-func InvariantToConstraint(inv Invariant) metamodel.Constraint {
-	return metamodel.Constraint{
+// InvariantToConstraint converts a Petri net Invariant to a tokenmodel.Constraint.
+func InvariantToConstraint(inv Invariant) tokenmodel.Constraint {
+	return tokenmodel.Constraint{
 		ID:   inv.ID,
 		Expr: inv.Expr,
 	}
 }
 
-// FromPetriNet creates a metamodel Model from a petri.PetriNet.
+// FromPetriNet creates a token model Model from a petri.PetriNet.
 // This is the inverse of ToPetriNet, enabling sensitivity analysis on builder-created nets.
 func FromPetriNet(net *mainpetri.PetriNet) *Model {
 	m := NewModel("imported")
@@ -188,9 +188,9 @@ func FromPetriNet(net *mainpetri.PetriNet) *Model {
 	return m
 }
 
-// ToPetriNet converts the metamodel Model to a petri.PetriNet for ODE simulation.
+// ToPetriNet converts the token model Model to a petri.PetriNet for ODE simulation.
 //
-// Arc weights are set to 1.0. The metamodel captures topology and binding semantics
+// Arc weights are set to 1.0. The token model captures topology and binding semantics
 // (keys, guards, constraints) but not discrete weights. For mass-action kinetics,
 // transition rates control flow intensity; arc multiplicity is uniform.
 func (m *Model) ToPetriNet() *mainpetri.PetriNet {
@@ -230,7 +230,7 @@ func (m *Model) DefaultRates(rate float64) map[string]float64 {
 // RateFunc is a function that returns rates for transitions.
 type RateFunc func() map[string]float64
 
-// ToODEProblem converts the metamodel to an ODE problem for continuous simulation.
+// ToODEProblem converts the token model to an ODE problem for continuous simulation.
 // Arc weights are 1.0; binding semantics (keys, values) are not used in the ODE model.
 // The rates parameter provides transition rates; if nil, all rates default to 1.0.
 func (m *Model) ToODEProblem(rates RateFunc, tspan [2]float64) *solver.Problem {

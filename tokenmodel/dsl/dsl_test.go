@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
 func TestLexer_BasicTokens(t *testing.T) {
@@ -275,7 +275,7 @@ func TestInterpret_ERC020(t *testing.T) {
 	if !balances.Exported {
 		t.Error("expected balances to be exported")
 	}
-	if balances.Kind != metamodel.DataState && balances.Kind != "" {
+	if balances.Kind != tokenmodel.DataState && balances.Kind != "" {
 		t.Errorf("expected balances kind to be data, got %q", balances.Kind)
 	}
 
@@ -318,7 +318,7 @@ func TestGenerateGo_ERC020(t *testing.T) {
 	if !strings.Contains(code, "package erc") {
 		t.Error("expected package declaration")
 	}
-	if !strings.Contains(code, `schema := metamodel.NewSchema("ERC-020")`) {
+	if !strings.Contains(code, `schema := tokenmodel.NewSchema("ERC-020")`) {
 		t.Error("expected schema creation")
 	}
 	if !strings.Contains(code, `ID: "balances"`) {

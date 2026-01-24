@@ -1,7 +1,7 @@
-// Package metamodel defines abstract building blocks for formal models.
+// Package tokenmodel defines abstract building blocks for formal models.
 // It provides a generalization that subsumes Petri nets and other formalisms.
-// ERC token standards are compositions of metamodel primitives.
-package metamodel
+// ERC token standards are compositions of tokenmodel primitives.
+package tokenmodel
 
 // Kind discriminates between token-counting and data-holding states.
 type Kind string
@@ -130,7 +130,7 @@ type EventParameter struct {
 	Indexed bool `json:"indexed,omitempty"`
 }
 
-// Schema is a complete metamodel definition.
+// Schema is a complete tokenmodel definition.
 // It defines the structure and behavior of a formal model.
 type Schema struct {
 	Name        string       `json:"name,omitempty"`

@@ -1,4 +1,4 @@
-package metamodel
+package tokenmodel
 
 // Snapshot represents the current state of all states in a schema.
 // It separates token counts (Petri net semantics) from data values (structured state).

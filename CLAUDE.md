@@ -18,9 +18,9 @@
 | `eventlog` | Parse CSV/JSONL event logs |
 | `mining` | Process discovery, conformance checking |
 | `monitoring` | Real-time case tracking, SLA alerts |
-| `metamodel` | Abstract schema definitions |
-| `metamodel/dsl` | S-expression and struct tag DSL |
-| `metamodel/petri` | Metamodel to Petri net conversion, equivalence checking, sensitivity analysis |
+| `tokenmodel` | Token model schemas for state machines |
+| `tokenmodel/dsl` | S-expression and struct tag DSL |
+| `tokenmodel/petri` | Petri net model, structural analysis, invariants |
 
 ## Quick Decision Tree
 
@@ -35,9 +35,7 @@
 | Deadlock/liveness checking | `reachability` |
 | Epidemics/populations | `petri` + `solver` |
 | General state/resource flow | `petri` |
-| Model equivalence/isomorphism | `metamodel/petri` |
-| Element importance analysis | `metamodel/petri` (sensitivity) |
-| Isolated element detection | `metamodel/petri` (sensitivity) |
+| Token model schemas | `tokenmodel`, `tokenmodel/dsl` |
 
 ## Core API
 
@@ -196,7 +194,7 @@ conf := mining.CheckConformance(log, net)
 | `alpha` | Concurrent (no noise) |
 | `heuristic` | Noisy real-world |
 
-## Metamodel DSL
+## Token Model DSL
 
 Two syntaxes for defining schemas (both produce identical output):
 
@@ -238,127 +236,6 @@ func (ERC20) Flows() []dsl.Flow {
 
 schema, _ := dsl.SchemaFromStruct(ERC20{})
 ```
-
-## Metamodel Equivalence & Sensitivity Analysis
-
-The `metamodel/petri` package provides tools for comparing models and analyzing element importance.
-
-### Model Equivalence
-
-```go
-import mpetri "github.com/pflow-xyz/go-pflow/metamodel/petri"
-
-// Semantic equivalence (topology fingerprinting)
-sig1 := model1.ComputeSignature()
-sig2 := model2.ComputeSignature()
-result := sig1.SemanticEquivalent(sig2)
-
-// Behavioral equivalence (ODE trajectory comparison)
-result := mpetri.VerifyBehavioralEquivalence(net1, rates1, net2, rates2, mapping, opts)
-
-// Automatic mapping discovery via trajectory matching
-mapping := mpetri.DiscoverMappingByTrajectory(net1, rates1, net2, rates2, tspan)
-```
-
-### Sensitivity Analysis (Deletion-Based)
-
-Measures behavioral impact of removing each element:
-
-```go
-// Full sensitivity analysis
-result := model.AnalyzeSensitivity(mpetri.DefaultSensitivityOptions())
-
-// Access results
-for _, elem := range result.TopElements(10) {
-    fmt.Printf("%s [%s]: impact=%.4f (%s)\n",
-        elem.ID, elem.Type, elem.Impact, elem.Category)
-}
-
-// Symmetry groups (elements with identical impact are interchangeable)
-for impact, members := range result.SymmetryGroups {
-    fmt.Printf("Impact %.4f: %v\n", impact, members)
-}
-```
-
-**Categories**: `critical` (model collapses), `important` (≥1.0), `moderate` (≥0.1), `peripheral` (<0.1)
-
-### Rate-Based Sensitivity
-
-Measures impact of varying transition rates (rate=0 is like deletion but cleaner):
-
-```go
-result := model.AnalyzeRateSensitivity(nil)
-
-for _, ts := range result.Transitions {
-    fmt.Printf("%s: rate=0 impact=%.4f\n", ts.ID, ts.AtZero)
-    if ts.AtZero < 0.001 {
-        fmt.Println("  ^ ISOLATED (unreachable/unused)")
-    }
-}
-```
-
-### Initial Marking Sensitivity
-
-Measures impact of changing initial token counts:
-
-```go
-result := model.AnalyzeMarkingSensitivity(nil)
-
-// Find "trigger" places (initial=0 but high impact if set to 1)
-for _, ps := range result.Places {
-    if ps.InitialValue == 0 && ps.AtPlus1 > 0.1 {
-        fmt.Printf("%s: trigger place (+1 impact=%.4f)\n", ps.ID, ps.AtPlus1)
-    }
-}
-```
-
-### Deletion vs Rate Sensitivity: When to Use Which
-
-**AnalyzeSensitivity (Deletion)**
-- Completely **removes** element from model structure
-- Question: "Is this element necessary at all?"
-- Works on: places, transitions, arcs
-- Impact: 0 to ∞ (model can collapse)
-
-**AnalyzeRateSensitivity (Rate)**
-- Keeps structure, **varies transition rates** (0, 0.5x, 2x)
-- Question: "Does the speed of this transition matter?"
-- Works on: transitions only
-- Impact: typically 0 to ~1 (model stays valid)
-
-```
-Deletion:  A ──t1──> B    →    A         B     (structure broken)
-Rate=0:    A ──t1──> B    →    A ──t1──> B     (t1 never fires, but arc exists)
-```
-
-| Scenario | Use Deletion | Use Rate |
-|----------|--------------|----------|
-| Find dead code | ✓ | ✓ (rate=0) |
-| Find critical paths | ✓ | |
-| Find bottlenecks | | ✓ |
-| Structural importance | ✓ | |
-| Dynamic importance | | ✓ |
-| Symmetry detection | ✓ | ✓ |
-
-**Example insight (tic-tac-toe):**
-```
-Deletion: p01 (edge square) → impact=4.12 (critical position)
-          playX01 (move)    → impact=0.44 (action matters less)
-
-Rate:     playX01 at rate=0 → impact=0.44
-          playX01 at rate=2 → impact=0.11 (speed doesn't matter much)
-```
-The board *position* is essential; how *fast* you claim it is secondary
-
-### Use Cases
-
-| Analysis | Use Case |
-|----------|----------|
-| Deletion sensitivity | Find critical elements, bottlenecks |
-| Rate sensitivity | Detect isolated/unused transitions |
-| Marking sensitivity | Find trigger places, initialization effects |
-| Symmetry groups | Identify interchangeable elements (game symmetry) |
-| Low-impact elements | Candidates for model simplification |
 
 ## Visualization
 

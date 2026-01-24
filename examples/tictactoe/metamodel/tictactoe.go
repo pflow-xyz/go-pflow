@@ -2,7 +2,7 @@
 // Defines the game using metamodel schema with states, actions, and flows.
 package metamodel
 
-import "github.com/pflow-xyz/go-pflow/metamodel/dsl"
+import "github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
 
 // TicTacToe defines the game as a metamodel schema.
 // States are places, actions are transitions, flows are arcs.

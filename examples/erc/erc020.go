@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/pflow-xyz/go-pflow/metamodel"
-	"github.com/pflow-xyz/go-pflow/metamodel/dsl"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
 )
 
 // NewERC020 creates an ERC-20 fungible token schema.
@@ -18,7 +18,7 @@ import (
 //   - transferFrom: spend allowance on behalf of owner
 //   - mint: create new tokens
 //   - burn: destroy tokens
-func NewERC020(name string) *metamodel.Schema {
+func NewERC020(name string) *tokenmodel.Schema {
 	return dsl.Build(name).
 		Version("ERC-020:1.0.0").
 		// States

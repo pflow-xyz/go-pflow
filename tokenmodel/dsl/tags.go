@@ -6,13 +6,13 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
 // Struct Tag Dialect
 //
 // This file provides an alternative to the fluent Builder API for defining
-// metamodel schemas using Go struct tags. Both approaches produce identical
+// token model schemas using Go struct tags. Both approaches produce identical
 // schemas; choose based on your use case.
 //
 // # Performance
@@ -107,7 +107,7 @@ type ConstraintProvider interface {
 	Constraints() []Invariant
 }
 
-// SchemaFromStruct extracts a metamodel.Schema from a struct type using reflection.
+// SchemaFromStruct extracts a tokenmodel.Schema from a struct type using reflection.
 // The struct should use DataState, TokenState, and Action marker types with meta tags.
 //
 // Performance: ~5.5μs per call (vs ~1.5μs for Builder). This is negligible since
@@ -143,7 +143,7 @@ type ConstraintProvider interface {
 //
 //	func (MySchema) Flows() []dsl.Flow { ... }
 //	func (MySchema) Constraints() []dsl.Invariant { ... }
-func SchemaFromStruct(v any) (*metamodel.Schema, error) {
+func SchemaFromStruct(v any) (*tokenmodel.Schema, error) {
 	node, err := ASTFromStruct(v)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func SchemaFromStruct(v any) (*metamodel.Schema, error) {
 }
 
 // MustSchemaFromStruct is like SchemaFromStruct but panics on error.
-func MustSchemaFromStruct(v any) *metamodel.Schema {
+func MustSchemaFromStruct(v any) *tokenmodel.Schema {
 	schema, err := SchemaFromStruct(v)
 	if err != nil {
 		panic(err)

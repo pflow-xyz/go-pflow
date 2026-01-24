@@ -3,7 +3,7 @@ package petri
 import (
 	"fmt"
 
-	"github.com/pflow-xyz/go-pflow/metamodel/guard"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/guard"
 )
 
 // Marking represents the current token state of all places.

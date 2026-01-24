@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
 func TestBuilder_MinimalSchema(t *testing.T) {
@@ -62,7 +62,7 @@ func TestBuilder_TokenStates(t *testing.T) {
 	if counter == nil {
 		t.Fatal("expected counter state")
 	}
-	if counter.Kind != metamodel.TokenState {
+	if counter.Kind != tokenmodel.TokenState {
 		t.Errorf("expected token kind, got %q", counter.Kind)
 	}
 	if counter.InitialTokens() != 100 {

@@ -1,4 +1,4 @@
-// Package petri implements Petri net semantics as a specialization of the metamodel.
+// Package petri implements Petri net semantics as a specialization of the tokenmodel.
 // This is the "arc" in arcnet - the core wiring and flow semantics.
 package petri
 
@@ -21,7 +21,7 @@ type Transition struct {
 // Arc connects places and transitions, defining token flow.
 // Arcs drive state updates: input arcs consume, output arcs produce.
 //
-// Arc omits a Weight field. The metamodel captures topology and binding semantics;
+// Arc omits a Weight field. The token model captures topology and binding semantics;
 // ODE simulation (via ToPetriNet) uses weight=1. For discrete weights, use petri.Arc.
 type Arc struct {
 	Source string   `json:"source"`          // place or transition ID

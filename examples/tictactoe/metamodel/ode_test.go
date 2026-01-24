@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/pflow-xyz/go-pflow/metamodel/dsl"
-	mpetri "github.com/pflow-xyz/go-pflow/metamodel/petri"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
+	mpetri "github.com/pflow-xyz/go-pflow/tokenmodel/petri"
 	"github.com/pflow-xyz/go-pflow/solver"
 )
 

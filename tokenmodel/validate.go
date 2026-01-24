@@ -1,4 +1,4 @@
-package metamodel
+package tokenmodel
 
 // Validate checks the schema for structural correctness.
 func (s *Schema) Validate() error {

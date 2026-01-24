@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/pflow-xyz/go-pflow/metamodel"
-	"github.com/pflow-xyz/go-pflow/metamodel/dsl"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
 )
 
 // NewERC721 creates an ERC-721 non-fungible token schema.
@@ -19,7 +19,7 @@ import (
 //   - setApprovalForAll: approve operator for all tokens
 //   - mint: create new token
 //   - burn: destroy token
-func NewERC721(name string) *metamodel.Schema {
+func NewERC721(name string) *tokenmodel.Schema {
 	return dsl.Build(name).
 		Version("ERC-721:1.0.0").
 		// States

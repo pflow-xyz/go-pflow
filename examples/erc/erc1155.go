@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/pflow-xyz/go-pflow/metamodel"
-	"github.com/pflow-xyz/go-pflow/metamodel/dsl"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
 )
 
 // NewERC1155 creates an ERC-1155 multi-token schema.
@@ -21,7 +21,7 @@ import (
 //   - setApprovalForAll: approve operator for all tokens
 //   - mint: create tokens
 //   - burn: destroy tokens
-func NewERC1155(name string) *metamodel.Schema {
+func NewERC1155(name string) *tokenmodel.Schema {
 	return dsl.Build(name).
 		Version("ERC-1155:1.0.0").
 		// States

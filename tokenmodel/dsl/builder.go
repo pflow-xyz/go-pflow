@@ -1,10 +1,10 @@
 package dsl
 
 import (
-	"github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
-// Builder provides a fluent API for constructing metamodel schemas.
+// Builder provides a fluent API for constructing token model schemas.
 type Builder struct {
 	node *SchemaNode
 
@@ -174,15 +174,15 @@ func (b *Builder) AST() *SchemaNode {
 	return b.node
 }
 
-// Schema builds and returns the metamodel.Schema.
+// Schema builds and returns the tokenmodel.Schema.
 // Returns an error if validation fails.
-func (b *Builder) Schema() (*metamodel.Schema, error) {
+func (b *Builder) Schema() (*tokenmodel.Schema, error) {
 	return Interpret(b.node)
 }
 
-// MustSchema builds and returns the metamodel.Schema.
+// MustSchema builds and returns the tokenmodel.Schema.
 // Panics if validation fails.
-func (b *Builder) MustSchema() *metamodel.Schema {
+func (b *Builder) MustSchema() *tokenmodel.Schema {
 	schema, err := b.Schema()
 	if err != nil {
 		panic(err)

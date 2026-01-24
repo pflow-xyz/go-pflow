@@ -15,15 +15,15 @@ func GenerateGo(node *SchemaNode, packageName string, funcName string) (string, 
 
 	// Imports
 	b.WriteString("import (\n")
-	b.WriteString("\t\"github.com/pflow-xyz/go-pflow/metamodel\"\n")
+	b.WriteString("\t\"github.com/pflow-xyz/go-pflow/tokenmodel\"\n")
 	b.WriteString(")\n\n")
 
 	// Function signature
 	b.WriteString(fmt.Sprintf("// %s creates a schema from DSL definition.\n", funcName))
-	b.WriteString(fmt.Sprintf("func %s() *metamodel.Schema {\n", funcName))
+	b.WriteString(fmt.Sprintf("func %s() *tokenmodel.Schema {\n", funcName))
 
 	// Schema creation
-	b.WriteString(fmt.Sprintf("\tschema := metamodel.NewSchema(%q)\n", node.Name))
+	b.WriteString(fmt.Sprintf("\tschema := tokenmodel.NewSchema(%q)\n", node.Name))
 	if node.Version != "" {
 		b.WriteString(fmt.Sprintf("\tschema.Version = %q\n", node.Version))
 	}
@@ -33,10 +33,10 @@ func GenerateGo(node *SchemaNode, packageName string, funcName string) (string, 
 	if len(node.States) > 0 {
 		b.WriteString("\t// States\n")
 		for _, s := range node.States {
-			b.WriteString("\tschema.AddState(metamodel.State{\n")
+			b.WriteString("\tschema.AddState(tokenmodel.State{\n")
 			b.WriteString(fmt.Sprintf("\t\tID: %q,\n", s.ID))
 			if s.Kind == "token" {
-				b.WriteString("\t\tKind: metamodel.TokenState,\n")
+				b.WriteString("\t\tKind: tokenmodel.TokenState,\n")
 			}
 			if s.Type != "" {
 				b.WriteString(fmt.Sprintf("\t\tType: %q,\n", s.Type))
@@ -61,7 +61,7 @@ func GenerateGo(node *SchemaNode, packageName string, funcName string) (string, 
 	if len(node.Actions) > 0 {
 		b.WriteString("\t// Actions\n")
 		for _, a := range node.Actions {
-			b.WriteString("\tschema.AddAction(metamodel.Action{\n")
+			b.WriteString("\tschema.AddAction(tokenmodel.Action{\n")
 			b.WriteString(fmt.Sprintf("\t\tID: %q,\n", a.ID))
 			if a.Guard != "" {
 				b.WriteString(fmt.Sprintf("\t\tGuard: %q,\n", a.Guard))
@@ -77,9 +77,9 @@ func GenerateGo(node *SchemaNode, packageName string, funcName string) (string, 
 		for _, a := range node.Arcs {
 			if len(a.Keys) == 0 && a.Value == "" {
 				// Simple arc
-				b.WriteString(fmt.Sprintf("\tschema.AddArc(metamodel.Arc{Source: %q, Target: %q})\n", a.Source, a.Target))
+				b.WriteString(fmt.Sprintf("\tschema.AddArc(tokenmodel.Arc{Source: %q, Target: %q})\n", a.Source, a.Target))
 			} else {
-				b.WriteString("\tschema.AddArc(metamodel.Arc{\n")
+				b.WriteString("\tschema.AddArc(tokenmodel.Arc{\n")
 				b.WriteString(fmt.Sprintf("\t\tSource: %q,\n", a.Source))
 				b.WriteString(fmt.Sprintf("\t\tTarget: %q,\n", a.Target))
 				if len(a.Keys) > 0 {
@@ -98,7 +98,7 @@ func GenerateGo(node *SchemaNode, packageName string, funcName string) (string, 
 	if len(node.Constraints) > 0 {
 		b.WriteString("\t// Constraints\n")
 		for _, c := range node.Constraints {
-			b.WriteString("\tschema.AddConstraint(metamodel.Constraint{\n")
+			b.WriteString("\tschema.AddConstraint(tokenmodel.Constraint{\n")
 			b.WriteString(fmt.Sprintf("\t\tID: %q,\n", c.ID))
 			b.WriteString(fmt.Sprintf("\t\tExpr: %q,\n", c.Expr))
 			b.WriteString("\t})\n")

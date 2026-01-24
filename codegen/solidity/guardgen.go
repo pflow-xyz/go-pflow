@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pflow-xyz/go-pflow/metamodel/guard"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/guard"
 )
 
 // GuardTranslator converts parsed guard ASTs to Solidity code.

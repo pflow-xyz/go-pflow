@@ -1,4 +1,4 @@
-package metamodel
+package tokenmodel
 
 import (
 	"crypto/sha256"

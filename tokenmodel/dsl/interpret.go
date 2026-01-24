@@ -1,21 +1,21 @@
 package dsl
 
 import (
-	"github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
-// Interpret converts a parsed SchemaNode into a metamodel.Schema.
-func Interpret(node *SchemaNode) (*metamodel.Schema, error) {
-	schema := metamodel.NewSchema(node.Name)
+// Interpret converts a parsed SchemaNode into a tokenmodel.Schema.
+func Interpret(node *SchemaNode) (*tokenmodel.Schema, error) {
+	schema := tokenmodel.NewSchema(node.Name)
 	schema.Version = node.Version
 
 	// Convert states
 	for _, s := range node.States {
-		kind := metamodel.DataState
+		kind := tokenmodel.DataState
 		if s.Kind == "token" {
-			kind = metamodel.TokenState
+			kind = tokenmodel.TokenState
 		}
-		schema.AddState(metamodel.State{
+		schema.AddState(tokenmodel.State{
 			ID:       s.ID,
 			Kind:     kind,
 			Type:     s.Type,
@@ -26,7 +26,7 @@ func Interpret(node *SchemaNode) (*metamodel.Schema, error) {
 
 	// Convert actions
 	for _, a := range node.Actions {
-		schema.AddAction(metamodel.Action{
+		schema.AddAction(tokenmodel.Action{
 			ID:    a.ID,
 			Guard: a.Guard,
 		})
@@ -34,7 +34,7 @@ func Interpret(node *SchemaNode) (*metamodel.Schema, error) {
 
 	// Convert arcs
 	for _, a := range node.Arcs {
-		schema.AddArc(metamodel.Arc{
+		schema.AddArc(tokenmodel.Arc{
 			Source: a.Source,
 			Target: a.Target,
 			Keys:   a.Keys,
@@ -44,7 +44,7 @@ func Interpret(node *SchemaNode) (*metamodel.Schema, error) {
 
 	// Convert constraints
 	for _, c := range node.Constraints {
-		schema.AddConstraint(metamodel.Constraint{
+		schema.AddConstraint(tokenmodel.Constraint{
 			ID:   c.ID,
 			Expr: c.Expr,
 		})
@@ -58,9 +58,9 @@ func Interpret(node *SchemaNode) (*metamodel.Schema, error) {
 	return schema, nil
 }
 
-// ParseSchema parses DSL input and returns a metamodel.Schema.
+// ParseSchema parses DSL input and returns a tokenmodel.Schema.
 // This is a convenience function that combines Parse and Interpret.
-func ParseSchema(input string) (*metamodel.Schema, error) {
+func ParseSchema(input string) (*tokenmodel.Schema, error) {
 	node, err := Parse(input)
 	if err != nil {
 		return nil, err

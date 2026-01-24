@@ -1,4 +1,4 @@
-package metamodel
+package tokenmodel
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 type GuardFunc func(args ...any) (any, error)
 
 // GuardEvaluator evaluates guard expressions.
-// This interface allows the metamodel to be independent of the guard DSL implementation.
+// This interface allows the tokenmodel to be independent of the guard DSL implementation.
 type GuardEvaluator interface {
 	// Evaluate evaluates a guard expression with bindings and returns true if satisfied.
 	Evaluate(expr string, bindings Bindings, funcs map[string]GuardFunc) (bool, error)

@@ -33,8 +33,8 @@ Port of the JavaScript [pflow.xyz](https://pflow.xyz) library with additional fe
 - **Equilibrium Detection**: Automatic steady-state detection with configurable tolerances
 
 ### Higher-Level Abstractions
-- **Metamodel DSL**: Declarative schema language for defining state machines as Petri nets with guard expressions
-- **Solidity Codegen**: Generate audit-ready Solidity smart contracts from metamodel schemas
+- **Token Model DSL**: Declarative schema language for defining state machines as Petri nets with guard expressions
+- **Solidity Codegen**: Generate audit-ready Solidity smart contracts from token model schemas
 - **Workflow Framework**: Task dependencies, resource management, SLA tracking, and case monitoring
 - **State Machine Engine**: Hierarchical states, parallel regions, guards, and actions compiled to Petri nets
 - **Actor Model**: Message-passing actors with Petri net behaviors, signal bus, and middleware
@@ -42,7 +42,6 @@ Port of the JavaScript [pflow.xyz](https://pflow.xyz) library with additional fe
 ### Analysis & Optimization
 - **Reachability Analysis**: State space exploration, deadlock detection, liveness analysis, P-invariants
 - **Sensitivity Analysis**: Parameter impact ranking, gradient computation, grid search optimization
-- **Metamodel Sensitivity**: Deletion-based, rate-based, and marking-based importance analysis with symmetry detection
 - **Hypothesis Evaluation**: Parallel move evaluation for game AI and decision making
 - **Caching**: Memoization for repeated simulations with LRU eviction
 
@@ -118,12 +117,12 @@ Learn the fundamentals and build real systems:
 ### 📦 Package Documentation
 Detailed API and implementation documentation:
 
-- **[metamodel](metamodel/README.md)** - Declarative schema DSL for state machines
+- **[tokenmodel](tokenmodel/README.md)** - Token model schemas for state machines
   - S-expression DSL and fluent builder API
   - Guard expressions for transition preconditions
   - Petri net execution semantics
 - **[codegen/solidity](codegen/solidity/)** - Solidity smart contract generation
-  - Generate contracts from metamodel schemas
+  - Generate contracts from token model schemas
   - Guard expressions to require statements
   - ERC token standards (ERC-20, ERC-721, ERC-1155)
 - **[eventlog](eventlog/README.md)** - Event log parsing, analysis, and statistics
@@ -306,7 +305,7 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 | **incident_simulator** | Operations | Medium | IT workflows, SLA prediction | Real-world processes |
 | **neural** | ML | Medium | Parameter fitting, learning | Data-driven modeling |
 | **dataset_comparison** | Calibration | Medium | Model fitting, validation | Model selection |
-| **tictactoe** | Game AI | Medium | Minimax, ODE evaluation, metamodel equivalence, sensitivity analysis | Game theory, model analysis ⭐ |
+| **tictactoe** | Game AI | Medium | Minimax, ODE evaluation | Game theory, model analysis ⭐ |
 | **nim** | Game Theory | Medium | Optimal strategy, discrete states | Mathematical modeling |
 | **connect4** | Game AI | Complex | Pattern recognition, lookahead | Advanced AI techniques |
 | **sudoku** | Puzzle | Medium | Constraint satisfaction, colored nets | CSP modeling |
@@ -614,44 +613,6 @@ grid := sensitivity.NewGridSearch(analyzer).
 best := grid.Run()
 ```
 
-#### `metamodel/petri` - Metamodel Sensitivity Analysis
-
-Analyze element importance and detect isolated/unused components:
-
-```go
-import mpetri "github.com/pflow-xyz/go-pflow/metamodel/petri"
-
-// Deletion-based sensitivity (which elements are critical?)
-result := model.AnalyzeSensitivity(mpetri.DefaultSensitivityOptions())
-for _, elem := range result.TopElements(5) {
-    fmt.Printf("%s: impact=%.4f (%s)\n", elem.ID, elem.Impact, elem.Category)
-}
-
-// Rate-based sensitivity (rate=0 detects isolated transitions)
-rateResult := model.AnalyzeRateSensitivity(nil)
-for _, ts := range rateResult.Transitions {
-    if ts.AtZero < 0.001 {
-        fmt.Printf("%s: ISOLATED (no behavioral impact)\n", ts.ID)
-    }
-}
-
-// Symmetry detection (elements with identical impact are interchangeable)
-for impact, members := range result.SymmetryGroups {
-    fmt.Printf("Equivalent group (impact=%.4f): %v\n", impact, members)
-}
-
-// Model equivalence verification
-behResult := mpetri.VerifyBehavioralEquivalence(net1, rates1, net2, rates2, mapping, nil)
-fmt.Printf("Equivalent: %v, max diff: %.6f\n", behResult.Equivalent, behResult.MaxDifference)
-```
-
-**Use cases:**
-- Find bottlenecks (high-impact elements)
-- Detect dead code (isolated elements with zero impact)
-- Discover symmetry (elements with identical behavioral fingerprints)
-- Verify model equivalence (different representations of same system)
-- Simplify models (remove peripheral elements)
-
 #### `cache` - Simulation Caching
 
 Memoize repeated simulations for performance:
@@ -885,7 +846,7 @@ petri/             Core data structures (places, transitions, arcs)
 ├── engine/        Continuous simulation with triggers
 │
 Higher-Level Abstractions
-├── metamodel/     Declarative schema DSL for state machines
+├── tokenmodel/    Token model schemas for state machines
 ├── codegen/       Code generation from schemas
 │   └── solidity/  Solidity smart contract generation
 ├── workflow/      Task dependencies, resources, SLA tracking

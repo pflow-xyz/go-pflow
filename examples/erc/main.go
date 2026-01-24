@@ -1,7 +1,7 @@
 // Package main demonstrates defining ERC token standards as Petri net schemas
 // and generating Solidity contracts from them.
 //
-// The metamodel package provides a declarative DSL for defining state machines
+// The tokenmodel package provides a declarative DSL for defining state machines
 // where states are places (data containers) and actions are transitions
 // (operations that transform state). Arcs connect states to actions, defining
 // token flows.
@@ -19,13 +19,13 @@ import (
 	"path/filepath"
 
 	"github.com/pflow-xyz/go-pflow/codegen/solidity"
-	"github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
 func main() {
 	type schemaEntry struct {
 		name   string
-		schema *metamodel.Schema
+		schema *tokenmodel.Schema
 	}
 
 	schemas := []schemaEntry{

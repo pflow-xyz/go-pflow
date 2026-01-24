@@ -1,4 +1,4 @@
-// Package dsl implements an S-expression DSL for defining metamodel schemas.
+// Package dsl implements an S-expression DSL for defining token model schemas.
 package dsl
 
 import (
