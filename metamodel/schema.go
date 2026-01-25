@@ -73,6 +73,55 @@ type Model struct {
 	// Debug/testing
 	Wallet *WalletConfig `json:"wallet,omitempty"`
 	Status *StatusConfig `json:"status,omitempty"`
+
+	// ODE Simulation for AI/move evaluation
+	Simulation *Simulation `json:"simulation,omitempty"`
+}
+
+// Simulation configures ODE-based simulation for move evaluation and AI.
+// When present, enables strategic analysis using the Guard DSL for scoring.
+type Simulation struct {
+	// Objective is a numeric expression evaluated against the marking.
+	// Uses Guard DSL syntax: arithmetic (+, -, *, /), comparisons, and
+	// aggregate functions (sum, count, tokens, minOf, maxOf).
+	// Examples: "win_x - win_o", "tokens('goal')", "sum('score')"
+	Objective string `json:"objective,omitempty"`
+
+	// Players defines the agents in the simulation and their goals.
+	// Each player has a perspective on the objective (maximize or minimize).
+	Players map[string]Player `json:"players,omitempty"`
+
+	// Solver configures ODE simulation parameters.
+	Solver *SolverConfig `json:"solver,omitempty"`
+}
+
+// Player represents an agent in the simulation (for games, optimization).
+type Player struct {
+	// Maximizes indicates whether this player tries to maximize the objective.
+	// If false, the player minimizes (opponent perspective).
+	Maximizes bool `json:"maximizes"`
+
+	// TurnPlace is the place ID that indicates it's this player's turn.
+	// Used for turn-based games to determine whose move it is.
+	TurnPlace string `json:"turnPlace,omitempty"`
+
+	// Transitions lists which transitions this player can fire.
+	// If empty, inferred from TurnPlace input arcs.
+	Transitions []string `json:"transitions,omitempty"`
+}
+
+// SolverConfig contains ODE solver parameters.
+type SolverConfig struct {
+	// Tspan is the simulation time span [start, end].
+	// Default: [0, 10]
+	Tspan [2]float64 `json:"tspan,omitempty"`
+
+	// Dt is the initial time step. Default: 0.01
+	Dt float64 `json:"dt,omitempty"`
+
+	// Rates maps transition IDs to firing rates.
+	// Default: all transitions have rate 1.0 (or Transition.Rate if set)
+	Rates map[string]float64 `json:"rates,omitempty"`
 }
 
 // Place represents a state/resource in the model.
