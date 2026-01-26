@@ -14,7 +14,12 @@ const (
 	DataKind StateKind = "data"
 )
 
-// Model represents a Petri net model with application extensions.
+// Model represents a core Petri net model.
+// Application-level constructs (roles, views, navigation, etc.) should be
+// stored in extensions using the ExtendedModel wrapper.
+//
+// Migration note: Previously embedded application types have been moved to
+// the extension system. Use ExtendedModel for application-level features.
 type Model struct {
 	Name        string       `json:"name"`
 	Version     string       `json:"version,omitempty"`
@@ -27,54 +32,11 @@ type Model struct {
 	// Events define the data contract for transitions (Events First schema)
 	Events []Event `json:"events,omitempty"`
 
-	// Access control
-	Roles  []Role       `json:"roles,omitempty"`
-	Access []AccessRule `json:"access,omitempty"`
-
-	// UI definitions
-	Views      []View      `json:"views,omitempty"`
-	Navigation *Navigation `json:"navigation,omitempty"`
-	Admin      *Admin      `json:"admin,omitempty"`
-
-	// Runtime configuration
-	EventSourcing *EventSourcingConfig `json:"eventSourcing,omitempty"`
-	Debug         *Debug               `json:"debug,omitempty"`
-	SLA           *SLAConfig           `json:"sla,omitempty"`
-	Prediction    *PredictionConfig    `json:"prediction,omitempty"`
-	GraphQL       *GraphQLConfig       `json:"graphql,omitempty"`
-	Blobstore     *BlobstoreConfig     `json:"blobstore,omitempty"`
-
-	// Workflow features
-	Timers        []Timer        `json:"timers,omitempty"`
-	Notifications []Notification `json:"notifications,omitempty"`
-	Relationships []Relationship `json:"relationships,omitempty"`
-	Computed      []ComputedField `json:"computed,omitempty"`
-	Indexes       []Index        `json:"indexes,omitempty"`
-	Approvals     map[string]*ApprovalChain `json:"approvals,omitempty"`
-	Templates     []Template     `json:"templates,omitempty"`
-	Batch         *BatchConfig   `json:"batch,omitempty"`
-	InboundWebhooks []InboundWebhook `json:"inboundWebhooks,omitempty"`
-	Documents     []Document     `json:"documents,omitempty"`
-
-	// Social features
-	Comments  *CommentsConfig  `json:"comments,omitempty"`
-	Tags      *TagsConfig      `json:"tags,omitempty"`
-	Activity  *ActivityConfig  `json:"activity,omitempty"`
-	Favorites *FavoritesConfig `json:"favorites,omitempty"`
-
-	// Data management
-	Export     *ExportConfig     `json:"export,omitempty"`
-	SoftDelete *SoftDeleteConfig `json:"softDelete,omitempty"`
-
-	// Token/currency display
+	// Token/currency display (kept here as it affects core display)
 	Decimals int    `json:"decimals,omitempty"` // Precision for token amounts (e.g., 18 for ETH)
 	Unit     string `json:"unit,omitempty"`     // Display symbol (e.g., "ETH", "USDC")
 
-	// Debug/testing
-	Wallet *WalletConfig `json:"wallet,omitempty"`
-	Status *StatusConfig `json:"status,omitempty"`
-
-	// ODE Simulation for AI/move evaluation
+	// ODE Simulation for AI/move evaluation (core analysis feature)
 	Simulation *Simulation `json:"simulation,omitempty"`
 }
 

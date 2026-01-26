@@ -139,8 +139,8 @@ func TestLegacyModel(t *testing.T) {
 	t.Run("ToExtended", func(t *testing.T) {
 		model := &Model{
 			Name: "extended-test",
-			Roles: []Role{
-				{ID: "admin", Name: "Administrator"},
+			Places: []Place{
+				{ID: "p1", Initial: 1},
 			},
 		}
 
@@ -230,93 +230,6 @@ func TestModelFromGenericData(t *testing.T) {
 	}
 }
 
-func TestHasApplicationConstructs(t *testing.T) {
-	t.Run("empty model", func(t *testing.T) {
-		model := &Model{Name: "empty"}
-		legacy := WrapLegacy(model)
-		if legacy.HasApplicationConstructs() {
-			t.Error("expected no application constructs")
-		}
-	})
-
-	t.Run("with roles", func(t *testing.T) {
-		model := &Model{
-			Name:  "with-roles",
-			Roles: []Role{{ID: "admin"}},
-		}
-		legacy := WrapLegacy(model)
-		if !legacy.HasApplicationConstructs() {
-			t.Error("expected application constructs")
-		}
-	})
-
-	t.Run("with views", func(t *testing.T) {
-		model := &Model{
-			Name:  "with-views",
-			Views: []View{{ID: "detail"}},
-		}
-		legacy := WrapLegacy(model)
-		if !legacy.HasApplicationConstructs() {
-			t.Error("expected application constructs")
-		}
-	})
-
-	t.Run("with navigation", func(t *testing.T) {
-		model := &Model{
-			Name:       "with-nav",
-			Navigation: &Navigation{Brand: "Test"},
-		}
-		legacy := WrapLegacy(model)
-		if !legacy.HasApplicationConstructs() {
-			t.Error("expected application constructs")
-		}
-	})
-}
-
-func TestApplicationConstructsSummary(t *testing.T) {
-	model := &Model{
-		Name: "full-model",
-		Roles: []Role{
-			{ID: "admin"},
-			{ID: "user"},
-		},
-		Access: []AccessRule{
-			{Transition: "confirm", Roles: []string{"admin"}},
-		},
-		Views: []View{
-			{ID: "detail"},
-			{ID: "list"},
-			{ID: "form"},
-		},
-		Navigation: &Navigation{Brand: "Test"},
-		Admin:      &Admin{Enabled: true},
-		Timers: []Timer{
-			{ID: "reminder"},
-		},
-	}
-
-	legacy := WrapLegacy(model)
-	summary := legacy.ApplicationConstructsSummary()
-
-	if summary["roles"] != 2 {
-		t.Errorf("expected 2 roles, got %d", summary["roles"])
-	}
-	if summary["access_rules"] != 1 {
-		t.Errorf("expected 1 access_rule, got %d", summary["access_rules"])
-	}
-	if summary["views"] != 3 {
-		t.Errorf("expected 3 views, got %d", summary["views"])
-	}
-	if summary["navigation"] != 1 {
-		t.Errorf("expected 1 navigation, got %d", summary["navigation"])
-	}
-	if summary["admin"] != 1 {
-		t.Errorf("expected 1 admin, got %d", summary["admin"])
-	}
-	if summary["timers"] != 1 {
-		t.Errorf("expected 1 timer, got %d", summary["timers"])
-	}
-}
 
 func TestMigrateToModern(t *testing.T) {
 	model := &Model{
