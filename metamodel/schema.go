@@ -140,6 +140,10 @@ type Place struct {
 	// Resource tracking fields for prediction/simulation
 	Capacity int  `json:"capacity,omitempty"` // Maximum tokens (for inventory modeling)
 	Resource bool `json:"resource,omitempty"` // True if this is a consumable resource
+
+	// Visualization position (optional, for diagram layout)
+	X int `json:"x,omitempty"`
+	Y int `json:"y,omitempty"`
 }
 
 // Supported Type values for DataKind places:
@@ -208,6 +212,10 @@ type Transition struct {
 
 	// ClearsHistory resets the aggregate to initial state
 	ClearsHistory bool `json:"clearsHistory,omitempty"`
+
+	// Visualization position (optional, for diagram layout)
+	X int `json:"x,omitempty"`
+	Y int `json:"y,omitempty"`
 
 	// Deprecated fields (backward compatibility)
 	EventType      string            `json:"event_type,omitempty"`
