@@ -254,6 +254,42 @@ if prediction.ExpectedTime > 4*time.Hour {
 - [ ] Bayesian parameter inference
 - [ ] Confidence intervals on predictions
 
+### Zero-Knowledge Proving
+
+**Completed (v0.10.x):**
+- [x] `prover/` - Groth16/PLONK proving infrastructure
+- [x] `zkcompile/` - Guard compilation, Merkle proofs, invariants
+- [x] `zkcompile/petrigen/` - Generate ZK circuits from any Petri net model
+- [x] `PetriTransitionCircuit` - Prove valid transition firing
+- [x] `PetriReadCircuit` - Prove place conditions (win states, completion, etc.)
+- [x] Solidity verifier export for on-chain verification
+
+**Selective Disclosure:**
+- [ ] Merkle tree state roots (prove individual places without revealing full marking)
+- [ ] Partial marking proofs (reveal only relevant places)
+- [ ] Range proofs for token counts (prove "tokens > 0" without exact count)
+- [ ] Private transition selection (prove valid firing without revealing which transition)
+
+**Circuit Optimizations:**
+- [ ] Chunked proofs for large nets (>100 places)
+- [ ] Recursive proof composition (aggregate multiple transitions)
+- [ ] Incremental verification (verify sequence without full replay)
+- [ ] Batch proving (multiple transitions in one proof)
+
+**On-Chain Integration:**
+- [ ] EVM verifier contracts (generated from model)
+- [ ] State commitment schemes (on-chain state roots)
+- [ ] Challenge-response protocols (optimistic verification)
+- [ ] L2 rollup integration (state transition proofs)
+
+**Applications:**
+- [ ] Trustless games (provably fair game mechanics)
+- [ ] Verifiable workflows (audit trails with privacy)
+- [ ] Private voting (prove eligibility without identity)
+- [ ] Supply chain (prove compliance without revealing operations)
+
+---
+
 ### Hybrid Modeling
 
 **Discrete-Continuous Integration:**
