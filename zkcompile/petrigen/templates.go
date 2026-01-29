@@ -203,9 +203,9 @@ func petriMimcHash(api frontend.API, values []frontend.Variable) frontend.Variab
 	return h.Sum()
 }
 
-// PetriWinCircuit proves that a specific place has tokens.
-// This is generic - can prove any place condition.
-type PetriWinCircuit struct {
+// PetriReadCircuit proves that a specific place has tokens.
+// Use this to verify any place condition (e.g., win states, completion, etc.).
+type PetriReadCircuit struct {
 	// Public
 	StateRoot   frontend.Variable ` + "`gnark:\",public\"`" + `
 	TargetPlace frontend.Variable ` + "`gnark:\",public\"`" + ` // place index to check
@@ -215,7 +215,7 @@ type PetriWinCircuit struct {
 }
 
 // Define declares the constraints for place verification.
-func (c *PetriWinCircuit) Define(api frontend.API) error {
+func (c *PetriReadCircuit) Define(api frontend.API) error {
 	// 1. Verify state root matches the private marking
 	root := petriMimcHash(api, c.Marking[:])
 	api.AssertIsEqual(root, c.StateRoot)
@@ -340,9 +340,9 @@ func (w *PetriTransitionWitness) ToPetriTransitionAssignment() *PetriTransitionC
 	return c
 }
 
-// ToPetriWinAssignment converts a witness to a circuit assignment.
-func (w *PetriPlaceWitness) ToPetriWinAssignment() *PetriWinCircuit {
-	c := &PetriWinCircuit{
+// ToPetriReadAssignment converts a witness to a circuit assignment.
+func (w *PetriPlaceWitness) ToPetriReadAssignment() *PetriReadCircuit {
+	c := &PetriReadCircuit{
 		StateRoot:   w.StateRoot,
 		TargetPlace: w.TargetPlace,
 	}
@@ -387,10 +387,10 @@ func TestPetriTransitionCircuit_Compiles(t *testing.T) {
 	}
 }
 
-func TestPetriWinCircuit_Compiles(t *testing.T) {
-	_, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &PetriWinCircuit{})
+func TestPetriReadCircuit_Compiles(t *testing.T) {
+	_, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &PetriReadCircuit{})
 	if err != nil {
-		t.Fatalf("PetriWinCircuit compilation failed: %v", err)
+		t.Fatalf("PetriReadCircuit compilation failed: %v", err)
 	}
 }
 
