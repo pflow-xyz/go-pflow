@@ -117,6 +117,13 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/hash/mimc"
 )
+{{if .HasGuards}}
+// GuardBindingNames lists the binding names used in guards.
+var GuardBindingNames = []string{ {{range $i, $b := .GuardBindings}}{{if $i}}, {{end}}"{{$b.Name}}"{{end}} }
+
+// NumGuardBindings is the number of guard binding variables.
+const NumGuardBindings = {{.NumGuardBindings}}
+{{end}}
 
 // PetriTransitionCircuit proves that firing a transition on the Petri net is valid.
 //
@@ -128,6 +135,9 @@ import (
 // Private inputs:
 //   - PreMarking:  token counts for all places before firing
 //   - PostMarking: token counts for all places after firing
+{{- if .HasGuards}}
+//   - GuardBindings: values for guard expression variables (e.g., amount, from)
+{{- end}}
 type PetriTransitionCircuit struct {
 	// Public
 	PreStateRoot  frontend.Variable ` + "`gnark:\",public\"`" + `
@@ -137,6 +147,9 @@ type PetriTransitionCircuit struct {
 	// Private
 	PreMarking  [NumPlaces]frontend.Variable
 	PostMarking [NumPlaces]frontend.Variable
+{{- if .HasGuards}}
+	GuardBindings [NumGuardBindings]frontend.Variable // Guard expression values
+{{- end}}
 }
 
 // Define declares the constraints for valid Petri net transition firing.
@@ -190,9 +203,32 @@ func (c *PetriTransitionCircuit) Define(api frontend.API) error {
 		diff := api.Sub(c.PreMarking[p], isInput)
 		api.ToBinary(diff, 8)
 	}
-
+{{if .HasGuards}}
+	// 6. Verify guard constraints for the selected transition
+	c.verifyGuards(api)
+{{end}}
 	return nil
 }
+{{if .HasGuards}}
+// verifyGuards checks that the guard expression is satisfied for the fired transition.
+// Guards are verified conditionally - only the guard for the actual transition must hold.
+func (c *PetriTransitionCircuit) verifyGuards(api frontend.API) {
+	// Build binding map for easy access
+	bindings := make(map[string]frontend.Variable)
+	for i, name := range GuardBindingNames {
+		bindings[name] = c.GuardBindings[i]
+	}
+	_ = bindings // Used in generated guard code
+{{range .Transitions}}{{if .HasGuard}}
+	// Transition {{.Index}} ({{.ID}}): {{.Guard}}
+	{
+		isThis := api.IsZero(api.Sub(c.Transition, {{.Index}}))
+		_ = isThis
+		{{guardConstraintCode .Guard .Index}}
+	}
+{{end}}{{end}}
+}
+{{end}}
 
 // petriMimcHash computes MiMC hash of marking values.
 func petriMimcHash(api frontend.API, values []frontend.Variable) frontend.Variable {
@@ -271,6 +307,9 @@ type PetriTransitionWitness struct {
 	Transition    int
 	PreMarking    Marking
 	PostMarking   Marking
+{{- if .HasGuards}}
+	GuardBindings map[string]int64 // Values for guard variables
+{{- end}}
 }
 
 // FireTransition fires a transition and returns the witness for proof generation.
@@ -295,6 +334,9 @@ func (g *PetriGame) FireTransition(t int) (*PetriTransitionWitness, error) {
 		Transition:    t,
 		PreMarking:    preMarking,
 		PostMarking:   newMarking,
+{{- if .HasGuards}}
+		GuardBindings: make(map[string]int64),
+{{- end}}
 	}
 
 	g.Marking = newMarking
@@ -302,6 +344,18 @@ func (g *PetriGame) FireTransition(t int) (*PetriTransitionWitness, error) {
 
 	return witness, nil
 }
+{{if .HasGuards}}
+// FireTransitionWithBindings fires a transition with guard binding values.
+// Use this when the transition has guards that require runtime values.
+func (g *PetriGame) FireTransitionWithBindings(t int, bindings map[string]int64) (*PetriTransitionWitness, error) {
+	witness, err := g.FireTransition(t)
+	if err != nil {
+		return nil, err
+	}
+	witness.GuardBindings = bindings
+	return witness, nil
+}
+{{end}}
 
 // PetriPlaceWitness contains values for proving a place has tokens.
 type PetriPlaceWitness struct {
@@ -337,6 +391,14 @@ func (w *PetriTransitionWitness) ToPetriTransitionAssignment() *PetriTransitionC
 		c.PreMarking[i] = int(w.PreMarking[i])
 		c.PostMarking[i] = int(w.PostMarking[i])
 	}
+{{- if .HasGuards}}
+	// Copy guard bindings in correct order
+	for i, name := range GuardBindingNames {
+		if val, ok := w.GuardBindings[name]; ok {
+			c.GuardBindings[i] = val
+		}
+	}
+{{- end}}
 	return c
 }
 
@@ -402,8 +464,17 @@ func TestPetriTransitionCircuit_ValidTransition(t *testing.T) {
 	if len(enabled) == 0 {
 		t.Skip("no enabled transitions in initial state")
 	}
+{{if .HasGuards}}
+	// Use bindings for guarded transitions
+	bindings := make(map[string]int64)
+	for _, name := range GuardBindingNames {
+		bindings[name] = 100 // Default test value
+	}
 
+	witness, err := game.FireTransitionWithBindings(enabled[0], bindings)
+{{else}}
 	witness, err := game.FireTransition(enabled[0])
+{{end}}
 	if err != nil {
 		t.Fatal(err)
 	}

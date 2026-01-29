@@ -192,3 +192,179 @@ func TestToConstName(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerator_WithGuards(t *testing.T) {
+	// Create a model with guards (like an ERC20 transfer)
+	model := &metamodel.Model{
+		Name: "guarded",
+		Places: []metamodel.Place{
+			{ID: "pending", Initial: 1},
+			{ID: "completed"},
+		},
+		Transitions: []metamodel.Transition{
+			{ID: "transfer", Guard: "balance >= amount"},
+			{ID: "cancel"},
+		},
+		Arcs: []metamodel.Arc{
+			{From: "pending", To: "transfer"},
+			{From: "transfer", To: "completed"},
+			{From: "pending", To: "cancel"},
+			{From: "cancel", To: "pending"},
+		},
+	}
+
+	gen, err := New(Options{
+		PackageName:  "guarded",
+		IncludeTests: true,
+	})
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
+
+	files, err := gen.GenerateFiles(model)
+	if err != nil {
+		t.Fatalf("GenerateFiles() failed: %v", err)
+	}
+
+	// Find circuits file
+	var circuitsContent string
+	for _, f := range files {
+		if f.Name == "petri_circuits.go" {
+			circuitsContent = string(f.Content)
+			break
+		}
+	}
+
+	// Check for guard-related code
+	checks := []string{
+		"NumGuardBindings",
+		"GuardBindingNames",
+		"GuardBindings",
+		"verifyGuards",
+		"balance >= amount",
+	}
+
+	for _, check := range checks {
+		if !strings.Contains(circuitsContent, check) {
+			t.Errorf("circuits file missing guard code: %s", check)
+		}
+	}
+
+	// Check game file for binding support
+	var gameContent string
+	for _, f := range files {
+		if f.Name == "petri_game.go" {
+			gameContent = string(f.Content)
+			break
+		}
+	}
+
+	if !strings.Contains(gameContent, "FireTransitionWithBindings") {
+		t.Error("game file missing FireTransitionWithBindings function")
+	}
+
+	t.Logf("Guard support generated correctly")
+}
+
+func TestContext_ExtractsGuards(t *testing.T) {
+	model := &metamodel.Model{
+		Name: "guarded",
+		Places: []metamodel.Place{
+			{ID: "start", Initial: 1},
+			{ID: "end"},
+		},
+		Transitions: []metamodel.Transition{
+			{ID: "guarded_action", Guard: "amount >= minimum && balance > 0"},
+		},
+		Arcs: []metamodel.Arc{
+			{From: "start", To: "guarded_action"},
+			{From: "guarded_action", To: "end"},
+		},
+	}
+
+	ctx, err := BuildContext(model, "guarded")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !ctx.HasGuards {
+		t.Error("expected HasGuards to be true")
+	}
+
+	if len(ctx.GuardBindings) == 0 {
+		t.Error("expected guard bindings to be extracted")
+	}
+
+	// Should extract: amount, minimum, balance
+	bindingNames := make(map[string]bool)
+	for _, b := range ctx.GuardBindings {
+		bindingNames[b.Name] = true
+	}
+
+	expectedBindings := []string{"amount", "minimum", "balance"}
+	for _, name := range expectedBindings {
+		if !bindingNames[name] {
+			t.Errorf("expected binding %q to be extracted", name)
+		}
+	}
+
+	// Check transition has guard info
+	trans := ctx.Transitions[0]
+	if !trans.HasGuard {
+		t.Error("expected transition to have guard")
+	}
+	if trans.Guard != "amount >= minimum && balance > 0" {
+		t.Errorf("unexpected guard: %s", trans.Guard)
+	}
+}
+
+func TestContext_ParsesConstraints(t *testing.T) {
+	model := &metamodel.Model{
+		Name: "constrained",
+		Places: []metamodel.Place{
+			{ID: "balances"},
+			{ID: "total_supply", Initial: 1000},
+		},
+		Transitions: []metamodel.Transition{
+			{ID: "transfer"},
+		},
+		Arcs: []metamodel.Arc{
+			{From: "balances", To: "transfer"},
+			{From: "transfer", To: "balances"},
+		},
+		Constraints: []metamodel.Constraint{
+			{ID: "conservation", Expr: "sum(balances) == total_supply"},
+			{ID: "non_negative", Expr: "balances >= 0"},
+			{ID: "bounded", Expr: "balances <= max_supply"},
+		},
+	}
+
+	ctx, err := BuildContext(model, "constrained")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !ctx.HasConstraints {
+		t.Error("expected HasConstraints to be true")
+	}
+
+	if len(ctx.Constraints) != 3 {
+		t.Errorf("expected 3 constraints, got %d", len(ctx.Constraints))
+	}
+
+	// Check constraint types
+	typeCount := make(map[string]int)
+	for _, c := range ctx.Constraints {
+		typeCount[c.Type]++
+	}
+
+	if typeCount["conservation"] != 1 {
+		t.Error("expected 1 conservation constraint")
+	}
+	if typeCount["non-negative"] != 1 {
+		t.Error("expected 1 non-negative constraint")
+	}
+	if typeCount["bounded"] != 1 {
+		t.Error("expected 1 bounded constraint")
+	}
+}

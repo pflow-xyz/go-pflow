@@ -114,3 +114,97 @@ require (
 
 	t.Log("Generated tests pass")
 }
+
+// TestIntegration_GuardedModelCompiles tests that code with guards compiles.
+func TestIntegration_GuardedModelCompiles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	// Create a model with guards (like an ERC20 transfer)
+	model := &metamodel.Model{
+		Name: "transfer",
+		Places: []metamodel.Place{
+			{ID: "ready", Initial: 1},
+			{ID: "completed"},
+			{ID: "failed"},
+		},
+		Transitions: []metamodel.Transition{
+			{ID: "execute", Guard: "balance >= amount"},
+			{ID: "reject", Guard: "balance < amount"},
+		},
+		Arcs: []metamodel.Arc{
+			{From: "ready", To: "execute"},
+			{From: "execute", To: "completed"},
+			{From: "ready", To: "reject"},
+			{From: "reject", To: "failed"},
+		},
+	}
+
+	// Create temp directory
+	tmpDir, err := os.MkdirTemp("", "petrigen_guard_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Generate code
+	gen, err := New(Options{
+		PackageName:  "transfer",
+		OutputDir:    tmpDir,
+		IncludeTests: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	files, err := gen.Generate(model)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("Generated %d files to %s", len(files), tmpDir)
+
+	// Create go.mod for the temp directory
+	goMod := `module transfer
+
+go 1.21
+
+require (
+	github.com/consensys/gnark v0.14.0
+	github.com/consensys/gnark-crypto v0.19.2
+)
+`
+	if err := os.WriteFile(filepath.Join(tmpDir, "go.mod"), []byte(goMod), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Run go mod tidy
+	cmd := exec.Command("go", "mod", "tidy")
+	cmd.Dir = tmpDir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Logf("go mod tidy output: %s", out)
+		t.Fatalf("go mod tidy failed: %v", err)
+	}
+
+	// Try to build the generated code
+	cmd = exec.Command("go", "build", "./...")
+	cmd.Dir = tmpDir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Logf("Build output: %s", out)
+		t.Fatalf("Generated code with guards failed to compile: %v", err)
+	}
+
+	t.Log("Generated code with guards compiles successfully")
+
+	// Run the generated tests
+	cmd = exec.Command("go", "test", "-v", "./...")
+	cmd.Dir = tmpDir
+	out, err := cmd.CombinedOutput()
+	t.Logf("Test output:\n%s", out)
+	if err != nil {
+		t.Fatalf("Generated tests with guards failed: %v", err)
+	}
+
+	t.Log("Generated tests with guards pass")
+}

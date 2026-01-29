@@ -16,14 +16,20 @@ type Context struct {
 	NumTransitions int
 	Places         []PlaceInfo
 	Transitions    []TransitionInfo
+
+	// Guard and constraint support
+	HasGuards      bool
+	GuardBindings  []GuardBinding  // Extracted bindings from all guards
+	Constraints    []ConstraintInfo // Model constraints (conservation, non-negative)
+	HasConstraints bool
 }
 
 // PlaceInfo holds information about a single place.
 type PlaceInfo struct {
-	ID           string
-	Index        int
-	ConstName    string
-	Initial      int
+	ID             string
+	Index          int
+	ConstName      string
+	Initial        int
 	IsControlPlace bool // e.g., turn indicators, win conditions
 }
 
@@ -32,8 +38,27 @@ type TransitionInfo struct {
 	ID        string
 	Index     int
 	ConstName string
-	Inputs    []int // place indices
-	Outputs   []int // place indices
+	Inputs    []int  // place indices
+	Outputs   []int  // place indices
+	Guard     string // Guard expression (e.g., "balance >= amount")
+	HasGuard  bool
+}
+
+// GuardBinding represents a variable binding used in guards.
+type GuardBinding struct {
+	Name      string // Variable name (e.g., "amount", "from")
+	ConstName string // Go constant name
+}
+
+// ConstraintInfo holds parsed constraint information.
+type ConstraintInfo struct {
+	ID         string
+	Type       string // "conservation", "non-negative", "bounded"
+	Expression string
+	SumPlace   string // For conservation: place being summed
+	TotalPlace string // For conservation: place holding total
+	Place      string // For non-negative/bounded
+	MaxValue   string // For bounded
 }
 
 // BuildContext creates a template context from a metamodel.Model.
@@ -90,19 +115,126 @@ func BuildContext(model *metamodel.Model, packageName string) (*Context, error) 
 		}
 	}
 
-	// Build transition info
+	// Collect unique bindings from all guards
+	bindingSet := make(map[string]bool)
+
+	// Build transition info with guards
 	for i, t := range model.Transitions {
+		hasGuard := t.Guard != ""
+		if hasGuard {
+			ctx.HasGuards = true
+			// Extract binding names from guard expression
+			extractBindings(t.Guard, bindingSet)
+		}
+
 		ctx.Transitions = append(ctx.Transitions, TransitionInfo{
 			ID:        t.ID,
 			Index:     i,
 			ConstName: toConstName(t.ID),
 			Inputs:    transitionInputs[t.ID],
 			Outputs:   transitionOutputs[t.ID],
+			Guard:     t.Guard,
+			HasGuard:  hasGuard,
 		})
 	}
 	ctx.NumTransitions = len(model.Transitions)
 
+	// Convert bindings to list
+	for name := range bindingSet {
+		ctx.GuardBindings = append(ctx.GuardBindings, GuardBinding{
+			Name:      name,
+			ConstName: toConstName(name),
+		})
+	}
+
+	// Parse model constraints
+	for _, c := range model.Constraints {
+		info := parseConstraint(c)
+		if info != nil {
+			ctx.Constraints = append(ctx.Constraints, *info)
+			ctx.HasConstraints = true
+		}
+	}
+
 	return ctx, nil
+}
+
+// extractBindings extracts variable names from a guard expression.
+// Simple heuristic: identifiers that aren't keywords or functions.
+func extractBindings(expr string, bindings map[string]bool) {
+	// Match identifiers (not inside function calls)
+	re := regexp.MustCompile(`\b([a-z][a-zA-Z0-9_]*)\b`)
+	matches := re.FindAllStringSubmatch(expr, -1)
+
+	keywords := map[string]bool{
+		"true": true, "false": true, "and": true, "or": true,
+		"sum": true, "count": true, "address": true,
+	}
+
+	for _, m := range matches {
+		name := m[1]
+		if !keywords[name] {
+			bindings[name] = true
+		}
+	}
+}
+
+// parseConstraint parses a model constraint into ConstraintInfo.
+func parseConstraint(c metamodel.Constraint) *ConstraintInfo {
+	expr := c.Expr
+
+	// Pattern: sum(place) == otherPlace
+	if strings.HasPrefix(expr, "sum(") {
+		parts := strings.Split(expr, "==")
+		if len(parts) != 2 {
+			return nil
+		}
+
+		sumPart := strings.TrimSpace(parts[0])
+		totalPart := strings.TrimSpace(parts[1])
+
+		if !strings.HasPrefix(sumPart, "sum(") || !strings.HasSuffix(sumPart, ")") {
+			return nil
+		}
+		sumPlace := sumPart[4 : len(sumPart)-1]
+
+		return &ConstraintInfo{
+			ID:         c.ID,
+			Type:       "conservation",
+			Expression: expr,
+			SumPlace:   sumPlace,
+			TotalPlace: totalPart,
+		}
+	}
+
+	// Pattern: place >= 0 (non-negative)
+	if strings.Contains(expr, ">= 0") {
+		parts := strings.Split(expr, ">=")
+		if len(parts) == 2 && strings.TrimSpace(parts[1]) == "0" {
+			return &ConstraintInfo{
+				ID:         c.ID,
+				Type:       "non-negative",
+				Expression: expr,
+				Place:      strings.TrimSpace(parts[0]),
+			}
+		}
+	}
+
+	// Pattern: place <= max (bounded)
+	if strings.Contains(expr, "<=") && !strings.Contains(expr, ">=") {
+		parts := strings.Split(expr, "<=")
+		if len(parts) == 2 {
+			return &ConstraintInfo{
+				ID:         c.ID,
+				Type:       "bounded",
+				Expression: expr,
+				Place:      strings.TrimSpace(parts[0]),
+				MaxValue:   strings.TrimSpace(parts[1]),
+			}
+		}
+	}
+
+	return nil
 }
 
 // toConstName converts an ID like "x_play_00" to "XPlay00" for Go constants.
@@ -216,6 +348,81 @@ func intSliceToGo(ints []int) string {
 		parts = append(parts, fmt.Sprintf("%d", i))
 	}
 	return "[]int{" + strings.Join(parts, ", ") + "}"
+}
+
+// NumGuardBindings returns the number of unique bindings in guards.
+func (c *Context) NumGuardBindings() int {
+	return len(c.GuardBindings)
+}
+
+// GuardBindingsList returns guard bindings as a Go map literal for initialization.
+func (c *Context) GuardBindingsList() string {
+	var lines []string
+	for _, b := range c.GuardBindings {
+		lines = append(lines, fmt.Sprintf("\t\t%q: 0,", b.Name))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// TransitionsWithGuards returns transitions that have guards.
+func (c *Context) TransitionsWithGuards() []TransitionInfo {
+	var result []TransitionInfo
+	for _, t := range c.Transitions {
+		if t.HasGuard {
+			result = append(result, t)
+		}
+	}
+	return result
+}
+
+// GuardConstraintCode generates gnark constraint code for a guard expression.
+// This is a simplified version that handles common patterns.
+func (c *Context) GuardConstraintCode(guard string, transitionVar string) string {
+	if guard == "" {
+		return ""
+	}
+
+	var code strings.Builder
+
+	// Parse simple comparison patterns
+	// Pattern: var >= value or var > value
+	if matches := regexp.MustCompile(`(\w+)\s*>=\s*(\w+)`).FindStringSubmatch(guard); matches != nil {
+		left, right := matches[1], matches[2]
+		code.WriteString(fmt.Sprintf(`
+		// Guard: %s >= %s
+		{
+			isThis := api.IsZero(api.Sub(%s, %d))
+			if binding, ok := c.GuardBindings[%q]; ok {
+				diff := api.Sub(binding, c.GuardBindings[%q])
+				// diff >= 0 check (via bit decomposition)
+				api.ToBinary(api.Mul(isThis, diff), 64)
+			}
+		}`, left, right, transitionVar, 0, left, right))
+	} else if matches := regexp.MustCompile(`(\w+)\s*>\s*(\w+)`).FindStringSubmatch(guard); matches != nil {
+		left, right := matches[1], matches[2]
+		code.WriteString(fmt.Sprintf(`
+		// Guard: %s > %s
+		{
+			isThis := api.IsZero(api.Sub(%s, %d))
+			if binding, ok := c.GuardBindings[%q]; ok {
+				diff := api.Sub(api.Sub(binding, c.GuardBindings[%q]), 1)
+				// diff >= 0 check
+				api.ToBinary(api.Mul(isThis, diff), 64)
+			}
+		}`, left, right, transitionVar, 0, left, right))
+	} else if matches := regexp.MustCompile(`(\w+)\s*==\s*(\w+)`).FindStringSubmatch(guard); matches != nil {
+		left, right := matches[1], matches[2]
+		code.WriteString(fmt.Sprintf(`
+		// Guard: %s == %s
+		{
+			isThis := api.IsZero(api.Sub(%s, %d))
+			diff := api.Sub(c.GuardBindings[%q], c.GuardBindings[%q])
+			// When isThis == 1, diff must be 0
+			api.AssertIsEqual(api.Mul(isThis, diff), 0)
+		}`, left, right, transitionVar, 0, left, right))
+	}
+
+	return code.String()
 }
 
 // SanitizeIdentifier makes a string safe for use as a Go identifier.

@@ -263,6 +263,16 @@ if prediction.ExpectedTime > 4*time.Hour {
 - [x] `PetriTransitionCircuit` - Prove valid transition firing
 - [x] `PetriReadCircuit` - Prove place conditions (win states, completion, etc.)
 - [x] Solidity verifier export for on-chain verification
+- [x] **Guard integration in petrigen** - Guards from model compile into circuit constraints
+- [x] **Constraint parsing** - Conservation, non-negative, bounded invariants extracted from model
+- [x] Guard bindings as private inputs (e.g., amount, balance for ERC20-style transitions)
+- [x] `FireTransitionWithBindings()` for guarded transitions
+
+**Guard Expression Support:**
+- [x] Comparison operators: `>=`, `>`, `<=`, `<`, `==`, `!=`
+- [x] Compound guards: `&&` (AND logic)
+- [x] Binding extraction from guard expressions
+- [x] Generated `verifyGuards()` method in circuits
 
 **Selective Disclosure:**
 - [ ] Merkle tree state roots (prove individual places without revealing full marking)

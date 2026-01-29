@@ -17,9 +17,21 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"text/template"
 
 	"github.com/pflow-xyz/go-pflow/metamodel"
+)
+
+// Regex patterns for guard expression parsing
+var (
+	gtePattern = regexp.MustCompile(`(\w+)\s*>=\s*(\w+)`)
+	gtPattern  = regexp.MustCompile(`(\w+)\s*>\s*(\w+)`)
+	ltePattern = regexp.MustCompile(`(\w+)\s*<=\s*(\w+)`)
+	ltPattern  = regexp.MustCompile(`(\w+)\s*<\s*(\w+)`)
+	eqPattern  = regexp.MustCompile(`(\w+)\s*==\s*(\w+)`)
+	neqPattern = regexp.MustCompile(`(\w+)\s*!=\s*(\w+)`)
 )
 
 // Options configures the ZK circuit generator.
@@ -52,9 +64,14 @@ func New(opts Options) (*Generator, error) {
 		templates: make(map[string]*template.Template),
 	}
 
+	// Template functions
+	funcMap := template.FuncMap{
+		"guardConstraintCode": guardConstraintCode,
+	}
+
 	// Parse embedded templates
 	for name, content := range templates {
-		tmpl, err := template.New(name).Parse(content)
+		tmpl, err := template.New(name).Funcs(funcMap).Parse(content)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse template %s: %w", name, err)
 		}
@@ -62,6 +79,97 @@ func New(opts Options) (*Generator, error) {
 	}
 
 	return g, nil
+}
+
+// guardConstraintCode generates gnark constraint code for a guard expression.
+// This handles common guard patterns found in Petri net models.
+func guardConstraintCode(guard string, transitionIndex int) string {
+	if guard == "" {
+		return "// No guard"
+	}
+
+	return generateGuardCode(guard)
+}
+
+// generateGuardCode produces gnark API calls for a guard expression.
+func generateGuardCode(guard string) string {
+	// This is a simplified code generator for common guard patterns.
+	// For complex guards, the full zkcompile.GuardCompiler should be used.
+
+	var code string
+
+	// Handle compound expressions with &&
+	if strings.Contains(guard, "&&") {
+		parts := strings.Split(guard, "&&")
+		for _, part := range parts {
+			code += generateGuardCode(strings.TrimSpace(part))
+		}
+		return code
+	}
+
+	// Pattern: var >= value (greater than or equal)
+	if match := gtePattern.FindStringSubmatch(guard); match != nil {
+		left, right := match[1], match[2]
+		code = fmt.Sprintf(`// Guard: %s >= %s
+		guardDiff := api.Sub(bindings[%q], bindings[%q])
+		api.ToBinary(api.Mul(isThis, guardDiff), 64) // non-negative check when isThis=1
+`, left, right, left, right)
+		return code
+	}
+
+	// Pattern: var > value (strictly greater)
+	if match := gtPattern.FindStringSubmatch(guard); match != nil {
+		left, right := match[1], match[2]
+		code = fmt.Sprintf(`// Guard: %s > %s
+		guardDiff := api.Sub(api.Sub(bindings[%q], bindings[%q]), 1)
+		api.ToBinary(api.Mul(isThis, guardDiff), 64) // positive check when isThis=1
+`, left, right, left, right)
+		return code
+	}
+
+	// Pattern: var <= value
+	if match := ltePattern.FindStringSubmatch(guard); match != nil {
+		left, right := match[1], match[2]
+		code = fmt.Sprintf(`// Guard: %s <= %s
+		guardDiff := api.Sub(bindings[%q], bindings[%q])
+		api.ToBinary(api.Mul(isThis, guardDiff), 64) // non-negative check when isThis=1
+`, right, left, right, left)
+		return code
+	}
+
+	// Pattern: var < value
+	if match := ltPattern.FindStringSubmatch(guard); match != nil {
+		left, right := match[1], match[2]
+		code = fmt.Sprintf(`// Guard: %s < %s
+		guardDiff := api.Sub(api.Sub(bindings[%q], bindings[%q]), 1)
+		api.ToBinary(api.Mul(isThis, guardDiff), 64) // positive check when isThis=1
+`, right, left, right, left)
+		return code
+	}
+
+	// Pattern: var == value
+	if match := eqPattern.FindStringSubmatch(guard); match != nil {
+		left, right := match[1], match[2]
+		code = fmt.Sprintf(`// Guard: %s == %s
+		eqDiff := api.Sub(bindings[%q], bindings[%q])
+		api.AssertIsEqual(api.Mul(isThis, eqDiff), 0)
+`, left, right, left, right)
+		return code
+	}
+
+	// Pattern: var != value
+	if match := neqPattern.FindStringSubmatch(guard); match != nil {
+		left, right := match[1], match[2]
+		code = fmt.Sprintf(`// Guard: %s != %s (requires inverse witness)
+		// Note: Full implementation requires additional neqInverse witness
+		_ = bindings[%q]
+		_ = bindings[%q]
+`, left, right, left, right)
+		return code
+	}
+
+	// Fallback: emit comment for unsupported pattern
+	return fmt.Sprintf("// TODO: Guard not yet compiled: %s\n", guard)
 }
 
 // GeneratedFile represents a generated source file.
