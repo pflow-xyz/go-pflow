@@ -39,6 +39,13 @@ Port of the JavaScript [pflow.xyz](https://pflow.xyz) library with additional fe
 - **State Machine Engine**: Hierarchical states, parallel regions, guards, and actions compiled to Petri nets
 - **Actor Model**: Message-passing actors with Petri net behaviors, signal bus, and middleware
 
+### Zero-Knowledge Proofs
+- **Groth16 Proofs**: Generate ZK proofs for Petri net state transitions using gnark
+- **Circuit Compilation**: Define custom circuits with gnark's frontend, compile to R1CS
+- **Solidity Verifiers**: Export verifier contracts for on-chain proof verification
+- **Parallel Proving**: Worker pools for high-throughput proof generation
+- **State Root Hashing**: Poseidon hashes for efficient state commitment
+
 ### Analysis & Optimization
 - **Reachability Analysis**: State space exploration, deadlock detection, liveness analysis, P-invariants
 - **Sensitivity Analysis**: Parameter impact ranking, gradient computation, grid search optimization
@@ -278,6 +285,16 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - Same pattern as game move evaluation (disable → observe)
 - **Run**: `cd examples/knapsack/cmd && go run *.go`
 
+### Zero-Knowledge Proof Examples
+
+**ZK Tic-Tac-Toe** (in [petri-pilot](https://github.com/pflow-xyz/petri-pilot)) - ZK-enabled game ⭐
+- Prove valid Petri net state transitions with Groth16
+- State roots computed via Poseidon hashing
+- Verify wins cryptographically without revealing strategy
+- Export Solidity verifiers for on-chain verification
+- GraphQL and REST APIs for proof generation
+- **Run**: See [petri-pilot/zk-tictactoe](https://github.com/pflow-xyz/petri-pilot/tree/main/zk-tictactoe)
+
 ### Visualization Examples
 
 **[examples/visualization_demo/](examples/visualization_demo/)** - SVG generation demo
@@ -312,6 +329,7 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 | **chess** | Puzzle/AI | Complex | N-Queens, Knight's Tour, ODE heuristics | Classic algorithms ⭐ |
 | **knapsack** | Optimization | Medium | Mass-action kinetics, exclusion analysis | Combinatorial optimization |
 | **visualization_demo** | Visualization | Simple | SVG rendering, workflows, state machines | Model documentation |
+| **zk-tictactoe** | ZK Proofs | Medium | Groth16, state roots, Solidity verifiers | Blockchain gaming ⭐ |
 
 ## Package Structure
 
@@ -665,6 +683,105 @@ if invAnalyzer.CheckConservation(initial) {
 }
 ```
 
+### Zero-Knowledge Proofs
+
+#### `prover` - ZK Proof Generation
+
+Generate Groth16 zero-knowledge proofs for Petri net state transitions:
+
+```go
+import "github.com/pflow-xyz/go-pflow/prover"
+
+// Create prover
+p := prover.NewProver()
+
+// Define a circuit (gnark frontend.Circuit interface)
+type TransitionCircuit struct {
+    PreStateRoot  frontend.Variable `gnark:",public"`
+    PostStateRoot frontend.Variable `gnark:",public"`
+    TransitionID  frontend.Variable `gnark:",public"`
+    // ... private witness fields
+}
+
+func (c *TransitionCircuit) Define(api frontend.API) error {
+    // Define constraints
+    // ... verify state transition is valid
+    return nil
+}
+
+// Register circuit (compiles to R1CS and runs trusted setup)
+err := p.RegisterCircuit("transition", &TransitionCircuit{})
+
+// Generate proof
+assignment := &TransitionCircuit{
+    PreStateRoot:  preRoot,
+    PostStateRoot: postRoot,
+    TransitionID:  transitionID,
+}
+proof, err := p.Prove("transition", assignment)
+
+// Verify locally before on-chain submission
+err = p.Verify("transition", assignment)
+
+// Export Solidity verifier contract
+solidity, err := p.ExportVerifier("transition")
+```
+
+**Key types:**
+- `Prover` - Circuit compilation, setup, and proof generation
+- `CompiledCircuit` - R1CS constraint system with proving/verifying keys
+- `ProofResult` - Proof points (A, B, C) in Solidity-compatible format
+- `ProofPool` - Worker pool for parallel proof generation
+- `Service` - HTTP service for remote proving
+
+**Proof output format (Solidity-compatible):**
+```go
+type ProofResult struct {
+    A [2]*big.Int     // G1 point
+    B [2][2]*big.Int  // G2 point
+    C [2]*big.Int     // G1 point
+    RawProof []*big.Int  // Flat array for calldata
+    PublicInputs []string // Hex-encoded public inputs
+}
+```
+
+**Parallel proving for high throughput:**
+```go
+// Create worker pool
+pool := prover.NewProofPool(p, 4) // 4 workers
+
+// Submit jobs
+for i, witness := range witnesses {
+    pool.Submit(prover.ProofJob{
+        ID:          i,
+        CircuitName: "transition",
+        Assignment:  witness,
+    })
+}
+
+// Collect results
+for result := range pool.Results() {
+    if result.Error != nil {
+        log.Printf("Job %d failed: %v", result.ID, result.Error)
+    } else {
+        log.Printf("Job %d: proof generated in %dms", result.ID, result.TimeMs)
+    }
+}
+
+pool.Close()
+```
+
+**HTTP Service for remote proving:**
+```go
+// Create service with witness factory
+factory := &MyWitnessFactory{}
+service := prover.NewService(p, factory)
+
+// Mount HTTP handlers
+mux.Handle("/prover/", http.StripPrefix("/prover", service.Handler()))
+// Endpoints: GET /health, GET /circuits, POST /prove/{circuit}, GET /verifier/{circuit}
+```
+
 ### Higher-Level Abstractions
 
 #### `workflow` - Workflow Management Framework
@@ -858,6 +975,10 @@ Analysis & Optimization
 ├── sensitivity/   Parameter impact analysis, grid search
 ├── hypothesis/    Move evaluation for game AI
 ├── cache/         Memoization for repeated simulations
+│
+Zero-Knowledge Proofs
+├── prover/        Groth16 proof generation with gnark
+│                  Circuit compilation, parallel proving, Solidity export
 │
 Process Mining
 ├── eventlog/      Event log parsing and analysis
