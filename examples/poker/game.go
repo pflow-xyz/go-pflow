@@ -1233,12 +1233,19 @@ func (g *PokerGame) evaluateAction(baseState map[string]float64, action Action, 
 		return ev
 
 	case ActionAllIn:
-		// All-in is high variance - apply penalty for risk-averse play
+		// All-in EV must account for both win and loss outcomes.
+		// Penalize overbetting: shoving 100x pot is much riskier than pot-sized.
 		potAfter = g.pot + amount
-		ev := strength * potAfter * allInVariancePenalty
+		penalty := allInVariancePenalty
+		if g.pot > 0 {
+			if overbet := amount / g.pot; overbet > 1 {
+				penalty /= overbet
+			}
+		}
+		ev := (strength*potAfter - (1-strength)*amount) * penalty
 		if verbose {
-			fmt.Printf("    %s: EV = %.1f (strength %.3f × pot %.0f × %.1f variance penalty)\n",
-				action, ev, strength, potAfter, allInVariancePenalty)
+			fmt.Printf("    %s: EV = %.1f (strength %.3f × pot %.0f, variance %.4f)\n",
+				action, ev, strength, potAfter, penalty)
 		}
 		return ev
 	}
@@ -1330,13 +1337,19 @@ func (g *PokerGame) evaluateActionWithAnalysis(baseState map[string]float64, act
 		return ev
 
 	case ActionAllIn:
-		// All-in is riskier when board is dangerous
+		// All-in EV must account for both win and loss outcomes.
+		// Penalize overbetting: shoving 100x pot is much riskier than pot-sized.
 		potAfter = g.pot + amount
 		winProb := effectiveStrength / (effectiveStrength + oppStrength + 0.001)
-		variancePenalty := allInVariancePenalty - dangerLevel*0.1 // More penalty on dangerous boards
-		ev := winProb * potAfter * variancePenalty
+		variancePenalty := allInVariancePenalty - dangerLevel*0.1
+		if g.pot > 0 {
+			if overbet := amount / g.pot; overbet > 1 {
+				variancePenalty /= overbet
+			}
+		}
+		ev := (winProb*potAfter - (1-winProb)*amount) * variancePenalty
 		if verbose {
-			fmt.Printf("    %s: EV = %.1f (win prob %.1f%%, danger-adjusted variance %.2f)\n",
+			fmt.Printf("    %s: EV = %.1f (win prob %.1f%%, variance %.4f)\n",
 				action, ev, winProb*100, variancePenalty)
 		}
 		return ev
