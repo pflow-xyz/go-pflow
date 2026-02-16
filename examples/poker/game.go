@@ -655,6 +655,48 @@ func (g *PokerGame) GetBoardTexture(p Player) BoardTexture {
 	return g.p2Tracker.AnalyzeBoard()
 }
 
+// SyncFromExternal sets the complete game state from external values.
+// This allows an external system (like zk-poker) to sync its game state
+// into the ODE model for action evaluation.
+func (g *PokerGame) SyncFromExternal(
+	p1Hole, p2Hole []Card,
+	community []Card,
+	phase GamePhase,
+	pot, currentBet float64,
+	p1Chips, p2Chips, p1Bet, p2Bet float64,
+	currentPlayer Player,
+) {
+	g.p1Hole = p1Hole
+	g.p2Hole = p2Hole
+	g.communityCards = community
+	g.phase = phase
+	g.pot = pot
+	g.currentBet = currentBet
+	g.p1Chips = p1Chips
+	g.p2Chips = p2Chips
+	g.p1Bet = p1Bet
+	g.p2Bet = p2Bet
+	g.currentPlayer = currentPlayer
+	g.p1Folded = false
+	g.p2Folded = false
+	g.actedThisRound = make(map[Player]bool)
+
+	// Reset trackers with new card info
+	g.p1Tracker = NewCardTracker()
+	g.p2Tracker = NewCardTracker()
+	g.p1Tracker.SetOurHoleCards(p1Hole)
+	g.p2Tracker.SetOurHoleCards(p2Hole)
+	if len(community) > 0 {
+		g.p1Tracker.SetCommunityCards(community)
+		g.p2Tracker.SetCommunityCards(community)
+	}
+	g.p1Tracker.SetPhase(phase)
+	g.p2Tracker.SetPhase(phase)
+
+	g.UpdateHandStrengths()
+	g.syncToEngine()
+}
+
 // syncToEngine updates the Petri net engine state
 func (g *PokerGame) syncToEngine() {
 	state := g.engine.GetState()
