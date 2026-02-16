@@ -1171,13 +1171,10 @@ func (g *PokerGame) GetODEAction(verbose bool) BettingDecision {
 
 // Expected Value (EV) calculation constants
 const (
-	// foldPenaltyFactor is the fraction of pot considered "lost" when folding.
-	// Set to 1/4 because folding gives up equity while limiting losses.
-	foldPenaltyFactor = 0.25
-
 	// baseFoldEquity is the base probability opponent folds to a raise.
-	// This is a simplified model; in practice it varies by opponent tendencies.
-	baseFoldEquity = 0.3
+	// Kept low (15%) because heads-up opponents defend wide, especially
+	// against min-raises where they get good pot odds.
+	baseFoldEquity = 0.15
 
 	// allInVariancePenalty reduces all-in EV to account for high variance.
 	// Risk-averse play prefers lower variance with similar expected value.
@@ -1196,13 +1193,12 @@ func (g *PokerGame) evaluateAction(baseState map[string]float64, action Action, 
 
 	switch action {
 	case ActionFold:
-		// Expected value of folding is losing current investment
-		// We use a fraction of the pot as the penalty since we're giving up equity
-		ev := -g.pot * foldPenaltyFactor
+		// Folding costs nothing beyond chips already committed (sunk cost).
+		// EV = 0 is the baseline all other actions must beat.
 		if verbose {
-			fmt.Printf("    %s: EV = %.0f (lost investment)\n", action, ev)
+			fmt.Printf("    %s: EV = 0 (baseline)\n", action)
 		}
-		return ev
+		return 0
 
 	case ActionCheck:
 		// Expected value based on hand strength
@@ -1223,8 +1219,8 @@ func (g *PokerGame) evaluateAction(baseState map[string]float64, action Action, 
 
 	case ActionRaise:
 		// Raising can win pot immediately (fold equity) or build pot
-		// Fold equity decreases with our hand strength (weaker hands = more fold equity value)
-		foldEquity := baseFoldEquity * (1 - strength)
+		// Fold equity scales with hand strength: strong hands get more value from raises
+		foldEquity := baseFoldEquity * strength
 		potAfter = g.pot + amount
 		ev := foldEquity*g.pot + (1-foldEquity)*(strength*potAfter-(1-strength)*amount)
 		if verbose {
@@ -1281,17 +1277,12 @@ func (g *PokerGame) evaluateActionWithAnalysis(baseState map[string]float64, act
 
 	switch action {
 	case ActionFold:
-		// Fold EV is higher when board is dangerous or opponent is aggressive
-		foldPenalty := foldPenaltyFactor
-		// If board is dangerous and opponent is aggressive, folding is less bad
-		if dangerLevel > 0.5 && g.GetOpponentAggression(g.currentPlayer) > 0.6 {
-			foldPenalty *= 0.5
-		}
-		ev := -g.pot * foldPenalty
+		// Folding costs nothing beyond chips already committed (sunk cost).
+		// EV = 0 is the baseline all other actions must beat.
 		if verbose {
-			fmt.Printf("    %s: EV = %.0f (adjusted for danger %.1f%%)\n", action, ev, dangerLevel*100)
+			fmt.Printf("    %s: EV = 0 (baseline)\n", action)
 		}
-		return ev
+		return 0
 
 	case ActionCheck:
 		// Expected value based on effective strength and danger
@@ -1313,19 +1304,16 @@ func (g *PokerGame) evaluateActionWithAnalysis(baseState map[string]float64, act
 		return ev
 
 	case ActionRaise:
-		// Fold equity is higher when opponent is weak/passive and board is dry
-		foldEquity := baseFoldEquity
+		// Fold equity scales with hand strength: only raise for value with strong hands
+		foldEquity := baseFoldEquity * effectiveStrength
 		if oppStrength < 0.3 {
-			foldEquity += 0.2 // Weak opponents fold more
+			foldEquity += 0.1 // Weak opponents fold a bit more
 		}
 		if dangerLevel < 0.3 {
-			foldEquity += 0.1 // Dry boards have more fold equity
+			foldEquity += 0.05 // Dry boards have slightly more fold equity
 		}
-		if g.GetOpponentAggression(g.currentPlayer) < 0.4 {
-			foldEquity += 0.1 // Passive opponents fold more
-		}
-		if foldEquity > 0.7 {
-			foldEquity = 0.7 // Cap fold equity
+		if foldEquity > 0.4 {
+			foldEquity = 0.4 // Cap fold equity
 		}
 
 		potAfter = g.pot + amount
