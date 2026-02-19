@@ -618,7 +618,7 @@ func getSamplePuzzle(size int) (puzzle, solution [][]int) {
 			{2, 3, 1, 4},
 			{4, 1, 3, 2},
 		}
-	} else {
+	} else if size == 9 {
 		puzzle = [][]int{
 			{5, 3, 0, 0, 7, 0, 0, 0, 0},
 			{6, 0, 0, 1, 9, 5, 0, 0, 0},
@@ -640,6 +640,14 @@ func getSamplePuzzle(size int) (puzzle, solution [][]int) {
 			{9, 6, 1, 5, 3, 7, 2, 8, 4},
 			{2, 8, 7, 4, 1, 9, 6, 3, 5},
 			{3, 4, 5, 2, 8, 6, 1, 7, 9},
+		}
+	} else {
+		// Empty puzzle for arbitrary sizes (benchmarking)
+		puzzle = make([][]int, size)
+		solution = make([][]int, size)
+		for i := 0; i < size; i++ {
+			puzzle[i] = make([]int, size)
+			solution[i] = make([]int, size)
 		}
 	}
 	return

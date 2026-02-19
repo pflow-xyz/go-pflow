@@ -12,14 +12,33 @@ import (
 // u is a map from place label to token concentration/value.
 type ODEFunc func(t float64, u map[string]float64) map[string]float64
 
+// transitionEntry holds pre-indexed arc data for vectorized ODE evaluation.
+type transitionEntry struct {
+	rate    float64
+	inputs  []arcEntry // place_index → transition (input arcs)
+	outputs []arcEntry // transition → place_index (output arcs)
+}
+
+type arcEntry struct {
+	idx    int
+	weight float64
+}
+
+// vecODEFunc computes derivatives using dense arrays instead of maps.
+type vecODEFunc func(t float64, u []float64) []float64
+
 // Problem represents an ODE initial value problem for a Petri net.
 type Problem struct {
 	Net         *petri.PetriNet
 	U0          map[string]float64 // Initial state (place -> token count)
 	Tspan       [2]float64         // Time span [t0, tf]
 	Rates       map[string]float64 // Transition rates
-	F           ODEFunc            // Derivative function
+	F           ODEFunc            // Derivative function (HashMap-based, for backward compat)
 	stateLabels []string           // Ordered list of state variable labels
+	// Vectorized internals for fast Solve()
+	stateIndex map[string]int
+	vecU0      []float64
+	vecF       vecODEFunc
 }
 
 // NewProblem creates a new ODE problem from a Petri net.
@@ -35,11 +54,22 @@ func NewProblem(net *petri.PetriNet, initialState map[string]float64, tspan [2]f
 	for k := range initialState {
 		prob.stateLabels = append(prob.stateLabels, k)
 	}
+	// Build vectorized internals
+	prob.stateIndex = make(map[string]int, len(prob.stateLabels))
+	for i, label := range prob.stateLabels {
+		prob.stateIndex[label] = i
+	}
+	n := len(prob.stateLabels)
+	prob.vecU0 = make([]float64, n)
+	for i, label := range prob.stateLabels {
+		prob.vecU0[i] = initialState[label]
+	}
+	prob.vecF = buildVecODEFunction(net, rates, prob.stateIndex, n)
 	return prob
 }
 
 // buildODEFunction constructs the ODE derivative function for a Petri net
-// using mass-action kinetics.
+// using mass-action kinetics. Retained for backward compatibility (equilibrium, implicit).
 func buildODEFunction(net *petri.PetriNet, rates map[string]float64) ODEFunc {
 	return func(t float64, u map[string]float64) map[string]float64 {
 		du := make(map[string]float64)
@@ -55,8 +85,6 @@ func buildODEFunction(net *petri.PetriNet, rates map[string]float64) ODEFunc {
 			flux := rate
 
 			// Compute flux using simplified mass-action kinetics
-			// flux = rate * product(concentration)
-			// Arc weights affect consumption/production amounts, not rate calculation
 			for _, arc := range net.Arcs {
 				if arc.Target == transLabel {
 					if _, isPlace := net.Places[arc.Source]; isPlace {
@@ -65,7 +93,6 @@ func buildODEFunction(net *petri.PetriNet, rates map[string]float64) ODEFunc {
 							flux = 0
 							break
 						}
-						// Simplified mass action: flux *= concentration
 						flux *= placeState
 					}
 				}
@@ -89,6 +116,71 @@ func buildODEFunction(net *petri.PetriNet, rates map[string]float64) ODEFunc {
 				}
 			}
 		}
+		return du
+	}
+}
+
+// buildVecODEFunction constructs a vectorized ODE derivative function with pre-indexed arcs.
+// This replaces map lookups with array indexing and pre-groups arcs by transition,
+// reducing per-call cost from O(T*A) to O(A).
+func buildVecODEFunction(net *petri.PetriNet, rates map[string]float64, stateIndex map[string]int, nPlaces int) vecODEFunc {
+	// Pre-group arcs by transition: O(A) construction
+	inputMap := make(map[string][]arcEntry)
+	outputMap := make(map[string][]arcEntry)
+
+	for _, arc := range net.Arcs {
+		w := arc.GetWeightSum()
+		if _, isTrans := net.Transitions[arc.Target]; isTrans {
+			if idx, ok := stateIndex[arc.Source]; ok {
+				inputMap[arc.Target] = append(inputMap[arc.Target], arcEntry{idx, w})
+			}
+		}
+		if _, isTrans := net.Transitions[arc.Source]; isTrans {
+			if idx, ok := stateIndex[arc.Target]; ok {
+				outputMap[arc.Source] = append(outputMap[arc.Source], arcEntry{idx, w})
+			}
+		}
+	}
+
+	// Build compact transition table
+	transitions := make([]transitionEntry, 0, len(net.Transitions))
+	for label := range net.Transitions {
+		rate := rates[label]
+		entry := transitionEntry{
+			rate:    rate,
+			inputs:  inputMap[label],
+			outputs: outputMap[label],
+		}
+		transitions = append(transitions, entry)
+	}
+
+	return func(_ float64, u []float64) []float64 {
+		du := make([]float64, nPlaces)
+
+		for i := range transitions {
+			tr := &transitions[i]
+			flux := tr.rate
+
+			// Mass-action kinetics: flux = rate * product(input tokens)
+			for _, inp := range tr.inputs {
+				v := u[inp.idx]
+				if v <= 0 {
+					flux = 0
+					break
+				}
+				flux *= v
+			}
+
+			if flux > 0 {
+				for _, inp := range tr.inputs {
+					du[inp.idx] -= flux * inp.weight
+				}
+				for _, out := range tr.outputs {
+					du[out.idx] += flux * out.weight
+				}
+			}
+		}
+
 		return du
 	}
 }
@@ -298,7 +390,17 @@ type Solver struct {
 	Bhat  []float64   // Error estimate weights
 }
 
+// vecToState converts a dense vector back to a labeled state map.
+func vecToState(v []float64, labels []string) map[string]float64 {
+	m := make(map[string]float64, len(labels))
+	for i, label := range labels {
+		m[label] = v[i]
+	}
+	return m
+}
+
 // Solve integrates the ODE problem using the given solver and options.
+// Internally uses vectorized (dense array) state representation for performance.
 func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 	if solver == nil {
 		solver = Tsit5()
@@ -317,16 +419,17 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 
 	t0 := prob.Tspan[0]
 	tf := prob.Tspan[1]
-	u0 := prob.U0
-	f := prob.F
-	stateLabels := prob.stateLabels
+	f := prob.vecF
+	n := len(prob.vecU0)
 
-	t := []float64{t0}
-	u := []map[string]float64{CopyState(u0)}
+	tOut := []float64{t0}
+	uOut := [][]float64{append([]float64(nil), prob.vecU0...)}
 	tcur := t0
-	ucur := CopyState(u0)
+	ucur := append([]float64(nil), prob.vecU0...)
 	dtcur := dt
 	nsteps := 0
+
+	numStages := len(solver.C)
 
 	for tcur < tf && nsteps < maxiters {
 		// Don't overshoot the final time
@@ -335,41 +438,49 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 		}
 
 		// Compute Runge-Kutta stages
-		K := make([]map[string]float64, len(solver.C))
-		K[0] = f(tcur, ucur)
+		k := make([][]float64, numStages)
+		k[0] = f(tcur, ucur)
 
-		for stage := 1; stage < len(solver.C); stage++ {
+		for stage := 1; stage < numStages; stage++ {
 			tstage := tcur + solver.C[stage]*dtcur
-			ustage := CopyState(ucur)
-			for _, key := range stateLabels {
-				for j := 0; j < stage; j++ {
-					aj := 0.0
-					if len(solver.A) > stage && len(solver.A[stage]) > j {
-						aj = solver.A[stage][j]
+			ustage := append([]float64(nil), ucur...)
+			for j := 0; j < stage; j++ {
+				aj := 0.0
+				if len(solver.A) > stage && len(solver.A[stage]) > j {
+					aj = solver.A[stage][j]
+				}
+				if aj != 0 {
+					scale := dtcur * aj
+					for i := 0; i < n; i++ {
+						ustage[i] += scale * k[j][i]
 					}
-					ustage[key] += dtcur * aj * K[j][key]
 				}
 			}
-			K[stage] = f(tstage, ustage)
+			k[stage] = f(tstage, ustage)
 		}
 
 		// Compute solution at next step
-		unext := CopyState(ucur)
-		for _, key := range stateLabels {
-			for j := 0; j < len(solver.B); j++ {
-				unext[key] += dtcur * solver.B[j] * K[j][key]
+		unext := append([]float64(nil), ucur...)
+		for j := 0; j < len(solver.B); j++ {
+			if solver.B[j] != 0 {
+				scale := dtcur * solver.B[j]
+				for i := 0; i < n; i++ {
+					unext[i] += scale * k[j][i]
+				}
 			}
 		}
 
 		// Compute error estimate for adaptive stepping
 		err := 0.0
 		if adaptive {
-			for _, key := range stateLabels {
+			for i := 0; i < n; i++ {
 				errest := 0.0
 				for j := 0; j < len(solver.Bhat); j++ {
-					errest += dtcur * solver.Bhat[j] * K[j][key]
+					errest += dtcur * solver.Bhat[j] * k[j][i]
 				}
-				scale := abstol + reltol*math.Max(math.Abs(ucur[key]), math.Abs(unext[key]))
+				uc := ucur[i]
+				un := unext[i]
+				scale := abstol + reltol*math.Max(math.Abs(uc), math.Abs(un))
 				if scale == 0 {
 					scale = abstol
 				}
@@ -385,8 +496,8 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 			// Accept step
 			tcur += dtcur
 			ucur = unext
-			t = append(t, tcur)
-			u = append(u, CopyState(ucur))
+			tOut = append(tOut, tcur)
+			uOut = append(uOut, append([]float64(nil), ucur...))
 			nsteps++
 
 			// Adapt step size for next iteration
@@ -403,10 +514,16 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 		}
 	}
 
+	// Convert dense trajectory to state maps for backward compatibility
+	stateU := make([]map[string]float64, len(uOut))
+	for i, v := range uOut {
+		stateU[i] = vecToState(v, prob.stateLabels)
+	}
+
 	return &Solution{
-		T:           t,
-		U:           u,
-		StateLabels: stateLabels,
+		T:           tOut,
+		U:           stateU,
+		StateLabels: prob.stateLabels,
 	}
 }
 

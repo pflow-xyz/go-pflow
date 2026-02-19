@@ -174,7 +174,7 @@ func createODENet(size, blockSize int) *petri.PetriNet {
 	// Create cell places (P##)
 	for row := 0; row < size; row++ {
 		for col := 0; col < size; col++ {
-			placeID := fmt.Sprintf("P%d%d", row, col)
+			placeID := fmt.Sprintf("P%d_%d", row, col)
 			x := float64(col+1) * spacing
 			y := float64(row+1) * spacing
 			label := fmt.Sprintf("Cell(%d,%d)", row, col)
@@ -197,7 +197,7 @@ func createODENet(size, blockSize int) *petri.PetriNet {
 	for row := 0; row < size; row++ {
 		for col := 0; col < size; col++ {
 			for digit := 1; digit <= size; digit++ {
-				placeID := fmt.Sprintf("_D%d_%d%d", digit, row, col)
+				placeID := fmt.Sprintf("_D%d_%d_%d", digit, row, col)
 				x := float64(col*size+digit) * spacing / 3
 				y := historyY + float64(row)*spacing/2
 				label := fmt.Sprintf("History: %d at (%d,%d)", digit, row, col)
@@ -220,7 +220,7 @@ func createODENet(size, blockSize int) *petri.PetriNet {
 			// Only create transitions for empty cells
 			if puzzle[row][col] == 0 {
 				for digit := 1; digit <= size; digit++ {
-					transID := fmt.Sprintf("D%d_%d%d", digit, row, col)
+					transID := fmt.Sprintf("D%d_%d_%d", digit, row, col)
 					x := float64(col*size+digit) * spacing / 3
 					y := transY
 					label := fmt.Sprintf("Place %d at (%d,%d)", digit, row, col)
@@ -228,11 +228,11 @@ func createODENet(size, blockSize int) *petri.PetriNet {
 					net.AddTransition(transID, fmt.Sprintf("d%d", digit), x, y, &label)
 
 					// Input arc from cell place
-					cellID := fmt.Sprintf("P%d%d", row, col)
+					cellID := fmt.Sprintf("P%d_%d", row, col)
 					net.AddArc(cellID, transID, 1.0, false)
 
 					// Output arc to history place
-					histID := fmt.Sprintf("_D%d_%d%d", digit, row, col)
+					histID := fmt.Sprintf("_D%d_%d_%d", digit, row, col)
 					net.AddArc(transID, histID, 1.0, false)
 				}
 			}
@@ -254,7 +254,7 @@ func createODENet(size, blockSize int) *petri.PetriNet {
 		// Connect all history places for this row
 		for col := 0; col < size; col++ {
 			for digit := 1; digit <= size; digit++ {
-				histID := fmt.Sprintf("_D%d_%d%d", digit, row, col)
+				histID := fmt.Sprintf("_D%d_%d_%d", digit, row, col)
 				net.AddArc(histID, transID, 1.0, false)
 			}
 		}
@@ -272,7 +272,7 @@ func createODENet(size, blockSize int) *petri.PetriNet {
 		// Connect all history places for this column
 		for row := 0; row < size; row++ {
 			for digit := 1; digit <= size; digit++ {
-				histID := fmt.Sprintf("_D%d_%d%d", digit, row, col)
+				histID := fmt.Sprintf("_D%d_%d_%d", digit, row, col)
 				net.AddArc(histID, transID, 1.0, false)
 			}
 		}
@@ -281,7 +281,7 @@ func createODENet(size, blockSize int) *petri.PetriNet {
 	// Block collectors
 	for br := 0; br < numBlocks; br++ {
 		for bc := 0; bc < numBlocks; bc++ {
-			transID := fmt.Sprintf("Block%d%d_Complete", br, bc)
+			transID := fmt.Sprintf("Block%d_%d_Complete", br, bc)
 			x := float64(size+4) * spacing
 			y := constraintY + float64(br*numBlocks+bc)*spacing/2
 			label := fmt.Sprintf("Block (%d,%d) Complete", br, bc)
@@ -294,7 +294,7 @@ func createODENet(size, blockSize int) *petri.PetriNet {
 					row := br*blockSize + i
 					col := bc*blockSize + j
 					for digit := 1; digit <= size; digit++ {
-						histID := fmt.Sprintf("_D%d_%d%d", digit, row, col)
+						histID := fmt.Sprintf("_D%d_%d_%d", digit, row, col)
 						net.AddArc(histID, transID, 1.0, false)
 					}
 				}
@@ -318,7 +318,7 @@ func createODENet(size, blockSize int) *petri.PetriNet {
 	}
 	for br := 0; br < numBlocks; br++ {
 		for bc := 0; bc < numBlocks; bc++ {
-			transID := fmt.Sprintf("Block%d%d_Complete", br, bc)
+			transID := fmt.Sprintf("Block%d_%d_Complete", br, bc)
 			net.AddArc(transID, "solved", 1.0, false)
 		}
 	}
