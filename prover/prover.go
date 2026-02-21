@@ -3,7 +3,11 @@ package prover
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"log/slog"
 	"math/big"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -20,6 +24,7 @@ type Prover struct {
 	mu       sync.RWMutex
 	circuits map[string]*CompiledCircuit
 	curve    ecc.ID
+	keyDir   string // optional directory for persisting keys
 }
 
 // CompiledCircuit holds the compiled circuit and keys.
@@ -57,6 +62,87 @@ func NewProver() *Prover {
 		circuits: make(map[string]*CompiledCircuit),
 		curve:    ecc.BN254, // Ethereum's alt_bn128
 	}
+}
+
+// NewProverWithKeyDir creates a prover that persists keys to keyDir.
+// Keys are saved after setup and loaded on subsequent runs, ensuring the
+// same proving/verifying key pair across restarts.
+func NewProverWithKeyDir(keyDir string) *Prover {
+	return &Prover{
+		circuits: make(map[string]*CompiledCircuit),
+		curve:    ecc.BN254,
+		keyDir:   keyDir,
+	}
+}
+
+// LoadOrCompile compiles the circuit, then either loads cached keys from disk
+// (if the constraint system hash matches) or runs groth16.Setup and saves the
+// new keys. The compiled circuit is stored in the prover's registry.
+func (p *Prover) LoadOrCompile(name string, circuit frontend.Circuit) (*CompiledCircuit, error) {
+	if p.keyDir == "" {
+		cc, err := p.CompileCircuit(name, circuit)
+		if err != nil {
+			return nil, err
+		}
+		p.StoreCircuit(name, cc)
+		return cc, nil
+	}
+
+	// Compile to get the current constraint system hash.
+	cs, err := frontend.Compile(p.curve.ScalarField(), r1cs.NewBuilder, circuit)
+	if err != nil {
+		return nil, fmt.Errorf("circuit compilation failed: %w", err)
+	}
+
+	currentHash, err := hashConstraintSystem(cs)
+	if err != nil {
+		return nil, fmt.Errorf("hash constraint system: %w", err)
+	}
+
+	dir := filepath.Join(p.keyDir, name)
+
+	// Try loading cached keys.
+	if savedHash, err := os.ReadFile(filepath.Join(dir, "circuit.hash")); err == nil {
+		if string(savedHash) == currentHash {
+			cc, err := LoadFrom(dir, p.curve)
+			if err == nil {
+				cc.Name = name
+				p.StoreCircuit(name, cc)
+				slog.Info("Loaded circuit keys from disk", "name", name, "dir", dir)
+				return cc, nil
+			}
+			// Load failed — fall through to regenerate.
+			slog.Warn("Failed to load cached keys, regenerating", "name", name, "err", err)
+		} else {
+			slog.Info("Circuit changed, regenerating keys", "name", name)
+		}
+	}
+
+	// No cache or hash mismatch — run setup and save.
+	pk, vk, err := groth16.Setup(cs)
+	if err != nil {
+		return nil, fmt.Errorf("setup failed: %w", err)
+	}
+
+	cc := &CompiledCircuit{
+		Name:         name,
+		CS:           cs,
+		ProvingKey:   pk,
+		VerifyingKey: vk,
+		Constraints:  cs.GetNbConstraints(),
+		PublicVars:   cs.GetNbPublicVariables(),
+		PrivateVars:  cs.GetNbSecretVariables(),
+	}
+
+	if err := cc.SaveTo(dir); err != nil {
+		slog.Warn("Failed to save keys to disk", "name", name, "err", err)
+		// Non-fatal — the prover still works, just without persistence.
+	} else {
+		slog.Info("Saved circuit keys to disk", "name", name, "dir", dir)
+	}
+
+	p.StoreCircuit(name, cc)
+	return cc, nil
 }
 
 // RegisterCircuit compiles a circuit and runs trusted setup.
@@ -223,54 +309,47 @@ func proofToSolidity(proof groth16.Proof, publicWitness witness.Witness, cc *Com
 		}
 	}
 
-	// Extract proof points using WriteTo interface
+	// Extract proof points using WriteRawTo for uncompressed format.
+	// WriteTo produces compressed points (128 bytes) which lose Y-coordinates.
+	// WriteRawTo produces uncompressed points (256 bytes): A(64) + B(128) + C(64).
+	// The concrete BN254 proof type implements WriteRawTo; fall back to WriteTo if not available.
+	type rawWriter interface {
+		WriteRawTo(w io.Writer) (int64, error)
+	}
+
 	var proofBuf bytes.Buffer
-	if _, err := proof.WriteTo(&proofBuf); err != nil {
-		return nil, fmt.Errorf("marshal proof: %w", err)
+	if rw, ok := proof.(rawWriter); ok {
+		if _, err := rw.WriteRawTo(&proofBuf); err != nil {
+			return nil, fmt.Errorf("marshal proof (raw): %w", err)
+		}
+	} else {
+		if _, err := proof.WriteTo(&proofBuf); err != nil {
+			return nil, fmt.Errorf("marshal proof: %w", err)
+		}
 	}
 	proofBytes := proofBuf.Bytes()
 
-	// gnark uses compressed point format:
-	// G1 compressed: 32 bytes
-	// G2 compressed: 64 bytes
-	// Groth16 proof: A (G1), B (G2), C (G1) = 32 + 64 + 32 = 128 bytes minimum
-	// But uncompressed: A (G1 64) + B (G2 128) + C (G1 64) = 256 bytes
-	// gnark may use either format depending on configuration
-
-	// Initialize with zeros for safety
-	result.A[0] = big.NewInt(0)
-	result.A[1] = big.NewInt(0)
-	result.B[0][0] = big.NewInt(0)
-	result.B[0][1] = big.NewInt(0)
-	result.B[1][0] = big.NewInt(0)
-	result.B[1][1] = big.NewInt(0)
-	result.C[0] = big.NewInt(0)
-	result.C[1] = big.NewInt(0)
-
-	// Try uncompressed format first (256 bytes)
-	if len(proofBytes) >= 256 {
-		// A point (G1): bytes 0-63
-		result.A[0] = new(big.Int).SetBytes(proofBytes[0:32])
-		result.A[1] = new(big.Int).SetBytes(proofBytes[32:64])
-
-		// B point (G2): bytes 64-191
-		result.B[0][0] = new(big.Int).SetBytes(proofBytes[64:96])
-		result.B[0][1] = new(big.Int).SetBytes(proofBytes[96:128])
-		result.B[1][0] = new(big.Int).SetBytes(proofBytes[128:160])
-		result.B[1][1] = new(big.Int).SetBytes(proofBytes[160:192])
-
-		// C point (G1): bytes 192-255
-		result.C[0] = new(big.Int).SetBytes(proofBytes[192:224])
-		result.C[1] = new(big.Int).SetBytes(proofBytes[224:256])
-	} else if len(proofBytes) >= 128 {
-		// Compressed format: A (32) + B (64) + C (32)
-		// Note: decompression would be needed for Solidity
-		// For now, store raw bytes - real use would decompress
-		result.A[0] = new(big.Int).SetBytes(proofBytes[0:32])
-		result.B[0][0] = new(big.Int).SetBytes(proofBytes[32:64])
-		result.B[0][1] = new(big.Int).SetBytes(proofBytes[64:96])
-		result.C[0] = new(big.Int).SetBytes(proofBytes[96:128])
+	// Uncompressed layout (256 bytes):
+	//   A (G1): [X 32B][Y 32B]           = 64 bytes
+	//   B (G2): [X0 32B][X1 32B][Y0 32B][Y1 32B] = 128 bytes
+	//   C (G1): [X 32B][Y 32B]           = 64 bytes
+	if len(proofBytes) < 256 {
+		return nil, fmt.Errorf("unexpected proof size %d (expected 256 for uncompressed BN254)", len(proofBytes))
 	}
+
+	// A point (G1): bytes 0-63
+	result.A[0] = new(big.Int).SetBytes(proofBytes[0:32])
+	result.A[1] = new(big.Int).SetBytes(proofBytes[32:64])
+
+	// B point (G2): bytes 64-191
+	result.B[0][0] = new(big.Int).SetBytes(proofBytes[64:96])
+	result.B[0][1] = new(big.Int).SetBytes(proofBytes[96:128])
+	result.B[1][0] = new(big.Int).SetBytes(proofBytes[128:160])
+	result.B[1][1] = new(big.Int).SetBytes(proofBytes[160:192])
+
+	// C point (G1): bytes 192-255
+	result.C[0] = new(big.Int).SetBytes(proofBytes[192:224])
+	result.C[1] = new(big.Int).SetBytes(proofBytes[224:256])
 
 	// Build RawProof array: [A.X, A.Y, B.X[0], B.X[1], B.Y[0], B.Y[1], C.X, C.Y]
 	result.RawProof = []*big.Int{
