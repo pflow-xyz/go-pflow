@@ -54,6 +54,9 @@ Understand the foundational ideas:
 - [**Predictive Monitoring**](concepts/predictive-monitoring.md)
   Real-time prediction and SLA violation detection
 
+- [**Topology-Driven Verifiable Computation**](concepts/topology-driven-zk.md)
+  How Petri net structure replaces floating-point differentiation for ZK proofs
+
 ### 2. Hands-On Tutorials
 
 Learn by doing:
@@ -105,6 +108,9 @@ For those who want the details:
 
 ### "I want to understand the math"
 → Go directly to [Mathematics Reference](mathematics.md)
+
+### "I want to build verifiable (ZK) computations"
+→ Read [Topology-Driven Verifiable Computation](concepts/topology-driven-zk.md), then [Petri Nets to gnark](petri-to-gnark.md)
 
 ### "I'm writing a paper/report"
 → Check out `RESEARCH_PAPER_OUTLINE.md` in the repository root
