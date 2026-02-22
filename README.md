@@ -1,6 +1,6 @@
 # go-pflow
 
-> **Note:** go-pflow is **not** an AI or machine learning library. It implements structural, dynamical computation based on Petri nets and ODE simulation. See [How go-pflow Differs From Modern AI](docs/concepts/not-ai.md) for details.
+> **Note:** go-pflow is **not** an AI or machine learning library. It implements structural, dynamical computation based on Petri nets and ODE simulation. See [the book](https://book.pflow.xyz) for details.
 
 A Go library for Petri net modeling, ODE simulation, process mining, and predictive monitoring. 
 
@@ -107,19 +107,7 @@ func main() {
 
 ## 📚 Documentation
 
-Comprehensive documentation for learning and reference:
-
-### 📖 Concepts & Tutorials
-Learn the fundamentals and build real systems:
-
-- **[Documentation Hub](docs/README.md)** - Complete learning path for undergraduates and practitioners
-  - [How go-pflow Differs From Modern AI](docs/concepts/not-ai.md) - **What go-pflow is (and isn't)**
-  - [Petri Nets Explained](docs/concepts/petri-nets.md) - What they are and why we use them
-  - [ODE Simulation](docs/concepts/ode-simulation.md) - Why differential equations for discrete systems
-  - [Process Mining](docs/concepts/process-mining.md) - Discover processes from event logs
-  - [Predictive Monitoring](docs/concepts/predictive-monitoring.md) - Real-time prediction and SLA detection
-  - [Getting Started Tutorial](docs/tutorials/getting-started.md) - Your first working system
-  - [Mathematics Reference](docs/mathematics.md) - Equations, derivations, and theory
+For comprehensive learning materials, concepts, tutorials, and mathematical foundations, see **[the book](https://book.pflow.xyz)**.
 
 ### 📦 Package Documentation
 Detailed API and implementation documentation:
@@ -152,10 +140,7 @@ Detailed API and implementation documentation:
   - Code templates and idioms
 
 ### 📊 Project Documentation
-- **[ROADMAP](ROADMAP.md)** - Development status, completed features, and future plans
-- **[ACCOMPLISHMENTS](ACCOMPLISHMENTS.md)** - Key achievements and milestones
 - **[RESEARCH PAPER OUTLINE](RESEARCH_PAPER_OUTLINE.md)** - Academic context and contributions
-- **[PROCESS MINING DIRECTIONS](PROCESS_MINING_DIRECTIONS.md)** - Process mining methodology and approach
 
 ## 🎯 Examples
 
@@ -213,7 +198,7 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - Simulate incident lifecycle (detection → resolution)
 - Predict completion times and SLA violations
 - Real-world IT operations example
-- See [REGRESSION_TEST_EXPLAINED.md](examples/incident_simulator/REGRESSION_TEST_EXPLAINED.md)
+- Real-world IT operations example
 
 ### Machine Learning Examples
 
@@ -254,7 +239,6 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - Lookahead search (minimax-lite)
 - **Complexity**: ~10^13 legal positions, 130 places, 222 transitions
 - **Petri Net Model**: Full board state + win detection in net structure
-- See [MODEL_EVOLUTION.md](examples/connect4/MODEL_EVOLUTION.md)
 - **Run**: `cd examples/connect4 && go run ./cmd`
 
 ### Puzzle & Constraint Satisfaction Examples
@@ -264,7 +248,6 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - Constraint propagation via transitions
 - ODE analysis for solution detection
 - Colored Petri nets for digit representation
-- See [ODE_ANALYSIS.md](examples/sudoku/ODE_ANALYSIS.md)
 - **Run**: `cd examples/sudoku/cmd && go run *.go`
 
 **[examples/chess/](examples/chess/)** - Classic chess problems ⭐
@@ -302,12 +285,6 @@ Complete working demonstrations organized by complexity and purpose. See **[exam
 - Workflow diagrams (approval, parallel, incident management)
 - State machine diagrams (traffic light, order status, media player)
 - **Run**: `make run-visualization`
-
-### Documentation & Analysis
-
-- **[examples/VISUALIZATIONS.md](examples/VISUALIZATIONS.md)** - Gallery of visualization examples
-- **[examples/FEATURE_REVIEW.md](examples/FEATURE_REVIEW.md)** - Feature comparison across examples
-- **[examples/PARITY_STATUS.md](examples/PARITY_STATUS.md)** - Implementation status matrix
 
 ### Example Comparison
 
@@ -1055,7 +1032,7 @@ Active development focuses on:
 - **Learn package**: Adjoint-based gradients, online learning, uncertainty quantification
 - **Monitoring package**: Multi-case optimization, adaptive interventions, what-if scenarios
 
-See **[ROADMAP.md](ROADMAP.md)** for detailed development plans, priorities, and completed features.
+See **[the book](https://book.pflow.xyz)** for more on the project's direction.
 
 ## Real-World Applications
 
@@ -1098,11 +1075,11 @@ Contributions welcome! Areas for improvement:
 - Process mining algorithms (Alpha, Heuristics, Inductive)
 - Additional monitoring and prediction features
 
-See **[ACCOMPLISHMENTS.md](ACCOMPLISHMENTS.md)** for recent achievements and **[ROADMAP.md](ROADMAP.md)** for planned features.
+See **[the book](https://book.pflow.xyz)** for more context.
 
 ## Related Resources
 
+- **[book.pflow.xyz](https://book.pflow.xyz)** - Technical book on Petri nets and go-pflow
 - **[pflow.xyz](https://pflow.xyz)** - Original JavaScript implementation and online editor
 - **[RESEARCH_PAPER_OUTLINE.md](RESEARCH_PAPER_OUTLINE.md)** - Academic context and research contributions
-- **[PROCESS_MINING_DIRECTIONS.md](PROCESS_MINING_DIRECTIONS.md)** - Process mining methodology
 - **Tsitouras, Ch.** "Runge-Kutta pairs of order 5(4)..." Computers & Mathematics with Applications, 62 (2011) 770-775
