@@ -206,6 +206,22 @@ The rate auto-derivation algorithm is structurally similar to a single message-p
 
 The difference: GNNs learn the aggregation function from data. The Petri net version uses a fixed, interpretable aggregation (count of target connections through unique output places). No training needed.
 
+## It's Graph Theory, Not Petri Net Theory
+
+The rate auto-derivation algorithm is pure graph theory. It operates on a bipartite directed graph — nodes are candidates and targets, edges pass through output places — and computes degree centrality of candidates with respect to targets through unique edges. Nothing about the algorithm requires Petri net firing semantics, token counts, or conservation laws. You could run it on any bipartite directed graph where you can identify "candidate" nodes, "target" nodes, and the edges between them.
+
+What the Petri net formalism adds comes in layers above the rate derivation:
+
+1. **Firing semantics.** Transitions consume input tokens and produce output tokens atomically. This gives you discrete state machines — valid moves, turn ordering, resource constraints — that pure graph connectivity cannot express.
+
+2. **Mass-action convention.** The rate formula `v[t] = k[t] × product(marking[inputs[t]])` couples the topology-derived rate constants to the current state. This is what turns static weights into dynamic ODE trajectories. The convention is borrowed from chemical kinetics, but it works for any system where transition speed depends on input availability.
+
+3. **Conservation laws.** P-invariants (weighted sums of places that remain constant across all firings) and T-invariants (firing count vectors that return the net to its original marking) are Petri net properties that constrain the state space. These provide correctness guarantees that graph centrality alone cannot.
+
+4. **ZK circuit structure.** The stoichiometry matrix — the signed incidence matrix of the bipartite graph — directly defines the gnark circuit constraints. Each non-zero entry becomes an `api.Add` or `api.Sub` constraint. The circuit topology *is* the Petri net topology, and this correspondence is what makes the proofs compact.
+
+The rate derivation discovers *how much* each candidate matters. The Petri net machinery determines *what happens* when you act on that knowledge. Separating these concerns clarifies where the simplicity lives (graph centrality) and where the complexity is justified (state machines, ODE integration, zero-knowledge proofs).
+
 ## Practical Usage
 
 ### Code Generation
@@ -325,11 +341,17 @@ The TTT work built the compiler. The next model that genuinely needs continuous 
 
 ## Key Takeaway
 
-The Petri net is both the specification and the computation:
+The system operates at two levels:
 
+**Graph theory** gives you the weights:
+- **Degree centrality** of candidates with respect to targets through unique output edges
+- Pure bipartite directed graph analysis — no Petri net semantics required
+- The classic strategy (center > corner > edge) emerges from connectivity alone
+
+**Petri net formalism** gives you the machine:
 - **The arcs define the differential equations** (stoichiometry matrix)
-- **The connectivity defines the rate constants** (a useful first-order approximation for combinatorial systems)
+- **Firing semantics** enforce valid state transitions (token consumption/production)
 - **The structure defines what can be proven** (ZK circuit topology)
 - **The mode determines what matters** (topology for combinatorial, trajectory for continuous)
 
-No floating-point numbers. No symbolic differentiation. No learned weights. Just a graph — and the graph is the proof. But know which mode you're in: if the topology is the answer, auto-derive the rates and keep it simple. If the dynamics are the answer, bring real rates and prove the integration.
+No floating-point numbers. No symbolic differentiation. No learned weights. Just a graph — and the graph is the proof. But know which level you're working at: graph centrality for the weights, Petri net machinery for the state machine and the proof.
