@@ -239,12 +239,48 @@ Rate constants are auto-derived from topology when a scoring config is provided.
 | `scoring_circuit.go` | Tactical win/block scoring in ZK (optional) |
 | `scoring_witness.go` | Native scoring computation (optional) |
 
+## Limitations of Topology-Derived Rates
+
+The rate auto-derivation is a first-order approximation — degree centrality of candidates with respect to targets. It works perfectly for tic-tac-toe because connectivity IS the entire strategic signal. For more complex systems, it has real limitations.
+
+### Not All Targets Are Equal
+
+The algorithm counts every target connection as weight=1. In chess, a checkmate path is worth infinitely more than capturing a pawn. A transition connected to one critical target and one irrelevant target gets the same count as one connected to two medium targets. You'd need weighted target importance for heterogeneous objectives.
+
+### One-Hop Only
+
+The algorithm looks at direct connections: candidate → unique output → target input. In deep strategic games, the important signal is multi-hop — a move that enables a future move that threatens a win. Go is the extreme case: on a 19x19 board, one-hop connectivity tells you almost nothing about strategic value. You'd need multi-hop reachability analysis (T-invariants, reachability graphs) for deeper strategy.
+
+### Non-Game Domains
+
+In chemical reaction networks, rate constants encode physical properties — activation energies, temperature dependence, catalytic effects. A reaction might connect to many downstream reactions but be physically slow. Topology connectivity is meaningless for chemistry; you need empirically measured or physically modeled rates.
+
+### Symmetric Degeneracy
+
+After X plays center in TTT, all four corners have identical topology connectivity (rate=3). The rate derivation alone can't distinguish between them — the heatmap is flat for symmetric positions. The *tactical* scoring layer (win/block detection) handles this, but that's a separate mechanism on top of rates.
+
+### Static Rates
+
+Topology-derived rates are computed once from the initial graph and never change. A position's strategic value changes as the game progresses (a corner becomes critical when it completes a fork), but the rates remain fixed. State-dependent modulation would require dynamic rate computation, which adds circuit complexity.
+
+### Where the Simplicity Is Justified
+
+The rate derivation is a convenience for when you don't have domain-specific rates. The real power of the topology-driven approach isn't the rate derivation — it's that:
+
+1. **The stoichiometry matrix writes the differential equations.** This is exact, not an approximation. The ODE system `dM/dt = S × v(M)` is a direct transcription of the graph.
+
+2. **The arc structure defines the ZK circuit constraints.** Every non-zero entry in S becomes an `api.Add` or `api.Sub` constraint. The circuit topology is the Petri net topology.
+
+3. **The simpler the rates, the fewer constraints in the circuit.** Topology-derived integer rates keep the ZK proof compact.
+
+For domains where the topology captures the essential dynamics (games, workflows, token standards), the auto-derived rates are sufficient. For domains where rates encode external physics, plug in measured rates — the topology-to-circuit pipeline works either way.
+
 ## Key Takeaway
 
 The Petri net is both the specification and the computation:
 
 - **The arcs define the differential equations** (stoichiometry matrix)
-- **The connectivity defines the rate constants** (target reachability)
+- **The connectivity defines the rate constants** (target reachability — a useful first-order approximation)
 - **The structure defines what can be proven** (ZK circuit topology)
 
-No floating-point numbers. No symbolic differentiation. No learned weights. Just a graph — and the graph is the proof.
+No floating-point numbers. No symbolic differentiation. No learned weights. Just a graph — and the graph is the proof. But know the limits: topology-derived rates capture degree centrality, not deep strategy. For complex domains, bring your own rates; the pipeline accepts them.
