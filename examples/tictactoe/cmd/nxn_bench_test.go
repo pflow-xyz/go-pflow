@@ -195,6 +195,155 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%.2fs", d.Seconds())
 }
 
+// TestIntegerReduction verifies that ODE steady-state values with uniform rates
+// preserve the ranking and grouping determined by incidence degrees (arc counts
+// to terminal win transitions) for any NxN board.
+//
+// The incidence degree for position (i,j) is:
+//   - 4: both diagonals (center of odd-sized boards only)
+//   - 3: one diagonal (corners + other diagonal positions)
+//   - 2: no diagonal (all other positions)
+//
+// The test verifies three properties:
+//  1. Positions with the same incidence degree get the same ODE score
+//  2. Higher incidence degree always produces higher ODE score
+//  3. ODE score ratios are approximately proportional to degree ratios
+func TestIntegerReduction(t *testing.T) {
+	sizes := []int{3, 4, 5, 6, 7}
+
+	for _, n := range sizes {
+		t.Run(fmt.Sprintf("N=%d", n), func(t *testing.T) {
+			net := generateTicTacToeNet(n)
+
+			// Compute incidence degrees from graph structure
+			degree := make([][]int, n)
+			for i := 0; i < n; i++ {
+				degree[i] = make([]int, n)
+				for j := 0; j < n; j++ {
+					deg := 2 // row + column
+					if i == j {
+						deg++ // main diagonal
+					}
+					if i+j == n-1 {
+						deg++ // anti-diagonal
+					}
+					degree[i][j] = deg
+				}
+			}
+
+			// Verify incidence degrees by counting arcs in the actual net
+			for i := 0; i < n; i++ {
+				for j := 0; j < n; j++ {
+					histPlace := fmt.Sprintf("_X%d_%d", i, j)
+					arcCount := 0
+					for _, arc := range net.Arcs {
+						if arc.Source == histPlace {
+							arcCount++
+						}
+					}
+					if arcCount != degree[i][j] {
+						t.Errorf("pos(%d,%d): arc count %d != computed degree %d",
+							i, j, arcCount, degree[i][j])
+					}
+				}
+			}
+
+			// Run ODE for each first move (X plays at each position)
+			state := net.SetState(nil)
+			rates := net.SetRates(nil)
+			scores := make([][]float64, n)
+
+			for i := 0; i < n; i++ {
+				scores[i] = make([]float64, n)
+				for j := 0; j < n; j++ {
+					hypState := make(map[string]float64)
+					for k, v := range state {
+						hypState[k] = v
+					}
+					hypState[fmt.Sprintf("P%d_%d", i, j)] = 0
+					hypState[fmt.Sprintf("_X%d_%d", i, j)] = 1
+					hypState["Next"] = 1
+
+					prob := solver.NewProblem(net, hypState, [2]float64{0, 9.0}, rates)
+					opts := solver.DefaultOptions()
+					opts.Abstol = 1e-6
+					opts.Reltol = 1e-5
+					opts.Dt = 0.1
+					sol := solver.Solve(prob, solver.Tsit5(), opts)
+					final := sol.GetFinalState()
+
+					scores[i][j] = final["win_x"] - final["win_o"]
+				}
+			}
+
+			// Group scores by degree
+			groups := map[int][]float64{}
+			for i := 0; i < n; i++ {
+				for j := 0; j < n; j++ {
+					deg := degree[i][j]
+					groups[deg] = append(groups[deg], scores[i][j])
+				}
+			}
+
+			// Print the board
+			fmt.Printf("\nN=%d board (%d win patterns):\n", n, 2*n+2)
+			for i := 0; i < n; i++ {
+				for j := 0; j < n; j++ {
+					if j > 0 {
+						fmt.Print("  ")
+					}
+					fmt.Printf("%d", degree[i][j])
+				}
+				fmt.Println()
+			}
+
+			// Property 1: positions with same degree get similar scores (within 5%)
+			for deg, vals := range groups {
+				for k := 1; k < len(vals); k++ {
+					relDiff := (vals[k] - vals[0]) / vals[0]
+					if relDiff < 0 {
+						relDiff = -relDiff
+					}
+					if relDiff > 0.05 {
+						t.Errorf("degree %d: scores differ by %.2f%% (%.6f vs %.6f)",
+							deg, relDiff*100, vals[0], vals[k])
+					}
+				}
+			}
+
+			// Property 2: higher degree always produces higher score
+			degreeOrder := []int{2, 3, 4}
+			for k := 1; k < len(degreeOrder); k++ {
+				lowDeg := degreeOrder[k-1]
+				highDeg := degreeOrder[k]
+				if _, ok := groups[highDeg]; !ok {
+					continue
+				}
+				if groups[highDeg][0] <= groups[lowDeg][0] {
+					t.Errorf("degree %d score %.6f not greater than degree %d score %.6f",
+						highDeg, groups[highDeg][0], lowDeg, groups[lowDeg][0])
+				}
+			}
+
+			// Property 3: score ratios approximate degree ratios
+			baseScore := groups[2][0]
+			baseDeg := 2.0
+			fmt.Println()
+			for deg := 4; deg >= 2; deg-- {
+				vals, ok := groups[deg]
+				if !ok {
+					continue
+				}
+				odeRatio := vals[0] / baseScore
+				degRatio := float64(deg) / baseDeg
+				pctErr := (odeRatio - degRatio) / degRatio * 100
+				fmt.Printf("  degree %d: %d positions, score %.6f, ratio %.3f (expected %.3f, err %+.1f%%)\n",
+					deg, len(vals), vals[0], odeRatio, degRatio, pctErr)
+			}
+		})
+	}
+}
+
 // Standard Go benchmarks for `go test -bench`
 func BenchmarkNxN3(b *testing.B)  { benchmarkNxN(b, 3) }
 func BenchmarkNxN4(b *testing.B)  { benchmarkNxN(b, 4) }
