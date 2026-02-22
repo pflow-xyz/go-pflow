@@ -108,9 +108,15 @@ The classic strategy center > corner > edge emerges purely from graph connectivi
 
 ### Filtering Shared Places
 
-The algorithm must filter out control-flow places shared by all candidates. In TTT, every `x_play_*` transition also produces `o_turn` (opponent's turn token) and `move_tokens` (move counter). These are shared by all 9 x-play transitions, so they can't distinguish positions. Only the **unique** output (the piece place) carries strategic information.
+This is the non-obvious step. Without it, the algorithm produces useless results.
 
-This filtering is analogous to removing bias terms in neural networks — shared outputs are the "DC component" that shifts everything equally without adding discriminative signal.
+In TTT, every `x_play_*` transition produces three output places: the piece (e.g., `x00`), the opponent's turn token (`o_turn`), and a move counter (`move_tokens`). The piece place is unique to that candidate — only `x_play_00` produces `x00`. But `o_turn` and `move_tokens` are produced by all 9 x-play transitions identically.
+
+The problem: `o_turn` is an input to every `x_win_*` transition (the win check happens on the opponent's turn). If you include it in the connectivity count, every candidate connects to all 8 win targets through `o_turn`, giving every position rate=8. The heatmap collapses to a flat field — center, corner, and edge are indistinguishable.
+
+The fix: exclude any output place that is produced by more than one candidate. A place shared across candidates carries no discriminative signal — it's the DC component that shifts every candidate equally. Only places unique to a single candidate can distinguish one candidate from another.
+
+After filtering, each candidate's connectivity is measured solely through its piece place, which correctly captures position-specific strategic value. This is analogous to removing bias terms in neural networks or mean-centering features before computing distances — the shared component must be subtracted before the differences become meaningful.
 
 ## The ZK Pipeline
 
