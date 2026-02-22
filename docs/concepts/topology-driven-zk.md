@@ -281,12 +281,55 @@ The rate derivation is a convenience for when you don't have domain-specific rat
 
 For domains where the topology captures the essential dynamics (games, workflows, token standards), the auto-derived rates are sufficient. For domains where rates encode external physics, plug in measured rates — the topology-to-circuit pipeline works either way.
 
+## Two Modes: Combinatorial vs Continuous
+
+The limitations above point to a clean separation in the design space. There are two fundamentally different kinds of systems, and they need different things from the pipeline.
+
+### Combinatorial Mode
+
+**Games, workflows, governance, token standards.**
+
+The state space is finite and discrete. TTT has at most 5,478 reachable board states. A workflow has a bounded number of case states. An ERC-20 has integer balances.
+
+In these systems, the topology and discrete scoring are sufficient. The ODE provides a continuous visualization of token flow — useful for intuition, beautiful as a heatmap — but when it comes time to decide, you discretize anyway. The heatmap scoring that drives move selection in TTT was always discrete: count win lines, evaluate threats, pick the best move. There is no actual continuous quantity being modeled — no concentration gradient, no population dynamics, no physical process that genuinely evolves in continuous time. The "mass-action kinetics" framing is a useful metaphor that lets you apply ODE machinery, but the strategic information is graph-theoretic.
+
+**What the ZK circuit needs to prove:** The discrete state transition was valid (correct inputs consumed, correct outputs produced, guard conditions met). The ODE step is optional — it adds a richer public output (heatmap scores) but isn't necessary for correctness.
+
+**Rate derivation:** Auto-derive from topology. Degree centrality captures the essential structure.
+
+### Continuous Mode
+
+**Chemical kinetics, population ecology, epidemiology, economic models.**
+
+The state genuinely evolves in continuous time. Concentrations rise and fall. Populations oscillate. Epidemics peak and decay. The *trajectory* carries information, not just the structure — you care about *when* concentrations peak, in what order, and how fast.
+
+In these systems, the topology tells you what *can* happen, but the ODE tells you what happens *first*. That ordering can matter enormously. A chemical cascade where reaction A peaks before reaction B produces a different product mix than one where B peaks first, even if the topology is identical. You need the full Tsit5 integration because the transient dynamics are the point.
+
+**What the ZK circuit needs to prove:** The ODE integration was computed correctly. The 7-stage Tsit5 step, the mass-action rates, the stoichiometry-weighted derivatives — all of it. This is where the ZK ODE machinery earns its keep.
+
+**Rate derivation:** Bring domain-specific rates. They encode physical properties (activation energies, birth/death rates, transmission coefficients) that topology cannot capture.
+
+### The Pipeline Supports Both
+
+The `zkgen` compiler already handles both paths:
+
+| | Combinatorial | Continuous |
+|---|---|---|
+| **Rates** | Auto-derived from topology | Specified in model or `simulation.solver.rates` |
+| **ODE step** | Optional (enriches output) | Essential (proves trajectory) |
+| **Scoring** | Discrete win/block detection | Rate-weighted heatmap |
+| **Circuit focus** | State transition validity | Integration correctness |
+| **Model examples** | TTT, workflows, ERC-20 | Cascade reactions, SIR epidemics |
+
+The TTT work built the compiler. The next model that genuinely needs continuous dynamics will justify the ODE machinery on its own terms.
+
 ## Key Takeaway
 
 The Petri net is both the specification and the computation:
 
 - **The arcs define the differential equations** (stoichiometry matrix)
-- **The connectivity defines the rate constants** (target reachability — a useful first-order approximation)
+- **The connectivity defines the rate constants** (a useful first-order approximation for combinatorial systems)
 - **The structure defines what can be proven** (ZK circuit topology)
+- **The mode determines what matters** (topology for combinatorial, trajectory for continuous)
 
-No floating-point numbers. No symbolic differentiation. No learned weights. Just a graph — and the graph is the proof. But know the limits: topology-derived rates capture degree centrality, not deep strategy. For complex domains, bring your own rates; the pipeline accepts them.
+No floating-point numbers. No symbolic differentiation. No learned weights. Just a graph — and the graph is the proof. But know which mode you're in: if the topology is the answer, auto-derive the rates and keep it simple. If the dynamics are the answer, bring real rates and prove the integration.
