@@ -78,6 +78,11 @@ type Pipeline struct {
 	// auto-advance). Lateness gates on this — without the distinction,
 	// out-of-order batch input would look artificially late.
 	explicitWM int
+
+	// Input history. Recorded on Send/AdvanceWatermark/AdvanceProcessingTime
+	// (only after the call succeeds), so the log is the exact sequence
+	// replayable on a fresh pipeline.
+	events []PipelineEvent
 }
 
 // NewPipeline creates a fresh pipeline.
@@ -411,7 +416,11 @@ func (p *Pipeline) Send(key string, timestamp int) error {
 	if err := p.ensureBuilt(); err != nil {
 		return err
 	}
-	return p.sendBuilt(Element{Key: key, Timestamp: timestamp})
+	if err := p.sendBuilt(Element{Key: key, Timestamp: timestamp}); err != nil {
+		return err
+	}
+	p.recordSend(key, timestamp)
+	return nil
 }
 
 func (p *Pipeline) sendBuilt(e Element) error {
@@ -471,7 +480,11 @@ func (p *Pipeline) AdvanceWatermark(to int) error {
 	if to > p.explicitWM {
 		p.explicitWM = to
 	}
-	return p.advanceBuilt(to)
+	if err := p.advanceBuilt(to); err != nil {
+		return err
+	}
+	p.recordAdvanceWM(to)
+	return nil
 }
 
 // AdvanceProcessingTime advances the processing-time clock to `to`.
@@ -492,6 +505,7 @@ func (p *Pipeline) AdvanceProcessingTime(to int) error {
 		}
 	}
 	p.drain()
+	p.recordAdvanceProc(to)
 	return nil
 }
 
