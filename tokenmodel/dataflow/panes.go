@@ -78,3 +78,56 @@ func classifyTiming(wm, end int) PaneTiming {
 		return PaneLate
 	}
 }
+
+// canFireEmit reports whether the per-(k,w) emit gate allows another
+// pane to fire. Allowed when emit has never fired for this (k,w), or
+// when the watermark has advanced strictly past the last fire's wm.
+func (p *Pipeline) canFireEmit(pk paneKey) bool {
+	if p.lastEmitWM == nil {
+		return true
+	}
+	last, seen := p.lastEmitWM[pk]
+	if !seen {
+		return true
+	}
+	return p.explicitWM > last
+}
+
+// markEmitFired records the watermark at which an emit pane just fired
+// for (k,w). canFireEmit reads this to gate further fires.
+func (p *Pipeline) markEmitFired(pk paneKey) {
+	if p.lastEmitWM == nil {
+		p.lastEmitWM = map[paneKey]int{}
+	}
+	p.lastEmitWM[pk] = p.explicitWM
+}
+
+// recordPane appends a Pane for one trigger firing on (key, window). The
+// reported Count depends on accMode: Discarding reports this firing's
+// increment; Accumulating reports the running cumulative total since the
+// window opened.
+func (p *Pipeline) recordPane(pk paneKey, increment int) {
+	if p.paneIndex == nil {
+		p.paneIndex = map[paneKey]int{}
+	}
+	if p.paneTotal == nil {
+		p.paneTotal = map[paneKey]int{}
+	}
+	idx := p.paneIndex[pk]
+	p.paneIndex[pk] = idx + 1
+	p.paneTotal[pk] += increment
+
+	count := increment
+	if p.accMode == Accumulating {
+		count = p.paneTotal[pk]
+	}
+	wm := p.explicitWM
+	p.panes = append(p.panes, Pane{
+		Key:    pk.Key,
+		Window: pk.Window,
+		Index:  idx,
+		Count:  count,
+		Timing: classifyTiming(wm, pk.Window.End),
+		AtWM:   wm,
+	})
+}

@@ -123,7 +123,7 @@ func (r *SubnetRunner) fireToQuiescence() {
 	const safetyCap = 1 << 20
 	for i := 0; i < safetyCap; i++ {
 		fired := false
-		funcs := guard.MakeAggregates(toGuardMarking(r.state.Marking))
+		funcs := guard.MakeAggregates(r.state.Marking.AsGuardMarking())
 		for _, t := range r.subnet.Model.Transitions {
 			if !r.state.Enabled(t.ID) {
 				continue
@@ -136,7 +136,7 @@ func (r *SubnetRunner) fireToQuiescence() {
 			}
 			if err == nil {
 				fired = true
-				funcs = guard.MakeAggregates(toGuardMarking(r.state.Marking))
+				funcs = guard.MakeAggregates(r.state.Marking.AsGuardMarking())
 			}
 		}
 		if !fired {
@@ -145,13 +145,6 @@ func (r *SubnetRunner) fireToQuiescence() {
 	}
 }
 
-func toGuardMarking(m tmpetri.Marking) guard.Marking {
-	out := make(guard.Marking, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
-	return out
-}
 
 // drainOutputs ships every token sitting on an out-port place onto its
 // bound wire(s) and zeroes the local count. Out-ports that have no bound
@@ -331,7 +324,7 @@ func (d *DistributedBundle) isQuiescent() bool {
 	d.tx.mu.RUnlock()
 	for _, r := range d.runners {
 		r.mu.RLock()
-		funcs := guard.MakeAggregates(toGuardMarking(r.state.Marking))
+		funcs := guard.MakeAggregates(r.state.Marking.AsGuardMarking())
 		for _, t := range r.subnet.Model.Transitions {
 			if !r.state.Enabled(t.ID) {
 				continue

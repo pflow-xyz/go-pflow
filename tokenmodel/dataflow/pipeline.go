@@ -94,6 +94,11 @@ type Pipeline struct {
 	panes      []Pane
 	paneIndex  map[paneKey]int
 	paneTotal  map[paneKey]int
+
+	// windowTxn maps a flattened transition ID (e.g. "win:k:[0,10)/emit")
+	// to the (key, window) it belongs to. Populated by Compile so the
+	// drain loop can look up structured metadata without parsing IDs.
+	windowTxn map[string]paneKey
 	// lastEmitWM gates emit re-firing per (k,w): a fresh pane is only
 	// allowed once the explicit watermark has advanced past the value
 	// recorded at the previous fire. Prevents AfterCount-style triggers
@@ -185,193 +190,6 @@ func (p *Pipeline) FromElements(elems []Element) (*Result, error) {
 		return nil, err
 	}
 	return p.Run()
-}
-
-// Compile lowers the pipeline to a subnet.Bundle without flattening or
-// firing. Exported for inspection / serialization.
-func (p *Pipeline) Compile() (*subnet.Bundle, error) {
-	if p.window == nil {
-		return nil, errors.New("dataflow: no window strategy")
-	}
-	switch p.window.kind() {
-	case "fixed", "sliding", "sessions":
-	default:
-		return nil, fmt.Errorf("dataflow: window kind %q: %w", p.window.kind(), ErrNotImplemented)
-	}
-	if p.stage != stageCountPerKey {
-		return nil, fmt.Errorf("dataflow: stage not set: %w", ErrNotImplemented)
-	}
-	if len(p.keys) == 0 {
-		return nil, errors.New("dataflow: no keys declared")
-	}
-	if p.horizon <= 0 {
-		return nil, errors.New("dataflow: horizon must be positive")
-	}
-
-	windows := p.window.Materialize(p.horizon)
-	perKey, perKeyOK := p.window.(PerKeyWindowFn)
-	windowsForKey := func(key string) []Window {
-		if perKeyOK {
-			return perKey.WindowsForKey(key)
-		}
-		return windows
-	}
-
-	trigger := p.trigger
-	if trigger == nil {
-		trigger = AfterWatermark{}
-	}
-	needProc := trigger.needsProcessingClock()
-
-	b := subnet.NewBundle(p.name)
-
-	// Watermark subnet: a single `wm` place, an `advance` transition that
-	// produces a token into `wm`. `wm` is exposed as an out-port so every
-	// downstream (key,window) subnet aliases its `wm` in-port to this slot.
-	wmModel := tmpetri.NewModel("watermark")
-	wmModel.AddPlace(tmpetri.Place{ID: "wm"})
-	wmModel.AddTransition(tmpetri.Transition{ID: "advance"})
-	wmModel.AddArc(tmpetri.Arc{Source: "advance", Target: "wm"})
-	b.AddSubnet(subnet.Subnet{
-		ID:    "watermark",
-		Model: wmModel,
-		Ports: []subnet.Port{{ID: "out", Kind: subnet.PortOut, Place: "wm", Schema: "watermark"}},
-	})
-
-	// Processing-time clock subnet: parallel to the watermark. Only emitted
-	// if the trigger needs it (AfterProcessingTime or any composite of one).
-	if needProc {
-		procModel := tmpetri.NewModel("proc-clock")
-		procModel.AddPlace(tmpetri.Place{ID: "proc"})
-		procModel.AddTransition(tmpetri.Transition{ID: "tick"})
-		procModel.AddArc(tmpetri.Arc{Source: "tick", Target: "proc"})
-		b.AddSubnet(subnet.Subnet{
-			ID:    "proc-clock",
-			Model: procModel,
-			Ports: []subnet.Port{{ID: "out", Kind: subnet.PortOut, Place: "proc", Schema: "proc-time"}},
-		})
-	}
-
-	// Per-key source subnet: one place `arrivals` (initial 0). For each
-	// window, an inputless `assign:[s,e)` transition with guard on
-	// event_time produces a token into per-window out-port `to:[s,e)`.
-	// Sources don't actually need an internal place: the assign transitions
-	// fire directly into the out-port places, which are aliased away on
-	// link. Each source subnet thus declares one out-port per window.
-	for _, k := range p.keys {
-		// Filter: if a keep-set is declared and this key isn't in it, the
-		// per-key source subnet is omitted entirely. Sending an element for
-		// this key still errors at Send (unknown-or-dropped key, same path).
-		if p.keepKeys != nil && !p.keepKeys[k] {
-			continue
-		}
-		kw := windowsForKey(k)
-		if len(kw) == 0 {
-			// Per-key window strategy with no sessions for this key: emit
-			// only an empty source subnet (no assigns, no ports). Send
-			// will reject this key at Compile-time naturally because no
-			// assign exists.
-			continue
-		}
-		srcModel := tmpetri.NewModel("source:" + k)
-		ports := make([]subnet.Port, 0, len(kw))
-		for _, w := range kw {
-			outID := "to:" + w.String()
-			assignID := "assign:" + w.String()
-			srcModel.AddPlace(tmpetri.Place{ID: outID})
-			srcModel.AddTransition(tmpetri.Transition{
-				ID:    assignID,
-				Guard: fmt.Sprintf("event_time >= %d && event_time < %d", w.Start, w.End),
-			})
-			srcModel.AddArc(tmpetri.Arc{Source: assignID, Target: outID})
-			ports = append(ports, subnet.Port{
-				ID:     "w:" + w.String(),
-				Kind:   subnet.PortOut,
-				Place:  outID,
-				Schema: "element:" + k,
-			})
-		}
-		b.AddSubnet(subnet.Subnet{
-			ID:    "src:" + k,
-			Model: srcModel,
-			Ports: ports,
-		})
-	}
-
-	// Per-(key,window) window subnet: `in` (arrivals from source), `wm`
-	// (watermark feed), accumulator `acc`, `out` (drained emission). One
-	// `emit` transition consumes one `acc` token per fire, gated by
-	// tokens("wm") >= w.End; output goes to `out`. Discarding semantics:
-	// emit fires until `acc` is empty, and the residual count lands in
-	// `out`. Each emit fire is a per-element emission to the collector.
-	for _, k := range p.keys {
-		if p.keepKeys != nil && !p.keepKeys[k] {
-			continue
-		}
-		for _, w := range windowsForKey(k) {
-			subID := "win:" + k + ":" + w.String()
-			m := tmpetri.NewModel(subID)
-			m.AddPlace(tmpetri.Place{ID: "in"})
-			m.AddPlace(tmpetri.Place{ID: "wm"})
-			m.AddPlace(tmpetri.Place{ID: "acc"})
-			m.AddPlace(tmpetri.Place{ID: "out"})
-			if needProc {
-				m.AddPlace(tmpetri.Place{ID: "proc"})
-			}
-
-			// receive: in -> acc. Always enabled when `in` has a token.
-			m.AddTransition(tmpetri.Transition{ID: "receive"})
-			m.AddArc(tmpetri.Arc{Source: "in", Target: "receive"})
-			m.AddArc(tmpetri.Arc{Source: "receive", Target: "acc"})
-
-			// emit: acc -> out, gated by the trigger's compiled guard.
-			// Local port names (wm, proc) and internal names (acc) are all
-			// rewritten through the alias map at flatten time.
-			m.AddTransition(tmpetri.Transition{ID: "emit", Guard: trigger.emitGuard(w.End)})
-			m.AddArc(tmpetri.Arc{Source: "acc", Target: "emit"})
-			m.AddArc(tmpetri.Arc{Source: "emit", Target: "out"})
-
-			// close: GC the window once the watermark has advanced past
-			// w.End + allowedLateness. Drains any leftover acc into out
-			// (force-emit on close), guaranteeing acc is structurally empty
-			// after close. Combined with the lateness gate at assign-time,
-			// the window subnet's per-place marking is bounded once closed.
-			closeGuard := fmt.Sprintf(`tokens("wm") > %d`, w.End+p.allowedLateness)
-			m.AddTransition(tmpetri.Transition{ID: "close", Guard: closeGuard})
-			m.AddArc(tmpetri.Arc{Source: "acc", Target: "close"})
-			m.AddArc(tmpetri.Arc{Source: "close", Target: "out"})
-
-			ports := []subnet.Port{
-				{ID: "feed", Kind: subnet.PortIn, Place: "in", Schema: "element:" + k},
-				{ID: "wm", Kind: subnet.PortIn, Place: "wm", Schema: "watermark"},
-				{ID: "result", Kind: subnet.PortOut, Place: "out", Schema: "count:" + k},
-			}
-			if needProc {
-				ports = append(ports, subnet.Port{ID: "proc", Kind: subnet.PortIn, Place: "proc", Schema: "proc-time"})
-			}
-
-			b.AddSubnet(subnet.Subnet{ID: subID, Model: m, Ports: ports})
-
-			// Links: source.w:[..] -> window.feed; watermark.out -> window.wm;
-			// proc-clock.out -> window.proc if the trigger reads proc time.
-			b.AddLink(subnet.Link{
-				FromSubnet: "src:" + k, FromPort: "w:" + w.String(),
-				ToSubnet: subID, ToPort: "feed",
-			})
-			b.AddLink(subnet.Link{
-				FromSubnet: "watermark", FromPort: "out",
-				ToSubnet: subID, ToPort: "wm",
-			})
-			if needProc {
-				b.AddLink(subnet.Link{
-					FromSubnet: "proc-clock", FromPort: "out",
-					ToSubnet: subID, ToPort: "proc",
-				})
-			}
-		}
-	}
-
-	return b, nil
 }
 
 // ensureBuilt compiles + flattens + replays buffered inputs. Called by
@@ -570,7 +388,7 @@ func (p *Pipeline) drain() {
 		// a pending close still drains acc even if the user's trigger
 		// never fired (e.g. AfterCount(100) on a window that only saw 30
 		// events).
-		funcs := guard.MakeAggregates(toGuardMarking(p.state.Marking))
+		funcs := guard.MakeAggregates(p.state.Marking.AsGuardMarking())
 		for _, t := range p.state.Model.Transitions {
 			isEmit := endsWith(t.ID, "/emit")
 			isClose := endsWith(t.ID, "/close")
@@ -580,11 +398,11 @@ func (p *Pipeline) drain() {
 			if !p.state.Enabled(t.ID) {
 				continue
 			}
-			key, win, ok := parseWindowSubnetID(t.ID)
+			pk, ok := p.windowTxn[t.ID]
 			// Emit gate: only allow one pane per (k,w) per watermark
 			// advance. close has no such gate — when wm > end+lateness it
 			// always runs to drain residual acc.
-			if isEmit && ok && !p.canFireEmit(key, win) {
+			if isEmit && ok && !p.canFireEmit(pk) {
 				continue
 			}
 			// First fire: evaluate the user's trigger guard.
@@ -593,7 +411,7 @@ func (p *Pipeline) drain() {
 			}
 			fired = true
 			increment := 1
-			funcs = guard.MakeAggregates(toGuardMarking(p.state.Marking))
+			funcs = guard.MakeAggregates(p.state.Marking.AsGuardMarking())
 			// Force-drain the rest of acc as part of this single pane.
 			// The trigger has fired; one logical firing emits everything
 			// currently buffered. Subsequent fires bypass the guard via
@@ -604,12 +422,12 @@ func (p *Pipeline) drain() {
 				}
 				increment++
 			}
-			funcs = guard.MakeAggregates(toGuardMarking(p.state.Marking))
+			funcs = guard.MakeAggregates(p.state.Marking.AsGuardMarking())
 			if ok && increment > 0 {
 				if isEmit {
-					p.markEmitFired(key, win)
+					p.markEmitFired(pk)
 				}
-				p.recordPane(key, win, increment)
+				p.recordPane(pk, increment)
 			}
 		}
 		if !fired {
@@ -618,149 +436,6 @@ func (p *Pipeline) drain() {
 	}
 }
 
-// canFireEmit reports whether the per-(k,w) emit gate allows another
-// pane to fire. Allowed when emit has never fired for this (k,w), or
-// when the watermark has advanced strictly past the last fire's wm.
-func (p *Pipeline) canFireEmit(key string, win Window) bool {
-	if p.lastEmitWM == nil {
-		return true
-	}
-	last, seen := p.lastEmitWM[paneKey{Key: key, Window: win}]
-	if !seen {
-		return true
-	}
-	return p.explicitWM > last
-}
-
-// markEmitFired records the watermark at which an emit pane just fired
-// for (k,w). canFireEmit reads this to gate further fires.
-func (p *Pipeline) markEmitFired(key string, win Window) {
-	if p.lastEmitWM == nil {
-		p.lastEmitWM = map[paneKey]int{}
-	}
-	p.lastEmitWM[paneKey{Key: key, Window: win}] = p.explicitWM
-}
-
-// recordPane appends a Pane for one trigger firing on (key, window). The
-// reported Count depends on accMode: Discarding reports this firing's
-// increment; Accumulating reports the running cumulative total since the
-// window opened.
-func (p *Pipeline) recordPane(key string, win Window, increment int) {
-	if p.paneIndex == nil {
-		p.paneIndex = map[paneKey]int{}
-	}
-	if p.paneTotal == nil {
-		p.paneTotal = map[paneKey]int{}
-	}
-	pk := paneKey{Key: key, Window: win}
-	idx := p.paneIndex[pk]
-	p.paneIndex[pk] = idx + 1
-	p.paneTotal[pk] += increment
-
-	count := increment
-	if p.accMode == Accumulating {
-		count = p.paneTotal[pk]
-	}
-	wm := p.explicitWM
-	p.panes = append(p.panes, Pane{
-		Key:    key,
-		Window: win,
-		Index:  idx,
-		Count:  count,
-		Timing: classifyTiming(wm, win.End),
-		AtWM:   wm,
-	})
-}
-
-// parseWindowSubnetID extracts (key, window) from a flattened transition ID
-// of the form "win:<key>:[<start>,<end>)/(emit|close)". Returns ok=false
-// if the ID doesn't match the expected shape.
-func parseWindowSubnetID(id string) (string, Window, bool) {
-	// Strip "/emit" or "/close" suffix.
-	var body string
-	switch {
-	case endsWith(id, "/emit"):
-		body = id[:len(id)-len("/emit")]
-	case endsWith(id, "/close"):
-		body = id[:len(id)-len("/close")]
-	default:
-		return "", Window{}, false
-	}
-	const prefix = "win:"
-	if len(body) < len(prefix) || body[:len(prefix)] != prefix {
-		return "", Window{}, false
-	}
-	body = body[len(prefix):]
-	// body is "<key>:[<start>,<end>)"; the window spec begins at the last "[".
-	bracket := -1
-	for i := len(body) - 1; i >= 0; i-- {
-		if body[i] == '[' {
-			bracket = i
-			break
-		}
-	}
-	if bracket < 1 || body[bracket-1] != ':' {
-		return "", Window{}, false
-	}
-	key := body[:bracket-1]
-	winStr := body[bracket:]
-	w, ok := parseWindowString(winStr)
-	if !ok {
-		return "", Window{}, false
-	}
-	return key, w, true
-}
-
-// parseWindowString parses "[start,end)" back into a Window.
-func parseWindowString(s string) (Window, bool) {
-	if len(s) < 5 || s[0] != '[' || s[len(s)-1] != ')' {
-		return Window{}, false
-	}
-	inner := s[1 : len(s)-1]
-	comma := -1
-	for i, r := range inner {
-		if r == ',' {
-			comma = i
-			break
-		}
-	}
-	if comma < 0 {
-		return Window{}, false
-	}
-	start, ok1 := parseInt(inner[:comma])
-	end, ok2 := parseInt(inner[comma+1:])
-	if !ok1 || !ok2 {
-		return Window{}, false
-	}
-	return Window{Start: start, End: end}, true
-}
-
-func parseInt(s string) (int, bool) {
-	if s == "" {
-		return 0, false
-	}
-	n := 0
-	neg := false
-	i := 0
-	if s[0] == '-' {
-		neg = true
-		i = 1
-	}
-	if i == len(s) {
-		return 0, false
-	}
-	for ; i < len(s); i++ {
-		c := s[i]
-		if c < '0' || c > '9' {
-			return 0, false
-		}
-		n = n*10 + int(c-'0')
-	}
-	if neg {
-		n = -n
-	}
-	return n, true
-}
 
 // Result is the structured output of a CountPerKey pipeline.
 type Result struct {
@@ -875,10 +550,3 @@ func endsWith(s, suffix string) bool {
 	return s[len(s)-len(suffix):] == suffix
 }
 
-func toGuardMarking(m tmpetri.Marking) guard.Marking {
-	out := make(guard.Marking, len(m))
-	for k, v := range m {
-		out[k] = v
-	}
-	return out
-}
