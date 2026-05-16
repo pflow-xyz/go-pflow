@@ -83,6 +83,23 @@ type Pipeline struct {
 	// (only after the call succeeds), so the log is the exact sequence
 	// replayable on a fresh pipeline.
 	events []PipelineEvent
+
+	// Accumulation mode and pane log. accMode controls what Pane.Count
+	// reports (increment vs running total). panes is the in-order log of
+	// trigger firings observed during drain. paneIndex tracks the next
+	// Pane.Index per (key, window); paneTotal tracks the cumulative count
+	// per (key, window) emitted into `out` since the window opened (used
+	// when accMode == Accumulating).
+	accMode    AccumulationMode
+	panes      []Pane
+	paneIndex  map[paneKey]int
+	paneTotal  map[paneKey]int
+	// lastEmitWM gates emit re-firing per (k,w): a fresh pane is only
+	// allowed once the explicit watermark has advanced past the value
+	// recorded at the previous fire. Prevents AfterCount-style triggers
+	// from re-firing on every subsequent element within the same
+	// watermark phase.
+	lastEmitWM map[paneKey]int
 }
 
 // NewPipeline creates a fresh pipeline.
@@ -523,6 +540,16 @@ func (p *Pipeline) advanceBuilt(to int) error {
 // drain fires all currently-enabled receive and emit transitions to
 // quiescence. Receive is unguarded so just Enabled. Emit needs marking
 // aggregates so we go through FireWithGuardFuncs.
+//
+// Pane semantics: when an emit transition's guard becomes true for a
+// (key, window), that's *one* trigger firing — drain ALL of acc into out
+// as a single pane. Subsequent fires for the same (k,w) are gated until
+// the watermark advances (one pane per "watermark phase"), so AfterCount
+// produces exactly one early pane and AfterWatermark produces one on-time
+// pane on a 12-element stream rather than 12 single-token panes.
+//
+// Close transitions are the GC path (wm > end+lateness) — they always
+// run when enabled and don't honor the per-window emit gate.
 func (p *Pipeline) drain() {
 	for {
 		fired := false
@@ -538,27 +565,201 @@ func (p *Pipeline) drain() {
 				fired = true
 			}
 		}
-		// Emit and close: both are guarded acc -> out transitions; close is
-		// the GC fallback once wm > end+lateness. Iterate together so a
-		// pending close still drains acc even if the user's trigger never
-		// fired (e.g. AfterCount(100) on a window that only saw 30 events).
+		// Emit and close: both are guarded acc -> out transitions; close
+		// is the GC fallback once wm > end+lateness. Iterate together so
+		// a pending close still drains acc even if the user's trigger
+		// never fired (e.g. AfterCount(100) on a window that only saw 30
+		// events).
 		funcs := guard.MakeAggregates(toGuardMarking(p.state.Marking))
 		for _, t := range p.state.Model.Transitions {
-			if !endsWith(t.ID, "/emit") && !endsWith(t.ID, "/close") {
+			isEmit := endsWith(t.ID, "/emit")
+			isClose := endsWith(t.ID, "/close")
+			if !isEmit && !isClose {
 				continue
 			}
+			if !p.state.Enabled(t.ID) {
+				continue
+			}
+			key, win, ok := parseWindowSubnetID(t.ID)
+			// Emit gate: only allow one pane per (k,w) per watermark
+			// advance. close has no such gate — when wm > end+lateness it
+			// always runs to drain residual acc.
+			if isEmit && ok && !p.canFireEmit(key, win) {
+				continue
+			}
+			// First fire: evaluate the user's trigger guard.
+			if err := p.state.FireWithGuardFuncs(t.ID, nil, funcs); err != nil {
+				continue
+			}
+			fired = true
+			increment := 1
+			funcs = guard.MakeAggregates(toGuardMarking(p.state.Marking))
+			// Force-drain the rest of acc as part of this single pane.
+			// The trigger has fired; one logical firing emits everything
+			// currently buffered. Subsequent fires bypass the guard via
+			// plain Fire() (Enabled checks only structural arc tokens).
 			for p.state.Enabled(t.ID) {
-				if err := p.state.FireWithGuardFuncs(t.ID, nil, funcs); err != nil {
+				if err := p.state.Fire(t.ID); err != nil {
 					break
 				}
-				fired = true
-				funcs = guard.MakeAggregates(toGuardMarking(p.state.Marking))
+				increment++
+			}
+			funcs = guard.MakeAggregates(toGuardMarking(p.state.Marking))
+			if ok && increment > 0 {
+				if isEmit {
+					p.markEmitFired(key, win)
+				}
+				p.recordPane(key, win, increment)
 			}
 		}
 		if !fired {
 			return
 		}
 	}
+}
+
+// canFireEmit reports whether the per-(k,w) emit gate allows another
+// pane to fire. Allowed when emit has never fired for this (k,w), or
+// when the watermark has advanced strictly past the last fire's wm.
+func (p *Pipeline) canFireEmit(key string, win Window) bool {
+	if p.lastEmitWM == nil {
+		return true
+	}
+	last, seen := p.lastEmitWM[paneKey{Key: key, Window: win}]
+	if !seen {
+		return true
+	}
+	return p.explicitWM > last
+}
+
+// markEmitFired records the watermark at which an emit pane just fired
+// for (k,w). canFireEmit reads this to gate further fires.
+func (p *Pipeline) markEmitFired(key string, win Window) {
+	if p.lastEmitWM == nil {
+		p.lastEmitWM = map[paneKey]int{}
+	}
+	p.lastEmitWM[paneKey{Key: key, Window: win}] = p.explicitWM
+}
+
+// recordPane appends a Pane for one trigger firing on (key, window). The
+// reported Count depends on accMode: Discarding reports this firing's
+// increment; Accumulating reports the running cumulative total since the
+// window opened.
+func (p *Pipeline) recordPane(key string, win Window, increment int) {
+	if p.paneIndex == nil {
+		p.paneIndex = map[paneKey]int{}
+	}
+	if p.paneTotal == nil {
+		p.paneTotal = map[paneKey]int{}
+	}
+	pk := paneKey{Key: key, Window: win}
+	idx := p.paneIndex[pk]
+	p.paneIndex[pk] = idx + 1
+	p.paneTotal[pk] += increment
+
+	count := increment
+	if p.accMode == Accumulating {
+		count = p.paneTotal[pk]
+	}
+	wm := p.explicitWM
+	p.panes = append(p.panes, Pane{
+		Key:    key,
+		Window: win,
+		Index:  idx,
+		Count:  count,
+		Timing: classifyTiming(wm, win.End),
+		AtWM:   wm,
+	})
+}
+
+// parseWindowSubnetID extracts (key, window) from a flattened transition ID
+// of the form "win:<key>:[<start>,<end>)/(emit|close)". Returns ok=false
+// if the ID doesn't match the expected shape.
+func parseWindowSubnetID(id string) (string, Window, bool) {
+	// Strip "/emit" or "/close" suffix.
+	var body string
+	switch {
+	case endsWith(id, "/emit"):
+		body = id[:len(id)-len("/emit")]
+	case endsWith(id, "/close"):
+		body = id[:len(id)-len("/close")]
+	default:
+		return "", Window{}, false
+	}
+	const prefix = "win:"
+	if len(body) < len(prefix) || body[:len(prefix)] != prefix {
+		return "", Window{}, false
+	}
+	body = body[len(prefix):]
+	// body is "<key>:[<start>,<end>)"; the window spec begins at the last "[".
+	bracket := -1
+	for i := len(body) - 1; i >= 0; i-- {
+		if body[i] == '[' {
+			bracket = i
+			break
+		}
+	}
+	if bracket < 1 || body[bracket-1] != ':' {
+		return "", Window{}, false
+	}
+	key := body[:bracket-1]
+	winStr := body[bracket:]
+	w, ok := parseWindowString(winStr)
+	if !ok {
+		return "", Window{}, false
+	}
+	return key, w, true
+}
+
+// parseWindowString parses "[start,end)" back into a Window.
+func parseWindowString(s string) (Window, bool) {
+	if len(s) < 5 || s[0] != '[' || s[len(s)-1] != ')' {
+		return Window{}, false
+	}
+	inner := s[1 : len(s)-1]
+	comma := -1
+	for i, r := range inner {
+		if r == ',' {
+			comma = i
+			break
+		}
+	}
+	if comma < 0 {
+		return Window{}, false
+	}
+	start, ok1 := parseInt(inner[:comma])
+	end, ok2 := parseInt(inner[comma+1:])
+	if !ok1 || !ok2 {
+		return Window{}, false
+	}
+	return Window{Start: start, End: end}, true
+}
+
+func parseInt(s string) (int, bool) {
+	if s == "" {
+		return 0, false
+	}
+	n := 0
+	neg := false
+	i := 0
+	if s[0] == '-' {
+		neg = true
+		i = 1
+	}
+	if i == len(s) {
+		return 0, false
+	}
+	for ; i < len(s); i++ {
+		c := s[i]
+		if c < '0' || c > '9' {
+			return 0, false
+		}
+		n = n*10 + int(c-'0')
+	}
+	if neg {
+		n = -n
+	}
+	return n, true
 }
 
 // Result is the structured output of a CountPerKey pipeline.

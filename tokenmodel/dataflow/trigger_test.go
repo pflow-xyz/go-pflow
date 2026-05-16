@@ -5,12 +5,12 @@ import (
 )
 
 func TestAfterCountFiresEarly(t *testing.T) {
-	// AfterCount semantics on this substrate: emit fires once per token
-	// while tokens("acc") >= N. So AfterCount(N) acts as "wait for N in
-	// acc, then drain one." For continuous emission once threshold met,
-	// users typically compose Any(AfterCount{N}, AfterWatermark{}) so the
-	// watermark drains anything left after the early fire — verified
-	// separately in TestCompositeAnyTriggerFiresEither.
+	// AfterCount semantics with the L1.2 pane model: when the threshold
+	// is first met, one trigger firing drains ALL of acc into out as a
+	// single pane. The trigger is then gated until the watermark advances
+	// — subsequent arrivals within the same watermark phase only refill
+	// acc; they don't refire. Composing with AfterWatermark drains the
+	// residual when the window closes (TestCompositeAnyTriggerFiresEither).
 	p := NewPipeline("ac").
 		WithKeys("a").
 		WindowInto(NewFixedWindows(10), 10).
@@ -27,25 +27,36 @@ func TestAfterCountFiresEarly(t *testing.T) {
 	if err := p.Send("a", 2); err != nil {
 		t.Fatal(err)
 	}
-	// Two elements: acc=2, guard fires once → acc=1, guard fails again.
-	// out=1 captures the single early emission. The other token waits in
-	// acc until either another arrival or a re-trigger.
+	// Two elements: acc=2, threshold met, the pane drains both. out=2.
 	res, err := p.Run()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := res.Counts["a"][Window{0, 10}]; got != 1 {
-		t.Errorf("after 2 elements: out=%d, want 1 (one early-fire per threshold crossing)", got)
+	if got := res.Counts["a"][Window{0, 10}]; got != 2 {
+		t.Errorf("after 2 elements: out=%d, want 2 (pane drains acc)", got)
+	}
+	if panes := p.Panes(); len(panes) != 1 || panes[0].Count != 2 {
+		t.Errorf("expected 1 pane of 2, got %+v", panes)
 	}
 
-	// Send a third element: acc back to 2, guard fires again, one more
-	// drains. out becomes 2.
+	// Send a third element within the same watermark phase: emit is
+	// gated (AfterCount fires once per pane epoch). acc holds it, out
+	// stays at 2.
 	if err := p.Send("a", 3); err != nil {
 		t.Fatal(err)
 	}
 	res2, _ := p.Run()
 	if got := res2.Counts["a"][Window{0, 10}]; got != 2 {
-		t.Errorf("after 3 elements: out=%d, want 2", got)
+		t.Errorf("after 3 elements (gated): out=%d, want 2", got)
+	}
+	// Send a fourth element to bring acc to 2 again. The gate is still
+	// closed at this wm, so still no re-fire.
+	if err := p.Send("a", 4); err != nil {
+		t.Fatal(err)
+	}
+	res3, _ := p.Run()
+	if got := res3.Counts["a"][Window{0, 10}]; got != 2 {
+		t.Errorf("after 4 elements (still gated): out=%d, want 2", got)
 	}
 }
 

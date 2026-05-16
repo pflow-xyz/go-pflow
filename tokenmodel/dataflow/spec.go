@@ -9,8 +9,6 @@
 //   - SessionWindows requires PlanSessions on a concrete element stream,
 //     so a session spec round-trips the gap but the caller must replay
 //     PlanSessions before Send / Run.
-//   - The accumulating-vs-discarding flag (L1.2, deferred) has no spec
-//     field yet; revisit when the pane API lands.
 package dataflow
 
 import (
@@ -37,7 +35,16 @@ type PipelineSpec struct {
 	Trigger         *TriggerSpec `json:"trigger,omitempty"`
 	Stage           string       `json:"stage"`
 	AllowedLateness int          `json:"allowed_lateness,omitempty"`
+	// AccumulationMode is "discarding" (default) or "accumulating". Controls
+	// what Pane.Count reports; does not affect Result.Counts.
+	AccumulationMode string `json:"accumulation_mode,omitempty"`
 }
+
+// Accumulation mode tags for PipelineSpec.AccumulationMode.
+const (
+	AccumulationDiscarding  = "discarding"
+	AccumulationAccumulating = "accumulating"
+)
 
 // WindowSpec describes a windowing strategy.
 type WindowSpec struct {
@@ -87,6 +94,9 @@ func (p *Pipeline) Spec() *PipelineSpec {
 		t := encodeTrigger(p.trigger)
 		s.Trigger = &t
 	}
+	if p.accMode == Accumulating {
+		s.AccumulationMode = AccumulationAccumulating
+	}
 	return s
 }
 
@@ -118,6 +128,14 @@ func (s *PipelineSpec) Build() (*Pipeline, error) {
 	}
 	if s.AllowedLateness > 0 {
 		p.WithAllowedLateness(s.AllowedLateness)
+	}
+	switch s.AccumulationMode {
+	case "", AccumulationDiscarding:
+		// default
+	case AccumulationAccumulating:
+		p.WithAccumulationMode(Accumulating)
+	default:
+		return nil, fmt.Errorf("dataflow: unknown accumulation_mode %q", s.AccumulationMode)
 	}
 	switch s.Stage {
 	case StageCountPerKey, "":
