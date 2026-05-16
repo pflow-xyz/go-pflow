@@ -3,27 +3,17 @@
 Layered so each tier is independently shippable and the next tier compiles
 down to the previous — same pattern as `dataflow → subnet → petri` already.
 
-## Status
+## Open items
 
-| Tier | Item | State |
+L1–L4.2 and L5.2 are shipped on `windowing-slice` — see git log for details.
+
+| Tier | Item | Where |
 |---|---|---|
-| L1.1 | Allowed-lateness windows | ✅ shipped |
-| L1.2 | Accumulating vs discarding panes (pane-log API) | ✅ shipped |
-| L1.3 | Window GC via `close` transition | ✅ shipped |
-| L1.4 | PerKey/PerWindow Max/Min/Mean combiners | ✅ shipped |
-| L2.1 | Pipeline event log + replay | ✅ shipped |
-| L2.2 | Snapshots (marking + watermark + cursor) | ✅ shipped |
-| L2.3 | Replay round-trip tests | ✅ shipped |
-| L3.1 | In-process Go-channel transport | ✅ shipped |
-| L3.2 | Guarded transitions in `SubnetRunner` + sink semantics | ✅ shipped (window subnets run distributed end-to-end; full `Pipeline.RunDistributed` still wants orchestrator-driven sources/watermark) |
-| L3.3 | Blocking-backpressure transport mode | ✅ shipped |
-| L4.1 | Bundle Graphviz DOT renderer | ✅ shipped |
-| L4.2 | PipelineSpec JSON-LD round-trip | ✅ shipped |
-| L4.3 | pflow-rs port of subnet + windowing | not started (other repo) |
-| L4.4 | pflow-xyz editor bundle mode | not started (other repo) |
-| L5.1 | Streaming → ZK | not started (`bitwrap-io`) |
-| L5.2 | Process-mined dataflow (PipelineSpec from event log) | ✅ shipped |
-| L5.3 | Governance pipelines | not started (`modeldao-org`) |
+| L3.2+ | Full `Pipeline.RunDistributed()` — orchestrator-driven sources + watermark | this repo |
+| L4.3  | pflow-rs port of subnet + windowing | `pflow-rs` |
+| L4.4  | pflow-xyz editor bundle mode | `pflow-xyz` |
+| L5.1  | Streaming → ZK | `bitwrap-io` |
+| L5.3  | Governance pipelines | `modeldao-org` |
 
 ## L1 — Harden the streaming substrate *(2–3 weeks)*
 
