@@ -210,6 +210,82 @@ func (pc *PCollection) PerKeyTotal() map[string]int {
 	return out
 }
 
+// PerKeyMax returns the maximum per-window count for each key. Equivalent
+// to Beam's Combine.PerKey(Max) over a windowed PCollection.
+func (pc *PCollection) PerKeyMax() map[string]int {
+	out := map[string]int{}
+	for k, row := range pc.Counts {
+		max := 0
+		first := true
+		for _, n := range row {
+			if first || n > max {
+				max = n
+				first = false
+			}
+		}
+		out[k] = max
+	}
+	return out
+}
+
+// PerKeyMin returns the minimum per-window count for each key, restricted
+// to non-empty rows. Empty rows are omitted from the result.
+func (pc *PCollection) PerKeyMin() map[string]int {
+	out := map[string]int{}
+	for k, row := range pc.Counts {
+		if len(row) == 0 {
+			continue
+		}
+		min := 0
+		first := true
+		for _, n := range row {
+			if first || n < min {
+				min = n
+				first = false
+			}
+		}
+		out[k] = min
+	}
+	return out
+}
+
+// PerKeyMean returns the arithmetic mean of per-window counts for each key.
+// Empty rows are omitted (no NaNs). Useful for "average orders per hour
+// per drink".
+func (pc *PCollection) PerKeyMean() map[string]float64 {
+	out := map[string]float64{}
+	for k, row := range pc.Counts {
+		if len(row) == 0 {
+			continue
+		}
+		total := 0
+		for _, n := range row {
+			total += n
+		}
+		out[k] = float64(total) / float64(len(row))
+	}
+	return out
+}
+
+// PerWindowMean returns the arithmetic mean of per-key counts within each
+// window, restricted to keys present in pc.Counts. Mirrors PerWindowMax /
+// PerWindowMin in axis but emits floats.
+func (pc *PCollection) PerWindowMean() map[Window]float64 {
+	sums := map[Window]int{}
+	counts := map[Window]int{}
+	for _, row := range pc.Counts {
+		for w, n := range row {
+			sums[w] += n
+			counts[w]++
+		}
+	}
+	out := map[Window]float64{}
+	for w, s := range sums {
+		out[w] = float64(s) / float64(counts[w])
+	}
+	return out
+}
+
 // String renders a small summary line for logging.
 func (pc *PCollection) String() string {
 	return fmt.Sprintf("PCollection(%s: %d keys × %d windows, total=%d)",

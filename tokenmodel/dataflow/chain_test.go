@@ -157,3 +157,39 @@ func TestPerWindowCombiners(t *testing.T) {
 		t.Errorf("totals[b] = %d, want 4", totals["b"])
 	}
 }
+
+func TestPerKeyAndPerWindowCombiners(t *testing.T) {
+	pc := &PCollection{
+		Name: "t",
+		Counts: map[string]map[Window]int{
+			"a": {{0, 10}: 3, {10, 20}: 7, {20, 30}: 5},
+			"b": {{0, 10}: 2, {10, 20}: 2, {20, 30}: 2},
+			"c": {},
+		},
+	}
+	if got := pc.PerKeyMax()["a"]; got != 7 {
+		t.Errorf("PerKeyMax[a] = %d, want 7", got)
+	}
+	if got := pc.PerKeyMax()["b"]; got != 2 {
+		t.Errorf("PerKeyMax[b] = %d, want 2", got)
+	}
+	if got := pc.PerKeyMin()["a"]; got != 3 {
+		t.Errorf("PerKeyMin[a] = %d, want 3", got)
+	}
+	if _, ok := pc.PerKeyMin()["c"]; ok {
+		t.Errorf("PerKeyMin should omit empty row c")
+	}
+	if got := pc.PerKeyMean()["a"]; got != 5.0 {
+		t.Errorf("PerKeyMean[a] = %v, want 5.0", got)
+	}
+	if got := pc.PerKeyMean()["b"]; got != 2.0 {
+		t.Errorf("PerKeyMean[b] = %v, want 2.0", got)
+	}
+	pwm := pc.PerWindowMean()
+	if got := pwm[Window{0, 10}]; got != 2.5 {
+		t.Errorf("PerWindowMean[[0,10)] = %v, want 2.5", got)
+	}
+	if got := pwm[Window{10, 20}]; got != 4.5 {
+		t.Errorf("PerWindowMean[[10,20)] = %v, want 4.5", got)
+	}
+}
