@@ -57,9 +57,10 @@ type Pipeline struct {
 	keepKeys map[string]bool // nil = keep all; non-nil = ParDo filter set
 	window   WindowFn
 	horizon  int
-	stage    pipelineStage
-	resultID string  // result PCollection name
-	trigger  Trigger // emit gate; default AfterWatermark
+	stage           pipelineStage
+	resultID        string  // result PCollection name
+	trigger         Trigger // emit gate; default AfterWatermark
+	allowedLateness int     // event-time grace after window.End during which late data is still accepted
 
 	// Built lazily by ensureBuilt.
 	bundle  *subnet.Bundle
@@ -72,6 +73,11 @@ type Pipeline struct {
 	pending      []Element
 	pendingWM    int
 	pendingDirty bool
+
+	// Explicit watermark: only moved by AdvanceWatermark (not by Send's
+	// auto-advance). Lateness gates on this — without the distinction,
+	// out-of-order batch input would look artificially late.
+	explicitWM int
 }
 
 // NewPipeline creates a fresh pipeline.
@@ -107,6 +113,20 @@ func (p *Pipeline) CountPerKey() *Pipeline {
 // Triggering sets the emit trigger. If unset, AfterWatermark is used.
 func (p *Pipeline) Triggering(t Trigger) *Pipeline {
 	p.trigger = t
+	return p
+}
+
+// WithAllowedLateness configures how far past window.End (in event-time
+// units) late elements are still accepted into the window. Default is 0:
+// once the watermark crosses w.End, further elements for w are silently
+// dropped. The trigger fires on watermark crossing w.End as before; late
+// elements that arrive before wm exceeds w.End+lateness still land in `acc`
+// and are picked up by the next emit pass (a "late pane" in Beam terms).
+func (p *Pipeline) WithAllowedLateness(d int) *Pipeline {
+	if d < 0 {
+		d = 0
+	}
+	p.allowedLateness = d
 	return p
 }
 
@@ -404,17 +424,27 @@ func (p *Pipeline) sendBuilt(e Element) error {
 	}
 	bindings := tmpetri.Bindings{"event_time": int64(e.Timestamp)}
 	fired := false
+	dropped := 0
 	for _, w := range wins {
 		assignID := fmt.Sprintf("src:%s/assign:%s", e.Key, w.String())
 		if p.state.Model.TransitionByID(assignID) == nil {
 			continue // out of materialized horizon
+		}
+		// Lateness gate: once the explicit watermark has advanced past
+		// w.End + allowedLateness, the window is closed and late data is
+		// silently dropped (per Beam). We gate on the explicit watermark
+		// (only moved by AdvanceWatermark) rather than the auto-incremented
+		// internal one — otherwise out-of-order batch input would look late.
+		if p.explicitWM > w.End+p.allowedLateness {
+			dropped++
+			continue
 		}
 		if err := p.state.FireWithBindings(assignID, bindings); err != nil {
 			return fmt.Errorf("assign: %w", err)
 		}
 		fired = true
 	}
-	if !fired {
+	if !fired && dropped == 0 {
 		return fmt.Errorf("dataflow: no in-horizon/in-session window for key %q ts=%d", e.Key, e.Timestamp)
 	}
 	// Drain receive transitions and any newly-enabled emits.
@@ -427,6 +457,9 @@ func (p *Pipeline) sendBuilt(e Element) error {
 func (p *Pipeline) AdvanceWatermark(to int) error {
 	if err := p.ensureBuilt(); err != nil {
 		return err
+	}
+	if to > p.explicitWM {
+		p.explicitWM = to
 	}
 	return p.advanceBuilt(to)
 }

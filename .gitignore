@@ -49,3 +49,4 @@ results.json
 tmp/
 temp/
 .aider*
+.playwright-mcp/
