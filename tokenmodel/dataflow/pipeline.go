@@ -309,6 +309,16 @@ func (p *Pipeline) Compile() (*subnet.Bundle, error) {
 			m.AddArc(tmpetri.Arc{Source: "acc", Target: "emit"})
 			m.AddArc(tmpetri.Arc{Source: "emit", Target: "out"})
 
+			// close: GC the window once the watermark has advanced past
+			// w.End + allowedLateness. Drains any leftover acc into out
+			// (force-emit on close), guaranteeing acc is structurally empty
+			// after close. Combined with the lateness gate at assign-time,
+			// the window subnet's per-place marking is bounded once closed.
+			closeGuard := fmt.Sprintf(`tokens("wm") > %d`, w.End+p.allowedLateness)
+			m.AddTransition(tmpetri.Transition{ID: "close", Guard: closeGuard})
+			m.AddArc(tmpetri.Arc{Source: "acc", Target: "close"})
+			m.AddArc(tmpetri.Arc{Source: "close", Target: "out"})
+
 			ports := []subnet.Port{
 				{ID: "feed", Kind: subnet.PortIn, Place: "in", Schema: "element:" + k},
 				{ID: "wm", Kind: subnet.PortIn, Place: "wm", Schema: "watermark"},
@@ -514,18 +524,20 @@ func (p *Pipeline) drain() {
 				fired = true
 			}
 		}
-		// Emit: gated on watermark.
+		// Emit and close: both are guarded acc -> out transitions; close is
+		// the GC fallback once wm > end+lateness. Iterate together so a
+		// pending close still drains acc even if the user's trigger never
+		// fired (e.g. AfterCount(100) on a window that only saw 30 events).
 		funcs := guard.MakeAggregates(toGuardMarking(p.state.Marking))
 		for _, t := range p.state.Model.Transitions {
-			if !endsWith(t.ID, "/emit") {
+			if !endsWith(t.ID, "/emit") && !endsWith(t.ID, "/close") {
 				continue
 			}
-			if !p.state.Enabled(t.ID) {
-				continue
-			}
-			if err := p.state.FireWithGuardFuncs(t.ID, nil, funcs); err == nil {
+			for p.state.Enabled(t.ID) {
+				if err := p.state.FireWithGuardFuncs(t.ID, nil, funcs); err != nil {
+					break
+				}
 				fired = true
-				// Refresh aggregates: marking changed.
 				funcs = guard.MakeAggregates(toGuardMarking(p.state.Marking))
 			}
 		}

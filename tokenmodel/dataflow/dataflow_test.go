@@ -204,3 +204,76 @@ func TestLatenessGracePeriodAccepts(t *testing.T) {
 		t.Errorf("[0,10) count = %d, want 2 (one on-time, one within grace)", got)
 	}
 }
+
+func TestCloseDrainsAccumulator(t *testing.T) {
+	// AfterCount(100) on a stream of 3 elements: the trigger never fires
+	// on its own. After wm > end+lateness the close transition should GC
+	// the window — emitting whatever was in acc so the final count is
+	// preserved and acc is structurally empty.
+	p := NewPipeline("gc").
+		WithKeys("k").
+		WindowInto(NewFixedWindows(10), 20).
+		Triggering(AfterCount{N: 100}).
+		CountPerKey()
+
+	for _, ts := range []int{1, 3, 7} {
+		if err := p.Send("k", ts); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// wm=11 > end(10)+lateness(0), close fires.
+	if err := p.AdvanceWatermark(11); err != nil {
+		t.Fatal(err)
+	}
+	res, err := p.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := res.Counts["k"][Window{0, 10}]; got != 3 {
+		t.Errorf("[0,10) count after close = %d, want 3", got)
+	}
+	// Acc should be empty after GC — no residual tokens to inflate later.
+	if got := p.state.Tokens("win:k:[0,10)/acc"); got != 0 {
+		t.Errorf("acc after close = %d, want 0", got)
+	}
+}
+
+func TestCloseRespectsLateness(t *testing.T) {
+	// With lateness=5 the window stays open until wm > 15. close should
+	// not fire prematurely at wm=11.
+	p := NewPipeline("gc-late").
+		WithKeys("k").
+		WindowInto(NewFixedWindows(10), 30).
+		WithAllowedLateness(5).
+		Triggering(AfterCount{N: 100}).
+		CountPerKey()
+
+	if err := p.Send("k", 3); err != nil {
+		t.Fatal(err)
+	}
+	if err := p.AdvanceWatermark(11); err != nil {
+		t.Fatal(err)
+	}
+	// Late-but-graced send: should still enter acc.
+	if err := p.Send("k", 4); err != nil {
+		t.Fatal(err)
+	}
+	// At wm=11 close guard is `wm > 15`, not yet enabled — acc holds 2.
+	if got := p.state.Tokens("win:k:[0,10)/acc"); got != 2 {
+		t.Errorf("acc before close = %d, want 2", got)
+	}
+	// Cross the close horizon.
+	if err := p.AdvanceWatermark(16); err != nil {
+		t.Fatal(err)
+	}
+	res, err := p.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := res.Counts["k"][Window{0, 10}]; got != 2 {
+		t.Errorf("[0,10) count after close = %d, want 2", got)
+	}
+	if got := p.state.Tokens("win:k:[0,10)/acc"); got != 0 {
+		t.Errorf("acc after close = %d, want 0", got)
+	}
+}
