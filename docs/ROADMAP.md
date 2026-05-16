@@ -3,6 +3,24 @@
 Layered so each tier is independently shippable and the next tier compiles
 down to the previous — same pattern as `dataflow → subnet → petri` already.
 
+## Status
+
+| Tier | Item | State |
+|---|---|---|
+| L1.1 | Allowed-lateness windows | ✅ shipped |
+| L1.2 | Accumulating vs discarding panes | ⏸️ deferred — needs pane-log API |
+| L1.3 | Window GC via `close` transition | ✅ shipped |
+| L1.4 | PerKey/PerWindow Max/Min/Mean combiners | ✅ shipped |
+| L2.1 | Pipeline event log + replay | ✅ shipped |
+| L2.2 | Snapshots (marking + watermark + cursor) | ✅ shipped |
+| L2.3 | Replay round-trip tests | ✅ shipped |
+| L3   | Multi-process / network execution | not started — needs transport call |
+| L4.1 | Bundle Graphviz DOT renderer | ✅ shipped |
+| L4.2 | PipelineSpec JSON-LD round-trip | ✅ shipped |
+| L4.3 | pflow-rs port of subnet + windowing | not started (other repo) |
+| L4.4 | pflow-xyz editor bundle mode | not started (other repo) |
+| L5   | ZK / mined dataflow / governance | gated on L3 |
+
 ## L1 — Harden the streaming substrate *(2–3 weeks)*
 
 What's missing from the initial vertical slice (`tokenmodel/windowing`,
