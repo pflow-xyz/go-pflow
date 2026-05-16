@@ -5,15 +5,16 @@ down to the previous — same pattern as `dataflow → subnet → petri` already
 
 ## Open items
 
-L1–L4.2 and L5.2 are shipped on `windowing-slice` — see git log for details.
+In-repo work is complete. See git log for shipped detail.
 
-| Tier | Item | Where |
+The remaining items live in sibling repos:
+
+| Tier | Item | Repo |
 |---|---|---|
-| L3.2+ | Full `Pipeline.RunDistributed()` — orchestrator-driven sources + watermark | this repo |
-| L4.3  | pflow-rs port of subnet + windowing | `pflow-rs` |
-| L4.4  | pflow-xyz editor bundle mode | `pflow-xyz` |
-| L5.1  | Streaming → ZK | `bitwrap-io` |
-| L5.3  | Governance pipelines | `modeldao-org` |
+| L4.3 | pflow-rs port of subnet + windowing | `pflow-rs` |
+| L4.4 | pflow-xyz editor bundle mode | `pflow-xyz` |
+| L5.1 | Streaming → ZK | `bitwrap-io` |
+| L5.3 | Governance pipelines | `modeldao-org` |
 
 ## L1 — Harden the streaming substrate *(2–3 weeks)*
 
