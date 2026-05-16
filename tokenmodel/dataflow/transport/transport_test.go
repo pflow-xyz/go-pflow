@@ -274,3 +274,50 @@ func TestSendToInPortFromOrchestrator(t *testing.T) {
 // keep imports honest (sort is used elsewhere in non-test code, but also
 // helpful for deterministic asserts here).
 var _ = sort.Strings
+
+func TestBackpressureErrorMode(t *testing.T) {
+	links := []subnet.Link{{FromSubnet: "p", FromPort: "out", ToSubnet: "c", ToPort: "in"}}
+	tx := NewLocal(links, 2)
+	if err := tx.Send(WireID(links[0]), 1); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Send(WireID(links[0]), 1); err != nil {
+		t.Fatal(err)
+	}
+	// Third send hits the cap; in error mode it must surface immediately.
+	if err := tx.Send(WireID(links[0]), 1); err == nil {
+		t.Error("expected buffer-full error on third send into cap-2 channel")
+	}
+}
+
+func TestBackpressureBlockMode(t *testing.T) {
+	links := []subnet.Link{{FromSubnet: "p", FromPort: "out", ToSubnet: "c", ToPort: "in"}}
+	tx := NewLocalBlocking(links, 2)
+	wire := WireID(links[0])
+	for i := 0; i < 2; i++ {
+		if err := tx.Send(wire, 1); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Third send should block until we drain. Run it in a goroutine and
+	// verify it doesn't return until a Recv frees a slot.
+	done := make(chan error, 1)
+	go func() { done <- tx.Send(wire, 1) }()
+	select {
+	case <-done:
+		t.Fatal("Send returned before buffer had room — backpressure not blocking")
+	case <-time.After(50 * time.Millisecond):
+		// good — Send is still parked
+	}
+	if _, ok := tx.Recv(LinkID(links[0])); !ok {
+		t.Fatal("Recv produced nothing")
+	}
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Errorf("Send after drain: %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("Send did not return after Recv freed a slot")
+	}
+}

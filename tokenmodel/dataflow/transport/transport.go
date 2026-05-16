@@ -63,12 +63,19 @@ func LinkID(l subnet.Link) string {
 
 // LocalChannelTransport implements Transport with one buffered Go channel
 // per linkID (receiver). Send fans out to all receivers on the wire.
+//
+// Backpressure: if blockOnFull is true (the default for distributed
+// pipelines), Send blocks the caller when a receiver's buffer is full —
+// the Beam-style natural backpressure that an inhibitor arc would
+// otherwise express structurally. If false, Send returns an error so
+// the buffer-sizing decision surfaces immediately (useful in tests).
 type LocalChannelTransport struct {
-	mu       sync.RWMutex
-	queues   map[string]chan int // linkID -> per-receiver queue
-	wires    map[string][]string // wireID -> receiver linkIDs
-	closed   bool
-	bufSize  int
+	mu          sync.RWMutex
+	queues      map[string]chan int // linkID -> per-receiver queue
+	wires       map[string][]string // wireID -> receiver linkIDs
+	closed      bool
+	bufSize     int
+	blockOnFull bool
 }
 
 // NewLocal constructs a LocalChannelTransport from a slice of links.
@@ -119,6 +126,13 @@ func (t *LocalChannelTransport) Send(wireID string, tokens int) error {
 	}
 	for _, lid := range receivers {
 		ch := t.queues[lid]
+		if t.blockOnFull {
+			// Block until the receiver drains. Provides Beam-style
+			// backpressure: a slow consumer naturally throttles the
+			// producer rather than overflowing.
+			ch <- tokens
+			continue
+		}
 		select {
 		case ch <- tokens:
 		default:
@@ -126,6 +140,24 @@ func (t *LocalChannelTransport) Send(wireID string, tokens int) error {
 		}
 	}
 	return nil
+}
+
+// SetBlockOnFull toggles whether Send blocks when a receiver buffer is
+// full (true) or returns an error (false). The default is false; toggle
+// to true via NewBlocking or after construction.
+func (t *LocalChannelTransport) SetBlockOnFull(block bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.blockOnFull = block
+}
+
+// NewLocalBlocking constructs a LocalChannelTransport with blocking-on-full
+// Send semantics — the Beam-equivalent of a backpressured channel.
+// Equivalent to NewLocal followed by SetBlockOnFull(true).
+func NewLocalBlocking(links []subnet.Link, bufferSize int) *LocalChannelTransport {
+	t := NewLocal(links, bufferSize)
+	t.SetBlockOnFull(true)
+	return t
 }
 
 // Recv non-blockingly drains the next queued count for linkID. Returns

@@ -15,8 +15,8 @@ down to the previous — same pattern as `dataflow → subnet → petri` already
 | L2.2 | Snapshots (marking + watermark + cursor) | ✅ shipped |
 | L2.3 | Replay round-trip tests | ✅ shipped |
 | L3.1 | In-process Go-channel transport | ✅ shipped |
-| L3.2 | Partition-by-key + multi-process | not started — Pipeline.Run needs to plug into `transport.DistributedBundle` |
-| L3.3 | Backpressure via inhibitor arcs | not started |
+| L3.2 | Guarded transitions in `SubnetRunner` + sink semantics | ✅ shipped (window subnets run distributed end-to-end; full `Pipeline.RunDistributed` still wants orchestrator-driven sources/watermark) |
+| L3.3 | Blocking-backpressure transport mode | ✅ shipped |
 | L4.1 | Bundle Graphviz DOT renderer | ✅ shipped |
 | L4.2 | PipelineSpec JSON-LD round-trip | ✅ shipped |
 | L4.3 | pflow-rs port of subnet + windowing | not started (other repo) |

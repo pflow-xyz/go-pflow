@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pflow-xyz/go-pflow/tokenmodel/guard"
 	tmpetri "github.com/pflow-xyz/go-pflow/tokenmodel/petri"
 	"github.com/pflow-xyz/go-pflow/tokenmodel/subnet"
 )
@@ -106,17 +107,36 @@ func (r *SubnetRunner) pollInputs() {
 }
 
 // fireToQuiescence fires every enabled internal transition until none
-// remain. Bounded by a generous safety cap so a runaway model can't hang
-// the goroutine — in normal use this exits naturally.
+// remain. Guards are evaluated against the local marking via
+// FireWithGuardFuncs — without this, inputless guarded transitions
+// (Pipeline's source `assign:[s,e)` and watermark `advance`) would fire
+// to safetyCap on every tick because plain Fire ignores guards.
+//
+// Transitions whose guards reference unbound bindings (e.g.
+// `event_time`) will fail evaluation and are skipped: those transitions
+// belong to subnets the orchestrator drives directly (sources and
+// watermark), not to subnets that should run autonomously here.
+//
+// Bounded by a generous safety cap so a runaway model can't hang the
+// goroutine — in normal use this exits naturally.
 func (r *SubnetRunner) fireToQuiescence() {
 	const safetyCap = 1 << 20
 	for i := 0; i < safetyCap; i++ {
 		fired := false
+		funcs := guard.MakeAggregates(toGuardMarking(r.state.Marking))
 		for _, t := range r.subnet.Model.Transitions {
-			if r.state.Enabled(t.ID) {
-				if err := r.state.Fire(t.ID); err == nil {
-					fired = true
-				}
+			if !r.state.Enabled(t.ID) {
+				continue
+			}
+			var err error
+			if t.Guard == "" {
+				err = r.state.Fire(t.ID)
+			} else {
+				err = r.state.FireWithGuardFuncs(t.ID, nil, funcs)
+			}
+			if err == nil {
+				fired = true
+				funcs = guard.MakeAggregates(toGuardMarking(r.state.Marking))
 			}
 		}
 		if !fired {
@@ -125,10 +145,25 @@ func (r *SubnetRunner) fireToQuiescence() {
 	}
 }
 
+func toGuardMarking(m tmpetri.Marking) guard.Marking {
+	out := make(guard.Marking, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
+}
+
 // drainOutputs ships every token sitting on an out-port place onto its
-// bound wire(s) and zeroes the local count.
+// bound wire(s) and zeroes the local count. Out-ports that have no bound
+// wires (terminal sinks — typical for a result port that nothing reads
+// downstream) are NOT zeroed; their tokens remain available for the
+// orchestrator to observe via Marking(). isQuiescent treats unwired
+// out-ports as quiescent so a finished pipeline can settle.
 func (r *SubnetRunner) drainOutputs() {
 	for place, wires := range r.outMap {
+		if len(wires) == 0 {
+			continue
+		}
 		n := r.state.Marking[place]
 		if n <= 0 {
 			continue
@@ -296,18 +331,36 @@ func (d *DistributedBundle) isQuiescent() bool {
 	d.tx.mu.RUnlock()
 	for _, r := range d.runners {
 		r.mu.RLock()
+		funcs := guard.MakeAggregates(toGuardMarking(r.state.Marking))
 		for _, t := range r.subnet.Model.Transitions {
-			if r.state.Enabled(t.ID) {
-				r.mu.RUnlock()
-				return false
+			if !r.state.Enabled(t.ID) {
+				continue
 			}
+			// A guarded transition whose guard can't evaluate cleanly with
+			// the current marking (typically because it references an
+			// unbound binding like `event_time`) is owned by the
+			// orchestrator, not by this runner. Treat as quiescent here.
+			if t.Guard != "" {
+				ok, err := guard.Evaluate(t.Guard, nil, funcs)
+				if err != nil || !ok {
+					continue
+				}
+			}
+			r.mu.RUnlock()
+			return false
 		}
-		// Also: any out-port still holding tokens pending drain?
+		// Any out-port still holding tokens pending drain? Skip terminal
+		// out-ports (no bound wires) — they're sinks the orchestrator
+		// reads via Marking(), not work the bundle still has to do.
 		for place, kind := range r.kinds {
-			if kind == kindOut && r.state.Marking[place] > 0 {
-				r.mu.RUnlock()
-				return false
+			if kind != kindOut || r.state.Marking[place] == 0 {
+				continue
 			}
+			if len(r.outMap[place]) == 0 {
+				continue
+			}
+			r.mu.RUnlock()
+			return false
 		}
 		r.mu.RUnlock()
 	}
