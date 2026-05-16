@@ -18,6 +18,18 @@ func (m Marking) Clone() Marking {
 	return clone
 }
 
+// AsGuardMarking converts the petri Marking to the guard.Marking shape
+// used by aggregate expressions. The two types are structurally
+// identical (map[string]int), but kept distinct so the guard package
+// has no upward dependency on petri.
+func (m Marking) AsGuardMarking() guard.Marking {
+	out := make(guard.Marking, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
+}
+
 // Bindings represent variable bindings for colored/parameterized transitions.
 type Bindings map[string]interface{}
 
