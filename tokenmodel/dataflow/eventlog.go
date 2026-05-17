@@ -80,6 +80,13 @@ func (p *Pipeline) Replay(events []PipelineEvent) error {
 // name (one trace per pipeline) and whose Activity is the op name. The
 // pipeline event's int TS becomes a Unix-epoch second on the Event so the
 // Trace's monotonic ordering matches Seq.
+//
+// Every event carries an "op" attribute (matching e.Op) so consumers can
+// filter to the data plane without parsing Activity strings. The "key"
+// attribute is set only on data-send events; control events (watermark
+// advances, processing-time advances, restored snapshots) omit it
+// entirely. mining.DiscoverPipeline relies on this to skip control
+// events instead of mistaking them for phantom keys.
 func (p *Pipeline) ToEventLog() *eventlog.EventLog {
 	log := eventlog.NewEventLog()
 	caseID := p.name
@@ -87,14 +94,18 @@ func (p *Pipeline) ToEventLog() *eventlog.EventLog {
 		caseID = "pipeline"
 	}
 	for _, e := range p.events {
+		attrs := map[string]any{
+			"op": string(e.Op),
+			"ts": e.TS,
+		}
+		if e.Op == OpSend {
+			attrs["key"] = e.Key
+		}
 		log.AddEvent(eventlog.Event{
-			CaseID:    caseID,
-			Activity:  string(e.Op),
-			Timestamp: time.Unix(int64(e.Seq), 0),
-			Attributes: map[string]interface{}{
-				"key": e.Key,
-				"ts":  e.TS,
-			},
+			CaseID:     caseID,
+			Activity:   string(e.Op),
+			Timestamp:  time.Unix(int64(e.Seq), 0),
+			Attributes: attrs,
 		})
 	}
 	return log

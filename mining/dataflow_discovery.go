@@ -241,6 +241,15 @@ func extractKeyTS(ev eventlog.Event) (string, int, bool) {
 	var key string
 	var ts int
 	if ev.Attributes != nil {
+		// Pipeline-originated events carry an "op" tag. If it's present
+		// and isn't a data send, this event is control plane (watermark
+		// advance, etc.) — skip without falling back to the Activity
+		// string, which would otherwise become a phantom key.
+		if v, ok := ev.Attributes["op"]; ok {
+			if s, ok := v.(string); ok && s != "send" {
+				return "", 0, false
+			}
+		}
 		if v, ok := ev.Attributes["key"]; ok {
 			if s, ok := v.(string); ok && s != "" {
 				key = s
