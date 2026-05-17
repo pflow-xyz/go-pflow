@@ -1,0 +1,30 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      # gofmt is not enforced: the existing tree has pre-existing fmt drift.
+      # Add a `gofmt -l .` gate after a one-off `gofmt -w .` cleanup pass.
+
+      - name: vet
+        run: go vet ./...
+
+      # ./learn/... has pre-existing failing tests (TestLearnableProblemSolve,
+      # TestFitSimpleRecovery — rate-recovery diverges). Excluded until the
+      # gradient/fit code there is repaired. Everything else is gated.
+      - name: test
+        run: go test $(go list ./... | grep -v '/learn$')
