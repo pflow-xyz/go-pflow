@@ -45,6 +45,11 @@ err := runtime.ExecuteWithBindings("transfer", tokenmodel.Bindings{
 - `guard/` - Guard expression parser and evaluator
 - `petri/` - Petri net model and analysis
 - `dsl/` - Domain-specific language for schema definition
+- `subnet/` - Subnet bundles: compose named Petri nets via port aliasing
+- `windowing/` - Event-time window primitives (fixed, sliding, sessions)
+- `dataflow/` - Apache Beam–style streaming pipelines lowered to subnets
+  (windows, triggers, watermarks, late data, streaming snapshots).
+  See [`dataflow/README.md`](dataflow/README.md).
 
 ## Features
 

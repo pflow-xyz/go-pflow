@@ -21,6 +21,9 @@
 | `tokenmodel` | Token model schemas for state machines |
 | `tokenmodel/dsl` | S-expression and struct tag DSL |
 | `tokenmodel/petri` | Petri net model, structural analysis, invariants |
+| `tokenmodel/subnet` | Compose named Petri nets via port aliasing |
+| `tokenmodel/windowing` | Event-time windows (fixed, sliding, sessions) |
+| `tokenmodel/dataflow` | Beam-style streaming pipelines / discrete-event process simulation |
 
 ## Quick Decision Tree
 
@@ -36,6 +39,8 @@
 | Epidemics/populations | `petri` + `solver` |
 | General state/resource flow | `petri` |
 | Token model schemas | `tokenmodel`, `tokenmodel/dsl` |
+| Streaming pipeline / DES (windowing, watermarks, late data) | `tokenmodel/dataflow` |
+| Pipeline-shape discovery from a stream | `mining.DiscoverPipeline` |
 
 ## Core API
 

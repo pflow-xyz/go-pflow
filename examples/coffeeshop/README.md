@@ -84,3 +84,23 @@ coffeeshop.StressTestConfig()  // Push limits
 - `reachability` - State space analysis
 - `visualization` - SVG rendering
 - `mining` - Process mining analysis
+
+## Dataflow Variant (`dataflow/`)
+
+The [`dataflow/`](dataflow/) subdirectory models the same coffee shop as
+a Beam-style streaming pipeline rather than an ODE. Same domain,
+different question:
+
+| File | Question answered |
+|---|---|
+| `simulation.go` | Given continuous demand rates, what's the ingredient trajectory? (ODE) |
+| `dataflow/coffeeshop_dataflow.go` | Given a discrete order stream, what do the windowed sinks observe? (DES) |
+
+The dataflow variant demonstrates fixed/sliding/session windows, early
+triggers, filtering, FlatMap with side-inputs, and a streaming hour-by-hour
+watermark driver. `dataflow/loop_closure_test.go` closes the loop with
+`mining.DiscoverPipeline` — running the pipeline, exporting the input
+history, and re-discovering the spec.
+
+See [`tokenmodel/dataflow/README.md`](../../tokenmodel/dataflow/README.md)
+for the substrate.

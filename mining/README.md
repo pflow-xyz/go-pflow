@@ -205,6 +205,31 @@ prob := solver.NewProblem(net, initialState, tspan, rates)
 sol := solver.Solve(prob, solver.Tsit5(), solver.DefaultOptions())
 ```
 
+### With `tokenmodel/dataflow` — pipeline-shape discovery
+
+Classical process mining discovers an activity graph from case traces.
+`DiscoverPipeline` answers a different question: given a stream of
+`(key, ts)` records (typically captured via `Pipeline.ToEventLog()`),
+infer a plausible `PipelineSpec` — window strategy, window size, key
+set, recommended trigger.
+
+```go
+log := pipeline.ToEventLog()
+res, _ := mining.DiscoverPipeline(log, mining.PipelineDiscoveryOptions{
+    Name:                 "discovered",
+    IdealEventsPerWindow: 7,
+})
+fmt.Println(res.Spec.Window.Kind, res.Spec.Window.Size, res.Spec.Keys)
+// e.g. "fixed" 50 [americano cappuccino espresso iced_latte latte mocha]
+```
+
+The recovered spec is qualitatively faithful (kind, key set, trigger
+family) and quantitatively heuristic (window size inferred from
+inter-arrival burstiness). This closes the dataflow⇄mining loop: a
+pipeline is the generator, mining is the recognizer.
+
+See `examples/coffeeshop/dataflow/loop_closure_test.go`.
+
 ### With `learn` (Coming)
 ```go
 // Fit sophisticated rate functions
