@@ -1,0 +1,5 @@
+# Shared example fixtures consumed by sub-package tests via relative paths.
+exports_files(glob([
+    "*.jsonld",
+    "*.json",
+]))

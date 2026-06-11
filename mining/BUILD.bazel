@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "mining",
+    srcs = [
+        "alpha.go",
+        "conformance.go",
+        "dataflow_discovery.go",
+        "discovery.go",
+        "footprint.go",
+        "heuristic.go",
+        "timing.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/mining",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//eventlog",
+        "//learn",
+        "//petri",
+        "//solver",
+        "//tokenmodel/dataflow",
+    ],
+)
+
+go_test(
+    name = "mining_test",
+    srcs = [
+        "conformance_test.go",
+        "dataflow_discovery_test.go",
+        "mining_test.go",
+    ],
+    embed = [":mining"],
+    deps = [
+        "//eventlog",
+        "//petri",
+    ],
+)

@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "windowing",
+    srcs = ["window.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/tokenmodel/windowing",
+    visibility = ["//visibility:public"],
+    deps = ["//tokenmodel/petri"],
+)
+
+go_test(
+    name = "windowing_test",
+    srcs = ["window_test.go"],
+    embed = [":windowing"],
+    deps = [
+        "//tokenmodel/guard",
+        "//tokenmodel/petri",
+    ],
+)

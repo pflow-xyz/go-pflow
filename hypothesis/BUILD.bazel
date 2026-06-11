@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "hypothesis",
+    srcs = ["hypothesis.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/hypothesis",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//solver",
+        "//stateutil",
+    ],
+)
+
+go_test(
+    name = "hypothesis_test",
+    srcs = ["hypothesis_test.go"],
+    embed = [":hypothesis"],
+    deps = [
+        "//petri",
+        "//solver",
+    ],
+)

@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "tokenmodel",
+    srcs = [
+        "cid.go",
+        "errors.go",
+        "runtime.go",
+        "schema.go",
+        "snapshot.go",
+        "validate.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/tokenmodel",
+    visibility = ["//visibility:public"],
+)

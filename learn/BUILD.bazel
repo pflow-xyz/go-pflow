@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "learn",
+    srcs = [
+        "dataset.go",
+        "optimize.go",
+        "problem.go",
+        "ratefunc.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/learn",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//solver",
+    ],
+)
+
+go_test(
+    name = "learn_test",
+    srcs = ["learn_test.go"],
+    embed = [":learn"],
+    deps = [
+        "//petri",
+        "//solver",
+    ],
+)

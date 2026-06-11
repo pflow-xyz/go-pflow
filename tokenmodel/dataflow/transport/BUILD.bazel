@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "transport",
+    srcs = [
+        "runner.go",
+        "transport.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/tokenmodel/dataflow/transport",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//tokenmodel/guard",
+        "//tokenmodel/petri",
+        "//tokenmodel/subnet",
+    ],
+)
+
+go_test(
+    name = "transport_test",
+    srcs = [
+        "pipeline_integration_test.go",
+        "transport_test.go",
+    ],
+    embed = [":transport"],
+    deps = [
+        "//tokenmodel/dataflow",
+        "//tokenmodel/petri",
+        "//tokenmodel/subnet",
+    ],
+)

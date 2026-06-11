@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "reachability",
+    srcs = [
+        "analyzer.go",
+        "graph.go",
+        "invariants.go",
+        "marking.go",
+        "spectral.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/reachability",
+    visibility = ["//visibility:public"],
+    deps = ["//petri"],
+)
+
+go_test(
+    name = "reachability_test",
+    srcs = ["reachability_test.go"],
+    embed = [":reachability"],
+    deps = ["//petri"],
+)

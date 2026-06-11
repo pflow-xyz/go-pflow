@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "stoplight_lib",
+    srcs = ["petri_net.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/stoplight",
+    visibility = ["//visibility:private"],
+    deps = ["//petri"],
+)
+
+go_binary(
+    name = "stoplight",
+    embed = [":stoplight_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "stoplight_test",
+    srcs = ["petri_net_test.go"],
+    embed = [":stoplight_lib"],
+    deps = ["//petri"],
+)

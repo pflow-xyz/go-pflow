@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "subnet",
+    srcs = [
+        "dot.go",
+        "subnet.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/tokenmodel/subnet",
+    visibility = ["//visibility:public"],
+    deps = ["//tokenmodel/petri"],
+)
+
+go_test(
+    name = "subnet_test",
+    srcs = [
+        "dot_test.go",
+        "subnet_test.go",
+    ],
+    embed = [":subnet"],
+    deps = ["//tokenmodel/petri"],
+)

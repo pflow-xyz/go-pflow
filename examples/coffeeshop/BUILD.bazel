@@ -1,0 +1,40 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "coffeeshop",
+    srcs = [
+        "actors.go",
+        "inventory.go",
+        "simulation.go",
+        "simulator.go",
+        "statemachine.go",
+        "workflow.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/coffeeshop",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//actor",
+        "//eventlog",
+        "//hypothesis",
+        "//mining",
+        "//petri",
+        "//reachability",
+        "//sensitivity",
+        "//solver",
+        "//statemachine",
+        "//stateutil",
+        "//workflow",
+    ],
+)
+
+go_test(
+    name = "coffeeshop_test",
+    srcs = ["coffeeshop_test.go"],
+    embed = [":coffeeshop"],
+    deps = [
+        "//reachability",
+        "//solver",
+        "//statemachine",
+        "//stateutil",
+    ],
+)

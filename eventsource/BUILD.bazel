@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "eventsource",
+    srcs = [
+        "aggregate.go",
+        "event.go",
+        "memory.go",
+        "sqlite.go",
+        "store.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/eventsource",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_google_uuid//:uuid",
+        "@org_modernc_sqlite//:sqlite",
+    ],
+)
+
+go_test(
+    name = "eventsource_test",
+    srcs = [
+        "aggregate_test.go",
+        "store_test.go",
+    ],
+    deps = [":eventsource"],
+)

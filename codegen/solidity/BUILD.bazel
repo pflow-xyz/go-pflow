@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "solidity",
+    srcs = [
+        "codegen.go",
+        "guardgen.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/codegen/solidity",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//tokenmodel",
+        "//tokenmodel/guard",
+    ],
+)
+
+go_test(
+    name = "solidity_test",
+    srcs = [
+        "codegen_test.go",
+        "guardgen_test.go",
+    ],
+    embed = [":solidity"],
+    deps = ["//tokenmodel/dsl"],
+)

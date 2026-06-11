@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "eventlog_demo_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/eventlog_demo",
+    visibility = ["//visibility:private"],
+    deps = ["//eventlog"],
+)
+
+go_binary(
+    name = "eventlog_demo",
+    embed = [":eventlog_demo_lib"],
+    visibility = ["//visibility:public"],
+)

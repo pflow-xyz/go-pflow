@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "covid_seir_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/dataset_comparison/cmd/covid_seir",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//learn",
+        "//petri",
+        "//plotter",
+        "//solver",
+    ],
+)
+
+go_binary(
+    name = "covid_seir",
+    embed = [":covid_seir_lib"],
+    visibility = ["//visibility:public"],
+)

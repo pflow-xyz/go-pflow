@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "guard",
+    srcs = [
+        "aggregate.go",
+        "eval.go",
+        "guard.go",
+        "invariant.go",
+        "lexer.go",
+        "parser.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/tokenmodel/guard",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_holiman_uint256//:uint256"],
+)
+
+go_test(
+    name = "guard_test",
+    srcs = ["guard_test.go"],
+    embed = [":guard"],
+)

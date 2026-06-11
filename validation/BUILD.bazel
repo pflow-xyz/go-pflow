@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "validation",
+    srcs = [
+        "checks.go",
+        "reachability.go",
+        "types.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/validation",
+    visibility = ["//visibility:public"],
+    deps = ["//petri"],
+)

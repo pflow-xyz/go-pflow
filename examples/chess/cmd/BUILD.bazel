@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "cmd_lib",
+    srcs = [
+        "knights.go",
+        "main.go",
+        "queens.go",
+        "rooks.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/chess/cmd",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//engine",
+        "//parser",
+        "//petri",
+        "//solver",
+        "//visualization",
+    ],
+)
+
+go_binary(
+    name = "cmd",
+    embed = [":cmd_lib"],
+    visibility = ["//visibility:public"],
+)

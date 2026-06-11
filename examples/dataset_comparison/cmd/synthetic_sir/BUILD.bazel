@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "synthetic_sir_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/dataset_comparison/cmd/synthetic_sir",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//learn",
+        "//petri",
+        "//plotter",
+        "//solver",
+    ],
+)
+
+go_binary(
+    name = "synthetic_sir",
+    embed = [":synthetic_sir_lib"],
+    visibility = ["//visibility:public"],
+)

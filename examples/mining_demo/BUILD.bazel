@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "mining_demo_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/mining_demo",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//eventlog",
+        "//mining",
+        "//parser",
+        "//plotter",
+        "//solver",
+    ],
+)
+
+go_binary(
+    name = "mining_demo",
+    embed = [":mining_demo_lib"],
+    visibility = ["//visibility:public"],
+)

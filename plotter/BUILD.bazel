@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "plotter",
+    srcs = ["svg.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/plotter",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//solver",
+    ],
+)
+
+go_test(
+    name = "plotter_test",
+    srcs = ["svg_test.go"],
+    embed = [":plotter"],
+    deps = [
+        "//petri",
+        "//solver",
+    ],
+)

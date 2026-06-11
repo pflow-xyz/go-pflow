@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "cmd_lib",
+    srcs = [
+        "game.go",
+        "main.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/connect4/cmd",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//engine",
+        "//parser",
+        "//petri",
+        "//validation",
+    ],
+)
+
+go_binary(
+    name = "cmd",
+    embed = [":cmd_lib"],
+    visibility = ["//visibility:public"],
+)

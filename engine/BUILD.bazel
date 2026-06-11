@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "engine",
+    srcs = ["engine.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/engine",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//solver",
+    ],
+)
+
+go_test(
+    name = "engine_test",
+    srcs = ["engine_test.go"],
+    embed = [":engine"],
+    deps = ["//petri"],
+)

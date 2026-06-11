@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "trafficlight_lib",
+    srcs = ["petri_net.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/trafficlight",
+    visibility = ["//visibility:private"],
+    deps = ["//petri"],
+)
+
+go_binary(
+    name = "trafficlight",
+    embed = [":trafficlight_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "trafficlight_test",
+    srcs = ["petri_net_test.go"],
+    embed = [":trafficlight_lib"],
+    deps = ["//petri"],
+)

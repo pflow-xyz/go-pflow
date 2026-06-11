@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "compat",
+    srcs = ["bridge.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/compat",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//tokenmodel/petri",
+    ],
+)
+
+go_test(
+    name = "compat_test",
+    srcs = [
+        "bridge_test.go",
+        "facade_measurement_test.go",
+    ],
+    embed = [":compat"],
+    deps = [
+        "//petri",
+        "//statemachine",
+        "//tokenmodel/petri",
+        "//workflow",
+    ],
+)
