@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "actor",
+    srcs = [
+        "actor.go",
+        "builder.go",
+        "bus.go",
+        "subnet.go",
+        "types.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/actor",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//engine",
+        "//petri",
+        "//solver",
+        "//tokenmodel/petri",
+        "//tokenmodel/subnet",
+        "//workflow",
+    ],
+)
+
+go_test(
+    name = "actor_test",
+    srcs = [
+        "actor_test.go",
+        "subnet_test.go",
+    ],
+    embed = [":actor"],
+    deps = [
+        "//petri",
+        "//tokenmodel/subnet",
+    ],
+)

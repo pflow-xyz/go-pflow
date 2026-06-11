@@ -1,0 +1,44 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "prover",
+    srcs = [
+        "aggregator.go",
+        "curves.go",
+        "persist.go",
+        "pipeline.go",
+        "prover.go",
+        "service.go",
+        "wrapper.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/prover",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_consensys_gnark//backend",
+        "@com_github_consensys_gnark//backend/groth16",
+        "@com_github_consensys_gnark//backend/witness",
+        "@com_github_consensys_gnark//constraint",
+        "@com_github_consensys_gnark//frontend",
+        "@com_github_consensys_gnark//frontend/cs/r1cs",
+        "@com_github_consensys_gnark//std/algebra/emulated/sw_bw6761",
+        "@com_github_consensys_gnark//std/algebra/native/sw_bls12377",
+        "@com_github_consensys_gnark//std/recursion/groth16",
+        "@com_github_consensys_gnark_crypto//ecc",
+    ],
+)
+
+go_test(
+    name = "prover_test",
+    srcs = [
+        "persist_test.go",
+        "prover_test.go",
+        "recursive_test.go",
+    ],
+    embed = [":prover"],
+    deps = [
+        "@com_github_consensys_gnark//backend/groth16",
+        "@com_github_consensys_gnark//backend/witness",
+        "@com_github_consensys_gnark//frontend",
+        "@com_github_consensys_gnark_crypto//ecc",
+    ],
+)

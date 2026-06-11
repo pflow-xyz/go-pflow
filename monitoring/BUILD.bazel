@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "monitoring",
+    srcs = [
+        "monitor.go",
+        "predictor.go",
+        "types.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/monitoring",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//solver",
+    ],
+)

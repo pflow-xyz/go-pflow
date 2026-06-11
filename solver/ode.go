@@ -68,6 +68,32 @@ func NewProblem(net *petri.PetriNet, initialState map[string]float64, tspan [2]f
 	return prob
 }
 
+// SetDerivative installs a custom hashmap-based derivative function and makes
+// Solve use it. Solve integrates over the vectorized internals (vecF), so simply
+// assigning prob.F has no effect; this rebuilds vecF to wrap f via the problem's
+// state ordering. Use it when the dynamics aren't plain mass-action over Rates
+// (e.g. learnable/parameterized rate functions).
+func (p *Problem) SetDerivative(f ODEFunc) {
+	p.F = f
+	labels := p.stateLabels
+	idx := p.stateIndex
+	n := len(labels)
+	p.vecF = func(t float64, u []float64) []float64 {
+		um := make(map[string]float64, n)
+		for i, label := range labels {
+			um[label] = u[i]
+		}
+		dm := f(t, um)
+		du := make([]float64, n)
+		for label, v := range dm {
+			if i, ok := idx[label]; ok {
+				du[i] = v
+			}
+		}
+		return du
+	}
+}
+
 // buildODEFunction constructs the ODE derivative function for a Petri net
 // using mass-action kinetics. Retained for backward compatibility (equilibrium, implicit).
 func buildODEFunction(net *petri.PetriNet, rates map[string]float64) ODEFunc {

@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "monitoring_demo_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/monitoring_demo",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//eventlog",
+        "//mining",
+        "//monitoring",
+        "//visualization",
+    ],
+)
+
+go_binary(
+    name = "monitoring_demo",
+    embed = [":monitoring_demo_lib"],
+    visibility = ["//visibility:public"],
+)

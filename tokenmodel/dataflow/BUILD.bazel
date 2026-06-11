@@ -1,0 +1,39 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "dataflow",
+    srcs = [
+        "chain.go",
+        "eventlog.go",
+        "panes.go",
+        "pcollection.go",
+        "pipeline.go",
+        "pipeline_compile.go",
+        "sessions.go",
+        "spec.go",
+        "trigger.go",
+        "windowing.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/tokenmodel/dataflow",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//eventlog",
+        "//tokenmodel/guard",
+        "//tokenmodel/petri",
+        "//tokenmodel/subnet",
+    ],
+)
+
+go_test(
+    name = "dataflow_test",
+    srcs = [
+        "chain_test.go",
+        "dataflow_test.go",
+        "eventlog_test.go",
+        "panes_test.go",
+        "sessions_test.go",
+        "spec_test.go",
+        "trigger_test.go",
+    ],
+    embed = [":dataflow"],
+)

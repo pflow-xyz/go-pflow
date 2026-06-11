@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "poker",
+    srcs = [
+        "cards.go",
+        "game.go",
+        "model.go",
+        "tracker.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/poker",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//engine",
+        "//hypothesis",
+        "//petri",
+        "//solver",
+    ],
+)
+
+go_test(
+    name = "poker_test",
+    srcs = [
+        "cards_test.go",
+        "game_test.go",
+        "model_test.go",
+        "tracker_test.go",
+    ],
+    embed = [":poker"],
+)

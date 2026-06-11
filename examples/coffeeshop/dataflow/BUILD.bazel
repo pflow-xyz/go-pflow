@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "dataflow",
+    srcs = ["coffeeshop_dataflow.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/coffeeshop/dataflow",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//examples/coffeeshop",
+        "//tokenmodel/dataflow",
+    ],
+)
+
+go_test(
+    name = "dataflow_test",
+    srcs = [
+        "coffeeshop_dataflow_test.go",
+        "loop_closure_test.go",
+    ],
+    embed = [":dataflow"],
+    deps = [
+        "//eventlog",
+        "//examples/coffeeshop",
+        "//mining",
+        "//tokenmodel/dataflow",
+    ],
+)

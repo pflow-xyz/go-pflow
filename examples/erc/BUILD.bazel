@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "erc_lib",
+    srcs = [
+        "erc020.go",
+        "erc1155.go",
+        "erc721.go",
+        "main.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/erc",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//codegen/solidity",
+        "//tokenmodel",
+        "//tokenmodel/dsl",
+    ],
+)
+
+go_binary(
+    name = "erc",
+    embed = [":erc_lib"],
+    visibility = ["//visibility:public"],
+)

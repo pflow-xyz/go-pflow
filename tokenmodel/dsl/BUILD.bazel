@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "dsl",
+    srcs = [
+        "ast.go",
+        "builder.go",
+        "codegen.go",
+        "interpret.go",
+        "lexer.go",
+        "parser.go",
+        "tags.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/tokenmodel/dsl",
+    visibility = ["//visibility:public"],
+    deps = ["//tokenmodel"],
+)
+
+go_test(
+    name = "dsl_test",
+    srcs = [
+        "bench_test.go",
+        "builder_test.go",
+        "dsl_test.go",
+        "tags_test.go",
+    ],
+    embed = [":dsl"],
+    deps = ["//tokenmodel"],
+)

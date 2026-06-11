@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "solver",
+    srcs = [
+        "equilibrium.go",
+        "implicit.go",
+        "methods.go",
+        "ode.go",
+        "tsit5.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/solver",
+    visibility = ["//visibility:public"],
+    deps = ["//petri"],
+)
+
+go_test(
+    name = "solver_test",
+    srcs = ["solver_test.go"],
+    embed = [":solver"],
+    deps = ["//petri"],
+)

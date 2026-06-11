@@ -1,5 +1,52 @@
 # go-pflow: Petri Net Modeling with ODE Simulation
 
+## Build systems
+
+go-pflow builds two ways. **Go tooling and Bazel coexist** — `go.mod`/`go.sum` stay
+the source of truth for dependencies; Bazel reads them via Gazelle.
+
+### Go (default for day-to-day dev)
+
+```bash
+make build      # go build
+make test       # go test ./...
+go test ./...
+```
+
+### Bazel (pure Bzlmod, hermetic, with nogo static analysis)
+
+Bazel is driven by [bazelisk](https://github.com/bazelbuild/bazelisk) (pinned to the
+version in `.bazelversion`). If you don't have it: `go install github.com/bazelbuild/bazelisk@latest`
+(installs to `$(go env GOPATH)/bin`; symlink/alias it to `bazel`).
+
+```bash
+bazel build //...              # build everything (runs nogo: go vet + x/tools passes)
+bazel test //...               # run all tests
+bazel run //cmd/pflow -- --help
+bazel run //:gazelle           # regenerate BUILD.bazel files after adding/moving Go files
+bazel mod tidy                 # sync go_deps use_repo list after editing go.mod
+```
+
+Layout:
+- `MODULE.bazel` — Bzlmod: `rules_go` + `gazelle`; deps come from `go.mod` via the
+  `go_deps` extension. The hermetic Go SDK and the `nogo` target are registered here.
+- `.bazelrc` — Bzlmod-only (`--noenable_workspace`); sets `--@io_bazel_rules_go//go/config:tags=purego`.
+- `BUILD.bazel` (root) — the `gazelle` target and the `nogo` target (`TOOLS_NOGO` analyzer set).
+- Per-package `BUILD.bazel` files are Gazelle-generated; hand-added attributes are marked `# keep`.
+
+**Gotchas / decisions baked in:**
+- **`purego` build tag (Bazel only).** `gnark-crypto`'s amd64/arm64 assembly uses relative
+  cross-package `#include` directives that don't resolve in Bazel's sandbox. The `purego` tag
+  (set in `.bazelrc`) selects its pure-Go field arithmetic — bit-identical, just slower.
+  `go build`/the Makefile still use the asm fast path.
+- **`//zkcompile/petrigen:petrigen_test`** runs with `-test.short` under Bazel: its integration
+  tests shell out to `go mod tidy`/`go build` (needs a Go dev env + network → non-hermetic).
+  The 7 generator unit tests still run.
+- **`//learn:learn_test` is a pre-existing failure** — it fails identically under plain
+  `go test ./learn/` (loss never decreases). Not a Bazel artifact; left as-is.
+- After editing `go.mod`, run `bazel mod tidy`; after adding/moving `.go` files, run
+  `bazel run //:gazelle`.
+
 ## Package Overview
 
 | Package | Purpose |

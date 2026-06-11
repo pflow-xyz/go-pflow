@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "templates",
+    srcs = [
+        "queue.go",
+        "sir.go",
+        "types.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/templates",
+    visibility = ["//visibility:public"],
+    deps = ["//petri"],
+)

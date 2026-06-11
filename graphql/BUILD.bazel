@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "graphql",
+    srcs = [
+        "doc.go",
+        "eventsource.go",
+        "introspect.go",
+        "parser.go",
+        "playground.go",
+        "resolver.go",
+        "schema.go",
+        "server.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/graphql",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//eventsource",
+        "//petri",
+        "@com_github_google_uuid//:uuid",
+    ],
+)
+
+go_test(
+    name = "graphql_test",
+    srcs = [
+        "eventsource_test.go",
+        "graphql_test.go",
+    ],
+    embed = [":graphql"],
+    deps = [
+        "//eventsource",
+        "//petri",
+    ],
+)

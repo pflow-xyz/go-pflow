@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "statemachine",
+    srcs = [
+        "builder.go",
+        "machine.go",
+        "model.go",
+        "types.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/statemachine",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//engine",
+        "//petri",
+        "//tokenmodel/petri",
+        "//tokenmodel/subnet",
+    ],
+)
+
+go_test(
+    name = "statemachine_test",
+    srcs = [
+        "model_test.go",
+        "statemachine_test.go",
+    ],
+    embed = [":statemachine"],
+    deps = [
+        "//tokenmodel/dataflow/transport",
+        "//tokenmodel/petri",
+        "//tokenmodel/subnet",
+    ],
+)

@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "results",
+    srcs = [
+        "analysis.go",
+        "builder.go",
+        "io.go",
+        "sweep.go",
+        "types.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/results",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//solver",
+    ],
+)

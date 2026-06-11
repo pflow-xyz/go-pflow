@@ -1,0 +1,43 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "cmd_lib",
+    srcs = [
+        "benchmark.go",
+        "game.go",
+        "main.go",
+        "test_ai.go",
+        "validate.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/tictactoe/cmd",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//engine",
+        "//parser",
+        "//petri",
+        "//solver",
+        "//visualization",
+    ],
+)
+
+go_binary(
+    name = "cmd",
+    embed = [":cmd_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "cmd_test",
+    srcs = [
+        "nxn_bench_test.go",
+        "ode_bench_test.go",
+        "spectral_test.go",
+    ],
+    embed = [":cmd_lib"],
+    deps = [
+        "//parser",
+        "//petri",
+        "//reachability",
+        "//solver",
+    ],
+)

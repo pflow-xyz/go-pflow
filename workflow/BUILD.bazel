@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "workflow",
+    srcs = [
+        "builder.go",
+        "engine.go",
+        "model.go",
+        "monitor.go",
+        "sugar.go",
+        "types.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/workflow",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//solver",
+        "//tokenmodel/petri",
+        "//tokenmodel/subnet",
+    ],
+)
+
+go_test(
+    name = "workflow_test",
+    srcs = [
+        "model_test.go",
+        "sugar_test.go",
+        "workflow_test.go",
+    ],
+    embed = [":workflow"],
+    deps = [
+        "//tokenmodel/dataflow/transport",
+        "//tokenmodel/subnet",
+    ],
+)

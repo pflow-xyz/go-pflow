@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "parser",
+    srcs = ["json.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/parser",
+    visibility = ["//visibility:public"],
+    deps = ["//petri"],
+)
+
+go_test(
+    name = "parser_test",
+    srcs = ["json_test.go"],
+    embed = [":parser"],
+    deps = ["//petri"],
+)

@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "f91w",
+    srcs = [
+        "model.go",
+        "watch.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/f91w",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//engine",
+        "//petri",
+    ],
+)
+
+go_test(
+    name = "f91w_test",
+    srcs = ["watch_test.go"],
+    embed = [":f91w"],
+)

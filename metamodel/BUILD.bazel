@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "metamodel",
+    srcs = [
+        "access.go",
+        "compat.go",
+        "config.go",
+        "convert.go",
+        "errors.go",
+        "extension.go",
+        "features.go",
+        "generic.go",
+        "patterns.go",
+        "schema.go",
+        "validation.go",
+        "views.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/metamodel",
+    visibility = ["//visibility:public"],
+    deps = ["//tokenmodel"],
+)
+
+go_test(
+    name = "metamodel_test",
+    srcs = [
+        "compat_test.go",
+        "convert_test.go",
+        "extension_test.go",
+        "generic_test.go",
+        "patterns_test.go",
+    ],
+    embed = [":metamodel"],
+    deps = ["//tokenmodel"],
+)

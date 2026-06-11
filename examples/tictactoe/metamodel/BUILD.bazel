@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "metamodel",
+    srcs = [
+        "dynamics.go",
+        "lens.go",
+        "tictactoe.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/tictactoe/metamodel",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//solver",
+        "//tokenmodel/dsl",
+    ],
+)
+
+go_test(
+    name = "metamodel_test",
+    srcs = [
+        "equivalence_test.go",
+        "ode_test.go",
+        "tictactoe_test.go",
+    ],
+    # Test reads ../../<cid>.jsonld relative to its package dir; expose it as runfiles.
+    data = ["//examples:z2xFpT8B936shqtNayWbC8hwxCe4bRxdKrY13QaHa5h2jaFg2wh.jsonld"],  # keep
+    embed = [":metamodel"],
+    deps = [
+        "//parser",
+        "//solver",
+        "//tokenmodel/dsl",
+        "//tokenmodel/petri",
+    ],
+)

@@ -1,0 +1,32 @@
+"""go-pflow: pure-Bazel (Bzlmod) build.
+
+Core Petri net library. Dependencies are sourced from go.mod via Gazelle's
+go_deps extension, so `go build`/`go test` continue to work alongside Bazel.
+"""
+
+module(
+    name = "go_pflow",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "rules_go", version = "0.55.1", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "gazelle", version = "0.44.0", repo_name = "bazel_gazelle")
+
+# Hermetic Go SDK (matches go.mod toolchain). nogo runs static analysis at build time.
+go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.24.10")
+go_sdk.nogo(nogo = "//:nogo")
+
+# External Go deps come straight from go.mod / go.sum.
+go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_mod = "//:go.mod")
+
+# `bazel mod tidy` populates this use_repo list from the go.mod graph.
+use_repo(
+    go_deps,
+    "com_github_consensys_gnark",
+    "com_github_consensys_gnark_crypto",
+    "com_github_google_uuid",
+    "com_github_holiman_uint256",
+    "org_modernc_sqlite",
+)

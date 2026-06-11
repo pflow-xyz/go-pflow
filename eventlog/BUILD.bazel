@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "eventlog",
+    srcs = [
+        "csv.go",
+        "jsonl.go",
+        "types.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/eventlog",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "eventlog_test",
+    srcs = [
+        "csv_test.go",
+        "jsonl_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":eventlog"],
+)

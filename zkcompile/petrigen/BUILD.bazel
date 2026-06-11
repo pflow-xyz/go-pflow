@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "petrigen",
+    srcs = [
+        "context.go",
+        "generator.go",
+        "templates.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/zkcompile/petrigen",
+    visibility = ["//visibility:public"],
+    deps = ["//metamodel"],
+)
+
+go_test(
+    name = "petrigen_test",
+    srcs = [
+        "generator_test.go",
+        "integration_test.go",
+    ],
+    # The integration tests shell out to `go mod tidy`/`go build` on generated code,
+    # which needs a Go dev env + network — not hermetic. They already guard on
+    # testing.Short(), so run short here; the 7 generator unit tests still run.
+    args = ["-test.short"],  # keep
+    embed = [":petrigen"],
+    deps = ["//metamodel"],
+)

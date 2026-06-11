@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "measles_sir_fixed_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/dataset_comparison/cmd/measles_sir_fixed",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//learn",
+        "//petri",
+        "//plotter",
+        "//solver",
+    ],
+)
+
+go_binary(
+    name = "measles_sir_fixed",
+    embed = [":measles_sir_fixed_lib"],
+    visibility = ["//visibility:public"],
+)

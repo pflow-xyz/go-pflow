@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "cmd_lib",
+    srcs = [
+        "main.go",
+        "model.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/sudoku/cmd",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//parser",
+        "//petri",
+        "//validation",
+        "//visualization",
+    ],
+)
+
+go_binary(
+    name = "cmd",
+    embed = [":cmd_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "cmd_test",
+    srcs = ["sudoku_bench_test.go"],
+    embed = [":cmd_lib"],
+    deps = ["//solver"],
+)

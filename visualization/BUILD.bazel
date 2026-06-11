@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "visualization",
+    srcs = [
+        "render.go",
+        "statemachine_svg.go",
+        "svg.go",
+        "workflow_svg.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/visualization",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//statemachine",
+        "//workflow",
+    ],
+)
+
+go_test(
+    name = "visualization_test",
+    srcs = [
+        "statemachine_svg_test.go",
+        "workflow_svg_test.go",
+    ],
+    embed = [":visualization"],
+    deps = [
+        "//statemachine",
+        "//workflow",
+    ],
+)

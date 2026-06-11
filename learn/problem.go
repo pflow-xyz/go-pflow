@@ -110,7 +110,9 @@ func (p *LearnableProblem) ToProblem() *solver.Problem {
 	}
 
 	prob := solver.NewProblem(p.Net, p.U0, p.Tspan, dummyRates)
-	prob.F = p.BuildODEFunc() // Replace with learnable ODE function
+	// Solve integrates over the vectorized derivative, so install via SetDerivative
+	// (assigning prob.F alone is ignored by Solve and leaves the rate functions unused).
+	prob.SetDerivative(p.BuildODEFunc())
 	return prob
 }
 

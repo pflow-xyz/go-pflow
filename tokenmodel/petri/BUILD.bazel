@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "petri",
+    srcs = [
+        "analysis.go",
+        "bridge.go",
+        "cid.go",
+        "equivalence.go",
+        "errors.go",
+        "fire.go",
+        "model.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/tokenmodel/petri",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//solver",
+        "//tokenmodel",
+        "//tokenmodel/guard",
+    ],
+)
+
+go_test(
+    name = "petri_test",
+    srcs = ["analysis_test.go"],
+    embed = [":petri"],
+)
