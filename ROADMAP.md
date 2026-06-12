@@ -79,4 +79,14 @@ into one dependency graph with a single `bazel test //...`.
 
 ## Non-Bazel roadmap items
 
-(Placeholder — add library/feature roadmap here as it emerges. Keep build-system tracking above.)
+- [ ] **Beat-relative note-duration encoding.** Across the ecosystem, MIDI note
+      events encode `duration` as fixed **milliseconds** (e.g. beats-bitwrap-io
+      `internal/pflow.MidiBinding.Duration`, hashed into the share CID). That's
+      tempo-blind: a sustain baked at a genre's nominal BPM (the bossa walking-
+      bass dotted-quarter is the latest example) plays wrong when the listener
+      overrides tempo. A beat-relative encoding (duration in ticks / sixteenth-
+      steps, resolved to ms at playback against the live BPM) would make note
+      length tempo-independent. Must stay byte-identical across Go and JS — this
+      is the same cross-language state-root convention Phase 3 wants enforced at
+      build time, so the two efforts should land together (change the encoding,
+      then add the genrule diff that guards it).
