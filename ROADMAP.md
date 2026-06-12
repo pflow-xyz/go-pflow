@@ -13,8 +13,8 @@ Workspace dependency DAG, so it's the pilot for a possible ecosystem-wide migrat
 | `nogo` static analysis gating every `bazel build` | ✅ Done |
 | Hermetic toolchain (pinned Bazel 7.6.1 + Go 1.24.10 + locked dep graph) | ✅ Done |
 | `bazel build //...` / `bazel test //...` green (41/41 test targets) | ✅ Done |
-| Phase 1: first cross-project consumer (beats-bitwrap-io) on the Bazel graph | ✅ Done |
-| Phase 3 (partial): a downstream Go↔JS parity test in the same `bazel test` | 🟡 Started |
+| Phase 1: cross-project consumers on the Bazel graph (beats-bitwrap-io + bitwrap-io) | ✅ Done (×2) |
+| Phase 3 (partial): downstream Go↔JS parity tests in the same `bazel test` | 🟡 Started |
 
 See [CLAUDE.md → Build systems](./CLAUDE.md#build-systems) for day-to-day commands and gotchas.
 
@@ -40,9 +40,12 @@ The **bigger** wins are conditional on going beyond one repo (see Phase 1–3).
 go-pflow builds and tests under pure Bazel, coexisting with Go tooling. Proves the core lib
 (heavy deps: gnark-crypto asm, modernc/sqlite) is Bazel-buildable with no cgo.
 
-### Phase 1 — Prove cross-project incremental rebuild (done for beats-bitwrap-io)
-First downstream consumer wired: **beats-bitwrap-io** builds and tests under Bazel and
-depends on go-pflow through the Bazel graph. See `beats-bitwrap-io/CLAUDE.md` ("Bazel").
+### Phase 1 — Prove cross-project incremental rebuild (done; generalized to 2 consumers)
+Two downstream consumers now build and test under Bazel through the go-pflow graph:
+**beats-bitwrap-io** and **bitwrap-io**. See each repo's `CLAUDE.md` ("Bazel"). The
+shared scaffolding (Bzlmod + Gazelle + `go_deps` + the `purego` tag + `nogo` + a tiny
+`tools/nodejs_test.bzl` for hermetic-Node JS parity) ports unchanged between them — the
+pattern generalizes; only repo-specific build features differ.
 
 - [x] Decide the multi-repo strategy. **Chosen (simpler than expected):** keep go.mod's
       `replace github.com/pflow-xyz/go-pflow => ../go-pflow` and let Gazelle's `go_deps`
@@ -57,9 +60,19 @@ depends on go-pflow through the Bazel graph. See `beats-bitwrap-io/CLAUDE.md` ("
       zero duplication — arguably better than the original "replace with a bazel_dep" plan.
 - [x] Incremental rebuild works: editing `../go-pflow/petri` triggers a minimal rebuild of
       only the affected beats targets under `bazel test //...`.
+- [x] **Generalized to bitwrap-io** — confirms the pattern isn't beats-specific. bitwrap was
+      the *easier* cross-repo case: it pins go-pflow as an ordinary registry dep (`v0.9.0`,
+      no local replace), so `go_deps` fetches it like any module — no replace handling at all.
+      Repo-specific work was orthogonal to the pattern: a **hermetic wasm build** (the gnark
+      prover cross-compiled to js/wasm in-graph and fed into a `//go:embed`, so `bazel build`
+      no longer needs a prior `make wasm`), `size=enormous` on the Groth16 proving test
+      (slower under `purego`), and skipping the Go-side node-exec parity tests under Bazel
+      (redundant with the JS-side `nodejs_test` parity; still run under `go test`).
 
-Next: extend the same pattern to a second consumer (bitwrap-io) to confirm it generalizes,
-then Phase 2 (shared remote cache) is where the multi-host wall-clock win lands.
+Two repo shapes now proven: **local-replace** (beats, sibling source) and **registry-pin**
+(bitwrap, versioned dep). Next: Phase 2 (shared remote cache) is where the multi-host
+wall-clock win lands — and where the matching pins (bitwrap/go-pflow on rules_go 0.55.1 +
+Go 1.24.10) start paying off.
 
 ### Phase 2 — Remote cache
 Stand up a shared Bazel remote cache (candidate host: valoper or pflow.dev). Build an artifact
