@@ -47,6 +47,36 @@ Layout:
 - After editing `go.mod`, run `bazel mod tidy`; after adding/moving `.go` files, run
   `bazel run //:gazelle`.
 
+### Shared remote cache (`bazel.stackdump.com`)
+
+go-pflow and its Bazel-ported consumers (beats-bitwrap-io, bitwrap-io) share a remote cache —
+build an artifact once, reuse it on any machine. It's **opt-in**:
+
+```bash
+# one-time per machine: add credentials (ask the operator for the password)
+printf 'machine bazel.stackdump.com login bazel password <PW>\n' >> ~/.netrc && chmod 600 ~/.netrc
+
+bazel test --config=remote //...      # use the cache (uploads local results, reuses remote ones)
+# or make it the default on this machine:
+echo 'build --config=remote' >> user.bazelrc   # (gitignored; bazel reads it via try-import or -bazelrc)
+```
+
+The `build:remote` config (in each repo's `.bazelrc`) sets
+`--remote_cache=https://bazel.stackdump.com --remote_local_fallback --remote_upload_local_results`.
+Auth comes from `~/.netrc`; **credentials are never committed**. If the cache is unreachable the
+build falls back to local — `--config=remote` is always safe to pass.
+
+**Server (pflow.dev), for ops:**
+- `bazel-remote` v2.6.1 — systemd-user service (`systemctl --user status|restart bazel-remote`),
+  binary `~/bin/bazel-remote`, cache dir `~/bazel-cache`, 20 GiB cap, listens on
+  `127.0.0.1:8086` (HTTP REST; gRPC disabled). Survives reboot (lingering on).
+- nginx `bazel.stackdump.com` → `127.0.0.1:8086`, TLS via certbot, HTTP basic auth
+  (`/etc/nginx/.htpasswd-bazel`, **not** in the sites-available git repo). A writable cache is an
+  RCE surface, so auth is mandatory — unauthenticated requests get 401.
+- Stats / health: `curl -u bazel:<PW> https://bazel.stackdump.com/status`.
+- Rotate the credential by updating `/etc/nginx/.htpasswd-bazel` (e.g. `openssl passwd -apr1`)
+  and every machine's `~/.netrc`.
+
 ## Package Overview
 
 | Package | Purpose |

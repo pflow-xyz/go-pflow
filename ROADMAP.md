@@ -14,6 +14,7 @@ Workspace dependency DAG, so it's the pilot for a possible ecosystem-wide migrat
 | Hermetic toolchain (pinned Bazel 7.6.1 + Go 1.24.10 + locked dep graph) | ✅ Done |
 | `bazel build //...` / `bazel test //...` green (41/41 test targets) | ✅ Done |
 | Phase 1: cross-project consumers on the Bazel graph (beats-bitwrap-io + bitwrap-io) | ✅ Done (×2) |
+| Phase 2: shared remote cache (`bazel.stackdump.com`, auth + TLS) | ✅ Done |
 | Phase 3 (partial): downstream Go↔JS parity tests in the same `bazel test` | 🟡 Started |
 
 See [CLAUDE.md → Build systems](./CLAUDE.md#build-systems) for day-to-day commands and gotchas.
@@ -74,14 +75,29 @@ Two repo shapes now proven: **local-replace** (beats, sibling source) and **regi
 wall-clock win lands — and where the matching pins (bitwrap/go-pflow on rules_go 0.55.1 +
 Go 1.24.10) start paying off.
 
-### Phase 2 — Remote cache
-Stand up a shared Bazel remote cache (candidate host: valoper or pflow.dev). Build an artifact
-once; every other machine and CI downloads instead of recompiling. This is where wall-clock and
-CPU actually drop across the multi-host + render-farm setup.
+### Phase 2 — Remote cache (done)
+Shared Bazel remote cache live at **`https://bazel.stackdump.com`**. Build an artifact once;
+any other machine reuses it instead of recompiling.
 
-- [ ] Provision remote cache (bazel-remote or similar) behind the existing infra.
-- [ ] Add `--remote_cache=` to a shared `.bazelrc` / CI config.
-- [ ] Measure: cold vs. warm build time across two hosts.
+- [x] Provisioned **bazel-remote** (v2.6.1) on pflow.dev — systemd-user service bound to
+      `127.0.0.1:8086`, 20 GiB disk cap, gRPC disabled (HTTP REST). nginx fronts it at
+      `bazel.stackdump.com` with TLS (certbot) + HTTP basic auth; the daemon is never directly
+      exposed. **Auth is mandatory** — a writable cache is an RCE surface; unauthenticated and
+      wrong-password requests get 401.
+- [x] Added an **opt-in** `build:remote` config to all three repos' `.bazelrc`
+      (`--remote_cache=https://bazel.stackdump.com --remote_local_fallback
+      --remote_upload_local_results`). Credentials come from `~/.netrc` (never committed); use
+      `bazel test --config=remote //...`, or set `build --config=remote` in a personal
+      `user.bazelrc` to default it on.
+- [x] Measured (go-pflow, 8 pure-Go targets, 118 actions): **cold populate 121 s → fresh
+      machine 24 s** with **108/118 remote cache hits**. The win scales with the gnark/sqlite
+      heavy targets, which dominate cold builds.
+
+Ops: `systemctl --user status bazel-remote` on pflow.dev; stats at
+`curl -u bazel:… https://bazel.stackdump.com/status`. See go-pflow `CLAUDE.md` → Build systems.
+
+Next: point the off-host render farm (valoper) and any CI at the same cache; rotate the basic-auth
+credential periodically.
 
 ### Phase 3 — Cross-language graph (the strongest case)
 Bring the **vanilla JS frontends**, **pflow-rs (Rust ZK provers)**, and **Solidity codegen**
