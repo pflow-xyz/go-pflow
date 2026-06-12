@@ -13,6 +13,8 @@ Workspace dependency DAG, so it's the pilot for a possible ecosystem-wide migrat
 | `nogo` static analysis gating every `bazel build` | ✅ Done |
 | Hermetic toolchain (pinned Bazel 7.6.1 + Go 1.24.10 + locked dep graph) | ✅ Done |
 | `bazel build //...` / `bazel test //...` green (41/41 test targets) | ✅ Done |
+| Phase 1: first cross-project consumer (beats-bitwrap-io) on the Bazel graph | ✅ Done |
+| Phase 3 (partial): a downstream Go↔JS parity test in the same `bazel test` | 🟡 Started |
 
 See [CLAUDE.md → Build systems](./CLAUDE.md#build-systems) for day-to-day commands and gotchas.
 
@@ -38,18 +40,26 @@ The **bigger** wins are conditional on going beyond one repo (see Phase 1–3).
 go-pflow builds and tests under pure Bazel, coexisting with Go tooling. Proves the core lib
 (heavy deps: gnark-crypto asm, modernc/sqlite) is Bazel-buildable with no cgo.
 
-### Phase 1 — Prove cross-project incremental rebuild (next, highest leverage)
-Wire **one downstream consumer** (candidate: `pflow-xyz` or `bitwrap-io`) to depend on
-go-pflow **through Bazel** rather than its `go.mod`. Goal: demonstrate that changing
-`go-pflow/petri` triggers a precise, minimal rebuild/retest of only the affected downstream
-targets — something `go test ./...` (module-scoped) and Make (no dep graph) can't do.
+### Phase 1 — Prove cross-project incremental rebuild (done for beats-bitwrap-io)
+First downstream consumer wired: **beats-bitwrap-io** builds and tests under Bazel and
+depends on go-pflow through the Bazel graph. See `beats-bitwrap-io/CLAUDE.md` ("Bazel").
 
-- [ ] Decide the multi-repo strategy: Bazel module registry (each repo a `bazel_dep`) vs. a
-      single `MODULE.bazel` spanning a Workspace super-repo. Lean: local registry / `git_override`.
-- [ ] Port the chosen downstream repo to Bzlmod + Gazelle.
-- [ ] Replace its go.mod dependency on go-pflow with a Bazel module dep.
-- [ ] Show: edit `go-pflow/petri` → `bazel test //...` in the downstream rebuilds only the
-      impacted targets.
+- [x] Decide the multi-repo strategy. **Chosen (simpler than expected):** keep go.mod's
+      `replace github.com/pflow-xyz/go-pflow => ../go-pflow` and let Gazelle's `go_deps`
+      stage the sibling checkout as `@com_github_pflow_xyz_go_pflow`. No module-registry,
+      `git_override`, or `local_path_override` needed — go-pflow's own MODULE.bazel is
+      irrelevant to the consumer's build. The consumer is the root module, so its newer
+      `rules_go` / Go SDK govern the whole graph (beats needs Go 1.26; go-pflow standalone
+      pins 1.24.10).
+- [x] Port the downstream repo to Bzlmod + Gazelle.
+- [~] go.mod stays the dependency source of truth (consumed via `go_deps`), rather than a
+      hand-written `bazel_dep` on go-pflow. This keeps `go build` and Bazel in lockstep with
+      zero duplication — arguably better than the original "replace with a bazel_dep" plan.
+- [x] Incremental rebuild works: editing `../go-pflow/petri` triggers a minimal rebuild of
+      only the affected beats targets under `bazel test //...`.
+
+Next: extend the same pattern to a second consumer (bitwrap-io) to confirm it generalizes,
+then Phase 2 (shared remote cache) is where the multi-host wall-clock win lands.
 
 ### Phase 2 — Remote cache
 Stand up a shared Bazel remote cache (candidate host: valoper or pflow.dev). Build an artifact
@@ -64,9 +74,16 @@ CPU actually drop across the multi-host + render-farm setup.
 Bring the **vanilla JS frontends**, **pflow-rs (Rust ZK provers)**, and **Solidity codegen**
 into one dependency graph with a single `bazel test //...`.
 
-- [ ] Turn the "Go and JS produce identical state roots" convention into an **enforced
-      build-time test** spanning both languages (genrule diffing Go vs. JS output).
-- [ ] Evaluate `rules_rust` for pflow-rs and `rules_js`/`aspect` for the frontends.
+- [~] Turn the "Go and JS produce identical state roots" convention into an **enforced
+      build-time test** spanning both languages. **Started:** beats-bitwrap-io's
+      `//scripts:cohesion_parity_test` runs the vanilla-ESM cohesion-parity check under a
+      hermetic Node toolchain (`rules_nodejs`) in the same `bazel test //...` as the Go
+      tests. It asserts JS output against the same pinned fixture the Go test checks, so the
+      two are guarded in one command — but it's not yet a single genrule *diffing live Go vs.
+      JS output*. Tightening it to a direct diff is the remaining work.
+- [ ] Evaluate `rules_rust` for pflow-rs and `rules_js`/`aspect` for the frontends. Note:
+      for no-npm vanilla ESM, a ~25-line custom rule over the `rules_nodejs` toolchain
+      (`beats-bitwrap-io/tools/nodejs_test.bzl`) beat pulling in aspect_rules_js.
 
 ## Honest costs (track these, don't let them rot)
 
