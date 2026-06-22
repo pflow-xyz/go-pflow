@@ -28,3 +28,60 @@ jobs:
       # gradient/fit code there is repaired. Everything else is gated.
       - name: test
         run: go test $(go list ./... | grep -v '/learn$')
+
+  # Exercises the hermetic Bazel graph so BUILD.bazel / MODULE.bazel can't
+  # silently drift from the Go sources, and so the core's artifacts populate
+  # the shared remote cache (bazel.stackdump.com) that every consumer reuses.
+  bazel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Installs the Bazel version pinned in .bazelversion (via bazelisk) and
+      # caches bazelisk/repository/disk state across runs.
+      - uses: bazel-contrib/setup-bazel@0.19.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
+
+      # Wire the shared bazel-remote cache. The .bazelrc default is read-only
+      # (--noremote_upload_local_results), so only a trusted push writes it:
+      #   - push (trusted)       -> opt into uploads (populates the cache)
+      #   - pull_request         -> read-only default stands
+      #   - no secret (fork PR)  -> skip remote entirely; plain local build
+      # --remote_local_fallback in .bazelrc means a cache outage never fails CI.
+      - name: Configure Bazel remote cache
+        env:
+          CACHE_USER: ${{ secrets.BAZEL_REMOTE_CACHE_USERNAME }}
+          CACHE_PASSWORD: ${{ secrets.BAZEL_REMOTE_CACHE_PASSWORD }}
+        run: |
+          if [ -z "$CACHE_PASSWORD" ]; then
+            echo "No remote-cache secret available — building without --config=remote."
+            echo "BAZEL_REMOTE=" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          umask 077
+          cat > "$HOME/.netrc" <<EOF
+          machine bazel.stackdump.com
+          login $CACHE_USER
+          password $CACHE_PASSWORD
+          EOF
+          FLAGS="--config=remote"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            FLAGS="$FLAGS --remote_upload_local_results"
+            echo "push build: remote cache read + write."
+          else
+            echo "pull_request build: remote cache is read-only."
+          fi
+          echo "BAZEL_REMOTE=$FLAGS" >> "$GITHUB_ENV"
+
+      # Fail if BUILD.bazel files have drifted from the Go sources.
+      - name: Check BUILD files are up to date (gazelle)
+        run: bazel run //:gazelle -- -mode=diff
+
+      - name: Build
+        run: bazel build //... $BAZEL_REMOTE
+
+      - name: Test
+        run: bazel test //... --test_output=errors $BAZEL_REMOTE

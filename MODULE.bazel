@@ -9,12 +9,17 @@ module(
     version = "0.0.0",
 )
 
-bazel_dep(name = "rules_go", version = "0.55.1", repo_name = "io_bazel_rules_go")
-bazel_dep(name = "gazelle", version = "0.44.0", repo_name = "bazel_gazelle")
+bazel_dep(name = "rules_go", version = "0.61.1", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "gazelle", version = "0.51.3", repo_name = "bazel_gazelle")
 
-# Hermetic Go SDK (matches go.mod toolchain). nogo runs static analysis at build time.
+# Hermetic Go SDK. Pinned to the ecosystem-wide line (1.26.0) so the core's
+# compiled actions share remote-cache keys with every consumer's build graph:
+# the rules_go version and the Go SDK both feed Bazel's action key, so they must
+# match graph-wide for cross-repo cache reuse. beats requires >= 1.26 (chromedp),
+# so 1.26.0 is the unifying floor. go.mod's `go`/`toolchain` directives are lower;
+# the SDK only needs to be >= them. nogo runs static analysis at build time.
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
-go_sdk.download(version = "1.24.10")
+go_sdk.download(version = "1.26.0")
 go_sdk.nogo(nogo = "//:nogo")
 
 # External Go deps come straight from go.mod / go.sum.

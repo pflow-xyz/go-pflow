@@ -38,7 +38,11 @@ Layout:
 - **`purego` build tag (Bazel only).** `gnark-crypto`'s amd64/arm64 assembly uses relative
   cross-package `#include` directives that don't resolve in Bazel's sandbox. The `purego` tag
   (set in `.bazelrc`) selects its pure-Go field arithmetic — bit-identical, just slower.
-  `go build`/the Makefile still use the asm fast path.
+  `go build`/the Makefile still use the asm fast path. **Consequence:** Bazel is a *verification*
+  path (hermetic, cache-shared, runs nogo) — it never builds the asm binary that production ships.
+  `make build` is the release toolchain. The "bit-identical" claim is asserted, not differentially
+  tested; a hash-equality check between the two field backends over a fixed proving input would
+  close that gap (open follow-up).
 - **`//zkcompile/petrigen:petrigen_test`** runs with `-test.short` under Bazel: its integration
   tests shell out to `go mod tidy`/`go build` (needs a Go dev env + network → non-hermetic).
   The 7 generator unit tests still run.
@@ -49,22 +53,34 @@ Layout:
 
 ### Shared remote cache (`bazel.stackdump.com`)
 
-go-pflow and its Bazel-ported consumers (beats-bitwrap-io, bitwrap-io) share a remote cache —
-build an artifact once, reuse it on any machine. It's **opt-in**:
+go-pflow and its Bazel-ported consumers (beats-bitwrap-io, bitwrap-io, petri-pilot) share a remote
+cache — build an artifact once, reuse it on any machine. Cross-repo reuse only works when the
+**pins match graph-wide**: rules_go and the Go SDK both feed the action key, so every repo is on the
+same line — `rules_go 0.61.1 / gazelle 0.51.3 / Go SDK 1.26.0` (1.26.0 is the floor beats requires
+for chromedp; lower go.mod `go`/`toolchain` directives are fine since the SDK only needs to be ≥
+them). The cache is **opt-in**:
 
 ```bash
 # one-time per machine: add credentials (ask the operator for the password)
 printf 'machine bazel.stackdump.com login bazel password <PW>\n' >> ~/.netrc && chmod 600 ~/.netrc
 
-bazel test --config=remote //...      # use the cache (uploads local results, reuses remote ones)
-# or make it the default on this machine:
-echo 'build --config=remote' >> user.bazelrc   # (gitignored; bazel reads it via try-import or -bazelrc)
+bazel test --config=remote //...      # reuse remote artifacts (READ-ONLY by default)
+# to also populate the cache from this (trusted) machine, opt into uploads:
+echo 'build --config=remote'                    >> user.bazelrc   # gitignored
+echo 'build --remote_upload_local_results'      >> user.bazelrc
 ```
 
 The `build:remote` config (in each repo's `.bazelrc`) sets
-`--remote_cache=https://bazel.stackdump.com --remote_local_fallback --remote_upload_local_results`.
-Auth comes from `~/.netrc`; **credentials are never committed**. If the cache is unreachable the
-build falls back to local — `--config=remote` is always safe to pass.
+`--remote_cache=https://bazel.stackdump.com --remote_local_fallback --noremote_upload_local_results`
+— **read-only by default**, so a non-sandboxed local-fallback result can never poison the shared
+cache. Only trusted CI pushes opt into uploads (the CI job appends `--remote_upload_local_results`
+on `push`, never on `pull_request`). Auth comes from `~/.netrc`; **credentials are never committed**.
+If the cache is unreachable the build falls back to local — `--config=remote` is always safe to pass.
+
+Each repo's CI runs the Bazel graph (`bazel build //...` + `bazel test //...`) behind a
+`gazelle -mode=diff` drift gate, so BUILD.bazel / MODULE.bazel can't silently fall out of sync with
+the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME` and
+`BAZEL_REMOTE_CACHE_PASSWORD`; without them it still builds, just without the shared cache.
 
 **Server (pflow.dev), for ops:**
 - `bazel-remote` v2.6.1 — systemd-user service (`systemctl --user status|restart bazel-remote`),
