@@ -29,6 +29,14 @@ jobs:
       - name: test
         run: go test $(go list ./... | grep -v '/learn$')
 
+      # F4: the prover/zkcompile binaries use gnark-crypto's asm field
+      # arithmetic; the Bazel verification build also uses asm now (inlined
+      # patch), but this independently asserts the asm and purego backends
+      # produce bit-identical field/circuit digests, so a divergence can never
+      # reach the Groth16 provers undetected.
+      - name: ZK field backend parity (purego vs asm)
+        run: ./scripts/zk-parity-check.sh
+
   # Exercises the hermetic Bazel graph so BUILD.bazel / MODULE.bazel can't
   # silently drift from the Go sources, and so the core's artifacts populate
   # the shared remote cache (bazel.stackdump.com) that every consumer reuses.

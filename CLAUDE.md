@@ -35,14 +35,20 @@ Layout:
 - Per-package `BUILD.bazel` files are Gazelle-generated; hand-added attributes are marked `# keep`.
 
 **Gotchas / decisions baked in:**
-- **`purego` build tag (Bazel only).** `gnark-crypto`'s amd64/arm64 assembly uses relative
-  cross-package `#include` directives that don't resolve in Bazel's sandbox. The `purego` tag
-  (set in `.bazelrc`) selects its pure-Go field arithmetic — bit-identical, just slower.
-  `go build`/the Makefile still use the asm fast path. **Consequence:** Bazel is a *verification*
-  path (hermetic, cache-shared, runs nogo) — it never builds the asm binary that production ships.
-  `make build` is the release toolchain. The "bit-identical" claim is asserted, not differentially
-  tested; a hash-equality check between the two field backends over a fixed proving input would
-  close that gap (open follow-up).
+- **gnark-crypto asm built hermetically (F4).** `gnark-crypto`'s amd64/arm64 assembly uses
+  relative cross-package `#include` directives that don't resolve in Bazel's sandbox (the included
+  `field/asm/element_Nw/*.s` files live in a separate vendoring-hack package — gnark-crypto issue
+  #619). Rather than fall back to pure-Go via `-tags purego`, `bazel/patches/gnark-crypto-asm-hermetic.patch`
+  (wired via `go_deps.module_override` in `MODULE.bazel`) **inlines** each included file's content
+  directly into the consuming `.s`, so rules_go assembles it in-sandbox. Bazel now compiles the
+  **same asm field backend** `make build` ships — the hermetic verification build and the released
+  binary are no longer different builds. Regenerate the patch after a gnark-crypto bump with
+  `scripts/gen-gnark-asm-patch.sh` (covers all 36 consuming files across `ecc/*` and
+  `field/{babybear,koalabear}`). Pure-Go is still available as a fallback via `bazel build --config=purego`.
+- **Defense in depth — purego↔asm parity.** Independent of the build path, `scripts/zk-parity-check.sh`
+  (run in CI; builds `cmd/zk-field-parity` with and without `-tags purego`) asserts the two field
+  backends produce identical digests for raw Fp/Fr ops, native MiMC, the compiled R1CS, and a solved
+  witness — so an asm/purego divergence can never silently reach the Groth16 provers.
 - **`//zkcompile/petrigen:petrigen_test`** runs with `-test.short` under Bazel: its integration
   tests shell out to `go mod tidy`/`go build` (needs a Go dev env + network → non-hermetic).
   The 7 generator unit tests still run.

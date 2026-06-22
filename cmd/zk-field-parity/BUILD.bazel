@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "zk-field-parity_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/cmd/zk-field-parity",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@com_github_consensys_gnark//frontend",
+        "@com_github_consensys_gnark//frontend/cs/r1cs",
+        "@com_github_consensys_gnark//logger",
+        "@com_github_consensys_gnark//std/hash/mimc",
+        "@com_github_consensys_gnark_crypto//ecc",
+        "@com_github_consensys_gnark_crypto//ecc/bn254/fp",
+        "@com_github_consensys_gnark_crypto//ecc/bn254/fr",
+        "@com_github_consensys_gnark_crypto//ecc/bn254/fr/mimc",
+    ],
+)
+
+go_binary(
+    name = "zk-field-parity",
+    embed = [":zk-field-parity_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -26,6 +26,19 @@ go_sdk.nogo(nogo = "//:nogo")
 go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
 
+# F4: make gnark-crypto's amd64/arm64 assembly build hermetically under Bazel,
+# so the hermetic artifact uses the SAME field backend `make build` ships instead
+# of falling back to `-tags purego`. Each ecc/<curve>/<fp|fr>/element_<arch>.s does
+# a relative cross-package include of a separate vendoring-hack package (gnark-crypto
+# issue #619) that rules_go can't stage as an asm include; this patch inlines the
+# included content directly into each consuming .s. Regenerate after a gnark-crypto
+# bump: scripts/gen-gnark-asm-patch.sh.
+go_deps.module_override(
+    patch_strip = 1,
+    patches = ["//bazel/patches:gnark-crypto-asm-hermetic.patch"],
+    path = "github.com/consensys/gnark-crypto",
+)
+
 # `bazel mod tidy` populates this use_repo list from the go.mod graph.
 use_repo(
     go_deps,

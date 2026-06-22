@@ -5,11 +5,13 @@ common --noenable_workspace
 # Go builds are hermetic via rules_go's downloaded SDK; never fall back to host Go.
 build --incompatible_enable_proto_toolchain_resolution
 
-# gnark-crypto's amd64/arm64 assembly uses relative cross-package #include directives
-# that don't resolve in Bazel's sandbox. The `purego` build tag selects its pure-Go
-# field arithmetic (gated behind //go:build !purego) — bit-identical, just slower.
-# `go build`/the Makefile still use the asm fast path; only Bazel uses purego.
-build --@io_bazel_rules_go//go/config:tags=purego
+# gnark-crypto's amd64/arm64 assembly is built hermetically (F4): the cross-package
+# #include directives that don't resolve in Bazel's sandbox are inlined by
+# bazel/patches/gnark-crypto-asm-hermetic.patch (wired in MODULE.bazel), so Bazel now
+# compiles the SAME asm field backend `make build` ships — the hermetic verification
+# build and the shipped binary are no longer different builds.
+# To force the pure-Go fallback instead, build with --config=purego.
+build:purego --@io_bazel_rules_go//go/config:tags=purego
 
 # Quieter, more useful output.
 build --show_timestamps
