@@ -8,7 +8,7 @@ bin/
 dist/
 
 # Go binaries (no extension)
-pflow
+/pflow
 examples/connect4/connect4
 examples/nim/nim
 examples/tictactoe/tictactoe

@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "pflow_lib",
+    srcs = [
+        "analyze.go",
+        "compare.go",
+        "create.go",
+        "events.go",
+        "main.go",
+        "plot.go",
+        "simulate.go",
+        "summary.go",
+        "sweep.go",
+        "validate.go",
+        "visualize.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/cmd/pflow",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//parser",
+        "//petri",
+        "//plotter",
+        "//results",
+        "//solver",
+        "//templates",
+        "//validation",
+        "//visualization",
+    ],
+)
+
+go_binary(
+    name = "pflow",
+    embed = [":pflow_lib"],
+    visibility = ["//visibility:public"],
+)
