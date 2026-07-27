@@ -4,6 +4,8 @@ go_library(
     name = "reachability",
     srcs = [
         "analyzer.go",
+        "coverability.go",
+        "farkas.go",
         "graph.go",
         "invariants.go",
         "marking.go",
@@ -16,7 +18,12 @@ go_library(
 
 go_test(
     name = "reachability_test",
-    srcs = ["reachability_test.go"],
+    srcs = [
+        "coverability_test.go",
+        "farkas_test.go",
+        "invariants_string_test.go",
+        "reachability_test.go",
+    ],
     embed = [":reachability"],
     deps = ["//petri"],
 )
