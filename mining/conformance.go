@@ -190,19 +190,32 @@ func replayTrace(trace *eventlog.Trace, net *petri.PetriNet, activityToTransitio
 		}
 	}
 
-	// Count remaining tokens (excluding end place)
+	// Count remaining tokens, excluding those that came to rest in a final
+	// place. A token sitting in a sink at the end of a trace means the process
+	// completed, which is the opposite of a conformance problem.
+	//
+	// Final places are identified structurally — a place with no outgoing arc
+	// cannot be left by any firing, so it is where completed cases accumulate.
+	// This previously matched the literal name "end", so a workflow whose sink
+	// was called "shipped" or "done" was penalized for finishing, and could
+	// never reach fitness 1.0 no matter how well the log fit.
+	finals := finalPlaces(net)
+
+	completed := false
 	for placeID, count := range marking {
-		// Don't penalize tokens in end place
-		if placeID != "end" && count > 0 {
-			result.RemainingTokens += count
+		if count <= 0 {
+			continue
 		}
+		if finals[placeID] {
+			completed = true
+			continue
+		}
+		result.RemainingTokens += count
 	}
 
-	// Check if there should be a token in end place
-	if endCount, hasEnd := marking["end"]; hasEnd && endCount > 0 {
-		// Good - process completed
-	} else if hasEndPlace(net) {
-		// Process didn't complete - penalize
+	// If the net has a final place but the trace never reached it, the case is
+	// unfinished — penalize that, as before.
+	if len(finals) > 0 && !completed {
 		result.RemainingTokens++
 	}
 
@@ -283,9 +296,30 @@ func fireTransition(net *petri.PetriNet, transID string, marking TokenState) (mi
 }
 
 // hasEndPlace checks if the net has a place named "end".
-func hasEndPlace(net *petri.PetriNet) bool {
-	_, exists := net.Places["end"]
-	return exists
+// finalPlaces returns the places a token can enter but never leave — the sinks
+// where completed cases come to rest. A place qualifies when no arc leads from
+// it to a transition.
+//
+// Inhibitor arcs are ignored: they test a place without consuming from it, so a
+// place whose only outgoing arc is an inhibitor is still a sink.
+func finalPlaces(net *petri.PetriNet) map[string]bool {
+	hasOutgoing := make(map[string]bool, len(net.Places))
+	for _, arc := range net.Arcs {
+		if arc.InhibitTransition {
+			continue
+		}
+		if _, isPlace := net.Places[arc.Source]; isPlace {
+			hasOutgoing[arc.Source] = true
+		}
+	}
+
+	finals := make(map[string]bool)
+	for placeID := range net.Places {
+		if !hasOutgoing[placeID] {
+			finals[placeID] = true
+		}
+	}
+	return finals
 }
 
 // =============================================================================
