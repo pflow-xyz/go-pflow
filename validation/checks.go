@@ -2,6 +2,10 @@ package validation
 
 import (
 	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/pflow-xyz/go-pflow/reachability"
 )
 
 // checkStructure validates basic structural properties
@@ -146,51 +150,84 @@ func (v *Validator) checkDeadlocks() {
 	}
 }
 
-// checkUnbounded checks for potentially unbounded places
+// checkUnbounded reports places that can accumulate tokens without limit.
+//
+// This used to compare the *number* of input and output arcs on each place,
+// which ignored arc weights and flagged plenty of perfectly bounded nets. It
+// now asks the structural analysis directly: a place covered by a P-invariant
+// is bounded by that invariant's constant, and an unbounded place is proved so
+// by a covering (pump) witness rather than guessed at.
 func (v *Validator) checkUnbounded() {
-	// Check for places without capacity that have more inputs than outputs
+	analyzer := reachability.NewInvariantAnalyzer(v.net)
+
+	// Places covered by some semi-positive P-invariant are provably bounded.
+	covered := make(map[string]bool)
+	basis := analyzer.PInvariantBasis()
+	for _, vec := range basis.Basis {
+		for i, c := range vec {
+			if c > 0 {
+				covered[basis.Labels[i]] = true
+			}
+		}
+	}
+
+	// A pump witness proves unboundedness outright.
+	if w := reachability.NewAnalyzer(v.net).WithMaxStates(unboundedSearchLimit).FindUnboundedWitness(); w != nil {
+		for _, name := range w.Places {
+			if place, ok := v.net.Places[name]; ok && len(place.Capacity) > 0 {
+				continue // an explicit capacity caps it
+			}
+			v.AddError("unbounded",
+				fmt.Sprintf("Place '%s' is unbounded: repeating [%s] adds tokens indefinitely",
+					name, strings.Join(w.Pump, " → ")),
+				[]string{name},
+				"Add a capacity, or consume the accumulated tokens on the cycle")
+		}
+	}
+
+	// Structural source/target shape is still useful context, and is cheap.
 	placeInputs := make(map[string]int)
 	placeOutputs := make(map[string]int)
-
 	for _, arc := range v.net.Arcs {
 		if _, isPlace := v.net.Places[arc.Target]; isPlace {
-			// Arc to place (transition output)
 			placeInputs[arc.Target]++
 		}
 		if _, isPlace := v.net.Places[arc.Source]; isPlace {
-			// Arc from place (transition input)
 			placeOutputs[arc.Source]++
 		}
 	}
 
 	for name, place := range v.net.Places {
-		// Skip places with capacity
 		if len(place.Capacity) > 0 {
 			continue
 		}
 
-		inputs := placeInputs[name]
-		outputs := placeOutputs[name]
+		inputs, outputs := placeInputs[name], placeOutputs[name]
 
-		// Warning if place has more inputs than outputs (potential accumulation)
-		if inputs > outputs {
-			v.AddWarning("unbounded", fmt.Sprintf("Place '%s' may be unbounded (more inputs than outputs, no capacity)", name),
-				[]string{name}, "Consider adding capacity or ensure balanced flow")
-		}
-
-		// Info if place has only inputs (sink)
 		if inputs > 0 && outputs == 0 {
 			v.AddInfo("unbounded", fmt.Sprintf("Place '%s' is a sink (only inputs, no outputs)", name),
 				[]string{name})
 		}
-
-		// Info if place has only outputs (source)
 		if outputs > 0 && inputs == 0 {
 			v.AddInfo("unbounded", fmt.Sprintf("Place '%s' is a source (only outputs, no inputs)", name),
 				[]string{name})
 		}
+
+		// Not covered by any conservation law and not obviously terminal:
+		// worth flagging, but as a warning rather than a claim of a bug.
+		if !covered[name] && inputs > 0 {
+			v.AddWarning("unbounded",
+				fmt.Sprintf("Place '%s' is not covered by any P-invariant, so nothing structurally bounds it", name),
+				[]string{name},
+				"Add a capacity, or balance the flow so the place participates in a conservation law")
+		}
 	}
 }
+
+// unboundedSearchLimit bounds the covering search during validation. Validation
+// is expected to be fast and run on every edit, so this is deliberately well
+// below the reachability package's own default.
+const unboundedSearchLimit = 2000
 
 // checkConservation checks for token conservation
 func (v *Validator) checkConservation() {
@@ -224,11 +261,39 @@ func (v *Validator) checkConservation() {
 	v.result.Summary.Conserved = conserved
 
 	if !conserved {
-		v.AddInfo("conservation", fmt.Sprintf("Net does not conserve tokens (transitions with unbalanced flow: %v)",
+		sort.Strings(nonConservingTransitions)
+		v.AddInfo("conservation", fmt.Sprintf("Net does not conserve total tokens (transitions with unbalanced flow: %v)",
 			nonConservingTransitions), nonConservingTransitions)
 	} else {
 		v.AddInfo("conservation", "Net conserves tokens (all transitions have balanced input/output)", nil)
 	}
+
+	// Total-token conservation is only the all-ones invariant. Report the full
+	// minimal-support P-invariant basis too: a net can fail the strict check
+	// above and still have several genuine conservation laws, and those laws
+	// are the most useful thing validation can hand back — they hold for every
+	// reachable marking, not just the ones a simulation happened to visit.
+	initial := make(reachability.Marking, len(v.net.Places))
+	for name, place := range v.net.Places {
+		initial[name] = int(place.GetTokenCount())
+	}
+
+	invariants := reachability.NewInvariantAnalyzer(v.net).FindPInvariants(initial)
+	if len(invariants) == 0 {
+		v.result.Invariants = []string{}
+		return
+	}
+
+	rendered := make([]string, 0, len(invariants))
+	for i := range invariants {
+		rendered = append(rendered, invariants[i].String())
+	}
+	sort.Strings(rendered)
+	v.result.Invariants = rendered
+
+	v.AddInfo("conservation",
+		fmt.Sprintf("Found %d conservation law(s): %s", len(rendered), strings.Join(rendered, "; ")),
+		nil)
 }
 
 type arcInfo struct {

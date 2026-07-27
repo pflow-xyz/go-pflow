@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "validation",
@@ -9,5 +9,15 @@ go_library(
     ],
     importpath = "github.com/pflow-xyz/go-pflow/validation",
     visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//reachability",
+    ],
+)
+
+go_test(
+    name = "validation_test",
+    srcs = ["validation_test.go"],
+    embed = [":validation"],
     deps = ["//petri"],
 )

@@ -15,6 +15,12 @@ type ValidationResult struct {
 	Info         []Issue             `json:"info,omitempty"`
 	Summary      Summary             `json:"summary"`
 	Reachability *ReachabilityResult `json:"reachability,omitempty"`
+
+	// Invariants lists the net's minimal-support P-invariants in rendered
+	// form, e.g. "3*boxes + widgets == 6". Each is a conservation law that
+	// holds at every reachable marking — the strongest correctness evidence
+	// this package produces, since it needs no state-space exploration.
+	Invariants []string `json:"invariants,omitempty"`
 }
 
 // Issue represents a validation issue
