@@ -65,6 +65,11 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
+	case "verify":
+		if err := verifyCmd(args); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	case "help", "-h", "--help":
 		printUsage()
 	case "version", "-v", "--version":
@@ -85,6 +90,7 @@ Usage:
 Commands:
   create     Create model from template
   validate   Validate model structure
+  verify     Check declarative properties (proved/refuted + counterexample)
   simulate   Run ODE simulation from Petri net model
   analyze    Compute insights from simulation results
   plot       Generate SVG visualization from simulation results
