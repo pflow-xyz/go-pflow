@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "verify",
+    srcs = [
+        "property.go",
+        "verify.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/verify",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//petri",
+        "//reachability",
+    ],
+)
+
+go_test(
+    name = "verify_test",
+    srcs = [
+        "property_test.go",
+        "verify_test.go",
+    ],
+    embed = [":verify"],
+    deps = [
+        "//petri",
+        "//reachability",
+    ],
+)
