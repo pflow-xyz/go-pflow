@@ -40,7 +40,8 @@ See [The go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) fo
 | `hypothesis` | Move evaluation for game AI | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) |
 | `sensitivity` | Parameter sensitivity analysis | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |
 | `cache` | Simulation memoization | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |
-| `reachability` | Deadlock/liveness analysis | [Ch 2: Mathematics of Flow](https://book.pflow.xyz/ch02-mathematics-of-flow.html) |
+| `reachability` | Deadlock/liveness analysis, P/T-invariants, unboundedness witnesses | [Ch 2: Mathematics of Flow](https://book.pflow.xyz/ch02-mathematics-of-flow.html) |
+| `verify` | Declarative property checking — proved/refuted + counterexample | [Model correctness](docs/MODEL-CORRECTNESS.md) |
 | `workflow` | Task dependencies, SLA tracking | [Ch 10: Complex State Machines](https://book.pflow.xyz/ch10-complex-state-machines.html) |
 | `statemachine` | Hierarchical state machines | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |
 | `actor` | Message-passing actor model | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |

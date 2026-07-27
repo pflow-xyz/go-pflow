@@ -52,8 +52,6 @@ Layout:
 - **`//zkcompile/petrigen:petrigen_test`** runs with `-test.short` under Bazel: its integration
   tests shell out to `go mod tidy`/`go build` (needs a Go dev env + network → non-hermetic).
   The 7 generator unit tests still run.
-- **`//learn:learn_test` is a pre-existing failure** — it fails identically under plain
-  `go test ./learn/` (loss never decreases). Not a Bazel artifact; left as-is.
 - After editing `go.mod`, run `bazel mod tidy`; after adding/moving `.go` files, run
   `bazel run //:gazelle`.
 
@@ -109,7 +107,8 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | `hypothesis` | Move evaluation for game AI |
 | `sensitivity` | Parameter sensitivity analysis |
 | `cache` | Memoization for simulations |
-| `reachability` | Discrete state space, deadlock/liveness analysis |
+| `reachability` | Discrete state space, deadlock/liveness, Farkas P/T-invariants, unboundedness witnesses |
+| `verify` | Declarative property checking (proved/refuted/unknown + counterexample) |
 | `statemachine` | Statecharts with Petri net backend |
 | `workflow` | Task dependencies, resources, SLA tracking |
 | `actor` | Actor model with message bus |
@@ -135,6 +134,8 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | Parameter optimization | `sensitivity` |
 | Process discovery from logs | `mining`, `eventlog` |
 | Deadlock/liveness checking | `reachability` |
+| "Is this model correct?" against stated requirements | `verify` |
+| Conservation laws / structural boundedness | `reachability.InvariantAnalyzer` |
 | Epidemics/populations | `petri` + `solver` |
 | General state/resource flow | `petri` |
 | Token model schemas | `tokenmodel`, `tokenmodel/dsl` |
@@ -221,6 +222,47 @@ changes := stateutil.Diff(before, after)
 analyzer := reachability.NewAnalyzer(net).WithMaxStates(10000)
 result := analyzer.Analyze()
 // result.Bounded, result.HasCycle, result.Live, result.Deadlocks
+
+// Finite proof of unboundedness (Karp-Miller covering witness)
+if w := analyzer.FindUnboundedWitness(); w != nil {
+    // repeating w.Pump after w.Prefix grows w.Places without limit
+}
+
+// Minimal-support P/T-invariants (Farkas)
+inv := reachability.NewInvariantAnalyzer(net)
+for _, p := range inv.FindPInvariants(marking) {
+    fmt.Println(p)              // "3*boxes + widgets == 6"
+}
+inv.FindTInvariants()           // firing-count vectors returning to the start marking
+inv.StructuralBoundedness()     // bounded for ANY initial marking?
+```
+
+### Verification
+
+Ask whether a model satisfies stated properties, and get a verdict with evidence
+rather than a description. Refutations carry a replayable firing sequence;
+`unknown` never counts as a pass.
+
+```go
+report := verify.New(net).Check(
+    verify.Property{Kind: verify.KindDeadlockFree},
+    verify.Property{Kind: verify.KindMutualExclusion, Places: []string{"busy1", "busy2"}},
+    verify.Property{Kind: verify.KindInvariant, Expr: "minted == circulating + burned"},
+    verify.Property{Kind: verify.KindUnreachable, Target: map[string]int{"overdrawn": 1}},
+)
+report.OK  // true only if every property was PROVED
+```
+
+Verdict `Method` says how far the result generalizes: `structural` (holds for any
+initial marking, proved via `y*C = 0`), `exhaustive` (this marking, full state
+space), `witness` (decided by a constructive witness), `partial` (truncated —
+only refutations are sound).
+
+CLI equivalent:
+
+```bash
+pflow verify model.json -p deadlock-free -p "mutex:busy1,busy2" -p "a + 2*b == 10"
+# exits non-zero unless everything is proved, so it works as a CI gate
 ```
 
 ## State Machine
