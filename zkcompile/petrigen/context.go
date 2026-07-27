@@ -19,7 +19,7 @@ type Context struct {
 
 	// Guard and constraint support
 	HasGuards      bool
-	GuardBindings  []GuardBinding  // Extracted bindings from all guards
+	GuardBindings  []GuardBinding   // Extracted bindings from all guards
 	Constraints    []ConstraintInfo // Model constraints (conservation, non-negative)
 	HasConstraints bool
 }

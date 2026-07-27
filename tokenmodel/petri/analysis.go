@@ -9,11 +9,11 @@ import (
 // IncidenceMatrix represents the effect of transitions on places.
 // Entry (i,j) = tokens added to place i by firing transition j (can be negative).
 type IncidenceMatrix struct {
-	Places      []string            // Place IDs (rows)
-	Transitions []string            // Transition IDs (columns)
-	Matrix      [][]int             // [place][transition] incidence values
-	placeIdx    map[string]int      // place ID -> row index
-	transIdx    map[string]int      // transition ID -> column index
+	Places      []string       // Place IDs (rows)
+	Transitions []string       // Transition IDs (columns)
+	Matrix      [][]int        // [place][transition] incidence values
+	placeIdx    map[string]int // place ID -> row index
+	transIdx    map[string]int // transition ID -> column index
 }
 
 // BuildIncidenceMatrix constructs the incidence matrix from a model.
@@ -292,8 +292,8 @@ func VerifyInvariantStructurally(model *Model, invariant PlaceInvariant) bool {
 
 // AnalysisResult contains the results of structural analysis.
 type AnalysisResult struct {
-	PlaceInvariants     []PlaceInvariant
-	ConservativeTransitions []string // Transitions that preserve total tokens
+	PlaceInvariants            []PlaceInvariant
+	ConservativeTransitions    []string // Transitions that preserve total tokens
 	NonConservativeTransitions []string // Transitions that create/destroy tokens (mint/burn)
 }
 

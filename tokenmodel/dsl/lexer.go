@@ -10,15 +10,15 @@ import (
 type TokenType int
 
 const (
-	TokenEOF TokenType = iota
-	TokenLParen   // (
-	TokenRParen   // )
-	TokenArrow    // ->
-	TokenKeyword  // :type, :guard, :keys, etc.
-	TokenSymbol   // schema, version, states, etc.
-	TokenString   // "..." (legacy, still supported)
-	TokenNumber   // 123, -456
-	TokenGuard    // {...} guard expression
+	TokenEOF     TokenType = iota
+	TokenLParen            // (
+	TokenRParen            // )
+	TokenArrow             // ->
+	TokenKeyword           // :type, :guard, :keys, etc.
+	TokenSymbol            // schema, version, states, etc.
+	TokenString            // "..." (legacy, still supported)
+	TokenNumber            // 123, -456
+	TokenGuard             // {...} guard expression
 )
 
 // Token represents a single token from the lexer.

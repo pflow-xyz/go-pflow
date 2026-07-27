@@ -8,10 +8,10 @@
 //
 // Output sections:
 //
-//   1. Per-hour drink counts (stage 1: WindowInto → CountPerKey).
-//   2. Per-hour ingredient totals (stage 2: FlatMap by recipe → CountPerKey).
-//   3. Filter ParDo: milk-drink-only subset.
-//   4. (--stream) Streaming emission as watermark advances by the hour.
+//  1. Per-hour drink counts (stage 1: WindowInto → CountPerKey).
+//  2. Per-hour ingredient totals (stage 2: FlatMap by recipe → CountPerKey).
+//  3. Filter ParDo: milk-drink-only subset.
+//  4. (--stream) Streaming emission as watermark advances by the hour.
 package main
 
 import (

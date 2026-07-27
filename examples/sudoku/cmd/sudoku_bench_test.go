@@ -33,4 +33,3 @@ func BenchmarkSudoku9x9ODE(b *testing.B) {
 func BenchmarkSudoku16x16ODE(b *testing.B) {
 	benchmarkSudokuODE(b, 16, 4)
 }
-

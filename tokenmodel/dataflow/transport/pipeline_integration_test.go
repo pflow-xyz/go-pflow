@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/pflow-xyz/go-pflow/tokenmodel/dataflow"
-	"github.com/pflow-xyz/go-pflow/tokenmodel/subnet"
 	tmpetri "github.com/pflow-xyz/go-pflow/tokenmodel/petri"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/subnet"
 )
 
 // TestPipelineWindowSubnetDistributed proves the integration: a

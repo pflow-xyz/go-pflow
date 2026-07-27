@@ -140,8 +140,8 @@ type GraphQLRequest struct {
 
 // GraphQLResponse represents a GraphQL response.
 type GraphQLResponse struct {
-	Data   map[string]any   `json:"data,omitempty"`
-	Errors []GraphQLError   `json:"errors,omitempty"`
+	Data   map[string]any `json:"data,omitempty"`
+	Errors []GraphQLError `json:"errors,omitempty"`
 }
 
 // GraphQLError represents a GraphQL error.

@@ -14,15 +14,15 @@
 // Mapping:
 //   - One subnet per Actor, ID = actor.ID.
 //     · Internal place "actor:state" — a marker that the actor is
-//       running. Initial = 1 if the system was Start()'d; 0 otherwise.
+//     running. Initial = 1 if the system was Start()'d; 0 otherwise.
 //     · One in-port per distinct signal type the actor subscribes to,
-//       backed by place "sig:in:<signalType>".
+//     backed by place "sig:in:<signalType>".
 //     · One out-port per distinct signal type the actor's behaviours
-//       emit, backed by place "sig:out:<signalType>".
+//     emit, backed by place "sig:out:<signalType>".
 //     · One transition per (behaviour, trigger) pair, named
-//       "handle:<behaviourID>:<signalType>". Consumes one token from
-//       the matching in-port; produces one token into the actor:state
-//       place (representing handler completion).
+//     "handle:<behaviourID>:<signalType>". Consumes one token from
+//     the matching in-port; produces one token into the actor:state
+//     place (representing handler completion).
 //   - Links connect every actor's "out:<sig>" port to every actor's
 //     "in:<sig>" port for the same signal type — modelling the bus's
 //     fan-out subscribe semantics. Buses don't get their own subnets:

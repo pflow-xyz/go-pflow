@@ -31,7 +31,7 @@ type Trigger interface {
 // AfterWatermark.pastEndOfWindow().
 type AfterWatermark struct{}
 
-func (AfterWatermark) emitGuard(end int) string  { return fmt.Sprintf(`tokens("wm") >= %d`, end) }
+func (AfterWatermark) emitGuard(end int) string   { return fmt.Sprintf(`tokens("wm") >= %d`, end) }
 func (AfterWatermark) needsProcessingClock() bool { return false }
 
 // AfterCount fires as soon as the accumulator has reached N tokens. Useful
@@ -39,7 +39,7 @@ func (AfterWatermark) needsProcessingClock() bool { return false }
 // to Beam's AfterPane.elementCountAtLeast(N).
 type AfterCount struct{ N int }
 
-func (a AfterCount) emitGuard(end int) string  { return fmt.Sprintf(`tokens("acc") >= %d`, a.N) }
+func (a AfterCount) emitGuard(end int) string   { return fmt.Sprintf(`tokens("acc") >= %d`, a.N) }
 func (a AfterCount) needsProcessingClock() bool { return false }
 
 // AfterProcessingTime fires when the processing-time clock advances past

@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pflow-xyz/go-pflow/tokenmodel/dataflow/transport"
 	tmpetri "github.com/pflow-xyz/go-pflow/tokenmodel/petri"
 	"github.com/pflow-xyz/go-pflow/tokenmodel/subnet"
-	"github.com/pflow-xyz/go-pflow/tokenmodel/dataflow/transport"
 )
 
 func trafficLightChart() *Chart {

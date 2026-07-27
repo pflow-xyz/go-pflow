@@ -333,10 +333,10 @@ func extractRawProof(proof groth16.Proof) [8]*big.Int {
 
 	// Uncompressed format: A (64 bytes) + B (128 bytes) + C (64 bytes) = 256 bytes
 	if len(proofBytes) >= 256 {
-		result[0] = new(big.Int).SetBytes(proofBytes[0:32])   // A.X
-		result[1] = new(big.Int).SetBytes(proofBytes[32:64])  // A.Y
-		result[2] = new(big.Int).SetBytes(proofBytes[64:96])  // B.X[0]
-		result[3] = new(big.Int).SetBytes(proofBytes[96:128]) // B.X[1]
+		result[0] = new(big.Int).SetBytes(proofBytes[0:32])    // A.X
+		result[1] = new(big.Int).SetBytes(proofBytes[32:64])   // A.Y
+		result[2] = new(big.Int).SetBytes(proofBytes[64:96])   // B.X[0]
+		result[3] = new(big.Int).SetBytes(proofBytes[96:128])  // B.X[1]
 		result[4] = new(big.Int).SetBytes(proofBytes[128:160]) // B.Y[0]
 		result[5] = new(big.Int).SetBytes(proofBytes[160:192]) // B.Y[1]
 		result[6] = new(big.Int).SetBytes(proofBytes[192:224]) // C.X

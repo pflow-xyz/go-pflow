@@ -34,11 +34,11 @@ func (t ConstraintType) String() string {
 
 // Constraint represents an arithmetic constraint in the circuit.
 type Constraint struct {
-	Type   ConstraintType
-	Left   *Expr
-	Right  *Expr
-	Out    *Expr  // For hash constraints: Out = Hash(Left, Right)
-	Tag    string // Human-readable description
+	Type  ConstraintType
+	Left  *Expr
+	Right *Expr
+	Out   *Expr  // For hash constraints: Out = Hash(Left, Right)
+	Tag   string // Human-readable description
 }
 
 func (c *Constraint) String() string {

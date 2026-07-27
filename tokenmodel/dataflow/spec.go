@@ -42,7 +42,7 @@ type PipelineSpec struct {
 
 // Accumulation mode tags for PipelineSpec.AccumulationMode.
 const (
-	AccumulationDiscarding  = "discarding"
+	AccumulationDiscarding   = "discarding"
 	AccumulationAccumulating = "accumulating"
 )
 

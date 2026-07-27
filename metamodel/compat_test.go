@@ -230,7 +230,6 @@ func TestModelFromGenericData(t *testing.T) {
 	}
 }
 
-
 func TestMigrateToModern(t *testing.T) {
 	model := &Model{
 		Name: "migrate-test",

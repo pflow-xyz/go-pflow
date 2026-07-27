@@ -256,12 +256,12 @@ func (w *Workflow[D]) Net() *PetriNet[DataState[D]] {
 // ResourcePool provides token-based resource management.
 // R is the type of resource metadata.
 type ResourcePool[R any] struct {
-	net         *PetriNet[TokenState[R]]
-	available   string // place ID for available resources
-	inUse       string // place ID for in-use resources
-	total       int    // total resources in pool
-	acquireID   string // transition ID for acquire
-	releaseID   string // transition ID for release
+	net       *PetriNet[TokenState[R]]
+	available string // place ID for available resources
+	inUse     string // place ID for in-use resources
+	total     int    // total resources in pool
+	acquireID string // transition ID for acquire
+	releaseID string // transition ID for release
 }
 
 // NewResourcePool creates a new resource pool with the given capacity.

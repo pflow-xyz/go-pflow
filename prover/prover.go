@@ -29,21 +29,21 @@ type Prover struct {
 
 // CompiledCircuit holds the compiled circuit and keys.
 type CompiledCircuit struct {
-	Name        string
-	CS          constraint.ConstraintSystem
-	ProvingKey  groth16.ProvingKey
+	Name         string
+	CS           constraint.ConstraintSystem
+	ProvingKey   groth16.ProvingKey
 	VerifyingKey groth16.VerifyingKey
-	Constraints int
-	PublicVars  int
-	PrivateVars int
+	Constraints  int
+	PublicVars   int
+	PrivateVars  int
 }
 
 // ProofResult contains the generated proof and public inputs.
 type ProofResult struct {
 	// Proof points for Solidity verification
-	A            [2]*big.Int   `json:"a"`
-	B            [2][2]*big.Int `json:"b"`
-	C            [2]*big.Int   `json:"c"`
+	A [2]*big.Int    `json:"a"`
+	B [2][2]*big.Int `json:"b"`
+	C [2]*big.Int    `json:"c"`
 
 	// Raw proof as flat array for L1 submission: [A.X, A.Y, B.X[0], B.X[1], B.Y[0], B.Y[1], C.X, C.Y]
 	RawProof []*big.Int `json:"raw_proof"`

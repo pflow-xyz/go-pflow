@@ -48,8 +48,8 @@ func TestValidate(t *testing.T) {
 
 	// Mismatched kinds.
 	bad := buildBundle()
-	bad.Links[0].FromPort = "feed"   // not on P
-	bad.Links[0].FromSubnet = "C"    // swap
+	bad.Links[0].FromPort = "feed" // not on P
+	bad.Links[0].FromSubnet = "C"  // swap
 	bad.Links[0].ToSubnet = "P"
 	bad.Links[0].ToPort = "result"
 	if err := bad.Validate(); err == nil {

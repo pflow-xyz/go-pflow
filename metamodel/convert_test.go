@@ -167,9 +167,9 @@ func TestValidateForCodegen(t *testing.T) {
 
 	t.Run("MissingName", func(t *testing.T) {
 		model := &metamodel.Model{
-			Places: []metamodel.Place{{ID: "p"}},
+			Places:      []metamodel.Place{{ID: "p"}},
 			Transitions: []metamodel.Transition{{ID: "t"}},
-			Arcs: []metamodel.Arc{{From: "p", To: "t"}},
+			Arcs:        []metamodel.Arc{{From: "p", To: "t"}},
 		}
 
 		issues := metamodel.ValidateForCodegen(model)
@@ -212,7 +212,7 @@ func TestValidateForCodegen(t *testing.T) {
 				{ID: "data", Kind: metamodel.DataKind}, // No type specified
 			},
 			Transitions: []metamodel.Transition{{ID: "t"}},
-			Arcs: []metamodel.Arc{{From: "data", To: "t"}},
+			Arcs:        []metamodel.Arc{{From: "data", To: "t"}},
 		}
 
 		issues := metamodel.ValidateForCodegen(model)

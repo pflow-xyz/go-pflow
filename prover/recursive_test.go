@@ -238,4 +238,3 @@ func TestWrappedProof(t *testing.T) {
 		t.Error("unexpected num batches")
 	}
 }
-

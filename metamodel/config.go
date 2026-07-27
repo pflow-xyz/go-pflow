@@ -120,6 +120,6 @@ type SoftDeleteConfig struct {
 
 // StatusConfig represents human-readable status labels for workflow states.
 type StatusConfig struct {
-	Places  map[string]string `json:"places,omitempty"` // Place ID to label mapping
+	Places  map[string]string `json:"places,omitempty"`  // Place ID to label mapping
 	Default string            `json:"default,omitempty"` // Default label
 }

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/pflow-xyz/go-pflow/solver"
 	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
 	mpetri "github.com/pflow-xyz/go-pflow/tokenmodel/petri"
-	"github.com/pflow-xyz/go-pflow/solver"
 )
 
 // TestODEConversion verifies the metamodel can be converted to a Petri net for ODE simulation

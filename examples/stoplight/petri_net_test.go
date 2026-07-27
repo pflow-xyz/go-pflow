@@ -1,8 +1,8 @@
 package main
 
 import (
-	"testing"
 	"github.com/pflow-xyz/go-pflow/petri"
+	"testing"
 )
 
 func TestStopLightPetriNet(t *testing.T) {

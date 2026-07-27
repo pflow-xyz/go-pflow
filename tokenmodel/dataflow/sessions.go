@@ -32,9 +32,9 @@ import (
 // session window covering each timestamp; Materialize returns the union of
 // all per-key session windows (deduplicated by [start,end) interval).
 type SessionWindows struct {
-	Gap         int
-	windows     []Window            // union across keys, sorted
-	perKeyWins  map[string][]Window // per-key sessions, post-PlanSessions
+	Gap        int
+	windows    []Window            // union across keys, sorted
+	perKeyWins map[string][]Window // per-key sessions, post-PlanSessions
 }
 
 // NewSessionWindows constructs an empty session-window strategy. Call

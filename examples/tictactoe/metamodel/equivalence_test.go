@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
-	mpetri "github.com/pflow-xyz/go-pflow/tokenmodel/petri"
 	"github.com/pflow-xyz/go-pflow/parser"
 	"github.com/pflow-xyz/go-pflow/solver"
+	"github.com/pflow-xyz/go-pflow/tokenmodel/dsl"
+	mpetri "github.com/pflow-xyz/go-pflow/tokenmodel/petri"
 )
 
 // TestSemanticEquivalence verifies the metamodel and JSONLD models are semantically equivalent.
@@ -856,11 +856,11 @@ func TestRandomDeletionDetection(t *testing.T) {
 
 	// Track detection by type
 	stats := map[string]struct {
-		count             int
-		semanticDetected  int
+		count              int
+		semanticDetected   int
 		behavioralDetected int
-		maxBehavioralDiff float64
-		examples          []string
+		maxBehavioralDiff  float64
+		examples           []string
 	}{
 		"place":      {},
 		"transition": {},

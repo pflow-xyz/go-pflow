@@ -13,29 +13,29 @@ const (
 	TokenEOF TokenType = iota
 	TokenIdentifier
 	TokenNumber
-	TokenString    // "..." or '...'
-	TokenLParen    // (
-	TokenRParen    // )
-	TokenLBracket  // [
-	TokenRBracket  // ]
-	TokenDot       // .
-	TokenComma     // ,
-	TokenGTE       // >=
-	TokenLTE       // <=
-	TokenGT        // >
-	TokenLT        // <
-	TokenEQ        // ==
-	TokenNEQ       // !=
-	TokenAnd       // &&
-	TokenOr        // ||
-	TokenNot       // !
-	TokenTrue      // true
-	TokenFalse     // false
-	TokenPlus      // +
-	TokenMinus     // -
-	TokenStar      // *
-	TokenSlash     // /
-	TokenPercent   // %
+	TokenString   // "..." or '...'
+	TokenLParen   // (
+	TokenRParen   // )
+	TokenLBracket // [
+	TokenRBracket // ]
+	TokenDot      // .
+	TokenComma    // ,
+	TokenGTE      // >=
+	TokenLTE      // <=
+	TokenGT       // >
+	TokenLT       // <
+	TokenEQ       // ==
+	TokenNEQ      // !=
+	TokenAnd      // &&
+	TokenOr       // ||
+	TokenNot      // !
+	TokenTrue     // true
+	TokenFalse    // false
+	TokenPlus     // +
+	TokenMinus    // -
+	TokenStar     // *
+	TokenSlash    // /
+	TokenPercent  // %
 )
 
 // Token represents a single token from the lexer.

@@ -1,9 +1,9 @@
 package petri
 
 import (
-	"github.com/pflow-xyz/go-pflow/tokenmodel"
 	mainpetri "github.com/pflow-xyz/go-pflow/petri"
 	"github.com/pflow-xyz/go-pflow/solver"
+	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
 // ToSchema converts a Petri net Model to a token model Schema.

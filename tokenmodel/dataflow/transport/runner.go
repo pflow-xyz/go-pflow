@@ -28,11 +28,11 @@ type SubnetRunner struct {
 	subnet *subnet.Subnet
 	tx     Transport
 
-	mu      sync.RWMutex
-	state   *tmpetri.State
-	kinds   map[string]portPlaceKind
-	inMap   map[string][]string // place -> []linkID
-	outMap  map[string][]string // place -> []wireID
+	mu     sync.RWMutex
+	state  *tmpetri.State
+	kinds  map[string]portPlaceKind
+	inMap  map[string][]string // place -> []linkID
+	outMap map[string][]string // place -> []wireID
 
 	// tick controls how often the runner re-polls when idle.
 	tick time.Duration
@@ -144,7 +144,6 @@ func (r *SubnetRunner) fireToQuiescence() {
 		}
 	}
 }
-
 
 // drainOutputs ships every token sitting on an out-port place onto its
 // bound wire(s) and zeroes the local count. Out-ports that have no bound

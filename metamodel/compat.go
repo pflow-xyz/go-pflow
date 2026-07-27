@@ -275,4 +275,3 @@ func (m *LegacyModel) MigrateToModern() (*PetriNet[TokenState[string]], []ModelE
 
 	return net, extensions
 }
-

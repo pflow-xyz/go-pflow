@@ -73,9 +73,9 @@ func (s *StateAccess) String() string {
 
 // WitnessTable tracks all witness variables and state accesses.
 type WitnessTable struct {
-	Variables    map[string]*WitnessVar
-	StateReads   []*StateAccess
-	nextTempID   int
+	Variables  map[string]*WitnessVar
+	StateReads []*StateAccess
+	nextTempID int
 }
 
 // NewWitnessTable creates a new witness table.

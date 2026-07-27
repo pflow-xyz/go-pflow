@@ -40,17 +40,18 @@ type MerkleProof struct {
 // CompileProof generates constraints to verify a Merkle proof.
 //
 // The verification logic:
-//   1. Compute leaf hash: leaf = Poseidon(key, value)
-//   2. Walk up the tree: for each level i,
-//      - if pathIndex[i] == 0: hash = Poseidon(current, sibling)
-//      - if pathIndex[i] == 1: hash = Poseidon(sibling, current)
-//   3. Final hash must equal the committed root
+//  1. Compute leaf hash: leaf = Poseidon(key, value)
+//  2. Walk up the tree: for each level i,
+//     - if pathIndex[i] == 0: hash = Poseidon(current, sibling)
+//     - if pathIndex[i] == 1: hash = Poseidon(sibling, current)
+//  3. Final hash must equal the committed root
 //
 // In ZK, we use arithmetic to select left/right without branching:
-//   hash = Poseidon(
-//       pathIndex * sibling + (1 - pathIndex) * current,
-//       pathIndex * current + (1 - pathIndex) * sibling
-//   )
+//
+//	hash = Poseidon(
+//	    pathIndex * sibling + (1 - pathIndex) * current,
+//	    pathIndex * current + (1 - pathIndex) * sibling
+//	)
 func (c *MerkleProofCompiler) CompileProof(proof *MerkleProof) []*Constraint {
 	var constraints []*Constraint
 
@@ -218,7 +219,8 @@ func (c *MerkleProofCompiler) Constraints() []*Constraint {
 //
 // Note: This is a placeholder - actual Poseidon implementation requires
 // the full permutation constraints. In gnark, this maps to:
-//   hash.Poseidon(api, left, right)
+//
+//	hash.Poseidon(api, left, right)
 func PoseidonConstraint(output, left, right *Expr, tag string) *Constraint {
 	return &Constraint{
 		Type:  Poseidon,

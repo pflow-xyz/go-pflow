@@ -28,14 +28,14 @@ type TypeRef struct {
 
 // FullType represents a complete type definition.
 type FullType struct {
-	Kind          string       `json:"kind"`
-	Name          string       `json:"name"`
-	Description   *string      `json:"description"`
-	Fields        []FieldType  `json:"fields"`
-	InputFields   []FieldType  `json:"inputFields"`
-	Interfaces    []any        `json:"interfaces"`
-	EnumValues    []any        `json:"enumValues"`
-	PossibleTypes []any        `json:"possibleTypes"`
+	Kind          string      `json:"kind"`
+	Name          string      `json:"name"`
+	Description   *string     `json:"description"`
+	Fields        []FieldType `json:"fields"`
+	InputFields   []FieldType `json:"inputFields"`
+	Interfaces    []any       `json:"interfaces"`
+	EnumValues    []any       `json:"enumValues"`
+	PossibleTypes []any       `json:"possibleTypes"`
 }
 
 // FieldType represents a field definition.

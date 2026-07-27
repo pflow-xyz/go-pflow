@@ -144,12 +144,12 @@ func sortSignatures(sigs []Signature) {
 
 // EquivalenceResult describes the result of a semantic equivalence check.
 type EquivalenceResult struct {
-	Equivalent   bool
-	PlaceMatch   bool
-	TransMatch   bool
-	ArcMatch     bool
-	TokenMatch   bool
-	Differences  []string
+	Equivalent  bool
+	PlaceMatch  bool
+	TransMatch  bool
+	ArcMatch    bool
+	TokenMatch  bool
+	Differences []string
 }
 
 // SemanticEquivalent checks if two signatures represent semantically equivalent nets.
@@ -231,12 +231,12 @@ type NodeMapping struct {
 
 // IsomorphismResult describes the result of a witness-based isomorphism check.
 type IsomorphismResult struct {
-	Isomorphic      bool
-	PlaceBijection  bool     // mapping covers all places bijectively
-	TransBijection  bool     // mapping covers all transitions bijectively
-	ArcsPreserved   bool     // all arcs map correctly
-	InitialPreserved bool    // initial markings match under mapping
-	Errors          []string // specific failures
+	Isomorphic       bool
+	PlaceBijection   bool     // mapping covers all places bijectively
+	TransBijection   bool     // mapping covers all transitions bijectively
+	ArcsPreserved    bool     // all arcs map correctly
+	InitialPreserved bool     // initial markings match under mapping
+	Errors           []string // specific failures
 }
 
 // VerifyIsomorphism checks if two Models are isomorphic given an explicit node mapping.
@@ -850,9 +850,9 @@ type ElementImportance struct {
 
 // SensitivityResult holds the results of sensitivity analysis.
 type SensitivityResult struct {
-	Elements       []ElementImportance       // all elements sorted by impact (descending)
+	Elements       []ElementImportance            // all elements sorted by impact (descending)
 	ByCategory     map[string][]ElementImportance // grouped by category
-	SymmetryGroups map[float64][]string      // elements with identical impact (key = impact value)
+	SymmetryGroups map[float64][]string           // elements with identical impact (key = impact value)
 
 	// Summary statistics
 	PlaceAvgImpact      float64
@@ -1215,9 +1215,9 @@ type RateSensitivityResult struct {
 	ByCategory  map[string][]TransitionSensitivity
 
 	// Global statistics
-	MostSensitive   string  // transition with highest sensitivity
-	MaxSensitivity  float64 // highest sensitivity value
-	AvgSensitivity  float64
+	MostSensitive  string  // transition with highest sensitivity
+	MaxSensitivity float64 // highest sensitivity value
+	AvgSensitivity float64
 }
 
 // TransitionSensitivity holds rate sensitivity data for a single transition.
@@ -1228,9 +1228,9 @@ type TransitionSensitivity struct {
 	Category    string  // "critical", "important", "moderate", "peripheral"
 
 	// Impact at different rate multipliers
-	AtZero    float64 // impact when rate = 0
-	AtHalf    float64 // impact when rate = 0.5x
-	AtDouble  float64 // impact when rate = 2x
+	AtZero   float64 // impact when rate = 0
+	AtHalf   float64 // impact when rate = 0.5x
+	AtDouble float64 // impact when rate = 2x
 }
 
 // RateSensitivityOptions configures rate-based sensitivity analysis.

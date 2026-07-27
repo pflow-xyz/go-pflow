@@ -52,11 +52,11 @@ const (
 
 // Pipeline is the builder + runner.
 type Pipeline struct {
-	name     string
-	keys     []string
-	keepKeys map[string]bool // nil = keep all; non-nil = ParDo filter set
-	window   WindowFn
-	horizon  int
+	name            string
+	keys            []string
+	keepKeys        map[string]bool // nil = keep all; non-nil = ParDo filter set
+	window          WindowFn
+	horizon         int
 	stage           pipelineStage
 	resultID        string  // result PCollection name
 	trigger         Trigger // emit gate; default AfterWatermark
@@ -90,10 +90,10 @@ type Pipeline struct {
 	// Pane.Index per (key, window); paneTotal tracks the cumulative count
 	// per (key, window) emitted into `out` since the window opened (used
 	// when accMode == Accumulating).
-	accMode    AccumulationMode
-	panes      []Pane
-	paneIndex  map[paneKey]int
-	paneTotal  map[paneKey]int
+	accMode   AccumulationMode
+	panes     []Pane
+	paneIndex map[paneKey]int
+	paneTotal map[paneKey]int
 
 	// windowTxn maps a flattened transition ID (e.g. "win:k:[0,10)/emit")
 	// to the (key, window) it belongs to. Populated by Compile so the
@@ -436,7 +436,6 @@ func (p *Pipeline) drain() {
 	}
 }
 
-
 // Result is the structured output of a CountPerKey pipeline.
 type Result struct {
 	Counts map[string]map[Window]int
@@ -549,4 +548,3 @@ func endsWith(s, suffix string) bool {
 	}
 	return s[len(s)-len(suffix):] == suffix
 }
-

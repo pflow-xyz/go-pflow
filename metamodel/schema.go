@@ -257,8 +257,8 @@ type Event struct {
 // EventField represents a typed field within an event.
 type EventField struct {
 	Name        string `json:"name"`
-	Type        string `json:"type"`               // string, number, integer, boolean, array, object, time
-	Of          string `json:"of,omitempty"`       // element type for array/object
+	Type        string `json:"type"`         // string, number, integer, boolean, array, object, time
+	Of          string `json:"of,omitempty"` // element type for array/object
 	Required    bool   `json:"required,omitempty"`
 	Description string `json:"description,omitempty"`
 }
