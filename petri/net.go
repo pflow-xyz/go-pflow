@@ -4,6 +4,7 @@
 package petri
 
 import (
+	"math"
 	"strconv"
 	"strings"
 )
@@ -213,19 +214,32 @@ func toFloatSlice(v interface{}) []float64 {
 	case []interface{}:
 		out := make([]float64, 0, len(x))
 		for _, xi := range x {
-			if f, ok := asFloat64(xi); ok {
+			if f, ok := asFloat64(xi); ok && isFinite(f) {
 				out = append(out, f)
 			}
 		}
 		return out
 	case []float64:
-		return x
+		out := make([]float64, 0, len(x))
+		for _, f := range x {
+			if isFinite(f) {
+				out = append(out, f)
+			}
+		}
+		return out
 	case float64:
+		if !isFinite(x) {
+			return []float64{}
+		}
 		return []float64{x}
 	case int:
 		return []float64{float64(x)}
 	case string:
-		if f, err := strconv.ParseFloat(x, 64); err == nil {
+		// strconv.ParseFloat happily accepts "NaN" and "Inf", and a NaN token
+		// count poisons everything downstream: ODE trajectories, reachability
+		// rounding, and JSON serialization (json.Marshal rejects NaN). Treat
+		// non-finite values the same as unparseable ones.
+		if f, err := strconv.ParseFloat(x, 64); err == nil && isFinite(f) {
 			return []float64{f}
 		}
 		return []float64{}
@@ -235,6 +249,11 @@ func toFloatSlice(v interface{}) []float64 {
 }
 
 // asFloat64 attempts to convert a value to float64.
+// isFinite reports whether f is a usable numeric value (not NaN or ±Inf).
+func isFinite(f float64) bool {
+	return !math.IsNaN(f) && !math.IsInf(f, 0)
+}
+
 func asFloat64(v interface{}) (float64, bool) {
 	switch t := v.(type) {
 	case float64:

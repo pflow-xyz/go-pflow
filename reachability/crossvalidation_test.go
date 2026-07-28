@@ -9,25 +9,54 @@ import (
 )
 
 // randomNet builds a small random net with a seeded RNG.
+//
+// The generator deliberately covers the model dimensions a hand-written test
+// tends to skip: arc weights above 2, inhibitor arcs (which break firing
+// monotonicity), and multi-color places/arcs (Weight and Initial are vectors
+// per color; all discrete analysis reduces them by summing).
 func randomNet(r *rand.Rand) *petri.PetriNet {
-	b := petri.Build()
+	net := petri.NewPetriNet()
 	np := 2 + r.Intn(4) // 2-5 places
 	nt := 1 + r.Intn(4) // 1-4 transitions
+
+	colors := 1
+	if r.Intn(3) == 0 {
+		colors = 2 // ~1/3 of nets use two token colors
+		net.Token = []string{"c0", "c1"}
+	}
+
+	tokens := func(max int) interface{} {
+		if colors == 1 {
+			return float64(r.Intn(max))
+		}
+		return []float64{float64(r.Intn(max)), float64(r.Intn(max))}
+	}
+	weight := func() interface{} {
+		if colors == 1 {
+			return float64(1 + r.Intn(4)) // weights 1-4
+		}
+		// per-color weights; at least one color moves tokens
+		return []float64{float64(1 + r.Intn(3)), float64(r.Intn(3))}
+	}
+
 	for i := 0; i < np; i++ {
-		b = b.Place(fmt.Sprintf("p%d", i), float64(r.Intn(3)))
+		net.AddPlace(fmt.Sprintf("p%d", i), tokens(3), nil, 0, 0, nil)
 	}
 	for i := 0; i < nt; i++ {
 		t := fmt.Sprintf("t%d", i)
-		b = b.Transition(t)
-		// each transition gets 1-2 inputs and 1-2 outputs
+		net.AddTransition(t, "default", 0, 0, nil)
 		for k := 0; k <= r.Intn(2); k++ {
-			b = b.Arc(fmt.Sprintf("p%d", r.Intn(np)), t, float64(1+r.Intn(2)))
+			net.AddArc(fmt.Sprintf("p%d", r.Intn(np)), t, weight(), false)
 		}
 		for k := 0; k <= r.Intn(2); k++ {
-			b = b.Arc(t, fmt.Sprintf("p%d", r.Intn(np)), float64(1+r.Intn(2)))
+			net.AddArc(t, fmt.Sprintf("p%d", r.Intn(np)), weight(), false)
+		}
+		// ~20% of transitions also get an inhibitor guard
+		if r.Intn(5) == 0 {
+			net.AddArc(fmt.Sprintf("p%d", r.Intn(np)), t, float64(1+r.Intn(3)), true)
 		}
 	}
-	return b.Done()
+	return net
 }
 
 // TestCrossValidation checks, on 500 random nets, invariants that must hold

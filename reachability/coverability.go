@@ -37,8 +37,27 @@ type UnboundedWitness struct {
 //
 // The search is breadth-first so the witness returned is a shortest one, which
 // keeps counterexample traces short enough to replay by hand.
+//
+// Inhibitor arcs and the pump argument. Repeating the pump forever relies on
+// monotonicity: a transition enabled at marking m stays enabled at any m' >= m.
+// That holds for ordinary arcs (they only require enough tokens) but not for
+// inhibitor arcs, which require a place to be EMPTY — a transition can be
+// enabled at the smaller marking and blocked at the covering one. A covering
+// pair whose pump contains an inhibitor-gated transition is therefore not a
+// proof, and is skipped rather than reported. (This was found by randomized
+// cross-validation: a net whose complete reachability graph is bounded was
+// issued a "witness" whose pump fired exactly once.)
 func (a *Analyzer) FindUnboundedWitness() *UnboundedWitness {
 	graph := NewGraph(a.net, a.initial)
+
+	// Transitions gated by an inhibitor arc — firing these is not monotone,
+	// so they cannot appear in a valid pump.
+	inhibited := make(map[string]bool)
+	for _, arc := range a.net.Arcs {
+		if arc.InhibitTransition {
+			inhibited[arc.Target] = true
+		}
+	}
 
 	type node struct {
 		marking Marking
@@ -79,6 +98,11 @@ func (a *Analyzer) FindUnboundedWitness() *UnboundedWitness {
 				if !next.StrictlyCovers(ancestor) {
 					continue
 				}
+				// The pump is only a proof if every transition in it is
+				// monotone — see the inhibitor note on this function.
+				if pumpHasInhibited(newTrace[i:], inhibited) {
+					continue
+				}
 				return &UnboundedWitness{
 					Prefix: append([]string(nil), newTrace[:i]...),
 					Pump:   append([]string(nil), newTrace[i:]...),
@@ -110,4 +134,18 @@ func growingPlaces(from, to Marking) []string {
 		}
 	}
 	return places
+}
+
+// pumpHasInhibited reports whether any transition in the pump sequence is
+// gated by an inhibitor arc.
+func pumpHasInhibited(pump []string, inhibited map[string]bool) bool {
+	if len(inhibited) == 0 {
+		return false
+	}
+	for _, t := range pump {
+		if inhibited[t] {
+			return true
+		}
+	}
+	return false
 }

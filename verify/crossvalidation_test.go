@@ -22,8 +22,13 @@ func TestVerifyVerdictsSoundOnRandomNets(t *testing.T) {
 		for i := 0; i < nt; i++ {
 			tr := fmt.Sprintf("t%d", i)
 			b = b.Transition(tr)
-			b = b.Arc(fmt.Sprintf("p%d", r.Intn(np)), tr, 1)
-			b = b.Arc(tr, fmt.Sprintf("p%d", r.Intn(np)), 1)
+			b = b.Arc(fmt.Sprintf("p%d", r.Intn(np)), tr, float64(1+r.Intn(3)))
+			b = b.Arc(tr, fmt.Sprintf("p%d", r.Intn(np)), float64(1+r.Intn(3)))
+			// ~20% of transitions get an inhibitor guard, which breaks firing
+			// monotonicity — the dimension hand-written tests tend to skip.
+			if r.Intn(5) == 0 {
+				b = b.InhibitorArc(fmt.Sprintf("p%d", r.Intn(np)), tr, float64(1+r.Intn(2)))
+			}
 		}
 		net := b.Done()
 
