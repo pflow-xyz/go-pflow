@@ -17,6 +17,8 @@ go_library(
 go_test(
     name = "verify_test",
     srcs = [
+        "crossvalidation_test.go",
+        "fuzz_test.go",
         "property_test.go",
         "verify_test.go",
     ],

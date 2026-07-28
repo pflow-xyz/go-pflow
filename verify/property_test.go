@@ -19,8 +19,8 @@ func TestParseExpr(t *testing.T) {
 		{"leading minus", "-a + b == 0", "-a + b == 0"},
 		{"constants fold", "a == 3 + 4", "a == 7"},
 		{"repeated place folds", "a + a == 4", "2*a == 4"},
-		{"quoted name", `"my place" >= 2`, "my place >= 2"},
-		{"quoted hyphenated name", `"ERC-020" == 1`, "ERC-020 == 1"},
+		{"quoted name", `"my place" >= 2`, `"my place" >= 2`},
+		{"quoted hyphenated name", `"ERC-020" == 1`, `"ERC-020" == 1`},
 		{"dotted name", "pool.reserve0 >= 100", "pool.reserve0 >= 100"},
 		{"strict comparison", "a < 5", "a < 5"},
 		{"not equal", "a != 5", "a != 5"},
@@ -107,5 +107,36 @@ func TestLinearExprHolds(t *testing.T) {
 				t.Errorf("%q.Holds(%v) = %v, want %v", tt.src, tt.marking, got, tt.want)
 			}
 		})
+	}
+}
+
+// TestStringQuotesNonIdentifierNames is the regression for a bug found by
+// FuzzParseExpr: an expression over the place "q p" printed as `q p != 0`,
+// which re-parses as the sum of two places q and p — so verdict details and
+// evidence silently changed the expression's meaning for any place name that
+// is not a bare identifier.
+func TestStringQuotesNonIdentifierNames(t *testing.T) {
+	tests := []struct{ in, want string }{
+		{`"q p" != 0`, `"q p" != 0`},           // space
+		{`"ERC-020" == 1`, `"ERC-020" == 1`},   // hyphen
+		{`"9lives" >= 1`, `"9lives" >= 1`},     // leading digit
+		{`plain_name == 1`, `plain_name == 1`}, // bare identifiers stay bare
+	}
+	for _, tt := range tests {
+		expr, err := ParseExpr(tt.in)
+		if err != nil {
+			t.Fatalf("ParseExpr(%q): %v", tt.in, err)
+		}
+		if got := expr.String(); got != tt.want {
+			t.Errorf("String() = %q, want %q", got, tt.want)
+		}
+		// and the printed form must mean the same thing
+		re, err := ParseExpr(expr.String())
+		if err != nil {
+			t.Fatalf("re-parse of %q failed: %v", expr.String(), err)
+		}
+		if re.String() != expr.String() {
+			t.Errorf("round-trip changed meaning: %q -> %q", expr.String(), re.String())
+		}
 	}
 }

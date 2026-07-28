@@ -275,7 +275,7 @@ func (e *LinearExpr) String() string {
 		if mag := absInt(c); mag != 1 {
 			fmt.Fprintf(&b, "%d*", mag)
 		}
-		b.WriteString(p)
+		b.WriteString(quoteName(p))
 	}
 	if b.Len() == 0 {
 		b.WriteString("0")
@@ -526,6 +526,30 @@ func tokenize(src string) ([]token, error) {
 // quoted ("ERC-020" >= 1).
 func isIdentRune(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' || r == '.' || r == ':'
+}
+
+// quoteName renders a place name so the printed expression re-parses to the
+// same expression. A name that is not a bare identifier (spaces, hyphens, a
+// leading digit) is emitted in quotes, exactly as the parser expects it on the
+// way in. Without this, an expression over the place "q p" printed as
+// `q p != 0` — which re-parses as the sum of two places q and p, silently
+// changing its meaning in verdict details and evidence.
+func quoteName(name string) string {
+	bare := name != ""
+	for i, r := range name {
+		if i == 0 && !(unicode.IsLetter(r) || r == '_') {
+			bare = false
+			break
+		}
+		if !isIdentRune(r) {
+			bare = false
+			break
+		}
+	}
+	if bare {
+		return name
+	}
+	return `"` + name + `"`
 }
 
 func absInt(n int) int {

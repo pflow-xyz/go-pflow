@@ -20,6 +20,7 @@ go_test(
     name = "reachability_test",
     srcs = [
         "coverability_test.go",
+        "crossvalidation_test.go",
         "farkas_test.go",
         "invariants_string_test.go",
         "reachability_test.go",
