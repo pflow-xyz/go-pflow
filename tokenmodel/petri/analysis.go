@@ -4,6 +4,9 @@ package petri
 import (
 	"fmt"
 	"sort"
+
+	mainpetri "github.com/pflow-xyz/go-pflow/petri"
+	"github.com/pflow-xyz/go-pflow/reachability"
 )
 
 // IncidenceMatrix represents the effect of transitions on places.
@@ -123,148 +126,55 @@ func (pi *PlaceInvariant) Verify(m Marking) bool {
 	return sum == pi.Value
 }
 
-// FindPlaceInvariants finds P-invariants for the model.
-// These are linear combinations of places that are preserved by all transitions.
-// For token conservation, we look for positive invariants (all coefficients >= 0).
+// FindPlaceInvariants finds P-invariants for the model: semi-positive integer
+// weight vectors y with y*C = 0, so the weighted token sum is constant at
+// every reachable marking. Keyed (colored) arcs are treated as unit weight,
+// matching BuildIncidenceMatrix.
+//
+// This delegates to the Farkas solver in the reachability package rather than
+// keeping a second implementation here. The previous local heuristic grouped
+// places connected through transitions and emitted an all-ones "invariant" per
+// connected component without ever checking y*C = 0 — so a fork transition
+// (one input place, two output places) yielded a claimed conservation law that
+// the package's own VerifyInvariantStructurally rejected. Every invariant
+// returned now passes that check by construction, and the minimal-support
+// basis also finds weighted laws the all-ones heuristic could not express.
 func FindPlaceInvariants(model *Model) []PlaceInvariant {
-	im := BuildIncidenceMatrix(model)
-
-	// Find P-invariants by analyzing which place combinations are preserved
-	// by all transitions. For simple token conservation, we check "natural"
-	// groupings based on the arc structure.
-
-	var invariants []PlaceInvariant
-
-	// Check each transition for conservation patterns
-	// A transition conserves tokens if sum of inputs == sum of outputs
-	for _, tid := range im.Transitions {
-		tIdx := im.transIdx[tid]
-
-		// Count net effect on each place
-		inputs := make(map[string]int)
-		outputs := make(map[string]int)
-
-		for _, pid := range im.Places {
-			pIdx := im.placeIdx[pid]
-			val := im.Matrix[pIdx][tIdx]
-			if val < 0 {
-				inputs[pid] = -val
-			} else if val > 0 {
-				outputs[pid] = val
-			}
-		}
-
-		// Check if this transition preserves tokens
-		inputSum := 0
-		outputSum := 0
-		for _, v := range inputs {
-			inputSum += v
-		}
-		for _, v := range outputs {
-			outputSum += v
-		}
-
-		if inputSum != outputSum {
-			// Non-conservative transition (mint/burn)
-			continue
-		}
+	// Rebuild the model as a core petri net with the same incidence structure
+	// (all arcs unit weight, as in BuildIncidenceMatrix).
+	net := mainpetri.NewPetriNet()
+	for _, p := range model.Places {
+		net.AddPlace(p.ID, float64(p.Initial), nil, 0, 0, nil)
+	}
+	for _, t := range model.Transitions {
+		net.AddTransition(t.ID, "default", 0, 0, nil)
+	}
+	for _, a := range model.Arcs {
+		net.AddArc(a.Source, a.Target, 1.0, false)
 	}
 
-	// Look for connected components that form conservation laws
-	// Using a simple heuristic: places connected through conservative transitions
-	invariants = append(invariants, findConservationGroups(model, im)...)
+	basis := reachability.NewInvariantAnalyzer(net).PInvariantBasis()
+
+	state := NewState(model)
+	invariants := make([]PlaceInvariant, 0, len(basis.Basis))
+	for _, vec := range basis.Basis {
+		weights := make(map[string]int)
+		value := 0
+		for i, c := range vec {
+			if c == 0 {
+				continue
+			}
+			place := basis.Labels[i]
+			weights[place] = c
+			value += c * state.Marking[place]
+		}
+		if len(weights) == 0 {
+			continue
+		}
+		invariants = append(invariants, PlaceInvariant{Weights: weights, Value: value})
+	}
 
 	return invariants
-}
-
-// findConservationGroups identifies groups of places that form conservation laws.
-func findConservationGroups(model *Model, im *IncidenceMatrix) []PlaceInvariant {
-	var result []PlaceInvariant
-
-	// Group places by their "flow partners" - places that exchange tokens
-	flowPartners := make(map[string]map[string]bool)
-	for _, p := range im.Places {
-		flowPartners[p] = make(map[string]bool)
-	}
-
-	// Find places that are connected through transitions
-	for tIdx, tid := range im.Transitions {
-		_ = tid
-		var inputs, outputs []string
-
-		for pIdx, pid := range im.Places {
-			val := im.Matrix[pIdx][tIdx]
-			if val < 0 {
-				inputs = append(inputs, pid)
-			} else if val > 0 {
-				outputs = append(outputs, pid)
-			}
-		}
-
-		// Connect inputs to outputs (they form a conservation group)
-		for _, in := range inputs {
-			for _, out := range outputs {
-				flowPartners[in][out] = true
-				flowPartners[out][in] = true
-			}
-		}
-	}
-
-	// Find connected components using union-find
-	parent := make(map[string]string)
-	for _, p := range im.Places {
-		parent[p] = p
-	}
-
-	var find func(string) string
-	find = func(p string) string {
-		if parent[p] != p {
-			parent[p] = find(parent[p])
-		}
-		return parent[p]
-	}
-
-	union := func(a, b string) {
-		ra, rb := find(a), find(b)
-		if ra != rb {
-			parent[ra] = rb
-		}
-	}
-
-	for p, partners := range flowPartners {
-		for partner := range partners {
-			union(p, partner)
-		}
-	}
-
-	// Group places by their root
-	groups := make(map[string][]string)
-	for _, p := range im.Places {
-		root := find(p)
-		groups[root] = append(groups[root], p)
-	}
-
-	// Create invariants for non-trivial groups
-	state := NewState(model)
-	for _, places := range groups {
-		if len(places) < 2 {
-			continue
-		}
-
-		weights := make(map[string]int)
-		sum := 0
-		for _, p := range places {
-			weights[p] = 1
-			sum += state.Marking[p]
-		}
-
-		result = append(result, PlaceInvariant{
-			Weights: weights,
-			Value:   sum,
-		})
-	}
-
-	return result
 }
 
 // VerifyInvariantStructurally checks if a constraint is provable from the net structure.

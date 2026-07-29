@@ -22,6 +22,7 @@ go_test(
         "bench_test.go",
         "builder_test.go",
         "dsl_test.go",
+        "fuzz_test.go",
         "tags_test.go",
     ],
     embed = [":dsl"],

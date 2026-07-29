@@ -297,3 +297,69 @@ func TestAnalyzeERC20Conservation(t *testing.T) {
 		}
 	}
 }
+
+// TestFindPlaceInvariantsForkIsNotConservative is the regression for the old
+// connected-component heuristic: a fork transition (a -> t -> b+c) linked all
+// three places into one group and emitted "a + b + c == initial" as an
+// invariant, even though firing t increases the sum — the package's own
+// VerifyInvariantStructurally rejected the very invariants FindPlaceInvariants
+// produced.
+func TestFindPlaceInvariantsForkIsNotConservative(t *testing.T) {
+	m := NewModel("fork")
+	m.AddPlace(Place{ID: "a", Initial: 5})
+	m.AddPlace(Place{ID: "b", Initial: 0})
+	m.AddPlace(Place{ID: "c", Initial: 0})
+	m.AddTransition(Transition{ID: "t"})
+	m.AddArc(Arc{Source: "a", Target: "t"})
+	m.AddArc(Arc{Source: "t", Target: "b"})
+	m.AddArc(Arc{Source: "t", Target: "c"})
+
+	for _, inv := range FindPlaceInvariants(m) {
+		if !VerifyInvariantStructurally(m, inv) {
+			t.Errorf("FindPlaceInvariants returned %s, which its own verifier rejects", inv.String())
+		}
+		if len(inv.Weights) == 3 && inv.Weights["a"] == 1 && inv.Weights["b"] == 1 && inv.Weights["c"] == 1 {
+			t.Errorf("the all-ones fork 'invariant' is back: %s", inv.String())
+		}
+	}
+}
+
+// TestFindPlaceInvariantsAllVerifyStructurally: every invariant returned must
+// pass the package's own structural check, across a few model shapes.
+func TestFindPlaceInvariantsAllVerifyStructurally(t *testing.T) {
+	models := map[string]*Model{}
+
+	swap := NewModel("swap")
+	swap.AddPlace(Place{ID: "a", Initial: 3})
+	swap.AddPlace(Place{ID: "b", Initial: 0})
+	swap.AddTransition(Transition{ID: "fwd"})
+	swap.AddTransition(Transition{ID: "back"})
+	swap.AddArc(Arc{Source: "a", Target: "fwd"})
+	swap.AddArc(Arc{Source: "fwd", Target: "b"})
+	swap.AddArc(Arc{Source: "b", Target: "back"})
+	swap.AddArc(Arc{Source: "back", Target: "a"})
+	models["swap"] = swap
+
+	mint := NewModel("mint")
+	mint.AddPlace(Place{ID: "supply", Initial: 0})
+	mint.AddTransition(Transition{ID: "mint"})
+	mint.AddArc(Arc{Source: "mint", Target: "supply"})
+	models["mint"] = mint
+
+	for name, m := range models {
+		t.Run(name, func(t *testing.T) {
+			invs := FindPlaceInvariants(m)
+			for _, inv := range invs {
+				if !VerifyInvariantStructurally(m, inv) {
+					t.Errorf("returned invariant %s fails structural verification", inv.String())
+				}
+			}
+			if name == "swap" && len(invs) == 0 {
+				t.Error("swap net conserves a+b; expected at least one invariant")
+			}
+			if name == "mint" && len(invs) != 0 {
+				t.Errorf("mint net conserves nothing; got %v", invs)
+			}
+		})
+	}
+}

@@ -15,6 +15,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//petri",
+        "//reachability",
         "//solver",
         "//tokenmodel",
         "//tokenmodel/guard",

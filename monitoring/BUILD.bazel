@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "monitoring",
@@ -13,4 +13,11 @@ go_library(
         "//petri",
         "//solver",
     ],
+)
+
+go_test(
+    name = "monitoring_test",
+    srcs = ["monitoring_test.go"],
+    embed = [":monitoring"],
+    deps = ["//petri"],
 )

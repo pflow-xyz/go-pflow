@@ -10,7 +10,10 @@ go_library(
 
 go_test(
     name = "parser_test",
-    srcs = ["json_test.go"],
+    srcs = [
+        "fuzz_test.go",
+        "json_test.go",
+    ],
     embed = [":parser"],
     deps = ["//petri"],
 )
