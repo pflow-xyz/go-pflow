@@ -24,6 +24,10 @@ go_library(
 
 go_test(
     name = "petri_test",
-    srcs = ["analysis_test.go"],
+    srcs = [
+        "analysis_test.go",
+        "fire_cid_test.go",
+    ],
     embed = [":petri"],
+    deps = ["//petri"],
 )

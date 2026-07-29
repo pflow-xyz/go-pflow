@@ -24,6 +24,7 @@ go_test(
         "farkas_test.go",
         "invariants_string_test.go",
         "reachability_test.go",
+        "spectral_test.go",
     ],
     embed = [":reachability"],
     deps = ["//petri"],

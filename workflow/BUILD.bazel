@@ -23,6 +23,7 @@ go_library(
 go_test(
     name = "workflow_test",
     srcs = [
+        "builder_coverage_test.go",
         "model_test.go",
         "sugar_test.go",
         "workflow_test.go",

@@ -30,6 +30,7 @@ go_library(
 go_test(
     name = "prover_test",
     srcs = [
+        "curves_pipeline_test.go",
         "persist_test.go",
         "prover_test.go",
         "recursive_test.go",
