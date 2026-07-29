@@ -7,25 +7,41 @@ import (
 // Analyzer performs reachability analysis on Petri nets.
 type Analyzer struct {
 	net       *petri.PetriNet
+	colorMap  *petri.ColorMap // non-nil when the net was color-unfolded
 	initial   Marking
 	maxStates int
 	maxTokens int
 }
 
 // NewAnalyzer creates a new reachability analyzer.
+//
+// Multi-color nets are unfolded first (petri.ExpandColors), so all discrete
+// analysis is component-wise per color — matching the browser engine — rather
+// than operating on a summed scalar projection. Place names in results are
+// then the expanded "place.color" names; ColorMap() recovers the mapping, and
+// a custom marking passed to WithInitialMarking must use expanded names.
+// Single-color nets are untouched and ColorMap() returns nil.
 func NewAnalyzer(net *petri.PetriNet) *Analyzer {
-	// Get initial marking from net
+	expanded, cm := net.ExpandColors()
+
 	initial := make(Marking)
-	for name, place := range net.Places {
+	for name, place := range expanded.Places {
 		initial[name] = int(place.GetTokenCount())
 	}
 
 	return &Analyzer{
-		net:       net,
+		net:       expanded,
+		colorMap:  cm,
 		initial:   initial,
 		maxStates: 10000,
 		maxTokens: 1000,
 	}
+}
+
+// ColorMap returns the color unfolding applied to a multi-color net, or nil
+// when the net was single-color.
+func (a *Analyzer) ColorMap() *petri.ColorMap {
+	return a.colorMap
 }
 
 // WithInitialMarking sets a custom initial marking.

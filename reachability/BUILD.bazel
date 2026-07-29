@@ -19,6 +19,7 @@ go_library(
 go_test(
     name = "reachability_test",
     srcs = [
+        "colors_test.go",
         "coverability_test.go",
         "crossvalidation_test.go",
         "farkas_test.go",

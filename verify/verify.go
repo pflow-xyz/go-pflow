@@ -17,6 +17,7 @@ const DefaultMaxStates = 20000
 // Verifier checks properties against a Petri net.
 type Verifier struct {
 	net       *petri.PetriNet
+	colorMap  *petri.ColorMap // non-nil when the net was color-unfolded
 	initial   reachability.Marking
 	maxStates int
 
@@ -28,12 +29,25 @@ type Verifier struct {
 }
 
 // New creates a Verifier using the net's own initial marking.
+//
+// Multi-color nets are unfolded first (petri.ExpandColors), so every check
+// runs with component-wise per-color semantics. Property expressions and
+// reachability targets may then name places two ways:
+//
+//   - an expanded name ("pool.red") constrains that color exactly;
+//   - a base name ("pool") means the SUM across that place's colors — the
+//     coefficient distributes over the expanded places, so "pool == 3" is
+//     the total-token constraint most requirements mean.
+//
+// Counterexample markings report expanded names, which are self-describing.
 func New(net *petri.PetriNet) *Verifier {
-	initial := make(reachability.Marking, len(net.Places))
-	for name, place := range net.Places {
+	expanded, cm := net.ExpandColors()
+
+	initial := make(reachability.Marking, len(expanded.Places))
+	for name, place := range expanded.Places {
 		initial[name] = int(place.GetTokenCount())
 	}
-	return &Verifier{net: net, initial: initial, maxStates: DefaultMaxStates}
+	return &Verifier{net: expanded, colorMap: cm, initial: initial, maxStates: DefaultMaxStates}
 }
 
 // WithInitialMarking overrides the marking to verify from.
@@ -310,7 +324,7 @@ func (v *Verifier) checkReachable(p Property, want bool) Verdict {
 	// place the target names.
 	var match reachability.Marking
 	for _, st := range r.Graph.States {
-		if markingMatches(st.Marking, p.Target) {
+		if v.markingMatches(st.Marking, p.Target) {
 			match = st.Marking
 			break
 		}
@@ -381,6 +395,8 @@ func (v *Verifier) checkInvariant(p Property) Verdict {
 	if err != nil {
 		return Verdict{Property: p, Status: Unknown, Detail: fmt.Sprintf("could not parse expression: %v", err)}
 	}
+
+	expr = v.expandExprColors(expr)
 
 	if unknown := v.unknownPlaces(expr); len(unknown) > 0 {
 		return Verdict{
@@ -643,14 +659,46 @@ func (v *Verifier) describeBasis() string {
 }
 
 // markingMatches reports whether m agrees with target on every place target
-// names. Places absent from target are unconstrained.
-func markingMatches(m reachability.Marking, target map[string]int) bool {
+// names. Places absent from target are unconstrained. On a color-unfolded
+// net, a base place name in the target constrains the SUM across its colors;
+// expanded names constrain a single color exactly.
+func (v *Verifier) markingMatches(m reachability.Marking, target map[string]int) bool {
 	for place, want := range target {
-		if m.Get(place) != want {
+		got := m.Get(place)
+		if v.colorMap != nil {
+			if expanded, ok := v.colorMap.Expanded[place]; ok {
+				got = 0
+				for _, name := range expanded {
+					got += m.Get(name)
+				}
+			}
+		}
+		if got != want {
 			return false
 		}
 	}
 	return true
+}
+
+// expandExprColors rewrites base place names in an expression into their
+// expanded color places, distributing the coefficient — so "pool == 3"
+// becomes "pool.red + pool.blue == 3" on a two-color net. Expanded names
+// pass through untouched. No-op on single-color nets.
+func (v *Verifier) expandExprColors(expr *LinearExpr) *LinearExpr {
+	if v.colorMap == nil {
+		return expr
+	}
+	coeffs := make(map[string]int, len(expr.Coeffs))
+	for place, c := range expr.Coeffs {
+		if expanded, ok := v.colorMap.Expanded[place]; ok {
+			for _, name := range expanded {
+				coeffs[name] += c
+			}
+			continue
+		}
+		coeffs[place] += c
+	}
+	return &LinearExpr{Coeffs: coeffs, Rel: expr.Rel, Constant: expr.Constant}
 }
 
 // exprLHS renders just the left-hand side of an expression.

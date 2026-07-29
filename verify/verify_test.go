@@ -465,3 +465,65 @@ func TestMutualExclusionRequiresPlaces(t *testing.T) {
 		t.Errorf("status = %s, want unknown when no places are given", verdict.Status)
 	}
 }
+
+// TestColorVerify: verify on a two-color net — base names sum over colors,
+// expanded names pin a single color, and the counterexample machinery works
+// on the unfolded state space.
+func TestColorVerify(t *testing.T) {
+	net := petri.NewPetriNet()
+	net.Token = []string{"red", "blue"}
+	net.AddPlace("a", []float64{2, 3}, nil, 0, 0, nil)
+	net.AddPlace("b", []float64{0, 0}, nil, 0, 0, nil)
+	net.AddTransition("move", "default", 0, 0, nil)
+	net.AddArc("a", "move", []float64{1, 1}, false)
+	net.AddArc("move", "b", []float64{1, 1}, false)
+
+	report := New(net).Check(
+		// Base names: totals across colors. 2+3 tokens conserved.
+		Property{Kind: KindInvariant, Name: "total conserved", Expr: "a + b == 5"},
+		// Expanded names: exact per-color law.
+		Property{Kind: KindInvariant, Name: "red conserved", Expr: `"a.red" + "b.red" == 2`},
+		// Per-color reachability. move consumes one red AND one blue
+		// atomically, so it fires at most min(2,3)=2 times: the reachable
+		// frontier is a=[0,1], b=[2,2].
+		Property{Kind: KindReachable, Name: "two of each moved", Target: map[string]int{"b.red": 2, "b.blue": 2}},
+		// Base-name target: sum over colors. b tops out at 4 total.
+		Property{Kind: KindReachable, Name: "four in b", Target: map[string]int{"b": 4}},
+		// And the atomicity itself: b can NEVER hold all 5, because red runs
+		// out first — a property the summed projection could not express.
+		Property{Kind: KindUnreachable, Name: "all five in b impossible", Target: map[string]int{"b": 5}},
+	)
+
+	for _, v := range report.Verdicts {
+		if v.Status != Proved {
+			t.Errorf("%s: %s (%s)", v.Property.Name, v.Status, v.Detail)
+		}
+	}
+
+	// And a refutation on a specific color carries expanded names.
+	verdict := New(net).CheckOne(Property{Kind: KindInvariant, Expr: `"a.red" == 99`})
+	if verdict.Status != Refuted {
+		t.Fatalf("want refuted, got %s", verdict.Status)
+	}
+}
+
+// TestColorVerifyWrongColorUnreachable: per-color precision — red can never
+// end up in b beyond the red supply, even though total tokens could.
+func TestColorVerifyWrongColorUnreachable(t *testing.T) {
+	net := petri.NewPetriNet()
+	net.Token = []string{"red", "blue"}
+	net.AddPlace("a", []float64{1, 4}, nil, 0, 0, nil)
+	net.AddPlace("b", []float64{0, 0}, nil, 0, 0, nil)
+	net.AddTransition("move", "default", 0, 0, nil)
+	net.AddArc("a", "move", []float64{1, 1}, false)
+	net.AddArc("move", "b", []float64{1, 1}, false)
+
+	verdict := New(net).CheckOne(Property{
+		Kind:   KindUnreachable,
+		Name:   "b never holds 2 red",
+		Target: map[string]int{"b.red": 2},
+	})
+	if verdict.Status != Proved {
+		t.Errorf("status = %s (%s), want proved — only 1 red exists", verdict.Status, verdict.Detail)
+	}
+}

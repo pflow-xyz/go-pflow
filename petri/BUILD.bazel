@@ -4,6 +4,7 @@ go_library(
     name = "petri",
     srcs = [
         "builder.go",
+        "colors.go",
         "net.go",
     ],
     importpath = "github.com/pflow-xyz/go-pflow/petri",
@@ -14,6 +15,7 @@ go_test(
     name = "petri_test",
     srcs = [
         "builder_test.go",
+        "colors_test.go",
         "net_test.go",
     ],
     embed = [":petri"],

@@ -84,11 +84,21 @@ func TestCrossValidation(t *testing.T) {
 		res := an.Analyze()
 		witness := NewAnalyzer(net).WithMaxStates(3000).FindUnboundedWitness()
 
-		// (1) invariants hold across explored states (valid even if truncated)
+		// (1) invariants hold across explored states (valid even if truncated).
+		// The invariants come from the raw net's summed incidence matrix, so
+		// they are statements about per-place TOTALS; on multi-color nets the
+		// analyzer color-unfolds, so fold each marking back to base places
+		// before checking. The projection is exact: the total a transition
+		// moves per place equals its summed weight vector.
+		cm := an.ColorMap()
 		for _, st := range res.Graph.States {
+			m := st.Marking
+			if cm != nil {
+				m = Marking(cm.SumByBase(st.Marking))
+			}
 			for i := range pinvs {
-				if !pinvs[i].Check(st.Marking) {
-					t.Fatalf("seed %d: invariant %s violated at %v", seed, pinvs[i].String(), st.Marking)
+				if !pinvs[i].Check(m) {
+					t.Fatalf("seed %d: invariant %s violated at %v (raw %v)", seed, pinvs[i].String(), m, st.Marking)
 				}
 			}
 		}
