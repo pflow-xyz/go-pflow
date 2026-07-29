@@ -178,8 +178,14 @@ func PredictNextActivity(c *Case, predictor *Predictor) []NextActivity {
 	return predictions
 }
 
-// EstimateCurrentState maps activity history to Petri net marking.
-// This is a key challenge in process monitoring - state estimation.
+// EstimateCurrentState replays a case's event history through the net to
+// estimate its current marking.
+//
+// Contract: this package assumes the net models a case workflow with a place
+// named "start" (where each case's token begins) and a place named "end"
+// (where token mass arriving means the case is complete). Nets using other
+// names will produce degenerate estimates — the replay starts from an
+// all-zero marking plus one token in "start".
 func EstimateCurrentState(c *Case, net *petri.PetriNet) map[string]float64 {
 	// Initialize state with all places at zero tokens
 	state := make(map[string]float64)
