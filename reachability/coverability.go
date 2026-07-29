@@ -50,12 +50,38 @@ type UnboundedWitness struct {
 func (a *Analyzer) FindUnboundedWitness() *UnboundedWitness {
 	graph := NewGraph(a.net, a.initial)
 
-	// Transitions gated by an inhibitor arc — firing these is not monotone,
-	// so they cannot appear in a valid pump.
+	// Transitions unsafe to repeat in a pump. The Karp–Miller argument needs
+	// two things from every pump transition, under the shared JS/Go firing
+	// semantics: enabling must be monotone (enabled at m implies enabled at
+	// any m' >= m), and the firing delta must be marking-independent (so each
+	// repeat adds at least as much as the first). Two shapes break one or
+	// the other:
+	//   - an input inhibitor arc: more tokens can cross the disable threshold
+	//     (breaks monotonicity);
+	//   - producing into a capacity-bounded place: more tokens can hit the
+	//     cap (breaks monotonicity).
+	// Output inhibitors (test arcs) are fine: they require tokens >= w, which
+	// more tokens cannot un-satisfy, and they move nothing. Multiple plain
+	// input arcs from one place are also fine: enabling sums the requirement
+	// per place, so consumption is exact and the firing delta is constant.
 	inhibited := make(map[string]bool)
 	for _, arc := range a.net.Arcs {
 		if arc.InhibitTransition {
-			inhibited[arc.Target] = true
+			if _, isTrans := a.net.Transitions[arc.Target]; isTrans {
+				inhibited[arc.Target] = true
+			}
+			continue
+		}
+		if _, isTrans := a.net.Transitions[arc.Source]; isTrans {
+			if p, ok := a.net.Places[arc.Target]; ok {
+				capSum := 0.0
+				for _, c := range p.Capacity {
+					capSum += c
+				}
+				if capSum > 0 {
+					inhibited[arc.Source] = true
+				}
+			}
 		}
 	}
 

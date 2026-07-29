@@ -634,3 +634,144 @@ func TestCompleteAnalysisHasConfirmedDead(t *testing.T) {
 		t.Errorf("PotentiallyDead should be empty for complete analysis, got %v", result.PotentiallyDead)
 	}
 }
+
+// === Shared JS/Go firing semantics (pflow-xyz parity/sim contract) ===
+//
+// These pin the firing rules that pflow-xyz's differential test enforces
+// cross-language, so a regression here fails fast in this repo without
+// needing the JS side present.
+
+// TestWeightedInhibitorThreshold: an inhibitor with weight w disables at
+// tokens >= w — not at "any token", which was the old behavior that ignored
+// the declared weight entirely.
+func TestWeightedInhibitorThreshold(t *testing.T) {
+	net := petri.Build().
+		Place("buf", 1).Place("src", 5).Place("out", 0).
+		Transition("t").
+		Arc("src", "t", 1).Arc("t", "out", 1).
+		InhibitorArc("buf", "t", 2).
+		Done()
+
+	g := NewGraph(net, Marking{"buf": 1, "src": 5, "out": 0})
+
+	// 1 token < threshold 2: enabled.
+	if st := g.AddState(Marking{"buf": 1, "src": 5, "out": 0}); len(st.Enabled) != 1 {
+		t.Errorf("tokens below inhibitor threshold: enabled = %v, want [t]", st.Enabled)
+	}
+	// 2 tokens >= threshold 2: disabled.
+	if st := g.AddState(Marking{"buf": 2, "src": 5, "out": 0}); len(st.Enabled) != 0 {
+		t.Errorf("tokens at inhibitor threshold: enabled = %v, want []", st.Enabled)
+	}
+}
+
+// TestOutputInhibitorIsTestArc: a transition->place inhibitor requires the
+// place to hold >= weight tokens to enable, and moves nothing when firing.
+// Previously it was ignored for enablement and — worse — Fire produced tokens
+// through it.
+func TestOutputInhibitorIsTestArc(t *testing.T) {
+	net := petri.Build().
+		Place("src", 3).Place("gate", 0).Place("out", 0).
+		Transition("t").
+		Arc("src", "t", 1).Arc("t", "out", 1).
+		Done()
+	// transition -> place inhibitor (test arc), weight 1
+	net.AddArc("t", "gate", 1.0, true)
+
+	g := NewGraph(net, Marking{"src": 3, "gate": 0, "out": 0})
+
+	// gate empty: test arc unsatisfied, disabled.
+	if st := g.AddState(Marking{"src": 3, "gate": 0, "out": 0}); len(st.Enabled) != 0 {
+		t.Errorf("test arc unsatisfied: enabled = %v, want []", st.Enabled)
+	}
+
+	// gate holds a token: enabled, and firing must NOT change gate.
+	m := Marking{"src": 3, "gate": 1, "out": 0}
+	next := g.Fire(m, "t")
+	if next == nil {
+		t.Fatal("should fire with the test arc satisfied")
+	}
+	if next.Get("gate") != 1 {
+		t.Errorf("test arc moved tokens: gate = %d, want 1", next.Get("gate"))
+	}
+	if next.Get("out") != 1 || next.Get("src") != 2 {
+		t.Errorf("normal arcs misfired: %v", next)
+	}
+}
+
+// TestCapacityBlocksFiring: firing may not push a place past its declared
+// capacity, netting out what the same firing consumes from that place.
+// Production aggregates across arcs. Previously capacity was ignored.
+func TestCapacityBlocksFiring(t *testing.T) {
+	net := petri.NewPetriNet()
+	net.AddPlace("src", 10.0, nil, 0, 0, nil)
+	net.AddPlace("buf", 2.0, 3.0, 0, 0, nil) // capacity 3
+	net.AddTransition("fill", "default", 0, 0, nil)
+	net.AddArc("src", "fill", 1.0, false)
+	net.AddArc("fill", "buf", 2.0, false)
+
+	g := NewGraph(net, Marking{"src": 10, "buf": 2})
+
+	// 2 + 2 > 3: blocked.
+	if st := g.AddState(Marking{"src": 10, "buf": 2}); len(st.Enabled) != 0 {
+		t.Errorf("capacity overflow allowed: enabled = %v, want []", st.Enabled)
+	}
+	// 1 + 2 = 3: exactly at capacity, allowed.
+	if st := g.AddState(Marking{"src": 10, "buf": 1}); len(st.Enabled) != 1 {
+		t.Errorf("firing to exactly capacity should be allowed, enabled = %v", st.Enabled)
+	}
+
+	// Aggregation: two weight-2 arcs into capacity-3 must count as 4.
+	net2 := petri.NewPetriNet()
+	net2.AddPlace("src", 10.0, nil, 0, 0, nil)
+	net2.AddPlace("buf", 0.0, 3.0, 0, 0, nil)
+	net2.AddTransition("fill", "default", 0, 0, nil)
+	net2.AddArc("src", "fill", 1.0, false)
+	net2.AddArc("fill", "buf", 2.0, false)
+	net2.AddArc("fill", "buf", 2.0, false)
+
+	g2 := NewGraph(net2, Marking{"src": 10, "buf": 0})
+	if st := g2.AddState(Marking{"src": 10, "buf": 0}); len(st.Enabled) != 0 {
+		t.Errorf("aggregated production 4 into capacity 3 allowed: %v", st.Enabled)
+	}
+
+	// Netting: capacity-1 self-loop place (consume 1, produce 1) stays legal.
+	net3 := petri.NewPetriNet()
+	net3.AddPlace("slot", 1.0, 1.0, 0, 0, nil)
+	net3.AddPlace("count", 0.0, nil, 0, 0, nil)
+	net3.AddTransition("spin", "default", 0, 0, nil)
+	net3.AddArc("slot", "spin", 1.0, false)
+	net3.AddArc("spin", "slot", 1.0, false)
+	net3.AddArc("spin", "count", 1.0, false)
+
+	g3 := NewGraph(net3, Marking{"slot": 1, "count": 0})
+	if st := g3.AddState(Marking{"slot": 1, "count": 0}); len(st.Enabled) != 1 {
+		t.Errorf("net-zero effect on full capacity-1 place should be allowed, enabled = %v", st.Enabled)
+	}
+}
+
+// TestMultipleInputArcsSumRequirement: two arcs from one place require the
+// SUM of their weights. Per-arc checking (the old behavior) enabled the
+// transition with fewer tokens than it consumes, forcing a clamp that made
+// firing effects marking-dependent and broke the incidence-matrix algebra.
+func TestMultipleInputArcsSumRequirement(t *testing.T) {
+	net := petri.Build().
+		Place("a", 3).Place("b", 0).
+		Transition("t").
+		Arc("a", "t", 2).Arc("a", "t", 2).
+		Arc("t", "b", 1).
+		Done()
+
+	g := NewGraph(net, Marking{"a": 3, "b": 0})
+
+	if st := g.AddState(Marking{"a": 3, "b": 0}); len(st.Enabled) != 0 {
+		t.Errorf("3 tokens with 2+2 required: enabled = %v, want []", st.Enabled)
+	}
+	m := Marking{"a": 4, "b": 0}
+	if st := g.AddState(m); len(st.Enabled) != 1 {
+		t.Fatalf("4 tokens with 2+2 required: enabled = %v, want [t]", st.Enabled)
+	}
+	next := g.Fire(m, "t")
+	if next.Get("a") != 0 || next.Get("b") != 1 {
+		t.Errorf("firing consumed wrong amount: %v, want a:0 b:1", next)
+	}
+}
