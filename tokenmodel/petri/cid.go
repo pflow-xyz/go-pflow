@@ -23,16 +23,33 @@ func (m *Model) CID() string {
 }
 
 // IdentityHash computes a structural fingerprint for matching.
-// Two models with the same structure have the same identity hash,
-// even if metadata (name, version) differs.
+// Two models with the same structure have the same identity hash, even if
+// metadata (name, version) or the initial marking differs. The initial
+// marking is state, not structure: the same net loaded with different token
+// counts is still the same net, and CID/Equal already distinguish markings
+// for callers who need that.
 func (m *Model) IdentityHash() string {
-	// Only hash structural elements
+	// Only hash structural elements. Places are reduced to their structural
+	// fields — hashing the full struct previously included Initial, so two
+	// identical nets with different markings got different "structural"
+	// fingerprints, contradicting both this doc comment and StructurallyEqual.
+	type structuralPlace struct {
+		ID       string `json:"id"`
+		Schema   string `json:"schema,omitempty"`
+		Exported bool   `json:"exported,omitempty"`
+	}
+
+	places := make([]structuralPlace, 0, len(m.Places))
+	for _, p := range m.normalizePlaces() {
+		places = append(places, structuralPlace{ID: p.ID, Schema: p.Schema, Exported: p.Exported})
+	}
+
 	structural := struct {
-		Places      []Place      `json:"places"`
-		Transitions []Transition `json:"transitions"`
-		Arcs        []Arc        `json:"arcs"`
+		Places      []structuralPlace `json:"places"`
+		Transitions []Transition      `json:"transitions"`
+		Arcs        []Arc             `json:"arcs"`
 	}{
-		Places:      m.normalizePlaces(),
+		Places:      places,
 		Transitions: m.normalizeTransitions(),
 		Arcs:        m.normalizeArcs(),
 	}
