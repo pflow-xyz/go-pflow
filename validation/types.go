@@ -44,14 +44,31 @@ type Summary struct {
 
 // Validator performs validation checks
 type Validator struct {
-	net    *petri.PetriNet
+	net *petri.PetriNet
+	// raw is the net as the caller supplied it. Checks that must see the
+	// declared color vectors run against raw, because the unfolding drops
+	// components it treats as "nothing to do" (a zero weight creates no arc,
+	// a zero capacity means unbounded) and a dropped component cannot be
+	// reported as the mistake it usually is.
+	raw    *petri.PetriNet
 	result *ValidationResult
 }
 
-// NewValidator creates a validator for a Petri net
+// NewValidator creates a validator for a Petri net.
+//
+// Multi-color nets are unfolded first (petri.ExpandColors), so per-color
+// capacity overflow and non-positive per-color arc weights are caught rather
+// than hidden by summing — [red:0, blue:3] against capacity [red:1, blue:1] is
+// an error, not a 3-vs-2 total that happens to look plausible. Findings name
+// the expanded "place.color" places, and the Summary counts are of the
+// unfolded net.
 func NewValidator(net *petri.PetriNet) *Validator {
+	raw := net
+	net, _ = net.ExpandColors()
+
 	return &Validator{
 		net: net,
+		raw: raw,
 		result: &ValidationResult{
 			Valid: true,
 			Summary: Summary{

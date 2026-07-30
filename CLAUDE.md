@@ -136,6 +136,7 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | Deadlock/liveness checking | `reachability` |
 | "Is this model correct?" against stated requirements | `verify` |
 | Conservation laws / structural boundedness | `reachability.InvariantAnalyzer` |
+| Colored / multi-color tokens | `petri.ExpandColors` (most entry points do it for you) |
 | Epidemics/populations | `petri` + `solver` |
 | General state/resource flow | `petri` |
 | Token model schemas | `tokenmodel`, `tokenmodel/dsl` |
@@ -264,6 +265,70 @@ CLI equivalent:
 pflow verify model.json -p deadlock-free -p "mutex:busy1,busy2" -p "a + 2*b == 10"
 # exits non-zero unless everything is proved, so it works as a CI gate
 ```
+
+## Colored tokens (multi-color nets)
+
+`Place.Initial`, `Place.Capacity` and `Arc.Weight` are **vectors, one component
+per token color** (`net.Token` names them). A net is multi-color as soon as any
+of those has length > 1.
+
+The semantics are component-wise, matching pflow-xyz's `petri-sim.js`: a red
+arc weight is satisfied by red tokens only, never by a summed pool. This is
+implemented once, as the standard colored-net unfolding:
+
+```go
+expanded, cm := net.ExpandColors()   // "pool" -> "pool.red", "pool.blue"
+cm.Colors                            // color names, index-aligned
+cm.Expanded["pool"]                  // -> ["pool.red", "pool.blue"]
+cm.BaseName("pool.red")              // -> "pool", "red", true
+cm.SumByBase(marking)                // fold a marking back to base places
+```
+
+The unfolding is a plain `PetriNet`, so every analysis applies to it unchanged.
+**Callers rarely need to call it** — these entry points unfold automatically,
+and are no-ops on a single-color net:
+
+| Entry point | Notes |
+|---|---|
+| `reachability.NewAnalyzer` | `ColorMap()` recovers the mapping; results use expanded names |
+| `verify.New` | expanded name pins a color, base name means the sum |
+| `solver.NewProblem` | per-color mass action; see below |
+| `learn.NewLearnableProblem` | same, with learnable rates |
+| `actor.BehaviorBuilder.WithNet` | per-color firing; `Behavior.ColorMap()` |
+| `mining.CheckConformance` / `CheckPrecision` | replay consumes per color |
+| `validation.NewValidator` | per-color capacity/negative-token findings |
+| `monitoring.NewPredictor`, `EstimateCurrentState` | per-color enablement |
+| `graphql.NewEventSourceStore` | markings keyed by expanded names |
+| `reachability.EigenvectorCentrality` / `ProjectedCentrality` | per-color vertices |
+
+**Reading results.** Two conventions, chosen per package so nothing silently
+returns zero for a name that used to work:
+
+- `solver.Solution` reports **base names by default** — `GetFinalState()`,
+  `GetState(i)` and `GetVariable("pool")` give per-place totals exactly as
+  before. `GetFinalStateByColor()`, `GetStateByColor(i)`,
+  `GetVariable("pool.red")` and `GetVariableByColor("pool")` give the
+  breakdown. The *dynamics* are per color either way.
+- `reachability` and `verify` report **expanded names**, which are
+  self-describing; in `verify` expressions a base name distributes as the sum
+  (`pool == 3` is the total-token constraint).
+
+**Initial state.** `net.ExpandState(state)` maps a base-name state vector into
+the unfolding: a base total splits across colors in the proportions the place
+declares, so `net.ExpandState(net.SetState(nil))` reproduces the declared
+vectors exactly, and scaling a total scales every color equally. Keys that are
+already expanded pass through, so it is idempotent.
+
+**Still summed (by design):**
+
+- `reachability.NewInvariantAnalyzer` on a raw multi-color net computes
+  summed-total laws. They are true, just coarser. For per-color conservation
+  laws, unfold first or go through `verify` (which does).
+- `compat.ToModel` collapses color vectors to a sum and records a Diagnostic —
+  `tokenmodel/petri` has a scalar `Place.Initial` and no color concept.
+
+**CLI:** `pflow expand model.json --summary` shows a model's color structure;
+`--output` writes the unfolded net for tools without color support.
 
 ## State Machine
 

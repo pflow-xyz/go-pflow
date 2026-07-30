@@ -65,6 +65,11 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
+	case "expand":
+		if err := expand(args); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	case "verify":
 		if err := verifyCmd(args); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -91,6 +96,7 @@ Commands:
   create     Create model from template
   validate   Validate model structure
   verify     Check declarative properties (proved/refuted + counterexample)
+  expand     Unfold a colored net into an equivalent single-color net
   simulate   Run ODE simulation from Petri net model
   analyze    Compute insights from simulation results
   plot       Generate SVG visualization from simulation results

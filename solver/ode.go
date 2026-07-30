@@ -39,16 +39,38 @@ type Problem struct {
 	stateIndex map[string]int
 	vecU0      []float64
 	vecF       vecODEFunc
+	colorMap   *petri.ColorMap // non-nil when the net was color-unfolded
 }
 
 // NewProblem creates a new ODE problem from a Petri net.
+//
+// Multi-color nets are unfolded first (petri.ExpandColors), so mass-action
+// kinetics run per color: a transition's flux depends only on the colors its
+// input arcs actually name, and consumes only those. Without the unfolding a
+// place holding [red:10, blue:5] would drive a red-only reaction at
+// concentration 15 and pay for it out of a summed pool.
+//
+// initialState is mapped through petri.ExpandState, so the usual
+// NewProblem(net, net.SetState(nil), …) call reproduces each place's declared
+// per-color vector exactly. Solution.GetFinalState and GetState still report
+// per-place totals under the original names, so existing readers are
+// unaffected; GetVariable and StateLabels expose the per-color series.
+//
+// Net is the unfolded net. ColorMap() returns the mapping, or nil when
+// nothing was unfolded.
 func NewProblem(net *petri.PetriNet, initialState map[string]float64, tspan [2]float64, rates map[string]float64) *Problem {
+	expanded, cm := net.ExpandColors()
+	if cm != nil {
+		initialState = net.ExpandState(initialState)
+		net = expanded
+	}
 	prob := &Problem{
-		Net:   net,
-		U0:    initialState,
-		Tspan: tspan,
-		Rates: rates,
-		F:     buildODEFunction(net, rates),
+		Net:      net,
+		U0:       initialState,
+		Tspan:    tspan,
+		Rates:    rates,
+		F:        buildODEFunction(net, rates),
+		colorMap: cm,
 	}
 	prob.stateLabels = make([]string, 0, len(initialState))
 	for k := range initialState {
@@ -67,6 +89,10 @@ func NewProblem(net *petri.PetriNet, initialState map[string]float64, tspan [2]f
 	prob.vecF = buildVecODEFunction(net, rates, prob.stateIndex, n)
 	return prob
 }
+
+// ColorMap returns the mapping produced when a multi-color net was unfolded,
+// or nil when the net was single-color and Net is the caller's own net.
+func (p *Problem) ColorMap() *petri.ColorMap { return p.colorMap }
 
 // SetDerivative installs a custom hashmap-based derivative function and makes
 // Solve use it. Solve integrates over the vectorized internals (vecF), so simply
@@ -212,14 +238,28 @@ func buildVecODEFunction(net *petri.PetriNet, rates map[string]float64, stateInd
 }
 
 // Solution represents the solution to an ODE problem.
+// Solution holds a solved trajectory.
+//
+// On a color-unfolded problem U and StateLabels use the expanded per-color
+// place names ("pool.red"); GetFinalState and GetState fold them back to
+// per-place totals under the original names, and GetVariable accepts either.
 type Solution struct {
 	T           []float64            // Time points
 	U           []map[string]float64 // State at each time point
 	StateLabels []string             // Ordered list of state variable labels
+
+	colorMap *petri.ColorMap // non-nil when the net was color-unfolded
 }
+
+// ColorMap returns the mapping used to unfold a multi-color net, or nil.
+func (s *Solution) ColorMap() *petri.ColorMap { return s.colorMap }
 
 // GetVariable extracts the time series for a specific state variable.
 // index can be either an int (index into StateLabels) or a string (place label).
+//
+// On a color-unfolded solution an expanded name ("pool.red") selects that
+// color and a base name ("pool") sums across colors, so a caller that plotted
+// "pool" before the unfolding still gets the same total series.
 func (s *Solution) GetVariable(index interface{}) []float64 {
 	var label string
 	switch t := index.(type) {
@@ -233,23 +273,65 @@ func (s *Solution) GetVariable(index interface{}) []float64 {
 	default:
 		return nil
 	}
+	labels := s.colorMap.Lookup(label)
 	out := make([]float64, 0, len(s.U))
 	for _, st := range s.U {
-		out = append(out, st[label])
+		sum := 0.0
+		for _, l := range labels {
+			sum += st[l]
+		}
+		out = append(out, sum)
 	}
 	return out
 }
 
-// GetFinalState returns the final state of the system.
+// GetVariableByColor extracts the per-color time series for a base place,
+// index-aligned with ColorMap().Colors. On a single-color solution it returns
+// the one series for that place.
+func (s *Solution) GetVariableByColor(place string) [][]float64 {
+	labels := s.colorMap.Lookup(place)
+	out := make([][]float64, len(labels))
+	for i, l := range labels {
+		series := make([]float64, 0, len(s.U))
+		for _, st := range s.U {
+			series = append(series, st[l])
+		}
+		out[i] = series
+	}
+	return out
+}
+
+// GetFinalState returns the final state of the system, keyed by the original
+// place names — on a color-unfolded solution the colors of each place are
+// summed. Use GetFinalStateByColor for the per-color breakdown.
 func (s *Solution) GetFinalState() map[string]float64 {
+	if len(s.U) == 0 {
+		return nil
+	}
+	return s.colorMap.SumByBaseFloat(s.U[len(s.U)-1])
+}
+
+// GetFinalStateByColor returns the final state keyed by expanded per-color
+// place names. Identical to GetFinalState on a single-color solution.
+func (s *Solution) GetFinalStateByColor() map[string]float64 {
 	if len(s.U) == 0 {
 		return nil
 	}
 	return s.U[len(s.U)-1]
 }
 
-// GetState returns the state at a specific time point index.
+// GetState returns the state at a specific time point index, keyed by the
+// original place names (colors summed). See GetStateByColor.
 func (s *Solution) GetState(i int) map[string]float64 {
+	if i < 0 || i >= len(s.U) {
+		return nil
+	}
+	return s.colorMap.SumByBaseFloat(s.U[i])
+}
+
+// GetStateByColor returns the state at a time point index keyed by expanded
+// per-color place names.
+func (s *Solution) GetStateByColor(i int) map[string]float64 {
 	if i < 0 || i >= len(s.U) {
 		return nil
 	}
@@ -550,6 +632,7 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 		T:           tOut,
 		U:           stateU,
 		StateLabels: prob.stateLabels,
+		colorMap:    prob.colorMap,
 	}
 }
 

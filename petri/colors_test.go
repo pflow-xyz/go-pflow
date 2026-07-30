@@ -145,3 +145,117 @@ func keys(m map[string]*Place) []string {
 	}
 	return out
 }
+
+// TestExpandStateRoundTrip pins the property that makes ExpandState safe as
+// the default translation in solver.NewProblem: expanding the net's OWN state
+// reproduces each place's declared per-color vector exactly, so the ordinary
+// NewProblem(net, net.SetState(nil), …) call loses nothing.
+func TestExpandStateRoundTrip(t *testing.T) {
+	n := NewPetriNet()
+	n.Token = []string{"red", "blue"}
+	n.AddPlace("pool", []float64{2, 6}, nil, 0, 0, nil)
+	n.AddPlace("sink", []float64{0, 0}, nil, 0, 0, nil)
+
+	got := n.ExpandState(n.SetState(nil))
+
+	want := map[string]float64{
+		"pool.red": 2, "pool.blue": 6,
+		"sink.red": 0, "sink.blue": 0,
+	}
+	for name, v := range want {
+		if got[name] != v {
+			t.Errorf("%s = %v, want %v", name, got[name], v)
+		}
+	}
+	if len(got) != len(want) {
+		t.Errorf("got %d entries %v, want %d", len(got), got, len(want))
+	}
+}
+
+// A base total that is not the declared total scales every color by the same
+// factor — "run this model at half the population" keeps the color ratio.
+func TestExpandStateScalesProportionally(t *testing.T) {
+	n := NewPetriNet()
+	n.Token = []string{"red", "blue"}
+	n.AddPlace("pool", []float64{2, 6}, nil, 0, 0, nil)
+
+	got := n.ExpandState(map[string]float64{"pool": 4})
+
+	if got["pool.red"] != 1 || got["pool.blue"] != 3 {
+		t.Errorf("got red=%v blue=%v, want 1 and 3", got["pool.red"], got["pool.blue"])
+	}
+}
+
+// A place that declares no tokens has no proportions to follow, so the whole
+// total goes to the first color rather than being silently dropped.
+func TestExpandStateEmptyDeclarationGoesToFirstColor(t *testing.T) {
+	n := NewPetriNet()
+	n.Token = []string{"red", "blue"}
+	n.AddPlace("pool", []float64{2, 6}, nil, 0, 0, nil)
+	n.AddPlace("sink", []float64{0, 0}, nil, 0, 0, nil)
+
+	got := n.ExpandState(map[string]float64{"sink": 5})
+
+	if got["sink.red"] != 5 || got["sink.blue"] != 0 {
+		t.Errorf("got red=%v blue=%v, want 5 and 0", got["sink.red"], got["sink.blue"])
+	}
+}
+
+// Already-expanded keys pass through untouched, which is what makes it safe
+// for a caller to hand ExpandState a state it has already expanded.
+func TestExpandStateIsIdempotent(t *testing.T) {
+	n := NewPetriNet()
+	n.Token = []string{"red", "blue"}
+	n.AddPlace("pool", []float64{2, 6}, nil, 0, 0, nil)
+
+	once := n.ExpandState(n.SetState(nil))
+	twice := n.ExpandState(once)
+
+	if len(once) != len(twice) {
+		t.Fatalf("second expansion changed size: %v vs %v", once, twice)
+	}
+	for k, v := range once {
+		if twice[k] != v {
+			t.Errorf("%s: %v -> %v", k, v, twice[k])
+		}
+	}
+}
+
+func TestExpandStateSingleColorIsNoOp(t *testing.T) {
+	n := NewPetriNet()
+	n.AddPlace("pool", 5.0, nil, 0, 0, nil)
+
+	in := n.SetState(nil)
+	got := n.ExpandState(in)
+
+	if got["pool"] != 5 || len(got) != 1 {
+		t.Errorf("single-color net was rewritten: %v", got)
+	}
+}
+
+func TestSumByBaseFloatAndLookup(t *testing.T) {
+	n := NewPetriNet()
+	n.Token = []string{"red", "blue"}
+	n.AddPlace("pool", []float64{2, 6}, nil, 0, 0, nil)
+	_, cm := n.ExpandColors()
+
+	folded := cm.SumByBaseFloat(map[string]float64{"pool.red": 1.5, "pool.blue": 2.5})
+	if folded["pool"] != 4 {
+		t.Errorf("SumByBaseFloat: got %v, want 4", folded["pool"])
+	}
+
+	if got := cm.Lookup("pool"); len(got) != 2 {
+		t.Errorf("Lookup(base): got %v, want 2 names", got)
+	}
+	// An expanded name is already a single color; an unknown name is its own.
+	if got := cm.Lookup("pool.red"); len(got) != 1 || got[0] != "pool.red" {
+		t.Errorf("Lookup(expanded): got %v", got)
+	}
+	var nilMap *ColorMap
+	if got := nilMap.Lookup("pool"); len(got) != 1 || got[0] != "pool" {
+		t.Errorf("Lookup on nil ColorMap: got %v", got)
+	}
+	if got := nilMap.SumByBaseFloat(map[string]float64{"pool": 3}); got["pool"] != 3 {
+		t.Errorf("SumByBaseFloat on nil ColorMap: got %v", got)
+	}
+}

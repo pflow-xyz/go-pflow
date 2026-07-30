@@ -16,7 +16,10 @@ go_library(
 
 go_test(
     name = "solver_test",
-    srcs = ["solver_test.go"],
+    srcs = [
+        "colors_test.go",
+        "solver_test.go",
+    ],
     embed = [":solver"],
     deps = ["//petri"],
 )

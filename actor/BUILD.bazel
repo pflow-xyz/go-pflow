@@ -25,6 +25,7 @@ go_test(
     name = "actor_test",
     srcs = [
         "actor_test.go",
+        "colors_test.go",
         "pubsub_test.go",
         "subnet_test.go",
     ],

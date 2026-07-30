@@ -14,15 +14,28 @@ type LearnableProblem struct {
 
 	// Internal
 	stateLabels []string
+	colorMap    *petri.ColorMap
 }
 
 // NewLearnableProblem creates a new learnable ODE problem from a Petri net.
 // rateFuncs maps transition names to RateFunc implementations.
 // Any transition not in rateFuncs will have rate = 0.
+//
+// Multi-color nets are unfolded (petri.ExpandColors) exactly as in
+// solver.NewProblem, so the learned dynamics are per color and Net, U0 and the
+// state maps handed to each RateFunc use expanded place names. ColorMap()
+// returns the mapping, or nil for a single-color net.
 func NewLearnableProblem(net *petri.PetriNet, initialState map[string]float64,
 	tspan [2]float64, rateFuncs map[string]RateFunc) *LearnableProblem {
 
+	expanded, cm := net.ExpandColors()
+	if cm != nil {
+		initialState = net.ExpandState(initialState)
+		net = expanded
+	}
+
 	prob := &LearnableProblem{
+		colorMap:  cm,
 		Net:       net,
 		U0:        initialState,
 		Tspan:     tspan,
@@ -36,6 +49,9 @@ func NewLearnableProblem(net *petri.PetriNet, initialState map[string]float64,
 
 	return prob
 }
+
+// ColorMap returns the mapping used to unfold a multi-color net, or nil.
+func (p *LearnableProblem) ColorMap() *petri.ColorMap { return p.colorMap }
 
 // BuildODEFunc constructs an ODE function that uses the learnable rate functions.
 func (p *LearnableProblem) BuildODEFunc() solver.ODEFunc {

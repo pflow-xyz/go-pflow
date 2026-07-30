@@ -9,16 +9,29 @@ import (
 
 // Predictor uses simulation to predict case outcomes.
 type Predictor struct {
-	net           *petri.PetriNet
+	// net is the model as supplied. It is deliberately NOT pre-unfolded:
+	// solver.NewProblem unfolds it itself, which keeps Solution's base-name
+	// reads (GetVariable("end"), GetFinalState()["end"]) working as the
+	// per-place totals this predictor is asking for.
+	net *petri.PetriNet
+	// expanded is the color unfolding, used for the discrete enablement
+	// checks that have no solver to do it for them.
+	expanded      *petri.PetriNet
 	rates         map[string]float64
 	solverMethod  *solver.Solver
 	solverOptions *solver.Options
 }
 
 // NewPredictor creates a prediction engine from a learned model.
+//
+// Multi-color nets are supported: the ODE forecast runs per color (see
+// solver.NewProblem) while completion is still measured as the total token
+// mass reaching "end", and enablement is decided per color.
 func NewPredictor(net *petri.PetriNet, rates map[string]float64) *Predictor {
+	expanded, _ := net.ExpandColors()
 	return &Predictor{
 		net:           net,
+		expanded:      expanded,
 		rates:         rates,
 		solverMethod:  solver.Tsit5(),
 		solverOptions: solver.DefaultOptions(),
@@ -196,6 +209,15 @@ func EstimateCurrentState(c *Case, net *petri.PetriNet) map[string]float64 {
 	// Start with initial marking (token in start place)
 	state["start"] = 1.0
 
+	// On a multi-color net, replay per color. The case's one starting token
+	// has no color of its own, so ExpandState splits it in the proportions
+	// "start" declares — the same rule solver.NewProblem uses — falling back
+	// to the first color when "start" declares nothing. The returned state is
+	// keyed by expanded place names.
+	raw := net
+	net, _ = net.ExpandColors()
+	state = raw.ExpandState(state)
+
 	// Replay the event history through the Petri net
 	// For each observed activity, fire the corresponding transition
 	for _, event := range c.History {
@@ -254,16 +276,20 @@ func EstimateCurrentState(c *Case, net *petri.PetriNet) map[string]float64 {
 }
 
 // getEnabledTransitions returns list of transitions enabled in given state.
+// On a multi-color model every color must independently satisfy its own arc
+// weight, so state is mapped into the unfolding first. Already-expanded keys
+// pass through ExpandState untouched, making this safe to call either way.
 func (p *Predictor) getEnabledTransitions(state map[string]float64) []string {
+	state = p.net.ExpandState(state)
 	enabled := make([]string, 0)
 
-	for transLabel := range p.net.Transitions {
+	for transLabel := range p.expanded.Transitions {
 		isEnabled := true
 
 		// Check if all input places have sufficient tokens
-		for _, arc := range p.net.Arcs {
+		for _, arc := range p.expanded.Arcs {
 			if arc.Target == transLabel {
-				if _, isPlace := p.net.Places[arc.Source]; isPlace {
+				if _, isPlace := p.expanded.Places[arc.Source]; isPlace {
 					weight := arc.GetWeightSum()
 					if state[arc.Source] < weight {
 						isEnabled = false

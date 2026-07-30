@@ -278,9 +278,15 @@ func (bb *BehaviorBuilder) Name(name string) *BehaviorBuilder {
 	return bb
 }
 
-// WithNet sets a Petri net as the model
+// WithNet sets a Petri net as the model.
+//
+// Multi-color nets are unfolded first (petri.ExpandColors), so firing is
+// per color and the behavior's state map is keyed by the expanded place
+// names ("pool.red"). Single-color nets are stored as given.
 func (bb *BehaviorBuilder) WithNet(net *petri.PetriNet) *BehaviorBuilder {
-	bb.behavior.net = net
+	expanded, cm := net.ExpandColors()
+	bb.behavior.net = expanded
+	bb.behavior.colorMap = cm
 	return bb
 }
 
@@ -462,11 +468,14 @@ func (b *Behavior) fireTransition(state map[string]float64, transitionID string)
 		return state
 	}
 
-	// Check if enabled
+	// Check if enabled. GetWeightSum, not Weight[0]: the latter panics on an
+	// arc with no declared weight and silently ignores every color past the
+	// first. On the unfolded net each arc carries exactly one component, so
+	// the sum IS that color's weight.
 	enabled := true
 	for _, arc := range b.net.Arcs {
 		if arc.Target == transitionID {
-			if state[arc.Source] < arc.Weight[0] {
+			if state[arc.Source] < arc.GetWeightSum() {
 				enabled = false
 				break
 			}
@@ -485,10 +494,10 @@ func (b *Behavior) fireTransition(state map[string]float64, transitionID string)
 
 	for _, arc := range b.net.Arcs {
 		if arc.Target == transitionID {
-			newState[arc.Source] -= arc.Weight[0]
+			newState[arc.Source] -= arc.GetWeightSum()
 		}
 		if arc.Source == transitionID {
-			newState[arc.Target] += arc.Weight[0]
+			newState[arc.Target] += arc.GetWeightSum()
 		}
 	}
 
@@ -551,6 +560,11 @@ func ThrottleBehavior(signalType string, maxPerSecond int) *Behavior {
 		Done().
 		Build()
 }
+
+// ColorMap returns the mapping used to unfold a multi-color Petri net into
+// the behavior's model, or nil when the net was single-color. Use it to read
+// the expanded "place.color" keys in ActorContext.NetState.
+func (b *Behavior) ColorMap() *petri.ColorMap { return b.colorMap }
 
 // ============================================================================
 // Simulating behaviors with ODE

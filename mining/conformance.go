@@ -63,7 +63,13 @@ func copyState(state TokenState) TokenState {
 // CheckConformance performs token-based replay conformance checking.
 // It replays each trace from the event log against the Petri net model
 // and computes fitness metrics.
+//
+// Multi-color nets are unfolded first (petri.ExpandColors), so replay consumes
+// and produces per color: a trace that supplies the wrong color is now counted
+// as a missing token instead of being satisfied by a summed pool.
 func CheckConformance(log *eventlog.EventLog, net *petri.PetriNet) *ConformanceResult {
+	net, _ = net.ExpandColors()
+
 	result := &ConformanceResult{
 		TraceResults: make([]TraceReplayResult, 0, log.NumCases()),
 		TotalTraces:  log.NumCases(),
@@ -345,7 +351,10 @@ type PrecisionResult struct {
 // CheckPrecision computes precision metrics using ETC (Escaping Edges) method.
 // Precision measures how much behavior the model allows beyond what's in the log.
 // A precision of 1.0 means the model only allows observed behavior.
+// Multi-color nets are unfolded first, so enablement is decided per color.
 func CheckPrecision(log *eventlog.EventLog, net *petri.PetriNet) *PrecisionResult {
+	net, _ = net.ExpandColors()
+
 	result := &PrecisionResult{}
 
 	activityToTransition := buildActivityMapping(net)

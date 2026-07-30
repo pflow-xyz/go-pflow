@@ -181,6 +181,42 @@ pflow events monitoring.json
 pflow events --type threshold_exceeded monitoring.json
 ```
 
+### `expand` - Unfold a colored net
+
+Turns a multi-color (colored) Petri net into an equivalent single-color net.
+Each place becomes one place per color (`pool.red`, `pool.blue`), each arc
+becomes one arc per non-zero weight component, and transitions are shared so a
+firing still moves every color atomically.
+
+```bash
+pflow expand [flags] <model.json>
+
+Flags:
+  --summary        Print the color mapping instead of the unfolded model
+  --output string  Write the unfolded model to a file instead of stdout
+```
+
+`validate`, `verify` and `simulate` already unfold internally — this command is
+for *seeing* the unfolding, or for handing the expanded net to a tool with no
+color support of its own. A single-color model passes through unchanged.
+
+**Examples**:
+```bash
+# Inspect a model's color structure
+pflow expand model.json --summary
+
+# Write the unfolded model out
+pflow expand model.json --output unfolded.json
+```
+
+In `verify`, you don't need to expand first: an expanded name pins one color
+and a base name means the total across colors.
+
+```bash
+pflow verify model.json -p "pool.red == 3"   # exactly 3 red
+pflow verify model.json -p "pool == 3"       # 3 tokens of any color
+```
+
 ## AI-Assisted Workflows
 
 The CLI is designed to work seamlessly with AI assistants like Claude:

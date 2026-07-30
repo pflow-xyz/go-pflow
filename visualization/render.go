@@ -583,16 +583,27 @@ func isEnabled(transitionID string, net PetriNet, marks map[string]int) bool {
 	return true
 }
 
+// getCapacity returns the place's capacity against the token TOTAL that the
+// renderer draws.
+//
+// Capacity is a per-color vector. A zero component means that color is
+// unbounded, and one unbounded color makes the total unbounded — so the
+// bound only exists when every component is non-zero, in which case it is
+// their sum. Reading Capacity[0] alone would report a two-color place
+// [red:1, blue:1] as capacity 1 and draw it permanently over its limit.
 func getCapacity(place Place) float64 {
-	if len(place.Capacity) > 0 {
-		cap := place.Capacity[0]
+	if len(place.Capacity) == 0 {
+		return math.Inf(1)
+	}
+	total := 0.0
+	for _, c := range place.Capacity {
 		// Treat capacity=0 as unlimited (Infinity)
-		if cap == 0 {
+		if c == 0 {
 			return math.Inf(1)
 		}
-		return cap
+		total += c
 	}
-	return math.Inf(1)
+	return total
 }
 
 // escapeXML escapes special XML characters in text

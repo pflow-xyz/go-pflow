@@ -217,3 +217,88 @@ func (cm *ColorMap) SumByBase(marking map[string]int) map[string]int {
 	}
 	return out
 }
+
+// SumByBaseFloat is SumByBase for continuous state vectors.
+func (cm *ColorMap) SumByBaseFloat(state map[string]float64) map[string]float64 {
+	if cm == nil {
+		return state
+	}
+	out := make(map[string]float64)
+	for name, v := range state {
+		if ref, ok := cm.Base[name]; ok {
+			out[ref.Place] += v
+		} else {
+			out[name] += v
+		}
+	}
+	return out
+}
+
+// Lookup returns the expanded place names for a base place, in color order.
+// A name that is already expanded (or unknown) returns itself as a
+// single-element slice, so callers can treat every name uniformly.
+func (cm *ColorMap) Lookup(name string) []string {
+	if cm == nil {
+		return []string{name}
+	}
+	if expanded, ok := cm.Expanded[name]; ok {
+		return expanded
+	}
+	return []string{name}
+}
+
+// ExpandState maps a state vector keyed by this (multi-color) net's place
+// names onto the place names of its ExpandColors unfolding.
+//
+// Expanded keys ("pool.red") pass through untouched and pin one color. A base
+// key ("pool") carries a TOTAL across colors — the shape petri.SetState and
+// Place.GetTokenCount produce — and is distributed across that place's colors
+// in the proportions of its declared Initial vector. When the declared vector
+// is empty or sums to zero there are no proportions to follow, so the whole
+// total goes to color 0.
+//
+// The distribution rule is chosen so the common call is exact:
+// n.ExpandState(n.SetState(nil)) reproduces each place's declared per-color
+// Initial vector componentwise. Scaling a base total scales every color by the
+// same factor, which is what "start this model at twice the population" means.
+//
+// Returns state unchanged on a single-color net.
+func (n *PetriNet) ExpandState(state map[string]float64) map[string]float64 {
+	_, cm := n.ExpandColors()
+	if cm == nil {
+		return state
+	}
+	out := make(map[string]float64, len(state)*len(cm.Colors))
+	for name, total := range state {
+		p, isBase := n.Places[name]
+		if !isBase {
+			// Already expanded, or not a place at all — pass through.
+			out[name] = total
+			continue
+		}
+		expanded := cm.Expanded[name]
+
+		declared := 0.0
+		for _, v := range p.Initial {
+			declared += v
+		}
+		if declared == 0 {
+			for i, en := range expanded {
+				if i == 0 {
+					out[en] = total
+				} else {
+					out[en] = 0
+				}
+			}
+			continue
+		}
+		for i, en := range expanded {
+			share := 0.0
+			if i < len(p.Initial) {
+				share = p.Initial[i]
+			}
+			out[en] = total * share / declared
+		}
+	}
+	return out
+}

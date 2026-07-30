@@ -220,6 +220,7 @@ func SolveUntilEquilibrium(prob *Problem, solver *Solver, opts *Options, eqOpts 
 		T:           t,
 		U:           u,
 		StateLabels: stateLabels,
+		colorMap:    prob.colorMap,
 	}
 
 	return sol, eqResult

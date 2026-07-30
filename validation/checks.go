@@ -45,8 +45,10 @@ func (v *Validator) checkStructure() {
 		}
 	}
 
-	// Check for zero or negative arc weights
-	for i, arc := range v.net.Arcs {
+	// Check for zero or negative arc weights. Run against the raw net: an
+	// all-zero weight vector produces no arcs at all in the unfolding, so
+	// checking v.net here would silently lose the finding.
+	for i, arc := range v.raw.Arcs {
 		weight := arc.GetWeightSum()
 		if weight <= 0 {
 			v.AddError("structure", fmt.Sprintf("Arc %d (%s → %s) has non-positive weight", i, arc.Source, arc.Target),

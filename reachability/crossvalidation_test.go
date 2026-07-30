@@ -13,7 +13,8 @@ import (
 // The generator deliberately covers the model dimensions a hand-written test
 // tends to skip: arc weights above 2, inhibitor arcs (which break firing
 // monotonicity), and multi-color places/arcs (Weight and Initial are vectors
-// per color; all discrete analysis reduces them by summing).
+// per color; discrete analysis unfolds them into one place per color, so the
+// markings that come back are keyed by expanded names — see ColorMap).
 func randomNet(r *rand.Rand) *petri.PetriNet {
 	net := petri.NewPetriNet()
 	np := 2 + r.Intn(4) // 2-5 places

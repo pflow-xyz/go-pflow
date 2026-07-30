@@ -26,7 +26,13 @@ type SpectralResult struct {
 //
 // where B[p][t] = arc weight between place p and transition t (ignoring direction).
 // Power iteration finds the Perron–Frobenius eigenvector for non-negative matrices.
+//
+// Multi-color nets are unfolded first (petri.ExpandColors), so each color is
+// its own vertex and the arc weights entering B are per color rather than
+// summed. Labels in the result are then the expanded "place.color" names.
 func EigenvectorCentrality(net *petri.PetriNet, maxIter int, tol float64) *SpectralResult {
+	net, _ = net.ExpandColors()
+
 	// Canonical ordering
 	places := sortedKeys(net.Places)
 	transitions := sortedTransKeys(net.Transitions)
@@ -149,7 +155,12 @@ func EigenvectorCentrality(net *petri.PetriNet, maxIter int, tol float64) *Spect
 // entityPrefix filters places to those starting with the prefix (e.g., "_X" for
 // accumulator places, or "" for all places). constraintRole filters transitions
 // by role (e.g., "drain" or "" for all).
+//
+// Multi-color nets are unfolded first; entityPrefix still matches, since an
+// expanded name keeps its base place's prefix.
 func ProjectedCentrality(net *petri.PetriNet, entityPrefix, constraintRole string, maxIter int, tol float64) *SpectralResult {
+	net, _ = net.ExpandColors()
+
 	// Identify entities and constraints
 	var entities []string
 	for _, p := range sortedKeys(net.Places) {

@@ -14,8 +14,10 @@ import (
 // EventSourceStore adapts eventsource.Store to graphql.Store.
 // It manages Petri net instances using event sourcing.
 type EventSourceStore struct {
-	store     eventsource.Store
+	store eventsource.Store
+	// model is color-unfolded; colorMap is nil when nothing was unfolded.
 	model     *petri.PetriNet
+	colorMap  *petri.ColorMap
 	modelName string
 
 	// Cache of loaded state machines
@@ -24,14 +26,26 @@ type EventSourceStore struct {
 }
 
 // NewEventSourceStore creates a new store backed by an eventsource.Store.
+//
+// Multi-color models are unfolded first (petri.ExpandColors), so firing checks
+// each color against its own arc weight instead of a summed pool. Markings
+// exposed through the GraphQL API are then keyed by the expanded
+// "place.color" names, which are self-describing; ColorMap() recovers the
+// mapping back to base places.
 func NewEventSourceStore(store eventsource.Store, model *petri.PetriNet, modelName string) *EventSourceStore {
+	expanded, cm := model.ExpandColors()
 	return &EventSourceStore{
 		store:     store,
-		model:     model,
+		model:     expanded,
+		colorMap:  cm,
 		modelName: modelName,
 		cache:     make(map[string]*eventsource.StateMachine[map[string]any]),
 	}
 }
+
+// ColorMap returns the mapping used to unfold a multi-color model, or nil.
+// Use it to fold an instance's marking back to per-place totals.
+func (s *EventSourceStore) ColorMap() *petri.ColorMap { return s.colorMap }
 
 // Create creates a new Petri net instance.
 func (s *EventSourceStore) Create(ctx context.Context, modelName string) (string, error) {

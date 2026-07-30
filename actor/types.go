@@ -89,8 +89,11 @@ type Behavior struct {
 	ID   string
 	Name string
 
-	// The model can be a raw Petri net or a workflow
+	// The model can be a raw Petri net or a workflow. A multi-color net is
+	// stored color-unfolded (see BehaviorBuilder.WithNet); colorMap is nil
+	// when nothing was unfolded.
 	net      *petri.PetriNet
+	colorMap *petri.ColorMap
 	workflow *workflow.Workflow
 	engine   *workflow.Engine
 
