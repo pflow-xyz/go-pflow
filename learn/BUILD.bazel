@@ -18,7 +18,10 @@ go_library(
 
 go_test(
     name = "learn_test",
-    srcs = ["learn_test.go"],
+    srcs = [
+        "colors_test.go",
+        "learn_test.go",
+    ],
     embed = [":learn"],
     deps = [
         "//petri",

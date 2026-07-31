@@ -20,6 +20,7 @@ go_library(
 go_test(
     name = "visualization_test",
     srcs = [
+        "colors_test.go",
         "statemachine_svg_test.go",
         "workflow_svg_test.go",
     ],

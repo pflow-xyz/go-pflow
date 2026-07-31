@@ -25,6 +25,7 @@ go_library(
 go_test(
     name = "mining_test",
     srcs = [
+        "colors_test.go",
         "conformance_final_place_test.go",
         "conformance_test.go",
         "dataflow_discovery_test.go",

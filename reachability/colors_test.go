@@ -1,6 +1,7 @@
 package reachability
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/pflow-xyz/go-pflow/petri"
@@ -115,5 +116,65 @@ func TestColorInhibitorPerColor(t *testing.T) {
 	// threshold fix, 3 >= 1 summed — still wrong).
 	if len(res.FiredTransitions) != 1 {
 		t.Errorf("t should fire (inhibitor watches blue only): fired = %v", res.FiredTransitions)
+	}
+}
+
+// TestSpectralCentralityIsPerColor: the centrality packages score a place by
+// how connected it is. On a colored net each color is its own vertex with its
+// own arc weights, so a place whose colors have different connectivity gets
+// different scores per color rather than one averaged number.
+func TestSpectralCentralityIsPerColor(t *testing.T) {
+	net := petri.NewPetriNet()
+	net.Token = []string{"red", "blue"}
+	net.AddPlace("pool", []float64{1, 1}, nil, 0, 0, nil)
+	net.AddPlace("sink", []float64{0, 0}, nil, 0, 0, nil)
+	net.AddTransition("t1", "default", 0, 0, nil)
+	net.AddTransition("t2", "default", 0, 0, nil)
+	// red touches both transitions; blue touches only t1.
+	net.AddArc("pool", "t1", []float64{1, 1}, false)
+	net.AddArc("pool", "t2", []float64{1, 0}, false)
+	net.AddArc("t1", "sink", []float64{1, 1}, false)
+	net.AddArc("t2", "sink", []float64{1, 0}, false)
+
+	result := EigenvectorCentrality(net, 200, 1e-9)
+
+	scores := result.Centrality
+
+	if _, ok := scores["pool.red"]; !ok {
+		t.Fatalf("centrality was not computed per color: labels = %v", result.Labels)
+	}
+	if _, ok := scores["pool"]; ok {
+		t.Errorf("base place appeared alongside expanded ones: %v", result.Labels)
+	}
+	// The better-connected color must score strictly higher; summing the
+	// weight vectors would have collapsed both into one identical vertex.
+	if scores["pool.red"] <= scores["pool.blue"] {
+		t.Errorf("red (2 transitions) did not outscore blue (1): red=%v blue=%v",
+			scores["pool.red"], scores["pool.blue"])
+	}
+}
+
+// ProjectedCentrality filters places by prefix; an expanded name keeps its
+// base place's prefix, so the filter still selects what the caller meant.
+func TestProjectedCentralityPrefixSurvivesUnfolding(t *testing.T) {
+	net := petri.NewPetriNet()
+	net.Token = []string{"red", "blue"}
+	net.AddPlace("_X0", []float64{1, 1}, nil, 0, 0, nil)
+	net.AddPlace("_X1", []float64{1, 1}, nil, 0, 0, nil)
+	net.AddPlace("other", []float64{1, 1}, nil, 0, 0, nil)
+	net.AddTransition("c0", "drain", 0, 0, nil)
+	net.AddArc("_X0", "c0", []float64{1, 1}, false)
+	net.AddArc("_X1", "c0", []float64{1, 1}, false)
+	net.AddArc("other", "c0", []float64{1, 1}, false)
+
+	result := ProjectedCentrality(net, "_X", "drain", 200, 1e-9)
+
+	if len(result.Labels) != 4 { // _X0 and _X1, two colors each
+		t.Errorf("prefix filter did not match expanded names: %v", result.Labels)
+	}
+	for _, l := range result.Labels {
+		if strings.HasPrefix(l, "other") {
+			t.Errorf("prefix filter admitted %q", l)
+		}
 	}
 }

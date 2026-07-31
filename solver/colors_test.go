@@ -184,3 +184,37 @@ func TestAllSolverEntryPointsCarryTheColorMap(t *testing.T) {
 		}
 	}
 }
+
+// The by-color accessors share the empty/out-of-range guards with their
+// base-name siblings, so an unsolved or empty Solution must not panic.
+func TestByColorAccessorsGuardEmptySolutions(t *testing.T) {
+	empty := &Solution{}
+
+	if got := empty.GetFinalState(); got != nil {
+		t.Errorf("GetFinalState on empty = %v, want nil", got)
+	}
+	if got := empty.GetFinalStateByColor(); got != nil {
+		t.Errorf("GetFinalStateByColor on empty = %v, want nil", got)
+	}
+	if got := empty.GetStateByColor(0); got != nil {
+		t.Errorf("GetStateByColor(0) on empty = %v, want nil", got)
+	}
+
+	net := coloredNet(4, 6)
+	prob := NewProblem(net, net.SetState(nil), [2]float64{0, 5}, map[string]float64{"drain": 1.0})
+	sol := Solve(prob, Tsit5(), DefaultOptions())
+
+	if got := sol.GetStateByColor(-1); got != nil {
+		t.Errorf("GetStateByColor(-1) = %v, want nil", got)
+	}
+	if got := sol.GetStateByColor(len(sol.U)); got != nil {
+		t.Errorf("GetStateByColor(past end) = %v, want nil", got)
+	}
+	// GetVariable rejects an index out of range and a non-string/int key.
+	if got := sol.GetVariable(len(sol.StateLabels)); got != nil {
+		t.Errorf("GetVariable(out of range) = %v, want nil", got)
+	}
+	if got := sol.GetVariable(3.5); got != nil {
+		t.Errorf("GetVariable(non-key type) = %v, want nil", got)
+	}
+}

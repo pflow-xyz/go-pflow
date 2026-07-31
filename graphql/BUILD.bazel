@@ -24,6 +24,7 @@ go_library(
 go_test(
     name = "graphql_test",
     srcs = [
+        "colors_test.go",
         "eventsource_test.go",
         "graphql_test.go",
     ],

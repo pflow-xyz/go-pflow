@@ -259,3 +259,142 @@ func TestSumByBaseFloatAndLookup(t *testing.T) {
 		t.Errorf("SumByBaseFloat on nil ColorMap: got %v", got)
 	}
 }
+
+// IsMultiColor answers from any of the three vector-valued fields, since a net
+// can declare colors on places, on arcs, or only via Token.
+func TestIsMultiColor(t *testing.T) {
+	tests := []struct {
+		name string
+		mk   func() *PetriNet
+		want bool
+	}{
+		{"empty net", func() *PetriNet { return NewPetriNet() }, false},
+		{"single color place", func() *PetriNet {
+			n := NewPetriNet()
+			n.AddPlace("p", 1.0, nil, 0, 0, nil)
+			return n
+		}, false},
+		{"two token names", func() *PetriNet {
+			n := NewPetriNet()
+			n.Token = []string{"red", "blue"}
+			n.AddPlace("p", 1.0, nil, 0, 0, nil)
+			return n
+		}, true},
+		{"multi-color initial", func() *PetriNet {
+			n := NewPetriNet()
+			n.AddPlace("p", []float64{1, 2}, nil, 0, 0, nil)
+			return n
+		}, true},
+		{"multi-color capacity", func() *PetriNet {
+			n := NewPetriNet()
+			n.AddPlace("p", 1.0, []float64{3, 3}, 0, 0, nil)
+			return n
+		}, true},
+		{"multi-color arc weight", func() *PetriNet {
+			n := NewPetriNet()
+			n.AddPlace("p", 1.0, nil, 0, 0, nil)
+			n.AddTransition("t", "default", 0, 0, nil)
+			n.AddArc("p", "t", []float64{1, 1}, false)
+			return n
+		}, true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			net := tc.mk()
+			if got := net.IsMultiColor(); got != tc.want {
+				t.Errorf("IsMultiColor() = %v, want %v", got, tc.want)
+			}
+			// colorCount and IsMultiColor must agree on where the line is.
+			if got := net.colorCount() > 1; got != tc.want {
+				t.Errorf("colorCount() > 1 = %v, disagrees with IsMultiColor", got)
+			}
+		})
+	}
+}
+
+// BaseName has to answer for three kinds of input: an expanded name, a name
+// the map has never seen, and a nil map (the single-color case, where callers
+// hold a nil *ColorMap and must not have to check).
+func TestBaseName(t *testing.T) {
+	n := NewPetriNet()
+	n.Token = []string{"red", "blue"}
+	n.AddPlace("pool", []float64{1, 1}, nil, 0, 0, nil)
+	_, cm := n.ExpandColors()
+
+	place, color, ok := cm.BaseName("pool.blue")
+	if !ok || place != "pool" || color != "blue" {
+		t.Errorf("BaseName(expanded) = %q, %q, %v", place, color, ok)
+	}
+
+	// An unknown name is returned unchanged rather than reported as an error,
+	// so a caller can pass any label through.
+	place, color, ok = cm.BaseName("somewhere-else")
+	if ok || place != "somewhere-else" || color != "" {
+		t.Errorf("BaseName(unknown) = %q, %q, %v", place, color, ok)
+	}
+
+	var nilMap *ColorMap
+	place, color, ok = nilMap.BaseName("pool")
+	if ok || place != "pool" || color != "" {
+		t.Errorf("BaseName on nil ColorMap = %q, %q, %v", place, color, ok)
+	}
+}
+
+// SumByBase passes non-place keys through and is a no-op on a nil map.
+func TestSumByBase(t *testing.T) {
+	n := NewPetriNet()
+	n.Token = []string{"red", "blue"}
+	n.AddPlace("pool", []float64{1, 1}, nil, 0, 0, nil)
+	_, cm := n.ExpandColors()
+
+	got := cm.SumByBase(map[string]int{"pool.red": 2, "pool.blue": 3, "unrelated": 7})
+	if got["pool"] != 5 {
+		t.Errorf("SumByBase(pool) = %d, want 5", got["pool"])
+	}
+	if got["unrelated"] != 7 {
+		t.Errorf("an unmapped key was dropped: %v", got)
+	}
+
+	var nilMap *ColorMap
+	in := map[string]int{"pool": 5}
+	if out := nilMap.SumByBase(in); out["pool"] != 5 {
+		t.Errorf("SumByBase on nil ColorMap = %v", out)
+	}
+	// Same passthrough for the float variant.
+	if out := cm.SumByBaseFloat(map[string]float64{"unrelated": 1.5}); out["unrelated"] != 1.5 {
+		t.Errorf("SumByBaseFloat dropped an unmapped key: %v", out)
+	}
+}
+
+// An arc with no declared weight defaults to [1] — one token of color 0 —
+// rather than being skipped as a zero vector. The Builder API creates such
+// arcs routinely, so a colored net can easily contain one.
+func TestExpandColorsDefaultsUndeclaredArcWeight(t *testing.T) {
+	n := NewPetriNet()
+	n.Token = []string{"red", "blue"}
+	n.AddPlace("a", []float64{1, 1}, nil, 0, 0, nil)
+	n.AddPlace("b", []float64{0, 0}, nil, 0, 0, nil)
+	n.AddTransition("t", "default", 0, 0, nil)
+	n.AddArc("a", "t", nil, false) // no weight declared
+	n.AddArc("t", "b", nil, false)
+
+	out, cm := n.ExpandColors()
+	if cm == nil {
+		t.Fatal("colored net was not unfolded")
+	}
+
+	// One arc per direction, on color 0 only — the default is [1], not [1,1].
+	if len(out.Arcs) != 2 {
+		t.Fatalf("got %d arcs, want 2: %+v", len(out.Arcs), out.Arcs)
+	}
+	for _, arc := range out.Arcs {
+		if arc.GetWeightSum() != 1 {
+			t.Errorf("default weight became %v, want 1", arc.GetWeightSum())
+		}
+		if arc.Source != "a.red" && arc.Target != "b.red" {
+			t.Errorf("default weight landed on a color other than the first: %s -> %s",
+				arc.Source, arc.Target)
+		}
+	}
+}

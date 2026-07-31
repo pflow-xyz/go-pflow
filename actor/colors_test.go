@@ -74,3 +74,17 @@ func TestSingleColorBehaviorHasNoColorMap(t *testing.T) {
 		t.Errorf("single-color net was rebuilt instead of passed through")
 	}
 }
+
+// An unknown transition is a no-op, not a panic — the trigger that names it
+// may refer to a model the behavior never got.
+func TestFireUnknownTransitionIsANoOp(t *testing.T) {
+	net := petri.NewPetriNet()
+	net.AddPlace("a", 3.0, nil, 0, 0, nil)
+
+	b := NewBehavior("x").WithNet(net).Build()
+	state := b.net.SetState(nil)
+
+	if got := b.fireTransition(state, "nope"); got["a"] != 3 {
+		t.Errorf("unknown transition changed state: %v", got)
+	}
+}
