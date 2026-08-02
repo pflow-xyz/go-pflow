@@ -6,6 +6,7 @@ go_library(
         "aggregate.go",
         "event.go",
         "memory.go",
+        "multiappend.go",
         "sqlite.go",
         "store.go",
     ],
@@ -21,8 +22,9 @@ go_test(
     name = "eventsource_test",
     srcs = [
         "aggregate_test.go",
+        "multiappend_test.go",
         "store_test.go",
         "subscribe_admin_test.go",
     ],
-    deps = [":eventsource"],
+    embed = [":eventsource"],
 )
