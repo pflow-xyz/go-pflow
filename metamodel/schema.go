@@ -157,6 +157,14 @@ type Transition struct {
 	// Bindings define operational data for state computation
 	Bindings []Binding `json:"bindings,omitempty"`
 
+	// Emits names the component event IDs this transition stands for. It is set
+	// by Bundle.Flatten when an EventLink fuses several transitions into one: the
+	// fused transition is a single firing, but each component still has to emit
+	// its own event or that component's read model is no longer replayable on its
+	// own. Empty on every hand-authored model, where the transition emits exactly
+	// the one event named by Event.
+	Emits []string `json:"emits,omitempty"`
+
 	// Fields define user input fields for this transition's action form
 	Fields []TransitionField `json:"fields,omitempty"`
 

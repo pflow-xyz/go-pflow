@@ -102,6 +102,7 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | Package | Purpose |
 |---------|---------|
 | `petri` | Core Petri net types, fluent Builder API |
+| `metamodel` | Application schema; **CompositeNet** — compose subnets via typed links (`Bundle`/`Flatten`) |
 | `solver` | ODE solvers (Tsit5, RK45, implicit), equilibrium detection |
 | `stateutil` | State map utilities (Copy, Apply, Merge, Sum, Diff) |
 | `hypothesis` | Move evaluation for game AI |
@@ -119,9 +120,63 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | `tokenmodel` | Token model schemas for state machines |
 | `tokenmodel/dsl` | S-expression and struct tag DSL |
 | `tokenmodel/petri` | Petri net model, structural analysis, invariants |
-| `tokenmodel/subnet` | Compose named Petri nets via port aliasing |
+| `tokenmodel/subnet` | Compose `tokenmodel/petri` nets via port aliasing (place fusion only; see note below) |
 | `tokenmodel/windowing` | Event-time windows (fixed, sliding, sessions) |
 | `tokenmodel/dataflow` | Beam-style streaming pipelines / discrete-event process simulation |
+
+## Composition: two layers, pick the right one
+
+There are two composition implementations. They are not interchangeable.
+
+| | `metamodel` (`Bundle`) | `tokenmodel/subnet` (`Bundle`) |
+|---|---|---|
+| Composes | `metamodel.Model` | `tokenmodel/petri.Model` |
+| Preserves | arc weights, inhibitor arcs, bindings, events, constraints, simulation | places, transitions, arcs, guards |
+| Link kinds | token, data, **event (transition fusion)**, guard | place fusion only |
+| Typed | net types + legality matrix | no |
+| Used by | application generation (petri-pilot) | `dataflow`, `actor`, `statemachine`, `workflow` |
+
+**Use `metamodel.Bundle` for anything that generates code or gets verified.**
+`tokenmodel/petri.Model` has no arc weights and no bindings, so composing through
+it silently drops what codegen depends on. `tokenmodel/subnet` remains for its
+existing callers and is not deprecated.
+
+```go
+b := metamodel.NewBundle("shop")
+b.AddSubnet(metamodel.Subnet{ID: "orders", NetType: metamodel.WorkflowNet, Model: orders})
+b.AddSubnet(metamodel.Subnet{ID: "inventory", NetType: metamodel.ResourceNet, Model: inventory})
+b.AddLink(metamodel.Link{Kind: metamodel.EventLink,       // fire together
+    From: metamodel.Endpoint{Subnet: "orders", Transition: "confirm"},
+    To:   metamodel.Endpoint{Subnet: "inventory", Transition: "reserve"}})
+
+if res := b.Validate(); !res.Valid { /* res.Errors */ }
+flat, fmap, err := b.FlattenWithMap()   // one Model, plus how it was rewritten
+```
+
+**Things worth knowing:**
+
+- **Identity is exact.** One subnet, no links → `Flatten` returns a deep copy of
+  the input, unnamespaced. Existing single-net models are untouched.
+- **Fusion is by equivalence class, not pairwise**, so `Flatten` is associative
+  and an EventLink cycle is legal (it is just a class of size 2). Canonical names
+  come from the lexicographically smallest member.
+- **Read `FlattenMap`, don't parse IDs.** It maps every local ID to its flat ID
+  and records wires, fused groups and per-member events. Inferring structure from
+  ID shapes breaks as soon as a transition fuses.
+- **Composition refines; it does not extend.** EventLink (rendezvous), GuardLink
+  and TokenLink all *remove* behavior. Safety properties — invariants, mutex,
+  conservation — survive by projection; liveness does not.
+  `TestComponentInvariantsSurviveComposition` proves both components' laws still
+  hold of the composite, and `TestEventLinkRestrictsBehavior` measures the
+  restriction (66 states → 3). The book's monotonicity claim (ch04, appendix E)
+  is wrong as written and needs correcting.
+- **Prefer structural guard lowering.** A GuardLink with `== 0` becomes an
+  inhibitor arc, which `reachability` and `verify` can see. Any other condition
+  becomes a guard expression, which they cannot — `Validate` warns
+  `W_GUARD_OPAQUE`, because it silently weakens every static claim.
+- **`sum`/`count` match places by prefix**, so composed expressions must be
+  rewritten, never left alone. `RewritePlaceRefs` handles both guard dialects and
+  both quote styles.
 
 ## Quick Decision Tree
 
@@ -136,6 +191,7 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | Deadlock/liveness checking | `reachability` |
 | "Is this model correct?" against stated requirements | `verify` |
 | Conservation laws / structural boundedness | `reachability.InvariantAnalyzer` |
+| Build one big model from small ones | `metamodel.Bundle` (see Composition above) |
 | Colored / multi-color tokens | `petri.ExpandColors` (most entry points do it for you) |
 | Epidemics/populations | `petri` + `solver` |
 | General state/resource flow | `petri` |
