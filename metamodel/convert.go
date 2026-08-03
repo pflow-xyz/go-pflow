@@ -207,6 +207,12 @@ func ValidateForCodegen(model *Model) []string {
 		}
 	}
 
+	// An arc type this build cannot execute must never reach a generator: the
+	// generated code would silently consume tokens the arc never meant to move.
+	for _, ve := range ValidateArcs(model) {
+		issues = append(issues, ve.Message)
+	}
+
 	return issues
 }
 

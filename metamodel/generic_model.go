@@ -106,6 +106,9 @@ func (n *PetriNet[S]) ToModel() *Model {
 		if a.Inhibitor {
 			arc.Type = InhibitorArc
 		}
+		if a.Read {
+			arc.Type = ReadArc
+		}
 		out.Arcs = append(out.Arcs, arc)
 	}
 

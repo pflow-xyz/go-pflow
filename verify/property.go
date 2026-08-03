@@ -45,6 +45,13 @@ const (
 
 	// KindLive asserts every transition can fire from some reachable marking
 	// (no dead transitions).
+	//
+	// This is L1 quasi-liveness, not the L4 liveness of the textbooks. L1 says
+	// each transition fires at least once somewhere in the state space; L4 says
+	// each transition remains fireable from EVERY reachable marking. So a
+	// proved KindLive does NOT imply deadlock-freedom — a net can fire all its
+	// transitions along one path and still wedge on another. Check
+	// KindDeadlockFree separately; the two answer different questions.
 	KindLive Kind = "live"
 
 	// KindTerminating asserts every execution eventually stops — equivalently,

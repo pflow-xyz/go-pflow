@@ -296,9 +296,9 @@ func (s *EventSourceStore) buildTransition(label string) eventsource.Transition 
 		}
 		if arc.InhibitTransition {
 			if t.Inhibitors == nil {
-				t.Inhibitors = make(map[string]bool)
+				t.Inhibitors = make(map[string]int)
 			}
-			t.Inhibitors[arc.Source] = true
+			t.Inhibitors[arc.Source] = weight
 		} else {
 			t.Inputs[arc.Source] = weight
 		}
@@ -309,6 +309,16 @@ func (s *EventSourceStore) buildTransition(label string) eventsource.Transition 
 		weight := int(arc.GetWeightSum())
 		if weight < 1 {
 			weight = 1
+		}
+		// An inhibitor arc pointing transition -> place is petri's read-arc
+		// encoding: it gates enablement and produces nothing. Counting it as an
+		// output would have minted tokens on every firing.
+		if arc.InhibitTransition {
+			if t.Reads == nil {
+				t.Reads = make(map[string]int)
+			}
+			t.Reads[arc.Target] = weight
+			continue
 		}
 		t.Outputs[arc.Target] = weight
 	}

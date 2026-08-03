@@ -209,15 +209,43 @@ type Transition struct {
 	// Outputs are the output places with produced token counts.
 	Outputs map[string]int
 
-	// Inhibitors are places that block firing if they have any tokens.
-	// Unlike Inputs, inhibitor arcs don't consume tokens - they just check for absence.
-	Inhibitors map[string]bool
+	// Inhibitors map a place to a token THRESHOLD: firing is blocked once that
+	// place holds at least that many tokens. A weight below 1 is read as 1, the
+	// familiar "must be empty" form. Inhibitor arcs consume nothing.
+	Inhibitors map[string]int
+
+	// Reads map a place to a token threshold that must be MET for the
+	// transition to fire — the dual of Inhibitors. Like inhibitors, and unlike
+	// Inputs, a read consumes nothing.
+	//
+	// Deliberately absent from Apply. Applying a read would decrement the place
+	// on every replayed event, so the marking would drift further from the truth
+	// with each firing while any single-fire test still passed.
+	Reads map[string]int
 
 	// Guard is an optional condition that must be true to fire.
 	Guard func(state any) bool
 
 	// EventType is the event type to emit when fired.
 	EventType string
+}
+
+// inhibitThreshold normalises an inhibitor weight. Zero is the zero value of an
+// int map, and an inhibitor that never inhibits is never what the author meant,
+// so it reads as the classic weight of 1.
+func inhibitThreshold(w int) int {
+	if w < 1 {
+		return 1
+	}
+	return w
+}
+
+// readThreshold normalises a read weight, for the same reason.
+func readThreshold(w int) int {
+	if w < 1 {
+		return 1
+	}
+	return w
 }
 
 // NewStateMachine creates a new state machine aggregate.
@@ -289,9 +317,16 @@ func (sm *StateMachine[S]) CanFire(transitionID string) bool {
 		}
 	}
 
-	// Check inhibitor arcs - blocked if any inhibitor place has tokens
-	for place := range t.Inhibitors {
-		if sm.places[place] > 0 {
+	// Check inhibitor arcs - blocked once the place reaches the threshold
+	for place, threshold := range t.Inhibitors {
+		if sm.places[place] >= inhibitThreshold(threshold) {
+			return false
+		}
+	}
+
+	// Check read arcs - the place must hold the threshold, but nothing is taken
+	for place, required := range t.Reads {
+		if sm.places[place] < readThreshold(required) {
 			return false
 		}
 	}
@@ -330,9 +365,16 @@ func (sm *StateMachine[S]) canFireLocked(transitionID string) bool {
 		}
 	}
 
-	// Check inhibitor arcs - blocked if any inhibitor place has tokens
-	for place := range t.Inhibitors {
-		if sm.places[place] > 0 {
+	// Check inhibitor arcs - blocked once the place reaches the threshold
+	for place, threshold := range t.Inhibitors {
+		if sm.places[place] >= inhibitThreshold(threshold) {
+			return false
+		}
+	}
+
+	// Check read arcs - the place must hold the threshold, but nothing is taken
+	for place, required := range t.Reads {
+		if sm.places[place] < readThreshold(required) {
 			return false
 		}
 	}
@@ -363,10 +405,17 @@ func (sm *StateMachine[S]) Fire(transitionID string, data any) (*Event, error) {
 		}
 	}
 
-	// Check inhibitor arcs - blocked if any inhibitor place has tokens
-	for place := range t.Inhibitors {
-		if sm.places[place] > 0 {
+	// Check inhibitor arcs - blocked once the place reaches the threshold
+	for place, threshold := range t.Inhibitors {
+		if sm.places[place] >= inhibitThreshold(threshold) {
 			return nil, fmt.Errorf("%w: inhibited by tokens in %s", ErrInvalidTransition, place)
+		}
+	}
+
+	// Check read arcs - the place must hold the threshold, but nothing is taken
+	for place, required := range t.Reads {
+		if sm.places[place] < readThreshold(required) {
+			return nil, fmt.Errorf("%w: insufficient tokens to read in %s", ErrInvalidTransition, place)
 		}
 	}
 

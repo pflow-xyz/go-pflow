@@ -61,6 +61,9 @@ func (m *LegacyModel) ToGenericTokenNet() *PetriNet[TokenState[string]] {
 		if arc.IsInhibitor() {
 			ga = ga.AsInhibitor()
 		}
+		if arc.IsRead() {
+			ga = ga.AsRead()
+		}
 
 		net.AddArc(ga)
 	}
@@ -120,6 +123,9 @@ func (m *LegacyModel) ToGenericDataNet() *PetriNet[DataState[any]] {
 
 		if arc.IsInhibitor() {
 			ga = ga.AsInhibitor()
+		}
+		if arc.IsRead() {
+			ga = ga.AsRead()
 		}
 
 		net.AddArc(ga)
@@ -187,6 +193,9 @@ func ModelFromGenericToken[T any](net *PetriNet[TokenState[T]]) *Model {
 		if ga.Inhibitor {
 			arc.Type = InhibitorArc
 		}
+		if ga.Read {
+			arc.Type = ReadArc
+		}
 		model.Arcs = append(model.Arcs, arc)
 	}
 
@@ -242,6 +251,9 @@ func ModelFromGenericData[T any](net *PetriNet[DataState[T]]) *Model {
 		}
 		if ga.Inhibitor {
 			arc.Type = InhibitorArc
+		}
+		if ga.Read {
+			arc.Type = ReadArc
 		}
 		model.Arcs = append(model.Arcs, arc)
 	}

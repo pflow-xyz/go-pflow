@@ -101,6 +101,22 @@ func BuildContext(model *metamodel.Model, packageName string) (*Context, error) 
 
 	// Process arcs
 	for _, arc := range model.Arcs {
+		// The generated Topology is two lists of place indices: Inputs are
+		// decremented on every firing and Outputs incremented. That shape can
+		// only express a normal arc. A read or inhibitor arc moves NO tokens,
+		// so appending it to Inputs would emit a circuit that consumes from a
+		// place the model only tests — and the circuit proves it, so nothing
+		// downstream can notice. Refuse instead of encoding a different net.
+		if !metamodel.IsKnownArcType(arc.Type) {
+			return nil, fmt.Errorf("arc %s -> %s has unknown type %q; refusing to generate a circuit for it",
+				arc.From, arc.To, arc.Type)
+		}
+		if arc.IsReadOnly() {
+			return nil, fmt.Errorf("arc %s -> %s is a %q arc, which moves no tokens; "+
+				"the generated topology has no way to express that and would consume from %q instead",
+				arc.From, arc.To, arc.Type, arc.From)
+		}
+
 		// Determine if arc is input (place->transition) or output (transition->place)
 		if fromPlace, ok := placeIndex[arc.From]; ok {
 			// Input arc: place -> transition

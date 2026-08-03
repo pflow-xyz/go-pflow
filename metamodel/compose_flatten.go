@@ -367,11 +367,25 @@ func (b *Bundle) mergeArcs(subnets []*Subnet, placeFlat, transFlat map[string]st
 				value: a.Value,
 			}
 			if existing, ok := acc[key]; ok {
-				if b.arcMerge() == MergeMax {
+				switch {
+				case flat.IsRead():
+					// Read arcs move nothing, so summing them would invent a
+					// requirement neither component made. Two lower bounds
+					// conjoin to the larger.
 					if flat.Weight > existing.Weight {
 						existing.Weight = flat.Weight
 					}
-				} else {
+				case flat.IsInhibitor():
+					// Two upper bounds conjoin to the smaller, for the same
+					// reason.
+					if flat.Weight < existing.Weight {
+						existing.Weight = flat.Weight
+					}
+				case b.arcMerge() == MergeMax:
+					if flat.Weight > existing.Weight {
+						existing.Weight = flat.Weight
+					}
+				default:
 					existing.Weight += flat.Weight
 				}
 				continue
@@ -419,19 +433,32 @@ func (b *Bundle) applyGuardLinks(out *Model, placeFlat, transFlat map[string]str
 		flatPlace := placeFlat[to.subnet.ID+"/"+to.place]
 		flatTrans := transFlat[from.subnet.ID+"/"+from.transition]
 
-		lowering, err := resolveLowering(l)
+		lowered, err := resolveLowering(l)
 		if err != nil {
 			return err
 		}
 
-		switch lowering {
-		case LoweringInhibitor:
-			out.Arcs = append(out.Arcs, Arc{
-				From:   flatPlace,
-				To:     flatTrans,
-				Weight: 1,
-				Type:   InhibitorArc,
-			})
+		switch lowered.Strategy {
+		case LoweringStructural:
+			// The transition's Guard is deliberately left alone: the arcs ARE
+			// the condition now, and restating it as text would re-introduce
+			// the opacity the structural lowering exists to remove.
+			if lowered.Read > 0 {
+				out.Arcs = append(out.Arcs, Arc{
+					From:   flatPlace,
+					To:     flatTrans,
+					Weight: lowered.Read,
+					Type:   ReadArc,
+				})
+			}
+			if lowered.Inhibit > 0 {
+				out.Arcs = append(out.Arcs, Arc{
+					From:   flatPlace,
+					To:     flatTrans,
+					Weight: lowered.Inhibit,
+					Type:   InhibitorArc,
+				})
+			}
 		case LoweringExpr:
 			conjunct, err := guardConjunct(flatPlace, l.Condition)
 			if err != nil {

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/pflow-xyz/go-pflow/metamodel"
-	"github.com/pflow-xyz/go-pflow/petri"
+	"github.com/pflow-xyz/go-pflow/metamodel/metapetri"
 	"github.com/pflow-xyz/go-pflow/reachability"
 )
 
@@ -72,17 +72,11 @@ func TestRegionMutexIsProvable(t *testing.T) {
 	// And it must be a real P-invariant of the emitted net, not just a string.
 	b := metamodel.NewBundle("light")
 	b.AddSubnet(*sub)
-	flat, err := b.Flatten()
+	res, err := metapetri.ConvertBundle(b, metapetri.Options{})
 	if err != nil {
-		t.Fatalf("flatten: %v", err)
+		t.Fatalf("convert bundle: %v", err)
 	}
-
-	net := metaToPetri(t, flat)
-	marking := reachability.Marking{}
-	for _, p := range flat.Places {
-		marking[p.ID] = p.Initial
-	}
-	invariants := reachability.NewInvariantAnalyzer(net).FindPInvariants(marking)
+	invariants := reachability.NewInvariantAnalyzer(res.Net).FindPInvariants(res.Marking)
 
 	for _, inv := range invariants {
 		got := map[string]bool{}
@@ -120,43 +114,4 @@ func TestGuardLossIsRecorded(t *testing.T) {
 	if !noted {
 		t.Error("a dropped closure guard makes the net more permissive than the chart; it must be recorded")
 	}
-}
-
-// metaToPetri converts token places and weighted arcs into a petri.PetriNet.
-//
-// Test-local on purpose: a public metamodel -> petri bridge has to decide what
-// happens to data places, colored tokens and inhibitor weights, and that is a
-// design question this test has no business settling.
-func metaToPetri(t *testing.T, m *metamodel.Model) *petri.PetriNet {
-	t.Helper()
-	b := petri.Build()
-
-	token := map[string]bool{}
-	for _, p := range m.Places {
-		if p.IsToken() {
-			token[p.ID] = true
-			b.Place(p.ID, float64(p.Initial))
-		}
-	}
-	for _, tr := range m.Transitions {
-		b.Transition(tr.ID)
-	}
-	for _, a := range m.Arcs {
-		if m.PlaceByID(a.From) != nil && !token[a.From] {
-			continue
-		}
-		if m.PlaceByID(a.To) != nil && !token[a.To] {
-			continue
-		}
-		w := a.Weight
-		if w == 0 {
-			w = 1
-		}
-		if a.Type == metamodel.InhibitorArc {
-			b.InhibitorArc(a.From, a.To, float64(w))
-		} else {
-			b.Arc(a.From, a.To, float64(w))
-		}
-	}
-	return b.Done()
 }

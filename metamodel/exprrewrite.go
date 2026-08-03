@@ -19,6 +19,36 @@ import "regexp"
 // single-quoted one, and exactly one of them participates in any match.
 var placeRefRE = regexp.MustCompile(`\b(tokens|sum|count|minOf|maxOf|min|max)\(\s*(?:"([^"]*)"|'([^']*)')\s*\)`)
 
+// PlaceRefs returns the place IDs a guard, invariant or objective expression
+// references, in order of first appearance and deduplicated. It is the
+// read-only twin of RewritePlaceRefs: exactly the references that would be
+// rewritten, which is exactly the expression's dependency set.
+//
+// Sharing placeRefRE with the rewriter is the point. A second pattern
+// maintained alongside it would eventually disagree, and the disagreement is
+// silent in the worst direction — a dependency the read set stopped reporting
+// is one the rewriter still renames underneath the caller.
+func PlaceRefs(expr string) []string {
+	if expr == "" {
+		return nil
+	}
+	var refs []string
+	seen := map[string]bool{}
+	for _, groups := range placeRefRE.FindAllStringSubmatch(expr, -1) {
+		// Exactly one quote alternative participates; the other is empty.
+		ref := groups[2]
+		if ref == "" {
+			ref = groups[3]
+		}
+		if ref == "" || seen[ref] {
+			continue
+		}
+		seen[ref] = true
+		refs = append(refs, ref)
+	}
+	return refs
+}
+
 // RewritePlaceRefs rewrites quoted place references in a guard, invariant or
 // objective expression so it keeps meaning after flattening.
 //
@@ -46,6 +76,16 @@ func RewritePlaceRefs(expr string, exact map[string]string, prefix string) strin
 		quote, ref := `"`, groups[2]
 		if groups[2] == "" && groups[3] != "" {
 			quote, ref = `'`, groups[3]
+		}
+		// An empty argument names no place, and PlaceRefs does not report one.
+		// Prefixing it anyway would change the expression's meaning behind the
+		// caller's back — sum("") is a prefix match on every place, so
+		// sum("orders/") is a strictly narrower sum that no read set mentioned.
+		// It also cannot round-trip: the two quote alternatives are
+		// indistinguishable when both bodies are empty, so sum('') would come
+		// back double-quoted.
+		if ref == "" {
+			return match
 		}
 
 		replacement := ref

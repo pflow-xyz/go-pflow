@@ -104,6 +104,65 @@ func (s *SQLiteStore) migrate() error {
 	return nil
 }
 
+// immediateTx is a write transaction on a dedicated connection, opened with
+// BEGIN IMMEDIATE.
+type immediateTx struct {
+	conn      *sql.Conn
+	committed bool
+}
+
+// beginImmediate opens a write transaction that takes SQLite's write lock
+// before its first read, rather than at its first write.
+//
+// s.mu only serialises goroutines inside THIS process, and the same database
+// file is routinely open in another one. Under a default deferred transaction
+// two processes can both run a check-then-append's version SELECT, both pass
+// the optimistic-concurrency check against the same version, and only collide
+// at the INSERT — where the loser dies on SQLITE_BUSY partway through instead
+// of being told, correctly and retryably, that it lost. Taking the lock up
+// front is what makes check-then-append atomic across processes.
+//
+// It has to run on a dedicated connection: database/sql hands statements to
+// whichever pooled connection is free, and the lock belongs to the connection
+// that took it.
+func (s *SQLiteStore) beginImmediate(ctx context.Context) (*immediateTx, error) {
+	conn, err := s.db.Conn(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire connection: %w", err)
+	}
+	// busy_timeout is per-connection, so it has to be set here rather than at
+	// open time: without it the loser of a race for the write lock gets an
+	// instant "database is locked" instead of waiting and then failing the
+	// version check it deserves to fail.
+	if _, err := conn.ExecContext(ctx, "PRAGMA busy_timeout=5000"); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("failed to set busy_timeout: %w", err)
+	}
+	if _, err := conn.ExecContext(ctx, "BEGIN IMMEDIATE"); err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	return &immediateTx{conn: conn}, nil
+}
+
+func (t *immediateTx) commit(ctx context.Context) error {
+	if _, err := t.conn.ExecContext(ctx, "COMMIT"); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	t.committed = true
+	return nil
+}
+
+// close rolls back an uncommitted transaction and releases the connection, so
+// it is safe to defer unconditionally.
+func (t *immediateTx) close() {
+	if !t.committed {
+		// Not the caller's ctx: a cancelled ctx must still release the write lock.
+		t.conn.ExecContext(context.Background(), "ROLLBACK")
+	}
+	t.conn.Close()
+}
+
 // Append adds events to a stream with optimistic concurrency control.
 func (s *SQLiteStore) Append(ctx context.Context, streamID string, expectedVersion int, events []*Event) (int, error) {
 	s.mu.Lock()
@@ -113,15 +172,18 @@ func (s *SQLiteStore) Append(ctx context.Context, streamID string, expectedVersi
 		return 0, ErrStoreClosed
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
+	// Same reasoning as MultiAppend: this is a check-then-append, so it needs
+	// the write lock held across both halves or another process can slip
+	// between them.
+	tx, err := s.beginImmediate(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("failed to begin transaction: %w", err)
+		return 0, err
 	}
-	defer tx.Rollback()
+	defer tx.close()
 
 	// Get current version
 	var currentVersion int
-	err = tx.QueryRowContext(ctx,
+	err = tx.conn.QueryRowContext(ctx,
 		"SELECT COALESCE(MAX(version), -1) FROM events WHERE stream_id = ?",
 		streamID,
 	).Scan(&currentVersion)
@@ -135,7 +197,7 @@ func (s *SQLiteStore) Append(ctx context.Context, streamID string, expectedVersi
 	}
 
 	// Insert events
-	stmt, err := tx.PrepareContext(ctx,
+	stmt, err := tx.conn.PrepareContext(ctx,
 		"INSERT INTO events (id, stream_id, type, version, timestamp, data, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)",
 	)
 	if err != nil {
@@ -167,8 +229,8 @@ func (s *SQLiteStore) Append(ctx context.Context, streamID string, expectedVersi
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		return 0, fmt.Errorf("failed to commit: %w", err)
+	if err := tx.commit(ctx); err != nil {
+		return 0, err
 	}
 
 	newVersion := currentVersion + len(events)

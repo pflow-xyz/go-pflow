@@ -291,7 +291,7 @@ func TestStateMachine(t *testing.T) {
 			ID:         "proceed",
 			Inputs:     map[string]int{"ready": 1},
 			Outputs:    map[string]int{"done": 1},
-			Inhibitors: map[string]bool{"blocked": true},
+			Inhibitors: map[string]int{"blocked": 1},
 		})
 
 		// Should be able to fire when blocked is empty

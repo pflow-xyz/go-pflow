@@ -252,6 +252,10 @@ type GenericArc[S any] struct {
 	// Inhibitor is true if this arc prevents firing when source has tokens.
 	Inhibitor bool `json:"inhibitor,omitempty"`
 
+	// Read is true if this arc only tests that the source place holds at least
+	// Weight tokens, consuming nothing. Mutually exclusive with Inhibitor.
+	Read bool `json:"read,omitempty"`
+
 	// Keys specify map access path for DataState places.
 	Keys []string `json:"keys,omitempty"`
 
@@ -277,6 +281,14 @@ func (a GenericArc[S]) WithWeight(weight int) GenericArc[S] {
 // AsInhibitor marks this as an inhibitor arc.
 func (a GenericArc[S]) AsInhibitor() GenericArc[S] {
 	a.Inhibitor = true
+	a.Read = false
+	return a
+}
+
+// AsRead marks this as a read arc: a threshold test that consumes nothing.
+func (a GenericArc[S]) AsRead() GenericArc[S] {
+	a.Read = true
+	a.Inhibitor = false
 	return a
 }
 
@@ -295,6 +307,17 @@ func (a GenericArc[S]) WithValue(value string) GenericArc[S] {
 // IsInhibitor returns true if this is an inhibitor arc.
 func (a GenericArc[S]) IsInhibitor() bool {
 	return a.Inhibitor
+}
+
+// IsRead returns true if this is a read arc.
+func (a GenericArc[S]) IsRead() bool {
+	return a.Read
+}
+
+// IsReadOnly returns true if this arc only tests the marking and moves no
+// tokens.
+func (a GenericArc[S]) IsReadOnly() bool {
+	return a.Inhibitor || a.Read
 }
 
 // PetriNet represents a complete Petri net with typed state.

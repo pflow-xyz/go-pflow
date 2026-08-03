@@ -158,11 +158,17 @@ func (e Endpoint) String() string {
 
 // GuardLink lowering strategies.
 const (
-	// LoweringAuto picks Inhibitor for "== 0" and Expr otherwise.
+	// LoweringAuto picks Structural for every condition that has a structural
+	// form (all but "!=") and Expr otherwise.
 	LoweringAuto = "auto"
 	// LoweringExpr appends a tokens(...) conjunct to the gated transition's guard.
 	LoweringExpr = "expr"
-	// LoweringInhibitor emits a structural inhibitor arc. Only valid for "== 0".
+	// LoweringStructural emits read and/or inhibitor arcs, which reachability
+	// and verify can see. Invalid only for conditions with no structural form.
+	LoweringStructural = "structural"
+	// LoweringInhibitor is the narrower spelling of Structural: it demands an
+	// inhibitor arc, so it rejects a lower-bound condition (">= n") that
+	// LoweringStructural would lower to a read arc.
 	LoweringInhibitor = "inhibitor"
 )
 
@@ -437,6 +443,8 @@ const (
 	ErrBadCondition        = "E_BAD_CONDITION"
 	ErrDurationConflict    = "E_DURATION_CONFLICT"
 	ErrPortDirection       = "E_PORT_DIRECTION"
+	ErrUnknownArcType      = "E_UNKNOWN_ARC_TYPE"
+	ErrReadArcDirection    = "E_READ_ARC_DIRECTION"
 
 	WarnUntypedSubnet   = "W_UNTYPED_SUBNET"
 	WarnUnboundedQueue  = "W_UNBOUNDED_QUEUE"
@@ -483,6 +491,10 @@ func (b *Bundle) Validate() *ValidationResult {
 		}
 		if s.NetType == UntypedNet {
 			warn(WarnUntypedSubnet, fmt.Sprintf("subnet %q has no net_type, so no link is rejected by typing", s.ID), s.ID)
+		}
+
+		for _, ve := range ValidateArcs(s.Model) {
+			fail(ve.Code, fmt.Sprintf("subnet %q: %s", s.ID, ve.Message), s.ID+":"+ve.Element)
 		}
 
 		portIDs := map[string]bool{}
@@ -676,7 +688,7 @@ func (b *Bundle) validateLink(l *Link, idx int, fail, warn func(code, msg, elem 
 			fail(ErrBadCondition, fmt.Sprintf("%s: %v", label, err), label)
 			return
 		}
-		lowering, err := resolveLowering(l)
+		lowered, err := resolveLowering(l)
 		if err != nil {
 			fail(ErrBadCondition, fmt.Sprintf("%s: %v", label, err), label)
 			return
@@ -684,7 +696,7 @@ func (b *Bundle) validateLink(l *Link, idx int, fail, warn func(code, msg, elem 
 		warn(WarnRestrictiveLink,
 			fmt.Sprintf("%s: a guard link restricts %s; properties proved of it alone may no longer hold",
 				label, from.subnet.ID), label)
-		if lowering == LoweringExpr {
+		if lowered.Strategy == LoweringExpr {
 			warn(WarnGuardOpaque,
 				fmt.Sprintf("%s: lowered to a guard expression, which reachability and verify do not evaluate; static claims about this net are weakened", label),
 				label)
@@ -713,20 +725,21 @@ func (b *Bundle) validatePlacePair(label string, from, to resolvedEndpoint, fail
 // validateDataLinkObserver rejects a DataLink whose observer side consumes from
 // or produces into the fused place.
 //
-// A DataLink is read-only observation, but metamodel.Arc has no read-arc type —
-// only "" and "inhibitor" — so there is no way to express "reads without
-// consuming" structurally. Silently fusing anyway would turn observation into
-// theft: the observer's arc would consume the producer's tokens. Rejecting is
-// honest; the author can use a guard or an inhibitor arc instead.
+// A DataLink is read-only observation, so an arc that moves tokens on the
+// observer's side would turn observation into theft: it would consume the
+// producer's tokens. Read and inhibitor arcs are exactly the arcs that move
+// nothing, so they are the honest way to say "this observer depends on what it
+// observes" and are permitted.
 func (b *Bundle) validateDataLinkObserver(label string, to resolvedEndpoint, fail func(code, msg, elem string)) {
-	for _, a := range to.subnet.Model.Arcs {
-		if a.Type == InhibitorArc {
+	for i := range to.subnet.Model.Arcs {
+		a := &to.subnet.Model.Arcs[i]
+		if a.IsReadOnly() {
 			continue
 		}
 		if a.From == to.place || a.To == to.place {
 			fail(ErrDataLinkConsumes,
 				fmt.Sprintf("%s: observer %s has arc %s -> %s on the observed place; a data link is read-only. "+
-					"Express the dependency as a guard (tokens(%q) > 0) or an inhibitor arc.",
+					"Express the dependency as a read arc (tokens >= n), an inhibitor arc, or a guard (tokens(%q) > 0).",
 					label, to, a.From, a.To, to.place), label)
 			return
 		}

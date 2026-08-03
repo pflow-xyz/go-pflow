@@ -99,8 +99,19 @@ type Place struct {
 	// InitialValue is the initial value for data places (JSON-encoded for complex types).
 	InitialValue any `json:"initial_value,omitempty"`
 
-	// Resource tracking fields for prediction/simulation
-	Capacity int  `json:"capacity,omitempty"` // Maximum tokens (for inventory modeling)
+	// Resource tracking fields for prediction/simulation.
+	//
+	// Capacity is a POST-FIRING bound, not a cap applied to the marking: a
+	// transition is disabled when firing it would leave this place above
+	// Capacity, netting out what the same firing consumes from it. So a
+	// capacity-2 place can be filled to 2 and then still take a firing that
+	// consumes 1 and produces 1. Zero (the default) means unbounded — the
+	// bound is not enforced at all rather than being a bound of zero.
+	//
+	// A bound that must survive composition should be modelled as a
+	// complementary place instead (see NewQueue): only then is it a derivable
+	// P-invariant rather than a rule the analyser has to be told about.
+	Capacity int  `json:"capacity,omitempty"`
 	Resource bool `json:"resource,omitempty"` // True if this is a consumable resource
 
 	// Visualization position (optional, for diagram layout)
@@ -227,16 +238,47 @@ const (
 	// NormalArc consumes tokens from input places and produces tokens to output places.
 	NormalArc ArcType = ""
 
-	// InhibitorArc prevents firing if the source place has tokens.
+	// InhibitorArc prevents firing while the source place holds at least the
+	// arc's Weight in tokens. The weight is a THRESHOLD, not a token count to
+	// consume, and nothing is consumed or produced: a weight-3 inhibitor still
+	// permits firing with 2 tokens present. Weight 1 (the default) is the
+	// familiar "must be empty" form, which is why the distinction is easy to
+	// miss.
 	InhibitorArc ArcType = "inhibitor"
+
+	// ReadArc permits firing only while the source place holds at least the
+	// arc's Weight in tokens, and consumes NOTHING. It is the dual of
+	// InhibitorArc: a threshold test rather than a flow.
+	//
+	// The direction is canonical: place -> transition only. A read arc the
+	// other way round has no meaning (a transition holds no tokens to test),
+	// so Validate rejects it rather than guessing.
+	//
+	// A read arc is what makes ">= n" expressible structurally. The
+	// alternative — a guard expression — is invisible to reachability and
+	// verify, which is why the guard-link lowering table prefers this.
+	ReadArc ArcType = "read"
 )
+
+// arcTypes lists every ArcType this build understands. It exists so an
+// unknown type is a hard error: without the check, an older reader silently
+// treats a type it has never heard of as a normal consuming arc, turning a
+// constraint into token theft.
+var arcTypes = map[ArcType]bool{
+	NormalArc:    true,
+	InhibitorArc: true,
+	ReadArc:      true,
+}
+
+// IsKnownArcType reports whether t is an arc type this build can execute.
+func IsKnownArcType(t ArcType) bool { return arcTypes[t] }
 
 // Arc represents a flow between place and transition.
 type Arc struct {
 	From   string  `json:"from"`
 	To     string  `json:"to"`
 	Weight int     `json:"weight,omitempty"` // default 1
-	Type   ArcType `json:"type,omitempty"`   // "" (normal) or "inhibitor"
+	Type   ArcType `json:"type,omitempty"`   // "" (normal), "inhibitor" or "read"
 
 	// Data flow
 	Keys  []string `json:"keys,omitempty"`  // Map access keys for data places
@@ -246,6 +288,18 @@ type Arc struct {
 // IsInhibitor returns true if this is an inhibitor arc.
 func (a *Arc) IsInhibitor() bool {
 	return a.Type == InhibitorArc
+}
+
+// IsRead returns true if this is a read arc.
+func (a *Arc) IsRead() bool {
+	return a.Type == ReadArc
+}
+
+// IsReadOnly returns true if this arc only tests the marking: it moves no
+// tokens, so it can be attached to a place that another net owns without
+// stealing from it.
+func (a *Arc) IsReadOnly() bool {
+	return a.IsInhibitor() || a.IsRead()
 }
 
 // Constraint represents an invariant on the model.

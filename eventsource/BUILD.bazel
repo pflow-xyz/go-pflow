@@ -23,6 +23,7 @@ go_test(
     srcs = [
         "aggregate_test.go",
         "multiappend_test.go",
+        "readarc_test.go",
         "store_test.go",
         "subscribe_admin_test.go",
     ],

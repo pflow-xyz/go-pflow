@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "metapetri",
+    srcs = [
+        "convert.go",
+        "verify.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/metamodel/metapetri",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metamodel",
+        "//petri",
+        "//reachability",
+        "//verify",
+    ],
+)
+
+go_test(
+    name = "metapetri_test",
+    srcs = [
+        "convert_test.go",
+        "guardlowering_semantics_test.go",
+        "soundness_test.go",
+        "verify_test.go",
+    ],
+    deps = [
+        ":metapetri",
+        "//metamodel",
+        "//reachability",
+        "//verify",
+    ],
+)

@@ -2,6 +2,7 @@ package metamodel
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"sort"
 	"strings"
@@ -661,17 +662,33 @@ func TestGuardLinkLowering(t *testing.T) {
 		}
 	})
 
-	t.Run("> 0 lowers to a guard conjunct", func(t *testing.T) {
+	t.Run("> 0 lowers to a read arc, leaving the guard empty", func(t *testing.T) {
 		got, _ := mustFlatten(t, build("> 0", ""))
+		var found bool
+		for _, a := range got.Arcs {
+			if a.Type == ReadArc && a.From == "inventory/available" && a.To == "orders/confirm" && a.Weight == 1 {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("want a structural read arc, got arcs %+v", got.Arcs)
+		}
+		if tr := got.TransitionByID("orders/confirm"); tr.Guard != "" {
+			t.Errorf("guard = %q, want empty: the arc is the condition now", tr.Guard)
+		}
+	})
+
+	t.Run("!= 0 has no structural form and lowers to a guard conjunct", func(t *testing.T) {
+		got, _ := mustFlatten(t, build("!= 0", ""))
 		tr := got.TransitionByID("orders/confirm")
-		want := `tokens("inventory/available") > 0`
+		want := `tokens("inventory/available") != 0`
 		if tr.Guard != want {
 			t.Errorf("guard = %q, want %q", tr.Guard, want)
 		}
 	})
 
 	t.Run("expr lowering is reported as opaque", func(t *testing.T) {
-		res := build("> 0", "").Validate()
+		res := build("!= 0", "").Validate()
 		var warned bool
 		for _, w := range res.Warnings {
 			if w.Code == WarnGuardOpaque {
@@ -691,7 +708,7 @@ func TestGuardLinkLowering(t *testing.T) {
 	})
 
 	t.Run("guard conjunction preserves the existing guard", func(t *testing.T) {
-		b := build("> 0", "")
+		b := build("!= 0", "")
 		b.Subnets[0].Model.Transitions[0].Guard = "amount > 0"
 		got, _ := mustFlatten(t, b)
 		tr := got.TransitionByID("orders/confirm")
@@ -699,6 +716,100 @@ func TestGuardLinkLowering(t *testing.T) {
 			t.Errorf("guard = %q, want both the original and the link conjunct", tr.Guard)
 		}
 	})
+}
+
+// TestGuardLoweringTable pins the whole operator table, because a single wrong
+// row is an unsound analysis rather than a wrong-looking diagram: an inhibitor
+// where a read arc belongs inverts the condition, and the net still verifies.
+//
+// Read arcs are lower bounds, inhibitor arcs upper bounds, and "== n" is the
+// conjunction of both. "!=" is a union of two intervals, which arcs cannot
+// express, so it stays a guard expression.
+func TestGuardLoweringTable(t *testing.T) {
+	cases := []struct {
+		op      string
+		n       int
+		read    int // expected read-arc weight, 0 = none
+		inhibit int // expected inhibitor-arc weight, 0 = none
+		opaque  bool
+	}{
+		{op: ">=", n: 0},                 // vacuously true: no arc at all
+		{op: ">=", n: 1, read: 1},
+		{op: ">=", n: 2, read: 2},
+		{op: ">=", n: 3, read: 3},
+
+		{op: ">", n: 0, read: 1},
+		{op: ">", n: 1, read: 2},
+		{op: ">", n: 2, read: 3},
+		{op: ">", n: 3, read: 4},
+
+		{op: "==", n: 0, inhibit: 1},
+		{op: "==", n: 1, read: 1, inhibit: 2},
+		{op: "==", n: 2, read: 2, inhibit: 3},
+		{op: "==", n: 3, read: 3, inhibit: 4},
+
+		{op: "<", n: 0, opaque: true}, // unsatisfiable; a weight-0 inhibitor would say the opposite
+		{op: "<", n: 1, inhibit: 1},
+		{op: "<", n: 2, inhibit: 2},
+		{op: "<", n: 3, inhibit: 3},
+
+		{op: "<=", n: 0, inhibit: 1},
+		{op: "<=", n: 1, inhibit: 2},
+		{op: "<=", n: 2, inhibit: 3},
+		{op: "<=", n: 3, inhibit: 4},
+
+		{op: "!=", n: 0, opaque: true},
+		{op: "!=", n: 1, opaque: true},
+		{op: "!=", n: 2, opaque: true},
+		{op: "!=", n: 3, opaque: true},
+	}
+
+	for _, tc := range cases {
+		cond := fmt.Sprintf("%s %d", tc.op, tc.n)
+		t.Run(cond, func(t *testing.T) {
+			b := NewBundle("gate")
+			b.AddSubnet(Subnet{ID: "orders", NetType: WorkflowNet, Model: ordersNet()})
+			b.AddSubnet(Subnet{ID: "inventory", NetType: ResourceNet, Model: inventoryNet()})
+			b.AddLink(Link{Kind: GuardLink,
+				From:      Endpoint{Subnet: "orders", Transition: "confirm"},
+				To:        Endpoint{Subnet: "inventory", Place: "available"},
+				Condition: cond})
+
+			got, _ := mustFlatten(t, b)
+
+			var read, inhibit int
+			for _, a := range got.Arcs {
+				if a.From != "inventory/available" || a.To != "orders/confirm" {
+					continue
+				}
+				switch a.Type {
+				case ReadArc:
+					read = a.Weight
+				case InhibitorArc:
+					inhibit = a.Weight
+				}
+			}
+			if read != tc.read || inhibit != tc.inhibit {
+				t.Errorf("lowered to read=%d inhibitor=%d, want read=%d inhibitor=%d",
+					read, inhibit, tc.read, tc.inhibit)
+			}
+
+			guard := got.TransitionByID("orders/confirm").Guard
+			if tc.opaque {
+				want := fmt.Sprintf("tokens(%q) %s %d", "inventory/available", tc.op, tc.n)
+				if guard != want {
+					t.Errorf("guard = %q, want %q", guard, want)
+				}
+				return
+			}
+			// A lowered guard link must leave the guard empty: restating the
+			// condition as text would re-introduce exactly the opacity the
+			// structural lowering exists to remove.
+			if guard != "" {
+				t.Errorf("guard = %q, want empty for a structurally lowered link", guard)
+			}
+		})
+	}
 }
 
 func TestParseCondition(t *testing.T) {

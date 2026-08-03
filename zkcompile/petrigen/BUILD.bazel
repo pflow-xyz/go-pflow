@@ -15,6 +15,7 @@ go_library(
 go_test(
     name = "petrigen_test",
     srcs = [
+        "arctype_test.go",
         "generator_test.go",
         "integration_test.go",
     ],

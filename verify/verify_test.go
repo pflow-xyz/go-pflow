@@ -527,3 +527,29 @@ func TestColorVerifyWrongColorUnreachable(t *testing.T) {
 		t.Errorf("status = %s (%s), want proved — only 1 red exists", verdict.Status, verdict.Detail)
 	}
 }
+
+// TestTargetPlaceNotInNetIsUnknown: a target place the net does not have used
+// to read as zero tokens, so "unreachable" came back PROVED and "reachable"
+// REFUTED — confident answers to a question the net cannot represent, and the
+// usual cause is a typo or a place some upstream conversion dropped.
+// checkInvariant has always refused unknown place names; targets now match.
+func TestTargetPlaceNotInNetIsUnknown(t *testing.T) {
+	net := petri.Build().
+		Place("start", 1).Place("end", 0).
+		Transition("t").
+		Arc("start", "t", 1).Arc("t", "end", 1).
+		Done()
+
+	for _, kind := range []Kind{KindUnreachable, KindReachable} {
+		verdict := New(net).CheckOne(Property{
+			Kind:   kind,
+			Target: map[string]int{"end": 1, "typo": 0},
+		})
+		if verdict.Status != Unknown {
+			t.Errorf("%s = %s, want unknown: %s", kind, verdict.Status, verdict.Detail)
+		}
+		if !strings.Contains(verdict.Detail, "typo") {
+			t.Errorf("%s detail should name the missing place: %s", kind, verdict.Detail)
+		}
+	}
+}

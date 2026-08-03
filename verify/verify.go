@@ -318,6 +318,17 @@ func (v *Verifier) checkReachable(p Property, want bool) Verdict {
 		}
 	}
 
+	// A target place the net does not have would silently read as zero, so
+	// "reachable" would be refuted and "unreachable" PROVED — a confident
+	// answer to a question the net cannot represent. checkInvariant already
+	// refuses expressions over unknown places; this is the same refusal.
+	if unknown := v.unknownTargetPlaces(p.Target); len(unknown) > 0 {
+		return Verdict{
+			Property: p, Status: Unknown,
+			Detail: fmt.Sprintf("target references places not in the net: %s", strings.Join(unknown, ", ")),
+		}
+	}
+
 	r := v.analyze()
 
 	// Partial targets are allowed: a state matches if it agrees on every
@@ -639,6 +650,25 @@ func (v *Verifier) unknownPlaces(expr *LinearExpr) []string {
 		if _, ok := v.net.Places[p]; !ok {
 			unknown = append(unknown, p)
 		}
+	}
+	sort.Strings(unknown)
+	return unknown
+}
+
+// unknownTargetPlaces returns target place names the net does not have. A base
+// name of a colored place counts as known: markingMatches sums its colors.
+func (v *Verifier) unknownTargetPlaces(target map[string]int) []string {
+	var unknown []string
+	for place := range target {
+		if _, ok := v.net.Places[place]; ok {
+			continue
+		}
+		if v.colorMap != nil {
+			if _, ok := v.colorMap.Expanded[place]; ok {
+				continue
+			}
+		}
+		unknown = append(unknown, place)
 	}
 	sort.Strings(unknown)
 	return unknown

@@ -243,9 +243,14 @@ func (b *Bundle) renderLinks(buf *strings.Builder) {
 // arcAttrs renders weight and inhibitor styling for an arc.
 func arcAttrs(a Arc) string {
 	var attrs []string
-	if a.Type == InhibitorArc {
+	switch a.Type {
+	case InhibitorArc:
 		// Circle head is the standard notation for an inhibitor arc.
 		attrs = append(attrs, "arrowhead=odot", "color=\"#aa3333\"")
+	case ReadArc:
+		// An undirected edge is the standard notation for a read (test) arc,
+		// and it reads correctly: nothing flows along it in either direction.
+		attrs = append(attrs, "dir=none", "style=dashed", "color=\"#3366aa\"")
 	}
 	if a.Weight > 1 {
 		attrs = append(attrs, fmt.Sprintf("label=%q", fmt.Sprint(a.Weight)), "fontsize=9")

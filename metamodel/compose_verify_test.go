@@ -1,9 +1,14 @@
-package metamodel
+package metamodel_test
 
 import (
 	"strings"
 	"testing"
 
+	// Dot-imported so these tests read the same as when they lived inside the
+	// package. They moved out only to break the import cycle that
+	// metamodel/metapetri would otherwise create.
+	. "github.com/pflow-xyz/go-pflow/metamodel"
+	"github.com/pflow-xyz/go-pflow/metamodel/metapetri"
 	"github.com/pflow-xyz/go-pflow/petri"
 	"github.com/pflow-xyz/go-pflow/reachability"
 )
@@ -19,81 +24,42 @@ import (
 // and an Inventory ResourceNet joined by EventLinks confirm→reserve and
 // ship→ship_out.
 
-// toPetriNet converts a flattened Model into the petri.PetriNet that
-// reachability and verify consume.
-//
-// Deliberately test-local. A public metamodel→petri bridge is a real API that
-// has to decide what happens to data places, colored tokens and inhibitor
-// weights; it deserves its own design pass rather than being smuggled in to make
-// a test compile. This handles what composition emits: token places, weighted
-// arcs, and inhibitor arcs.
-func toPetriNet(t *testing.T, m *Model) *petri.PetriNet {
+// convert is the shared metamodel -> petri bridge, with its diagnostics
+// checked. These tests analyse structure — invariants, boundedness, projection
+// — so an over-approximation would be as fatal here as anywhere: a P-invariant
+// of a net that is not the model's is not the model's law. Failing loudly on a
+// lossy conversion keeps that honest.
+func convert(t *testing.T, m *Model) *metapetri.Result {
 	t.Helper()
-	b := petri.Build()
-
-	for _, p := range m.Places {
-		if !p.IsToken() {
-			continue // data places are not token-counting; invariants ignore them
-		}
-		if p.Capacity > 0 {
-			b.PlaceWithCapacity(p.ID, float64(p.Initial), float64(p.Capacity))
-		} else {
-			b.Place(p.ID, float64(p.Initial))
-		}
+	res, err := metapetri.Convert(m, metapetri.Options{})
+	if err != nil {
+		t.Fatalf("metapetri.Convert: %v", err)
 	}
-	for _, tr := range m.Transitions {
-		b.Transition(tr.ID)
+	if res.Diag.Overapproximates() || res.Diag.Underapproximates() {
+		t.Fatalf("conversion is not exact, so nothing proved of it is proved of the model:\n%s", res.Diag)
 	}
-
-	tokenPlace := map[string]bool{}
-	for _, p := range m.Places {
-		if p.IsToken() {
-			tokenPlace[p.ID] = true
-		}
-	}
-	for _, a := range m.Arcs {
-		// Skip arcs touching data places; they carry values, not tokens.
-		if (tokenPlace[a.From] || tokenPlace[a.To]) == false {
-			continue
-		}
-		if m.PlaceByID(a.From) != nil && !tokenPlace[a.From] {
-			continue
-		}
-		if m.PlaceByID(a.To) != nil && !tokenPlace[a.To] {
-			continue
-		}
-		w := a.Weight
-		if w == 0 {
-			w = 1
-		}
-		if a.Type == InhibitorArc {
-			b.InhibitorArc(a.From, a.To, float64(w))
-		} else {
-			b.Arc(a.From, a.To, float64(w))
-		}
-	}
-	return b.Done()
+	return res
 }
 
-func markingOf(m *Model) reachability.Marking {
-	out := reachability.Marking{}
-	for _, p := range m.Places {
-		if p.IsToken() {
-			out[p.ID] = p.Initial
-		}
-	}
-	return out
+func toPetriNet(t *testing.T, m *Model) *petri.PetriNet {
+	t.Helper()
+	return convert(t, m).Net
+}
+
+func markingOf(t *testing.T, m *Model) reachability.Marking {
+	t.Helper()
+	return convert(t, m).Marking
 }
 
 // TestComponentInvariantsSurviveComposition is the assume-guarantee test: both
 // components' conservation laws must still be derivable from the flattened net's
 // incidence matrix.
 func TestComponentInvariantsSurviveComposition(t *testing.T) {
-	flat, _ := mustFlatten(t, ordersInventoryBundle())
+	flat, _ := MustFlatten(t, OrdersInventoryBundle())
 
 	net := toPetriNet(t, flat)
 	analyzer := reachability.NewInvariantAnalyzer(net)
-	invariants := analyzer.FindPInvariants(markingOf(flat))
+	invariants := analyzer.FindPInvariants(markingOf(t, flat))
 
 	if len(invariants) == 0 {
 		t.Fatal("the composed net has no P-invariants; both components declared conservation laws")
@@ -143,7 +109,7 @@ func coversPlaces(invariants []reachability.Invariant, places ...string) bool {
 // TestCompositionIsStructurallyBounded checks the composed net stays bounded —
 // a fusion that leaked tokens would show up here.
 func TestCompositionIsStructurallyBounded(t *testing.T) {
-	flat, _ := mustFlatten(t, ordersInventoryBundle())
+	flat, _ := MustFlatten(t, OrdersInventoryBundle())
 	net := toPetriNet(t, flat)
 
 	if !reachability.NewInvariantAnalyzer(net).StructuralBoundedness() {
@@ -167,14 +133,14 @@ func TestCompositionIsStructurallyBounded(t *testing.T) {
 // conservation — which is exactly what assume-guarantee needs. It does not
 // preserve liveness, and it should not be claimed to.
 func TestProjectionRefinement(t *testing.T) {
-	flat, fm := mustFlatten(t, ordersInventoryBundle())
+	flat, fm := MustFlatten(t, OrdersInventoryBundle())
 
 	composite := toPetriNet(t, flat)
 	result := reachability.NewAnalyzer(composite).WithMaxStates(10000).Analyze()
 
 	// Every reachable composite marking must project to a marking that the
 	// component alone can reach.
-	orders := toPetriNet(t, ordersNet())
+	orders := toPetriNet(t, OrdersNet())
 	ordersReachable := map[string]bool{}
 	for _, state := range reachability.NewAnalyzer(orders).WithMaxStates(10000).Analyze().Graph.States {
 		ordersReachable[markingKey(state.Marking, "pending", "confirmed", "shipped")] = true
@@ -233,11 +199,11 @@ func itoa(n int) string {
 // false as stated.
 func TestEventLinkRestrictsBehavior(t *testing.T) {
 	// Inventory alone can reserve freely.
-	alone := toPetriNet(t, inventoryNet())
+	alone := toPetriNet(t, InventoryNet())
 	aloneStates := reachability.NewAnalyzer(alone).WithMaxStates(10000).Analyze().StateCount
 
 	// Composed, reserve only fires when Orders can confirm — once.
-	flat, _ := mustFlatten(t, ordersInventoryBundle())
+	flat, _ := MustFlatten(t, OrdersInventoryBundle())
 	composed := toPetriNet(t, flat)
 	composedStates := reachability.NewAnalyzer(composed).WithMaxStates(10000).Analyze().StateCount
 

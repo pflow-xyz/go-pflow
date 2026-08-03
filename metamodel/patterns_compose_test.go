@@ -1,9 +1,10 @@
-package metamodel
+package metamodel_test
 
 import (
 	"strings"
 	"testing"
 
+	. "github.com/pflow-xyz/go-pflow/metamodel"
 	"github.com/pflow-xyz/go-pflow/reachability"
 )
 
@@ -50,7 +51,7 @@ func TestResourcePoolConservationIsProvable(t *testing.T) {
 	}
 
 	net := toPetriNet(t, flat)
-	invariants := reachability.NewInvariantAnalyzer(net).FindPInvariants(markingOf(flat))
+	invariants := reachability.NewInvariantAnalyzer(net).FindPInvariants(markingOf(t, flat))
 	if !coversPlaces(invariants, "available", "in_use") {
 		var got []string
 		for _, inv := range invariants {

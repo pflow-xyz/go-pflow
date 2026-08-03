@@ -30,7 +30,7 @@ go_test(
     embed = [":statemachine"],
     deps = [
         "//metamodel",
-        "//petri",
+        "//metamodel/metapetri",
         "//reachability",
         "//tokenmodel/dataflow/transport",
         "//tokenmodel/petri",

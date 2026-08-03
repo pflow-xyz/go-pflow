@@ -31,9 +31,58 @@ type StreamAppend struct {
 // simply do not implement it, and callers must fail rather than fall back
 // to sequential appends.
 type MultiAppender interface {
-	// MultiAppend appends to every stream or to none. Per-stream
-	// concurrency checks follow Append's rules.
+	// MultiAppend appends to every stream or to none, failing with
+	// ErrConcurrencyConflict if any stream's ExpectedVersion does not hold.
+	//
+	// The check is stricter than Append's, which ignores any negative
+	// expectation: here -1 genuinely requires a stream with no events yet, and
+	// only -2 skips the check. A caller porting a call from Append must say -2
+	// where it said -1, or a create-if-absent turns into a hard conflict.
 	MultiAppend(ctx context.Context, appends []StreamAppend) error
+}
+
+// mergeStreamAppends collapses repeated stream IDs into one entry per stream,
+// preserving first-appearance order.
+//
+// A coordinator that fires a member subnet and *also* fences a read on that
+// same subnet names the stream twice: once carrying the member's events, once
+// carrying no events at all and only the version the read was taken at. That is
+// one intent, not two, so the fence merges into the append it duplicates rather
+// than being refused.
+//
+// Two entries that both carry events stay an error: they are two independent
+// appends computed against the same history, and silently concatenating them
+// would make the second one's expected version a lie. A fence whose expected
+// version disagrees with the append's is the same mistake, so it errors too —
+// the caller read at a version it is not appending at.
+func mergeStreamAppends(appends []StreamAppend) ([]StreamAppend, error) {
+	index := make(map[string]int, len(appends))
+	merged := make([]StreamAppend, 0, len(appends))
+	for _, a := range appends {
+		i, ok := index[a.StreamID]
+		if !ok {
+			index[a.StreamID] = len(merged)
+			merged = append(merged, a)
+			continue
+		}
+		prev := &merged[i]
+		if len(prev.Events) > 0 && len(a.Events) > 0 {
+			return nil, fmt.Errorf("multi-append: stream %q appears twice", a.StreamID)
+		}
+		// -2 skips the check, so a real expectation on either side wins; two
+		// real expectations must agree.
+		switch {
+		case prev.ExpectedVersion == -2:
+			prev.ExpectedVersion = a.ExpectedVersion
+		case a.ExpectedVersion != -2 && a.ExpectedVersion != prev.ExpectedVersion:
+			return nil, fmt.Errorf("multi-append: stream %q appears twice at versions %d and %d",
+				a.StreamID, prev.ExpectedVersion, a.ExpectedVersion)
+		}
+		if len(a.Events) > 0 {
+			prev.Events = a.Events
+		}
+	}
+	return merged, nil
 }
 
 // MultiAppend on the memory store: every check precedes every mutation,
@@ -46,12 +95,12 @@ func (s *MemoryStore) MultiAppend(ctx context.Context, appends []StreamAppend) e
 		return ErrStoreClosed
 	}
 
-	seen := map[string]bool{}
+	appends, err := mergeStreamAppends(appends)
+	if err != nil {
+		return err
+	}
+
 	for _, a := range appends {
-		if seen[a.StreamID] {
-			return fmt.Errorf("multi-append: stream %q appears twice", a.StreamID)
-		}
-		seen[a.StreamID] = true
 		// -2 skips the check; -1 requires a new stream; >=0 requires an
 		// exact match. Every check runs before any mutation.
 		currentVersion := len(s.streams[a.StreamID]) - 1
@@ -98,13 +147,21 @@ func (s *SQLiteStore) MultiAppend(ctx context.Context, appends []StreamAppend) e
 		return ErrStoreClosed
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
+	appends, err := mergeStreamAppends(appends)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return err
 	}
-	defer tx.Rollback()
 
-	stmt, err := tx.PrepareContext(ctx,
+	// The version SELECTs below and the INSERTs that follow them have to be one
+	// indivisible step against every other writer of this file, in this process
+	// or another; beginImmediate is what buys that.
+	tx, err := s.beginImmediate(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.close()
+
+	stmt, err := tx.conn.PrepareContext(ctx,
 		"INSERT INTO events (id, stream_id, type, version, timestamp, data, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)",
 	)
 	if err != nil {
@@ -112,16 +169,10 @@ func (s *SQLiteStore) MultiAppend(ctx context.Context, appends []StreamAppend) e
 	}
 	defer stmt.Close()
 
-	seen := map[string]bool{}
 	var notify []*Event
 	for _, a := range appends {
-		if seen[a.StreamID] {
-			return fmt.Errorf("multi-append: stream %q appears twice", a.StreamID)
-		}
-		seen[a.StreamID] = true
-
 		var currentVersion int
-		if err := tx.QueryRowContext(ctx,
+		if err := tx.conn.QueryRowContext(ctx,
 			"SELECT COALESCE(MAX(version), -1) FROM events WHERE stream_id = ?",
 			a.StreamID,
 		).Scan(&currentVersion); err != nil {
@@ -153,8 +204,8 @@ func (s *SQLiteStore) MultiAppend(ctx context.Context, appends []StreamAppend) e
 		notify = append(notify, a.Events...)
 	}
 
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+	if err := tx.commit(ctx); err != nil {
+		return err
 	}
 
 	go s.notifySubscribers(notify)

@@ -170,10 +170,37 @@ flat, fmap, err := b.FlattenWithMap()   // one Model, plus how it was rewritten
   hold of the composite, and `TestEventLinkRestrictsBehavior` measures the
   restriction (66 states → 3). The book's monotonicity claim (ch04, appendix E)
   is wrong as written and needs correcting.
-- **Prefer structural guard lowering.** A GuardLink with `== 0` becomes an
-  inhibitor arc, which `reachability` and `verify` can see. Any other condition
-  becomes a guard expression, which they cannot — `Validate` warns
-  `W_GUARD_OPAQUE`, because it silently weakens every static claim.
+- **Guard links lower structurally wherever they can.** `metamodel.Arc` has
+  three types: normal, `InhibitorArc` (an upper bound) and `ReadArc` (a lower
+  bound — fires at `>= weight`, consumes nothing, direction place→transition
+  only). Every GuardLink condition except `!=` therefore has a structural
+  lowering that `reachability` and `verify` can see:
+
+  | condition | arcs |
+  |---|---|
+  | `< n` (n>0) | inhibitor(n) |
+  | `<= n` | inhibitor(n+1) |
+  | `== 0` | inhibitor(1) |
+  | `>= n` (n>0) | read(n) |
+  | `> n` | read(n+1) |
+  | `== n` (n>0) | read(n) **and** inhibitor(n+1) |
+  | `!= n`, `< 0` | none — guard expression |
+
+  A structurally lowered link leaves the transition's `Guard` **empty**;
+  restating the condition as text would re-introduce the opacity the arcs
+  remove. Only the expression fallback warns `W_GUARD_OPAQUE`.
+  `Lowering: "structural"` demands the arcs; the older `"inhibitor"` spelling
+  still means "an inhibitor arc specifically" and rejects a lower bound.
+- **An unknown `ArcType` is an error** (`E_UNKNOWN_ARC_TYPE`, via
+  `ValidateArcs`, checked by `Bundle.Validate`, `ValidateForCodegen` and
+  `metapetri.Convert`). It has to be: every reader that does not recognise a
+  type treats the arc as a normal consuming one, so silence turns a constraint
+  into token theft.
+- **`petri.Arc` deliberately has no read flag.** It is the wire format shared
+  with `parser/json.go` and the JS engines, and it does not need one: an
+  inhibitor arc pointing transition→place is already enabled only while the
+  place holds at least the weight. `metapetri` encodes a read arc as that
+  reversal, losslessly.
 - **`sum`/`count` match places by prefix**, so composed expressions must be
   rewritten, never left alone. `RewritePlaceRefs` handles both guard dialects and
   both quote styles.
@@ -219,6 +246,56 @@ cross into a net: `GenericTransition.Guard`/`Action` are dropped in favour of
 transition's `Description`. Both make the net *more permissive* than the
 original, which is sound for safety analysis (if the over-approximation cannot
 reach a bad marking, neither can the original) but **not** for liveness.
+
+### Analysing a Model: go through `metamodel/metapetri`
+
+`reachability`, `verify` and the invariant analyzers consume a `petri.PetriNet`,
+and a `metamodel.Model` is not one. `metamodel/metapetri` is the only supported
+bridge, and it exists because the conversion is lossy in a way that produces
+**confidently wrong answers** if you ignore it: nothing in go-pflow evaluates a
+transition `Guard` while exploring the state space, so a converted net fires
+guarded transitions freely. `verify` then reports `KindLive → proved
+(exhaustive)` for transitions that provably cannot fire.
+
+```go
+res, err := metapetri.ConvertBundle(b, metapetri.Options{})   // or Convert(model, …)
+res.Diag.Overapproximates()      // the analysed net admits more than the model
+report, err := metapetri.Verify(res, verify.Property{Kind: verify.KindLive})
+// -> unknown, naming the guard that was dropped
+```
+
+Every conversion decision emits a `Note` with a `Direction`
+(`Lossless`/`Permissive`/`Restrictive`), and `metapetri.Verify` uses those to
+degrade exactly the verdicts they undermine — existential kinds
+(`live`, `reachable`) and `deadlock-free` lose their proof under
+over-approximation, while `bounded`, `terminating`, `invariant`, `conserves`,
+`mutual-exclusion` and `unreachable` classify the other way and keep it. The
+table is data with a per-row justification in `metamodel/metapetri/verify.go`.
+
+Two things a `Direction` cannot express, capped separately:
+
+- **`TokenizeData` invents a coordinate.** A Direction compares firing
+  *sequences*; tokenizing a data place changes the *marking vector*. So
+  `bounded` and `conserves` — which quantify over every place — get refuted by a
+  data place that is merely written repeatedly, and the Restrictive column
+  trusts refutations. `Result.Tokenized` names those places and `Verify`
+  degrades any verdict whose scope reaches one; verdicts over token places only
+  are untouched.
+- **A property may name a place the net has not got.** A dropped data place
+  reads as zero tokens, so `unreachable{cfg: 7}` came back proved. `verify`
+  now refuses an unknown *target* place the same way `checkInvariant` has
+  always refused an unknown place in an expression.
+
+Dropping a guard stays a true over-approximation even with capacity in play —
+a newly-enabled transition can fill a place to its bound and lock another one
+out, but the analysed net keeps the run where it does not fire, so the
+reachable set still only grows. `TestPermissiveIsMonotoneWhenCapacityIsInPlay`
+pins that; if it ever fails, `Direction` needs an `Incomparable` value.
+
+There is deliberately **no `ToPetriNet(m)` returning just the net** — discarding
+the diagnostics is the bug. Note also that the permissive flag keys on any
+surviving guard text, not only on guards a `GuardLink` lowered: a hand-authored
+guard (`examples/erc/erc721.go`) is exactly as invisible to analysis.
 
 **Rendering.** `(*Bundle).RenderDOT()` draws the bundle *before* flattening —
 subnets as clusters, each link kind in its own colour and glyph (`◆` token,
@@ -600,6 +677,7 @@ grep -r "actor.NewSystem" --include="*.go"
 | Goal detection | Place starts at 0, transition produces when conditions met |
 | Resource pool | Place with N tokens, consumed/released by transitions |
 | Inhibitor arc | `InhibitorArc("buffer", "process", 5)` stops when full |
+| Read arc (test arc) | `metamodel.Arc{Type: ReadArc, Weight: n}`; in `petri`, the same arc reversed: `InhibitorArc("process", "buffer", n)` |
 
 ## Troubleshooting
 

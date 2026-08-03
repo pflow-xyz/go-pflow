@@ -1,9 +1,10 @@
-package metamodel
+package metamodel_test
 
 import (
 	"strings"
 	"testing"
 
+	. "github.com/pflow-xyz/go-pflow/metamodel"
 	"github.com/pflow-xyz/go-pflow/reachability"
 )
 
@@ -63,7 +64,7 @@ func TestQueueCapacityIsProvable(t *testing.T) {
 	if !analyzer.StructuralBoundedness() {
 		t.Error("a bounded queue must be structurally bounded")
 	}
-	invariants := analyzer.FindPInvariants(markingOf(flat))
+	invariants := analyzer.FindPInvariants(markingOf(t, flat))
 	if !coversPlaces(invariants, QueueItems, QueueSlots) {
 		var got []string
 		for _, inv := range invariants {
@@ -135,7 +136,7 @@ func TestQueueComposesWithProducer(t *testing.T) {
 		From: Endpoint{Subnet: "producer", Transition: "emit"},
 		To:   Endpoint{Subnet: "jobs", Port: QueueEnqueue}})
 
-	flat, fm := mustFlatten(t, b)
+	flat, fm := MustFlatten(t, b)
 
 	fused := fm.Transition["producer"]["emit"]
 	if fused != fm.Transition["jobs"][QueueEnqueue] {
