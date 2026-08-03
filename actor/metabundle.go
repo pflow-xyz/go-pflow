@@ -123,8 +123,22 @@ func actorMetaSubnet(a *Actor, running bool) *metamodel.Subnet {
 		bh := a.behaviors[bid]
 		for _, sig := range sortedKeys(bh.triggers) {
 			txnID := "handle:" + bid + ":" + sig
+			// dispatch (actor.go) refuses a handler whose behaviour guard or
+			// whose trigger condition says no. Both are Go closures, so
+			// neither can be written down here — this transition fires in the
+			// net whenever a signal token is present, which is strictly more
+			// often than the actor runs it. Same loss, same marker as the
+			// statechart and generic-net bridges: prose for the reader, flag
+			// for metapetri.
+			description := "handle " + sig
+			unrepresentable := bh.guard != nil || bh.triggers[sig].Condition != nil
+			if unrepresentable {
+				description += "; guard not represented: the behaviour's precondition is a Go closure, " +
+					"so this net over-approximates it (sound for safety, not for liveness)"
+			}
 			m.Transitions = append(m.Transitions, metamodel.Transition{
-				ID: txnID, Description: "handle " + sig,
+				ID: txnID, Description: description,
+				GuardUnrepresentable: unrepresentable,
 			})
 			m.Arcs = append(m.Arcs,
 				metamodel.Arc{From: "sig:in:" + sig, To: txnID, Weight: 1},

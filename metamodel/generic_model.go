@@ -81,14 +81,27 @@ func (n *PetriNet[S]) ToModel() *Model {
 	}
 
 	for _, t := range n.Transitions {
+		// Guard and Action are Go funcs and cannot cross this boundary; only
+		// the declared expression does.
+		//
+		// A Guard closure with no GuardExpr standing in for it is a
+		// precondition that vanishes here, so the emitted Model fires this
+		// transition whenever its input places allow — more often than the
+		// generic net does. That is the same over-approximation a statechart
+		// closure guard causes, and it gets the same marker, so downstream
+		// analysis degrades its existential verdicts instead of trusting them.
+		//
+		// A dropped Action closure is deliberately NOT flagged: it is a data
+		// effect, not an enablement condition. Anything downstream that reads
+		// what an Action would have written reads it through a GuardExpr, and
+		// metapetri already reports every surviving guard as unevaluated.
 		out.Transitions = append(out.Transitions, Transition{
-			ID:          t.ID,
-			Description: t.Description,
-			// Guard and Action are Go funcs and cannot cross this boundary;
-			// only the declared expression does.
-			Guard: t.GuardExpr,
-			X:     int(t.X),
-			Y:     int(t.Y),
+			ID:                   t.ID,
+			Description:          t.Description,
+			Guard:                t.GuardExpr,
+			GuardUnrepresentable: t.Guard != nil && t.GuardExpr == "",
+			X:                    int(t.X),
+			Y:                    int(t.Y),
 		})
 	}
 

@@ -162,6 +162,23 @@ type Transition struct {
 	Description string `json:"description,omitempty"`
 	Guard       string `json:"guard,omitempty"`
 
+	// GuardUnrepresentable marks a transition whose source carried a
+	// precondition that could not be written down here — typically a Go
+	// closure, which has no expression form to put in Guard.
+	//
+	// A dropped precondition is not a cosmetic loss: the transition fires in
+	// this net whenever its input places allow, which is strictly more often
+	// than the source permits. The net is therefore an OVER-APPROXIMATION of
+	// whatever it was emitted from, and every existential verdict proved
+	// against it ("this can fire", "this marking is reachable") may be false of
+	// the source.
+	//
+	// Emitters also say this in prose in Description, because that is what a
+	// human reads in generated output. The flag is what tools key on: prose is
+	// not a contract, and metamodel/metapetri sniffing English for "guard not
+	// represented" would be a worse bug than the one it closed.
+	GuardUnrepresentable bool `json:"guardUnrepresentable,omitempty"`
+
 	// Event reference (Events First schema) - references Event.ID
 	Event string `json:"event,omitempty"`
 

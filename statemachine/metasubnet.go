@@ -188,16 +188,24 @@ func (c *Chart) addMetaTransitions(m *metamodel.Model, eventPlacePrefix string) 
 		// over-approximation cannot reach a bad marking, neither can the chart —
 		// but it is not sound for liveness, and it is worth seeing in the output
 		// rather than inferring, so it is recorded on the transition.
+		//
+		// The prose is for the reader; metamodel.Transition.GuardUnrepresentable
+		// is for the tools. Both are set, and neither substitutes for the other:
+		// metapetri keys its Permissive finding on the flag, because a bridge
+		// that had to recognise this sentence to stay sound would break the
+		// moment anyone reworded it.
 		description := ""
-		if t.Guard != nil {
+		unrepresentable := t.Guard != nil
+		if unrepresentable {
 			description = "guard not represented: the chart's precondition is a Go closure, " +
 				"so this net over-approximates it (sound for safety, not for liveness)"
 		}
 
 		m.Transitions = append(m.Transitions, metamodel.Transition{
-			ID:          txnID,
-			Event:       t.Event,
-			Description: description,
+			ID:                   txnID,
+			Event:                t.Event,
+			Description:          description,
+			GuardUnrepresentable: unrepresentable,
 		})
 
 		sourcePlace := c.pathToPlaceName(StatePath(t.Source))

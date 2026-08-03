@@ -28,6 +28,7 @@ go_test(
     srcs = [
         "actor_test.go",
         "colors_test.go",
+        "metabundle_guard_test.go",
         "metabundle_test.go",
         "pubsub_test.go",
         "subnet_test.go",
@@ -35,7 +36,9 @@ go_test(
     embed = [":actor"],
     deps = [
         "//metamodel",
+        "//metamodel/metapetri",
         "//petri",
         "//tokenmodel/subnet",
+        "//verify",
     ],
 )

@@ -162,6 +162,13 @@ func (b *Bundle) fuseClass(
 			}
 		}
 		fused.ClearsHistory = fused.ClearsHistory || t.ClearsHistory
+
+		// A rendezvous is enabled only when every participant is, so an
+		// unrepresentable precondition on ANY member is a precondition on the
+		// fused firing. OR, not AND: fusion cannot recover a guard that was
+		// already lost, and a fused transition that quietly dropped the marker
+		// would put the hole back one composition step later.
+		fused.GuardUnrepresentable = fused.GuardUnrepresentable || t.GuardUnrepresentable
 	}
 
 	dur, err := mergeDurations(sorted, index, flat)

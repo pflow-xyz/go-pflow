@@ -240,12 +240,37 @@ synchronous and an asynchronous bus, and it is a modelling decision, not an
 implementation detail. `actor.ToMetaBundle` deliberately uses EventLinks, so an
 actor system with a buffered bus should be modelled with explicit queues.
 
-**Two deliberate losses, both recorded rather than silent.** Go closures cannot
-cross into a net: `GenericTransition.Guard`/`Action` are dropped in favour of
-`GuardExpr`, and `statemachine`'s closure guards are noted on the emitted
-transition's `Description`. Both make the net *more permissive* than the
-original, which is sound for safety analysis (if the over-approximation cannot
-reach a bad marking, neither can the original) but **not** for liveness.
+**Three deliberate losses, all recorded rather than silent.** Go closures cannot
+cross into a net: `GenericTransition.Guard` is dropped in favour of `GuardExpr`,
+`statemachine`'s closure guards are dropped entirely, and `actor`'s behaviour
+`Guard` / trigger `When` conditions — which `dispatch` really does enforce — are
+dropped too. All three make the net *more permissive* than the original, which
+is sound for safety analysis (if the over-approximation cannot reach a bad
+marking, neither can the original) but **not** for liveness.
+
+Each loss is recorded **twice**, and both halves matter.
+`Transition.Description` carries the prose a reader sees in generated output;
+`Transition.GuardUnrepresentable` is the machine-readable flag every tool keys
+on. Prose alone was not enough — `metapetri` classifies a conversion
+`Permissive` when a transition carries guard *text*, and a closure leaves none,
+so a chart that lost a precondition used to convert with
+`Overapproximates() == false` and `verify` reported `live → proved` on a net
+strictly more permissive than the chart. Setting the flag closes that; sniffing
+the Description for English would not have. The flag survives `Model.Clone` and
+`Bundle.Flatten`, and a fused transition inherits it if **any** member had it —
+a rendezvous is enabled only when every participant is, so fusion cannot recover
+a precondition that was already lost.
+
+**Every emitter that drops a closure sets it — check the whole family, not the
+one you touched.** There are three generic-net → `Model` bridges, not one:
+`(*PetriNet[S]).ToModel` plus `ModelFromGenericToken` / `ModelFromGenericData`
+in `compat.go` (the pair the package doc actually recommends). Marking only the
+method left the other two converting with `Overapproximates() == false`, which
+is the same hole one call away. `actor.ToMetaBundle` is the third source:
+`dispatch` refuses a handler whose behaviour `Guard` or trigger `When` says no,
+and neither closure can be written down, so `handle:*` transitions carry the
+flag whenever either is set — and must **not** carry it otherwise, or every
+faithfully-represented actor system loses its existential verdicts for nothing.
 
 ### Analysing a Model: go through `metamodel/metapetri`
 
@@ -295,7 +320,10 @@ pins that; if it ever fails, `Direction` needs an `Incomparable` value.
 There is deliberately **no `ToPetriNet(m)` returning just the net** — discarding
 the diagnostics is the bug. Note also that the permissive flag keys on any
 surviving guard text, not only on guards a `GuardLink` lowered: a hand-authored
-guard (`examples/erc/erc721.go`) is exactly as invisible to analysis.
+guard (`examples/erc/erc721.go`) is exactly as invisible to analysis. It keys on
+`Transition.GuardUnrepresentable` as well (`GUARD_UNREPRESENTABLE`), which is
+the case with **no** guard text at all — a precondition that never reached the
+model because its source was a Go closure.
 
 **Rendering.** `(*Bundle).RenderDOT()` draws the bundle *before* flattening —
 subnets as clusters, each link kind in its own colour and glyph (`◆` token,

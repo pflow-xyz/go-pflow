@@ -35,5 +35,6 @@ go_test(
         "//tokenmodel/dataflow/transport",
         "//tokenmodel/petri",
         "//tokenmodel/subnet",
+        "//verify",
     ],
 )

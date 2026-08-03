@@ -75,6 +75,11 @@ const (
 	// analysis core does not evaluate.
 	CodeGuardDropped = "GUARD_DROPPED"
 
+	// CodeGuardUnrepresentable: a transition is marked
+	// GuardUnrepresentable — its source had a precondition that never made it
+	// into the model at all, so there is no guard text left to drop.
+	CodeGuardUnrepresentable = "GUARD_UNREPRESENTABLE"
+
 	// CodeDataPlaceDropped: a DataKind place (and its arcs) was left out.
 	CodeDataPlaceDropped = "DATA_PLACE_DROPPED"
 
@@ -268,6 +273,20 @@ func Convert(m *metamodel.Model, opts Options) (*Result, error) {
 			note(CodeGuardDropped, tr.ID, fmt.Sprintf(
 				"guard %q is not evaluated during analysis; the analysed net fires this transition whenever its "+
 					"input places allow, which the guard was there to prevent", tr.Guard), Permissive)
+		}
+
+		// The other half of the same hole, and the more dangerous one: a
+		// precondition that never reached Model.Guard is invisible to the
+		// check above precisely because there is no text to find. An emitter
+		// that lost a closure guard (statemachine.Chart, the generic net
+		// bridge) says so with this flag, and it costs exactly the same
+		// verdicts a surviving guard costs — the analysed net fires the
+		// transition whenever its input places allow, either way.
+		if tr.GuardUnrepresentable {
+			note(CodeGuardUnrepresentable, tr.ID,
+				"this transition's source carried a precondition that could not be represented in the model "+
+					"(typically a Go closure), so there is no guard left to evaluate; the analysed net fires it "+
+					"whenever its input places allow, which the lost precondition was there to prevent", Permissive)
 		}
 	}
 

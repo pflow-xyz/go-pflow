@@ -36,6 +36,7 @@ go_library(
 go_test(
     name = "metamodel_test",
     srcs = [
+        "compat_guardunrepresentable_test.go",
         "compat_test.go",
         "compose_test.go",
         "compose_verify_test.go",
@@ -45,6 +46,7 @@ go_test(
         "exprrewrite_test.go",
         "extension_test.go",
         "generic_test.go",
+        "guardunrepresentable_test.go",
         "infer_bindings_test.go",
         "patterns_compose_test.go",
         "patterns_test.go",

@@ -175,8 +175,15 @@ func ModelFromGenericToken[T any](net *PetriNet[TokenState[T]]) *Model {
 			ID:          gt.ID,
 			Description: gt.Description,
 			Guard:       gt.GuardExpr,
-			X:           int(gt.X),
-			Y:           int(gt.Y),
+			// The same loss, and the same marker, as
+			// (*PetriNet[S]).ToModel: a Guard closure with no GuardExpr
+			// standing in for it is a precondition that does not survive this
+			// call, so the emitted Model fires the transition whenever its
+			// input places allow. Only the flag records that — a closure
+			// leaves no guard TEXT for metapetri to notice.
+			GuardUnrepresentable: gt.Guard != nil && gt.GuardExpr == "",
+			X:                    int(gt.X),
+			Y:                    int(gt.Y),
 		}
 		model.Transitions = append(model.Transitions, trans)
 	}
@@ -234,8 +241,15 @@ func ModelFromGenericData[T any](net *PetriNet[DataState[T]]) *Model {
 			ID:          gt.ID,
 			Description: gt.Description,
 			Guard:       gt.GuardExpr,
-			X:           int(gt.X),
-			Y:           int(gt.Y),
+			// The same loss, and the same marker, as
+			// (*PetriNet[S]).ToModel: a Guard closure with no GuardExpr
+			// standing in for it is a precondition that does not survive this
+			// call, so the emitted Model fires the transition whenever its
+			// input places allow. Only the flag records that — a closure
+			// leaves no guard TEXT for metapetri to notice.
+			GuardUnrepresentable: gt.Guard != nil && gt.GuardExpr == "",
+			X:                    int(gt.X),
+			Y:                    int(gt.Y),
 		}
 		model.Transitions = append(model.Transitions, trans)
 	}

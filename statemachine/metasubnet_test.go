@@ -7,6 +7,7 @@ import (
 	"github.com/pflow-xyz/go-pflow/metamodel"
 	"github.com/pflow-xyz/go-pflow/metamodel/metapetri"
 	"github.com/pflow-xyz/go-pflow/reachability"
+	"github.com/pflow-xyz/go-pflow/verify"
 )
 
 func lightChart() *Chart {
@@ -105,13 +106,88 @@ func TestGuardLossIsRecorded(t *testing.T) {
 
 	sub := chart.ToMetaSubnet()
 
-	var noted bool
+	var noted, flagged bool
 	for _, tr := range sub.Model.Transitions {
 		if strings.Contains(tr.Description, "guard not represented") {
 			noted = true
 		}
+		if tr.GuardUnrepresentable {
+			flagged = true
+		}
 	}
 	if !noted {
 		t.Error("a dropped closure guard makes the net more permissive than the chart; it must be recorded")
+	}
+	// The prose is for a human reading generated output; the flag is the
+	// machine-readable half, and it is the one metapetri keys on. Losing
+	// either one is a regression: prose alone is what let a dropped guard
+	// convert as lossless, and a flag alone would make the loss invisible in
+	// the artefact a modeller actually reads.
+	if !flagged {
+		t.Error("GuardUnrepresentable is unset: the loss is prose-only again, so no tool can see it")
+	}
+}
+
+// TestClosureGuardReachesTheSoundnessBridge is the end-to-end claim, and the
+// reason GuardUnrepresentable exists. metamodel/metapetri classifies a
+// conversion Permissive when a transition carries a guard it cannot evaluate.
+// A chart guard is a Go closure, so it never becomes guard TEXT — which used to
+// mean a chart that lost a precondition converted with Overapproximates() ==
+// false, and verify reported Proved for an existential property on a net
+// strictly more permissive than the chart it came from. Exactly the hole
+// metapetri was built to close, one level up.
+func TestClosureGuardReachesTheSoundnessBridge(t *testing.T) {
+	chart := NewChart("gated").
+		Region("s").
+		State("a").Initial().
+		State("b").
+		EndRegion().
+		When("go").In("s:a").GoTo("s:b").
+		If(func(state map[string]float64) bool { return state["s_a"] > 1 }).
+		Build()
+
+	sub := chart.ToMetaSubnet()
+
+	// Stand in for the upstream subnet that would deliver the event: without a
+	// token in the delivery slot nothing fires at all and liveness is Refuted,
+	// which transfers under over-approximation and would prove nothing here.
+	if ep := sub.Model.PlaceByID("event:go"); ep != nil {
+		ep.Initial = 1
+	} else {
+		t.Fatal("missing event delivery place")
+	}
+
+	res, err := metapetri.ConvertBundle(metamodel.NewBundle("gatedbundle").AddSubnet(*sub), metapetri.Options{})
+	if err != nil {
+		t.Fatalf("ConvertBundle: %v", err)
+	}
+
+	if !res.Diag.Overapproximates() {
+		t.Fatal("conversion reports no over-approximation, but the chart's precondition was dropped: " +
+			"every existential verdict below is about a net the chart does not implement")
+	}
+
+	var found bool
+	for _, n := range res.Diag.Notes {
+		if n.Code == metapetri.CodeGuardUnrepresentable && n.Dir == metapetri.Permissive {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("no %s note; got %v", metapetri.CodeGuardUnrepresentable, res.Diag.Notes)
+	}
+
+	rep, err := metapetri.Verify(res, verify.Property{Kind: verify.KindLive})
+	if err != nil {
+		t.Fatalf("Verify: %v", err)
+	}
+	if len(rep.Verdicts) != 1 {
+		t.Fatalf("got %d verdicts, want 1", len(rep.Verdicts))
+	}
+	// Quasi-liveness is existential: the witness firing sequence uses the very
+	// firing the closure forbids, so Proved must not survive the trip.
+	if got := rep.Verdicts[0].Status; got != verify.Unknown {
+		t.Errorf("live verdict = %q, want %q: a witness found under a dropped precondition is not a witness for the chart",
+			got, verify.Unknown)
 	}
 }
