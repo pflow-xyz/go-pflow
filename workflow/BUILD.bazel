@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "builder.go",
         "engine.go",
+        "metasubnet.go",
         "model.go",
         "monitor.go",
         "sugar.go",
@@ -13,6 +14,7 @@ go_library(
     importpath = "github.com/pflow-xyz/go-pflow/workflow",
     visibility = ["//visibility:public"],
     deps = [
+        "//metamodel",
         "//petri",
         "//solver",
         "//tokenmodel/petri",
@@ -24,12 +26,14 @@ go_test(
     name = "workflow_test",
     srcs = [
         "builder_coverage_test.go",
+        "metasubnet_test.go",
         "model_test.go",
         "sugar_test.go",
         "workflow_test.go",
     ],
     embed = [":workflow"],
     deps = [
+        "//metamodel",
         "//tokenmodel/dataflow/transport",
         "//tokenmodel/subnet",
     ],

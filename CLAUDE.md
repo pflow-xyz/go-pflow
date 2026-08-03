@@ -178,6 +178,67 @@ flat, fmap, err := b.FlattenWithMap()   // one Model, plus how it was rewritten
   rewritten, never left alone. `RewritePlaceRefs` handles both guard dialects and
   both quote styles.
 
+### Composable building blocks
+
+The higher-level utilities emit `metamodel.Subnet`, so an application can be
+assembled from them rather than hand-written as one net. Each **carries its own
+structural promise as a `Constraint`**, so the property that makes the block
+correct stays provable after it composes into something larger.
+
+| Constructor | Emits | Net type | Constraint it carries |
+|---|---|---|---|
+| `metamodel.NewQueue` | bounded/unbounded buffer | ResourceNet | `items + slots == N` |
+| `(*workflow.Workflow).ToMetaSubnet` | tasks, deps, resource pools | WorkflowNet | per-pool conservation |
+| `(*statemachine.Chart).ToMetaSubnet` | statechart | WorkflowNet | per-region `sum(states) == 1` |
+| `(*actor.ActorSystem).ToMetaBundle` | actors + bus | Untyped | — |
+| `(*metamodel.ResourcePool[R]).ToSubnet` | pool | ResourceNet | `available + in_use == N` |
+| `(*metamodel.StateMachine[S]).ToSubnet` | states | WorkflowNet | `state_mutex` |
+| `(*metamodel.PetriNet[S]).ToModel` | generic net → Model | — | — |
+
+```go
+q := metamodel.MustNewQueue(metamodel.QueueSpec{ID: "jobs", Capacity: 64})
+
+b := metamodel.NewBundle("pipeline")
+b.AddSubnet(*producer.ToMetaSubnet())
+b.AddSubnet(*q)
+b.AddLink(metamodel.Link{Kind: metamodel.EventLink,   // produce-and-enqueue, atomically
+    From: metamodel.Endpoint{Subnet: "producer", Transition: "emit"},
+    To:   metamodel.Endpoint{Subnet: "jobs", Port: metamodel.QueueEnqueue}})
+```
+
+**Choosing between the queue and a direct EventLink.** Fusing a producer
+straight onto a consumer is a *rendezvous*: neither can run ahead. Put a Queue
+between them when you want buffering — that is the difference between a
+synchronous and an asynchronous bus, and it is a modelling decision, not an
+implementation detail. `actor.ToMetaBundle` deliberately uses EventLinks, so an
+actor system with a buffered bus should be modelled with explicit queues.
+
+**Two deliberate losses, both recorded rather than silent.** Go closures cannot
+cross into a net: `GenericTransition.Guard`/`Action` are dropped in favour of
+`GuardExpr`, and `statemachine`'s closure guards are noted on the emitted
+transition's `Description`. Both make the net *more permissive* than the
+original, which is sound for safety analysis (if the over-approximation cannot
+reach a bad marking, neither can the original) but **not** for liveness.
+
+**Rendering.** `(*Bundle).RenderDOT()` draws the bundle *before* flattening —
+subnets as clusters, each link kind in its own colour and glyph (`◆` token,
+`▷` data, `⊗` event, `⊘` guard), arc weights and inhibitor arcs shown.
+`RenderFlatDOT()` draws the flattened model instead, double-bordering the places
+and transitions that came from fusion. Both are deterministic, so the output
+diffs cleanly. Pipe through `dot -Tsvg`.
+
+**Event payloads use declared binding types.** `InferEvents` reads
+`Transition.Bindings` when present, so an `amount` declared `int64` produces an
+`int64` event field instead of the `int` guessed from the arc. Arc-derived
+fields still fill in whatever the bindings do not name, and a model with no
+bindings infers exactly what it always did.
+
+**A bounded queue uses a complementary place, not a capacity check**, so its
+bound is a derivable P-invariant rather than merely an enforced rule. An
+unbounded queue's `enqueue` is a source transition, so the net genuinely is not
+structurally bounded — `Validate` says so (`W_UNBOUNDED_QUEUE`) instead of
+letting it look safe.
+
 ## Quick Decision Tree
 
 | Problem | Package |
@@ -192,6 +253,7 @@ flat, fmap, err := b.FlattenWithMap()   // one Model, plus how it was rewritten
 | "Is this model correct?" against stated requirements | `verify` |
 | Conservation laws / structural boundedness | `reachability.InvariantAnalyzer` |
 | Build one big model from small ones | `metamodel.Bundle` (see Composition above) |
+| Buffer between two composed nets | `metamodel.NewQueue` (an EventLink alone is a rendezvous) |
 | Colored / multi-color tokens | `petri.ExpandColors` (most entry points do it for you) |
 | Epidemics/populations | `petri` + `solver` |
 | General state/resource flow | `petri` |

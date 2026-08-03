@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "builder.go",
         "machine.go",
+        "metasubnet.go",
         "model.go",
         "types.go",
     ],
@@ -12,6 +13,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//engine",
+        "//metamodel",
         "//petri",
         "//tokenmodel/petri",
         "//tokenmodel/subnet",
@@ -21,11 +23,15 @@ go_library(
 go_test(
     name = "statemachine_test",
     srcs = [
+        "metasubnet_test.go",
         "model_test.go",
         "statemachine_test.go",
     ],
     embed = [":statemachine"],
     deps = [
+        "//metamodel",
+        "//petri",
+        "//reachability",
         "//tokenmodel/dataflow/transport",
         "//tokenmodel/petri",
         "//tokenmodel/subnet",

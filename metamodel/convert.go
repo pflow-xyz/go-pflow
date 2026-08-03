@@ -1,6 +1,8 @@
 package metamodel
 
 import (
+	"sort"
+
 	"github.com/pflow-xyz/go-pflow/tokenmodel"
 )
 
@@ -316,15 +318,27 @@ func bindingsToMap(bindings []Binding) map[string]string {
 	return result
 }
 
+// mapToBindings converts a name→type map into the ordered Binding slice.
+//
+// Sorted by name: this is the DSL parse path (FromTokenModel), and bindings now
+// reach code generation twice — as the action's parameter struct and, via
+// inferEventFields, as the event payload. An unordered walk would make both
+// differ between runs for an identical model.
 func mapToBindings(m map[string]string) []Binding {
 	if len(m) == 0 {
 		return nil
 	}
-	var result []Binding
-	for name, typ := range m {
+	names := make([]string, 0, len(m))
+	for name := range m {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	result := make([]Binding, 0, len(names))
+	for _, name := range names {
 		result = append(result, Binding{
 			Name: name,
-			Type: typ,
+			Type: m[name],
 		})
 	}
 	return result
@@ -513,16 +527,58 @@ func inferEventsFromTransitions(model *Model) []EventDef {
 	return events
 }
 
+// bindingTypeToEventType maps a Binding.Type onto the Go type an event field
+// carries. Binding types use the same vocabulary as event field types (the
+// schema names plus plain Go types), so schemaTypeToGo is the single conversion;
+// an untyped binding falls back to string, matching the arc-derived default for
+// keys.
+func bindingTypeToEventType(typ string) string {
+	if typ == "" {
+		return "string"
+	}
+	return schemaTypeToGo(typ, "")
+}
+
+// inferEventFields derives an event's payload for a transition that has no
+// explicit Event definition.
+//
+// Two sources, in order of authority:
+//
+//  1. Transition.Bindings, when declared. A binding states its type, so the
+//     event field can use it rather than guessing. This matters because the same
+//     data reaches generated code twice — once as the action's Bindings struct
+//     (typed from Binding.Type) and once as the event struct — and inferring
+//     types independently made those two disagree: a binding declared int64
+//     produced an event field typed int.
+//
+//  2. Arc keys and values, as a fallback. Arcs carry no type information, so
+//     keys are assumed string and the transferred value int. This is the only
+//     path for models that declare no bindings, and it is preserved exactly, so
+//     their inferred events are unchanged.
+//
+// Arc-derived names still fill in anything the bindings do not cover, so
+// declaring one binding never silently drops the rest of the payload.
 func inferEventFields(model *Model, t Transition) []InferredEventField {
 	fields := []InferredEventField{
 		{Name: "aggregate_id", Type: "string"},
 		{Name: "timestamp", Type: "time.Time"},
 	}
 
-	// Add fields from arc bindings
 	seen := make(map[string]bool)
 	seen["aggregate_id"] = true
 	seen["timestamp"] = true
+
+	// Declared bindings first: they are the only typed source.
+	for _, b := range t.Bindings {
+		if b.Name == "" || seen[b.Name] {
+			continue
+		}
+		fields = append(fields, InferredEventField{
+			Name: b.Name,
+			Type: bindingTypeToEventType(b.Type),
+		})
+		seen[b.Name] = true
+	}
 
 	for _, arc := range model.Arcs {
 		if arc.From == t.ID || arc.To == t.ID {

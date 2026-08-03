@@ -439,6 +439,7 @@ const (
 	ErrPortDirection       = "E_PORT_DIRECTION"
 
 	WarnUntypedSubnet   = "W_UNTYPED_SUBNET"
+	WarnUnboundedQueue  = "W_UNBOUNDED_QUEUE"
 	WarnRestrictiveLink = "W_RESTRICTIVE_LINK"
 	WarnGuardOpaque     = "W_GUARD_OPAQUE"
 	WarnRouteDropped    = "W_ROUTE_DROPPED"
@@ -577,6 +578,13 @@ func (b *Bundle) MustValidate() error {
 
 // validateNetType checks the structural promise each net type makes.
 func (b *Bundle) validateNetType(s *Subnet, warn func(code, msg, elem string)) {
+	if IsUnboundedQueue(s) {
+		warn(WarnUnboundedQueue,
+			fmt.Sprintf("queue %q has no capacity, so its enqueue is a source transition and the net is not structurally bounded; "+
+				"bound it with a capacity, or fuse enqueue with a producer whose own net is bounded", s.ID),
+			s.ID)
+	}
+
 	switch s.NetType {
 	case WorkflowNet:
 		marked := 0

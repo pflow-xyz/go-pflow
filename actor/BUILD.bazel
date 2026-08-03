@@ -6,6 +6,7 @@ go_library(
         "actor.go",
         "builder.go",
         "bus.go",
+        "metabundle.go",
         "subnet.go",
         "types.go",
     ],
@@ -13,6 +14,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//engine",
+        "//metamodel",
         "//petri",
         "//solver",
         "//tokenmodel/petri",
@@ -26,11 +28,13 @@ go_test(
     srcs = [
         "actor_test.go",
         "colors_test.go",
+        "metabundle_test.go",
         "pubsub_test.go",
         "subnet_test.go",
     ],
     embed = [":actor"],
     deps = [
+        "//metamodel",
         "//petri",
         "//tokenmodel/subnet",
     ],
