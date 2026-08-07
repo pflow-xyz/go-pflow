@@ -366,6 +366,44 @@ letting it look safe.
 | Streaming pipeline / DES (windowing, watermarks, late data) | `tokenmodel/dataflow` |
 | Pipeline-shape discovery from a stream | `mining.DiscoverPipeline` |
 
+## The firing rule: `metamodel/firing.go`
+
+Anything that decides whether a transition may fire uses this, and nothing
+re-derives it from `arc.From`/`arc.To`.
+
+```go
+mk := m.InitialMarking()          // Marking: token places only, sparse-friendly
+m.Enabled("ship", mk)             // all four rules below, together
+m.EnabledWhyNot("ship", mk)       // same, with the reason
+next := m.Fire("ship", mk)        // pure; mk is untouched
+m.Inputs(t) / m.Outputs(t) / m.Tests(t)   // the classification, for engines that index it
+```
+
+| | Rule |
+|---|---|
+| consuming arc | needs `weight` tokens |
+| read arc | needs `weight` present, **consumes none** |
+| inhibitor arc | blocks at `>= weight` |
+| capacity | **post-firing** bound, netting out what the same firing consumes — a capacity-2 place at 2 still admits a consume-1-produce-1 firing. Zero is unbounded, not zero |
+
+Data places take no part: their arcs carry `Keys`/`Value` bindings, not counts.
+An unknown transition is **not** enabled — a typo should not look like a working
+model.
+
+Five implementations across this repo and petri-pilot used to disagree. Two
+dropped read and inhibitor arcs; two *consumed* them, turning a read arc into a
+drain and an inhibitor into a source feeding the transition it blocks. Nothing
+compared them, so nothing failed. Reach for `Enabled`/`Fire` rather than writing
+a sixth.
+
+**`Model.Gating()`** names what a *continuous* engine cannot represent — read
+arcs, inhibitors, reachable capacities, guards. `solver` sees none of them
+(`InhibitTransition` is read by `reachability`, `visualization`, `parser` and
+`mining`, never by `solver`), so a caller about to hand a gated net to an ODE
+should refuse or caveat rather than answer a less constrained question. A
+capacity no transition can raise is not reported: a bound nothing can breach is
+documentation.
+
 ## Core API
 
 ### Petri Net Builder
