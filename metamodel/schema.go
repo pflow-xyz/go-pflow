@@ -38,6 +38,19 @@ type Model struct {
 
 	// ODE Simulation for AI/move evaluation (core analysis feature)
 	Simulation *Simulation `json:"simulation,omitempty"`
+
+	// AssertedClasses are parameter classes a modeller declared, as opposed to
+	// ones discovery found. They exist because merging is a different kind of
+	// act from splitting: a tag that distinguishes two elements only refines
+	// what the algorithm already computed, while declaring two elements one
+	// parameter contradicts both the structure and whatever measurement was
+	// taken of it.
+	//
+	// So an assertion is a modelling simplification, not a discovery, and a
+	// consumer must treat it as an assumption it was handed rather than a fact
+	// about the net. Tools are expected to re-check each one and report what
+	// the simplification costs rather than quietly adopting it.
+	AssertedClasses []AssertedClass `json:"assertedClasses,omitempty"`
 }
 
 // Simulation configures ODE-based simulation for move evaluation and AI.
@@ -114,9 +127,49 @@ type Place struct {
 	Capacity int  `json:"capacity,omitempty"`
 	Resource bool `json:"resource,omitempty"` // True if this is a consumable resource
 
+	// Tags carry facts about an element that the net itself cannot express —
+	// which shift a staff pool belongs to, what an item costs, who owns a
+	// resource. They are the human's channel into automated classification.
+	//
+	// A key prefixed "refine." takes part in colour refinement, seeding the
+	// element's initial colour so a distinction the wiring cannot see still
+	// splits a class. Every other key is metadata that travels with the model
+	// and changes no derivation. The split matters: if every tag refined,
+	// labelling a place with an owner or a display colour would shatter every
+	// class it belongs to, and the prefix keeps that intent visible in the
+	// model JSON rather than hidden in a caller's parameters.
+	//
+	// Seeding a refinement is monotone: the partition afterwards refines the
+	// partition before, so no distinction already drawn is undone and no
+	// earlier finding is invalidated. It is not local, though — refinement
+	// propagates, and symmetry is a global property. Tagging one fork in a
+	// ring of five distinguishes all five, because each becomes identifiable
+	// by its distance from the marked one. Expect a tag on one member of a
+	// symmetric set to dissolve the whole symmetry.
+	//
+	// Merging is the opposite kind of claim and lives in Model.AssertedClasses
+	// instead.
+	//
+	// omitempty with a nil map, so a model written before this field existed
+	// marshals byte-for-byte as it did. That is load-bearing: model ids are
+	// the sha256 of this canonical JSON, and petri-pilot hash-pins generated
+	// apps against it.
+	Tags map[string]string `json:"tags,omitempty"`
+
 	// Visualization position (optional, for diagram layout)
 	X int `json:"x,omitempty"`
 	Y int `json:"y,omitempty"`
+}
+
+// AssertedClass is a modeller's claim that several elements should be treated
+// as one parameter, with the reason recorded alongside it. Members name places
+// or transitions by id.
+type AssertedClass struct {
+	ID      string   `json:"id"`
+	Members []string `json:"members"`
+	// Note is why the modeller wants this, which is the only part no tool can
+	// reconstruct later.
+	Note string `json:"note,omitempty"`
 }
 
 // Supported Type values for DataKind places:
@@ -215,6 +268,29 @@ type Transition struct {
 	X int `json:"x,omitempty"`
 	Y int `json:"y,omitempty"`
 
+	// Tags carry facts about an element that the net itself cannot express —
+	// which shift a staff pool belongs to, what an item costs, who owns a
+	// resource. They are the human's channel into automated classification.
+	//
+	// A key prefixed "refine." takes part in colour refinement, seeding the
+	// element's initial colour so a distinction the wiring cannot see still
+	// splits a class. Every other key is metadata that travels with the model
+	// and changes no derivation. The split matters: if every tag refined,
+	// labelling a place with an owner or a display colour would shatter every
+	// class it belongs to, and the prefix keeps that intent visible in the
+	// model JSON rather than hidden in a caller's parameters.
+	//
+	// Seeding a refinement is monotone — it can only split a class, never
+	// merge two the algorithm separated — so a tag can be added without
+	// invalidating any earlier finding. Merging is the opposite kind of claim
+	// and lives in Model.AssertedClasses instead.
+	//
+	// omitempty with a nil map, so a model written before this field existed
+	// marshals byte-for-byte as it did. That is load-bearing: model ids are
+	// the sha256 of this canonical JSON, and petri-pilot hash-pins generated
+	// apps against it.
+	Tags map[string]string `json:"tags,omitempty"`
+
 	// Deprecated fields (backward compatibility)
 	EventType      string            `json:"event_type,omitempty"`
 	LegacyBindings map[string]string `json:"legacy_bindings,omitempty"`
@@ -297,6 +373,30 @@ type Arc struct {
 	Weight int     `json:"weight,omitempty"` // default 1
 	Type   ArcType `json:"type,omitempty"`   // "" (normal), "inhibitor" or "read"
 
+	// Kinetic says whether this input arc's place scales the transition's
+	// firing RATE, as opposed to merely permitting the firing. Mass action
+	// multiplies C(marking, weight) for every consuming input, which is the
+	// right law for chemistry and the wrong one for a service system: a
+	// barista pool wired as an input makes two drinks in progress each finish
+	// twice as fast, and a pantry arc makes the recipe using MORE milk the one
+	// the shop prefers. A non-kinetic arc is a prerequisite, not an accelerant.
+	//
+	// It is a *bool because ABSENT MEANS TRUE. Every model written before this
+	// field existed must serialise and execute byte-identically — petri-pilot
+	// hash-pins fourteen generated apps against the marshalled model — and a
+	// plain bool with omitempty would spell "kinetic" as the non-default.
+	//
+	// The asymmetry against IsReadOnly is deliberate and load-bearing: a read
+	// or inhibitor arc moves no tokens, while a non-kinetic arc still gates
+	// enablement and still consumes exactly what its weight says. Folding it
+	// into IsReadOnly would stop the model paying for what it uses.
+	//
+	// One honest gap: nothing here rejects unknown JSON fields, so a binary
+	// predating this field reads "kinetic": false and runs the arc as kinetic
+	// — quietly the old, wrong rate law, where an unknown ArcType is a hard
+	// error. A bool cannot be made to fail that way.
+	Kinetic *bool `json:"kinetic,omitempty"`
+
 	// Data flow
 	Keys  []string `json:"keys,omitempty"`  // Map access keys for data places
 	Value string   `json:"value,omitempty"` // Value binding name
@@ -317,6 +417,13 @@ func (a *Arc) IsRead() bool {
 // stealing from it.
 func (a *Arc) IsReadOnly() bool {
 	return a.IsInhibitor() || a.IsRead()
+}
+
+// IsKinetic reports whether this arc's place scales the firing rate. An
+// unset flag reads as true, so a model that never heard of kinetics keeps the
+// mass-action law it was written under.
+func (a *Arc) IsKinetic() bool {
+	return a.Kinetic == nil || *a.Kinetic
 }
 
 // Constraint represents an invariant on the model.
