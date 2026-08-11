@@ -122,6 +122,9 @@ func (n *PetriNet[S]) ToModel() *Model {
 		if a.Read {
 			arc.Type = ReadArc
 		}
+		if a.NonKinetic {
+			arc.Kinetic = new(bool) // false: gates and consumes, but sets no rate
+		}
 		out.Arcs = append(out.Arcs, arc)
 	}
 

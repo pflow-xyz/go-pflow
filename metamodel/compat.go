@@ -64,6 +64,9 @@ func (m *LegacyModel) ToGenericTokenNet() *PetriNet[TokenState[string]] {
 		if arc.IsRead() {
 			ga = ga.AsRead()
 		}
+		if !arc.IsKinetic() {
+			ga = ga.AsNonKinetic()
+		}
 
 		net.AddArc(ga)
 	}
@@ -126,6 +129,9 @@ func (m *LegacyModel) ToGenericDataNet() *PetriNet[DataState[any]] {
 		}
 		if arc.IsRead() {
 			ga = ga.AsRead()
+		}
+		if !arc.IsKinetic() {
+			ga = ga.AsNonKinetic()
 		}
 
 		net.AddArc(ga)
@@ -203,6 +209,9 @@ func ModelFromGenericToken[T any](net *PetriNet[TokenState[T]]) *Model {
 		if ga.Read {
 			arc.Type = ReadArc
 		}
+		if ga.NonKinetic {
+			arc.Kinetic = new(bool) // false: gates and consumes, but sets no rate
+		}
 		model.Arcs = append(model.Arcs, arc)
 	}
 
@@ -268,6 +277,9 @@ func ModelFromGenericData[T any](net *PetriNet[DataState[T]]) *Model {
 		}
 		if ga.Read {
 			arc.Type = ReadArc
+		}
+		if ga.NonKinetic {
+			arc.Kinetic = new(bool) // false: gates and consumes, but sets no rate
 		}
 		model.Arcs = append(model.Arcs, arc)
 	}

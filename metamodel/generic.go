@@ -256,6 +256,13 @@ type GenericArc[S any] struct {
 	// Weight tokens, consuming nothing. Mutually exclusive with Inhibitor.
 	Read bool `json:"read,omitempty"`
 
+	// NonKinetic is true if this input arc gates and consumes but must not
+	// scale the transition's firing rate — see Arc.Kinetic. It is spelled as
+	// the negative because kinetic is the default, and omitempty can only
+	// elide a false; a positively-named flag would make every ordinary arc
+	// carry the field.
+	NonKinetic bool `json:"nonKinetic,omitempty"`
+
 	// Keys specify map access path for DataState places.
 	Keys []string `json:"keys,omitempty"`
 
@@ -292,6 +299,13 @@ func (a GenericArc[S]) AsRead() GenericArc[S] {
 	return a
 }
 
+// AsNonKinetic marks this as a prerequisite rather than an accelerant: it still
+// gates and still consumes, but drops out of the rate law.
+func (a GenericArc[S]) AsNonKinetic() GenericArc[S] {
+	a.NonKinetic = true
+	return a
+}
+
 // WithKeys sets the map access keys for DataState arcs.
 func (a GenericArc[S]) WithKeys(keys ...string) GenericArc[S] {
 	a.Keys = keys
@@ -315,9 +329,14 @@ func (a GenericArc[S]) IsRead() bool {
 }
 
 // IsReadOnly returns true if this arc only tests the marking and moves no
-// tokens.
+// tokens. A non-kinetic arc is deliberately NOT read-only: it still consumes.
 func (a GenericArc[S]) IsReadOnly() bool {
 	return a.Inhibitor || a.Read
+}
+
+// IsKinetic returns true if this arc's place scales the firing rate.
+func (a GenericArc[S]) IsKinetic() bool {
+	return !a.NonKinetic
 }
 
 // PetriNet represents a complete Petri net with typed state.

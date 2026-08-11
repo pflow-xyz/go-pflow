@@ -340,9 +340,14 @@ func describeFusion(desc, verb string, members []string) string {
 // its conservation law survives projection. MergeMax models a genuinely shared
 // consumption instead.
 func (b *Bundle) mergeArcs(subnets []*Subnet, placeFlat, transFlat map[string]string) []Arc {
+	// Kinetics is part of the key, not merged: two components that disagree
+	// about whether a place accelerates a shared transition are making
+	// different claims, and folding them would let whichever subnet was
+	// visited first silently decide the rate law for both.
 	type arcKey struct {
 		from, to string
 		typ      ArcType
+		kinetic  bool
 		keys     string
 		value    string
 	}
@@ -355,16 +360,18 @@ func (b *Bundle) mergeArcs(subnets []*Subnet, placeFlat, transFlat map[string]st
 			flat := a
 			flat.From = b.translateRef(s, a.From, placeFlat, transFlat)
 			flat.To = b.translateRef(s, a.To, placeFlat, transFlat)
+			flat.Kinetic = cloneBool(a.Kinetic)
 			if flat.Weight == 0 {
 				flat.Weight = 1
 			}
 
 			key := arcKey{
-				from:  flat.From,
-				to:    flat.To,
-				typ:   flat.Type,
-				keys:  strings.Join(a.Keys, "\x00"),
-				value: a.Value,
+				from:    flat.From,
+				to:      flat.To,
+				typ:     flat.Type,
+				kinetic: flat.IsKinetic(),
+				keys:    strings.Join(a.Keys, "\x00"),
+				value:   a.Value,
 			}
 			if existing, ok := acc[key]; ok {
 				switch {

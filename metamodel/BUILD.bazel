@@ -50,6 +50,7 @@ go_test(
         "generic_test.go",
         "guardunrepresentable_test.go",
         "infer_bindings_test.go",
+        "kinetic_test.go",
         "patterns_compose_test.go",
         "patterns_test.go",
         "queue_test.go",

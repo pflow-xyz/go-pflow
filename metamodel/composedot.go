@@ -252,6 +252,12 @@ func arcAttrs(a Arc) string {
 		// and it reads correctly: nothing flows along it in either direction.
 		attrs = append(attrs, "dir=none", "style=dashed", "color=\"#3366aa\"")
 	}
+	if !a.IsKinetic() && a.Type == NormalArc {
+		// A non-kinetic arc consumes exactly like its neighbours but does not
+		// set the rate, and a diagram that draws the two identically hides the
+		// only interesting thing about it.
+		attrs = append(attrs, "style=dotted", "headlabel=\"gate\"", "labelfontsize=8")
+	}
 	if a.Weight > 1 {
 		attrs = append(attrs, fmt.Sprintf("label=%q", fmt.Sprint(a.Weight)), "fontsize=9")
 	}

@@ -63,6 +63,7 @@ func (m *Model) Clone() *Model {
 		out.Arcs = make([]Arc, len(m.Arcs))
 		for i, a := range m.Arcs {
 			a.Keys = cloneStrings(a.Keys)
+			a.Kinetic = cloneBool(a.Kinetic)
 			out.Arcs[i] = a
 		}
 	}
@@ -151,6 +152,18 @@ func cloneFields(in []TransitionField) []TransitionField {
 		out[i] = f
 	}
 	return out
+}
+
+// cloneBool copies an optional flag so a copied arc does not share the cell
+// with its source. Nothing mutates Arc.Kinetic today, but Clone's contract is
+// that the output is not reachable from the input, and an aliased pointer is
+// exactly the kind of exception that stops being harmless quietly.
+func cloneBool(in *bool) *bool {
+	if in == nil {
+		return nil
+	}
+	v := *in
+	return &v
 }
 
 func cloneStrings(in []string) []string {

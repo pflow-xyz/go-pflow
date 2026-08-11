@@ -57,6 +57,29 @@ func ValidateArcs(m *Model) []ValidationError {
 				Fix:     "reverse the arc, or use a normal arc if the transition really does produce tokens",
 			})
 		}
+
+		// Kinetics only has meaning on an arc that is in a rate law, which is
+		// a consuming place -> transition arc. On a read or inhibitor arc it
+		// says nothing (they never scaled a rate), and on an output arc it is
+		// a lie (a product does not set the rate either). Either way the
+		// author believed they were changing the dynamics and were not, so
+		// this is an error rather than something to ignore.
+		// tokenPlace, not PlaceByID: Model.Inputs and Gating both require
+		// IsToken, so an arc out of a DATA place is not an input to the firing
+		// rule at all and its flag never reaches ArcRef.Kinetic. Testing for
+		// any place here would let exactly that arc validate clean — the
+		// silent no-op this check exists to turn into an error.
+		if !a.IsKinetic() {
+			consuming := m.tokenPlace(a.From) != nil && m.TransitionByID(a.To) != nil
+			if a.IsReadOnly() || !consuming {
+				out = append(out, ValidationError{
+					Code:    ErrKineticMisplaced,
+					Message: fmt.Sprintf(`arc %s declares "kinetic": false, but only a consuming place -> transition arc appears in a rate law`, label),
+					Element: label,
+					Fix:     `drop the flag, or move it to the place -> transition arc whose rate contribution you meant to remove`,
+				})
+			}
+		}
 	}
 	return out
 }

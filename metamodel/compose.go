@@ -445,6 +445,7 @@ const (
 	ErrPortDirection       = "E_PORT_DIRECTION"
 	ErrUnknownArcType      = "E_UNKNOWN_ARC_TYPE"
 	ErrReadArcDirection    = "E_READ_ARC_DIRECTION"
+	ErrKineticMisplaced    = "E_KINETIC_MISPLACED"
 
 	WarnUntypedSubnet   = "W_UNTYPED_SUBNET"
 	WarnUnboundedQueue  = "W_UNBOUNDED_QUEUE"

@@ -35,6 +35,16 @@ type ArcRef struct {
 	Place  string
 	Weight int
 	Type   ArcType
+
+	// Kinetic mirrors Arc.IsKinetic, already defaulted. It is carried here
+	// because ArcRef is the whole of what a rate engine sees — petri-pilot's
+	// two stochastic simulators build their propensity terms from Inputs and
+	// never touch Model.Arcs, so a flag that stopped at the Arc struct would
+	// be invisible to the only code that could act on it.
+	//
+	// On Outputs and Tests it is whatever the arc declared, but it means
+	// nothing: neither is in a rate law. Only Inputs may be read for it.
+	Kinetic bool
 }
 
 // InitialMarking is the marking the model declares.
@@ -78,7 +88,7 @@ func (m *Model) Inputs(transition string) []ArcRef {
 		if a.To != transition || a.IsReadOnly() || m.tokenPlace(a.From) == nil {
 			continue
 		}
-		out = append(out, ArcRef{Place: a.From, Weight: arcWeight(a), Type: a.Type})
+		out = append(out, ArcRef{Place: a.From, Weight: arcWeight(a), Type: a.Type, Kinetic: a.IsKinetic()})
 	}
 	return out
 }
@@ -91,7 +101,7 @@ func (m *Model) Outputs(transition string) []ArcRef {
 		if a.From != transition || a.IsReadOnly() || m.tokenPlace(a.To) == nil {
 			continue
 		}
-		out = append(out, ArcRef{Place: a.To, Weight: arcWeight(a), Type: a.Type})
+		out = append(out, ArcRef{Place: a.To, Weight: arcWeight(a), Type: a.Type, Kinetic: a.IsKinetic()})
 	}
 	return out
 }
@@ -105,7 +115,7 @@ func (m *Model) Tests(transition string) []ArcRef {
 		if a.To != transition || !a.IsReadOnly() || m.tokenPlace(a.From) == nil {
 			continue
 		}
-		out = append(out, ArcRef{Place: a.From, Weight: arcWeight(a), Type: a.Type})
+		out = append(out, ArcRef{Place: a.From, Weight: arcWeight(a), Type: a.Type, Kinetic: a.IsKinetic()})
 	}
 	return out
 }
@@ -225,9 +235,9 @@ func (m *Model) EnabledTransitions(mk Marking) []string {
 // meant to be shown, not counted.
 func (m *Model) Gating() []string {
 	var (
-		reads, inhibits int
-		caps, guards    []string
-		out             []string
+		reads, inhibits, static int
+		caps, guards            []string
+		out                     []string
 	)
 	for i := range m.Arcs {
 		a := &m.Arcs[i]
@@ -236,6 +246,12 @@ func (m *Model) Gating() []string {
 			reads++
 		case a.IsInhibitor():
 			inhibits++
+		case !a.IsKinetic() && m.tokenPlace(a.From) != nil && m.TransitionByID(a.To) != nil:
+			// Mass action derives the rate law from the arcs themselves, so
+			// there is no way to keep an arc's stoichiometry while dropping its
+			// term from the rate. Omitting the arc instead would break
+			// conservation on top of the rate error.
+			static++
 		}
 	}
 	// A capacity only gates if something can push the place up to it. A bound
@@ -262,6 +278,9 @@ func (m *Model) Gating() []string {
 	}
 	if inhibits > 0 {
 		out = append(out, fmt.Sprintf("%d inhibitor arc(s) block a firing above a threshold; a continuous solver cannot test them", inhibits))
+	}
+	if static > 0 {
+		out = append(out, fmt.Sprintf("%d non-kinetic input arc(s) gate and consume without scaling the rate; a mass-action solver has no way to omit them from the rate law", static))
 	}
 	if len(caps) > 0 {
 		out = append(out, fmt.Sprintf("capacity is declared on %v but is a post-firing bound, which has no continuous analogue", caps))

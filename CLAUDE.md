@@ -386,6 +386,35 @@ m.Inputs(t) / m.Outputs(t) / m.Tests(t)   // the classification, for engines tha
 | inhibitor arc | blocks at `>= weight` |
 | capacity | **post-firing** bound, netting out what the same firing consumes — a capacity-2 place at 2 still admits a consume-1-produce-1 firing. Zero is unbounded, not zero |
 
+**`Arc.Kinetic` (`*bool`, absent = true) is about the *rate*, not the firing
+rule.** Mass action multiplies `C(marking, weight)` for every consuming input,
+which is right for chemistry and wrong for a service system: a barista pool
+wired as an input makes two drinks in progress each finish twice as fast, and a
+pantry arc makes the recipe using *more* milk the one the shop prefers.
+`"kinetic": false` says *prerequisite, not accelerant* — the arc still gates
+enablement and still consumes exactly its weight, it just drops out of the
+product a rate engine forms.
+
+- `IsKinetic()` defaults an unset flag to true, so every model written before
+  the field marshals and executes byte-identically. That is deliberate:
+  petri-pilot hash-pins fourteen generated apps against the marshalled model.
+- It is **not** `IsReadOnly`. A read or inhibitor arc moves nothing; a
+  non-kinetic arc moves everything it always did. Widening `IsReadOnly` to
+  cover it would stop the model paying for what it uses.
+- The resolved value rides on `ArcRef.Kinetic`, because `Inputs` is the whole
+  of what a rate engine sees — a flag that stopped at the `Arc` struct would be
+  invisible to the only code that could act on it. On `Outputs`/`Tests` it is
+  carried but meaningless: neither is in a rate law.
+- `ValidateArcs` rejects the flag anywhere it cannot apply (`E_KINETIC_MISPLACED`
+  — read/inhibitor arcs, transition → place arcs, and arcs out of a **data**
+  place), because an author who set it there changed nothing while believing
+  they had. It applies the same token-place test `Inputs` and `Gating` use, so
+  validation and the firing rule agree on what an input is.
+- One honest gap: nothing rejects unknown JSON fields, so a binary predating the
+  field reads `"kinetic": false` and runs the arc as kinetic — quietly the old
+  rate law, where an unknown `ArcType` is a hard error. A bool cannot be made to
+  fail that way.
+
 Data places take no part: their arcs carry `Keys`/`Value` bindings, not counts.
 An unknown transition is **not** enabled — a typo should not look like a working
 model.
@@ -397,7 +426,11 @@ compared them, so nothing failed. Reach for `Enabled`/`Fire` rather than writing
 a sixth.
 
 **`Model.Gating()`** names what a *continuous* engine cannot represent — read
-arcs, inhibitors, reachable capacities, guards. `solver` sees none of them
+arcs, inhibitors, non-kinetic arcs, reachable capacities, guards. A non-kinetic
+arc belongs there because mass action derives the rate law from the arcs
+themselves: there is no way to keep an arc's stoichiometry while dropping its
+term from the rate, and omitting the arc instead would break conservation on top
+of the rate error. `solver` sees none of them
 (`InhibitTransition` is read by `reachability`, `visualization`, `parser` and
 `mining`, never by `solver`), so a caller about to hand a gated net to an ODE
 should refuse or caveat rather than answer a less constrained question. A
