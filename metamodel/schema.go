@@ -36,6 +36,19 @@ type Model struct {
 	Decimals int    `json:"decimals,omitempty"` // Precision for token amounts (e.g., 18 for ETH)
 	Unit     string `json:"unit,omitempty"`     // Display symbol (e.g., "ETH", "USDC")
 
+	// View is the model's presentation intent: what an application rendering
+	// this model should be and do, as prose addressed to whoever generates
+	// that application — a person or an LLM. "Let two players play on the
+	// board; a click fires that cell's move transition" is a view; "a live
+	// map of clinic state with the rates as controls" is a view. It rides the
+	// model rather than living beside it because intent is a modelling
+	// statement: the same net presented as a game and as a dashboard is two
+	// different artifacts, and a content id should say which one you have.
+	// Prose, not configuration — nothing executes it, generators read it.
+	// omitempty keeps every existing model's marshalled bytes (and therefore
+	// its content hash) unchanged.
+	View string `json:"view,omitempty"`
+
 	// ODE Simulation for AI/move evaluation (core analysis feature)
 	Simulation *Simulation `json:"simulation,omitempty"`
 
