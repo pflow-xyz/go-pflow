@@ -120,6 +120,12 @@ var ModelLDContext = map[string]any{
 	"tspan":      map[string]any{"@id": "timeSpan", "@container": "@list"},
 	"dt":         map[string]any{"@id": "timeStep", "@type": "schema:Number"},
 
+	// Declared parameters: structural decision variables (arc weights,
+	// capacities) the model names as choices rather than facts.
+	"parameters": map[string]any{"@id": "declaresParameter"},
+	"min":        map[string]any{"@id": "parameterMin", "@type": "schema:Integer"},
+	"max":        map[string]any{"@id": "parameterMax", "@type": "schema:Integer"},
+
 	// Asserted classes: modeller simplifications, re-checked not adopted.
 	"assertedClasses": map[string]any{"@id": "assertsClass"},
 	"members":         map[string]any{"@id": "hasMember", "@type": "@id"},
@@ -157,5 +163,6 @@ func ModelVocabularyTerms() map[string]string {
 		"turnPlace":           "the place whose token marks this player's turn",
 		"rateOverrides":       "per-transition rate overrides in the solver map — where calibration writes learned rates, leaving declared rates untouched",
 		"assertsClass":        "a modeller's claim that members share one parameter; tools re-check it and report what the simplification costs",
+		"declaresParameter":   "a structural decision variable: the arc weights (moved together) or place capacity it binds are a choice, not a fact; the bound element's current value is the base",
 	}
 }

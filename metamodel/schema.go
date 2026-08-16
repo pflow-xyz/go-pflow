@@ -74,6 +74,18 @@ type Model struct {
 	// about the net. Tools are expected to re-check each one and report what
 	// the simplification costs rather than quietly adopting it.
 	AssertedClasses []AssertedClass `json:"assertedClasses,omitempty"`
+
+	// Parameters name the model's decision variables that live in structure
+	// rather than in marking or rates: an arc weight (a batch size, a recipe
+	// quantity, a scale-down floor) or a place capacity (a shelf, a waiting
+	// room). Marking and rate knobs are discoverable from the net alone and
+	// overridable by any scenario; a weight or capacity is neither — without
+	// a declaration it is baked structure, invisible to every harness that
+	// ranks controls. Declaring one is the modeller saying "this number is a
+	// choice, not a fact". ApplyParameters materialises an assignment; tools
+	// that probe knobs treat each declared parameter as one more control.
+	// omitempty keeps every existing model's bytes and content id unchanged.
+	Parameters []Parameter `json:"parameters,omitempty"`
 }
 
 // ViewDecl is one screen of the application a model describes: a validated

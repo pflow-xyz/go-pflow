@@ -104,6 +104,18 @@ func (m *Model) Clone() *Model {
 		}
 	}
 
+	if m.Parameters != nil {
+		out.Parameters = make([]Parameter, len(m.Parameters))
+		for i, p := range m.Parameters {
+			if p.Arcs != nil {
+				arcs := make([]ParameterArc, len(p.Arcs))
+				copy(arcs, p.Arcs)
+				p.Arcs = arcs
+			}
+			out.Parameters[i] = p
+		}
+	}
+
 	out.Simulation = m.Simulation.clone()
 	return out
 }
