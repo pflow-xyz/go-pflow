@@ -329,6 +329,20 @@ type Transition struct {
 	// Simulation
 	Rate float64 `json:"rate,omitempty"` // Firing rate for ODE simulation
 
+	// Stages declares a phase-type (Erlang-k) duration for this transition:
+	// the delay is the sum of Stages exponential stages, each at Stages x
+	// Rate, so the mean is unchanged and the variance falls by a factor of
+	// Stages. It exists because exponential service is the most erratic a
+	// duration can be for a given average, and most real work is not like
+	// that — a wash cycle or a CI job takes about as long every time.
+	// ExpandStages materialises the declaration as a structural chain of
+	// stage places and transitions, so no engine needs a second duration
+	// distribution: the expansion is ordinary mass action, and any engine
+	// that cannot expand must refuse a staged model rather than quietly run
+	// it exponential. 0 and 1 both mean plain exponential. omitempty keeps
+	// every existing model's bytes and content id unchanged.
+	Stages int `json:"stages,omitempty"`
+
 	// ClearsHistory resets the aggregate to initial state
 	ClearsHistory bool `json:"clearsHistory,omitempty"`
 

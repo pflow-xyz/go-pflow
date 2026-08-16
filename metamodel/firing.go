@@ -288,5 +288,21 @@ func (m *Model) Gating() []string {
 	if len(guards) > 0 {
 		out = append(out, fmt.Sprintf("guards on %v are expressions evaluated at a firing instant, which a continuous solution does not have", guards))
 	}
+	// A stage declaration is representable — ExpandStages turns it into an
+	// ordinary mass-action chain — but only for an engine that expands. One
+	// that does not would quietly run the transition as plain exponential,
+	// which is the exact divergence the declaration exists to prevent, so it
+	// is named here for every engine that consults Gating before running.
+	// Expanding engines expand first: the expansion clears Stages, so the
+	// expanded model does not carry this entry.
+	var staged []string
+	for i := range m.Transitions {
+		if m.Transitions[i].Stages > 1 {
+			staged = append(staged, m.Transitions[i].ID)
+		}
+	}
+	if len(staged) > 0 {
+		out = append(out, fmt.Sprintf("stages on %v declare phase-type durations; an engine that has not expanded them (ExpandStages) would run them as plain exponential", staged))
+	}
 	return out
 }
