@@ -55,6 +55,7 @@ go_test(
         "patterns_test.go",
         "queue_test.go",
         "readarc_test.go",
+        "views_test.go",
     ],
     embed = [":metamodel"],
     deps = [
