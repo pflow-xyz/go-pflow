@@ -74,6 +74,11 @@ func (m *Model) Clone() *Model {
 			t.Fields = cloneFields(t.Fields)
 			t.Emits = cloneStrings(t.Emits)
 			t.LegacyBindings = cloneStringMap(t.LegacyBindings)
+			if t.Schedule != nil {
+				segs := make([]RateSegment, len(t.Schedule))
+				copy(segs, t.Schedule)
+				t.Schedule = segs
+			}
 			out.Transitions[i] = t
 		}
 	}

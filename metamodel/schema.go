@@ -329,6 +329,19 @@ type Transition struct {
 	// Simulation
 	Rate float64 `json:"rate,omitempty"` // Firing rate for ODE simulation
 
+	// Schedule declares the transition's rate as piecewise-constant over
+	// model time: the day shape is a fact about the demand, not about any
+	// one question asked of it, so a lunch rush belongs in the model rather
+	// than in every scenario that runs it. Segments apply in Until order and
+	// the last one holds to whatever horizon a run uses. When declared, the
+	// schedule defines the rate for the whole horizon and Rate becomes the
+	// nominal figure tools display; a scenario's rate override or schedule
+	// still wins, because the scenario is the question being asked. Engines
+	// that cannot vary a rate over time must refuse a scheduled model
+	// rather than quietly running it flat. omitempty keeps every existing
+	// model's bytes and content id unchanged.
+	Schedule []RateSegment `json:"schedule,omitempty"`
+
 	// Stages declares a phase-type (Erlang-k) duration for this transition:
 	// the delay is the sum of Stages exponential stages, each at Stages x
 	// Rate, so the mean is unchanged and the variance falls by a factor of

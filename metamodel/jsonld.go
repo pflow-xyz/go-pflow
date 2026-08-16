@@ -123,6 +123,10 @@ var ModelLDContext = map[string]any{
 	// Phase-type durations: Erlang-k service declared on a transition.
 	"stages": map[string]any{"@id": "erlangStages", "@type": "schema:Integer"},
 
+	// Declared demand pattern: piecewise-constant rate over model time.
+	"schedule": map[string]any{"@id": "rateSchedule", "@container": "@list"},
+	"until":    map[string]any{"@id": "segmentUntil", "@type": "schema:Number"},
+
 	// Declared parameters: structural decision variables (arc weights,
 	// capacities) the model names as choices rather than facts.
 	"parameters": map[string]any{"@id": "declaresParameter"},
@@ -168,5 +172,6 @@ func ModelVocabularyTerms() map[string]string {
 		"assertsClass":        "a modeller's claim that members share one parameter; tools re-check it and report what the simplification costs",
 		"declaresParameter":   "a structural decision variable: the arc weights (moved together) or place capacity it binds are a choice, not a fact; the bound element's current value is the base",
 		"erlangStages":        "the transition's duration is the sum of this many exponential stages at stages x rate: same mean, variance divided by stages; 0 and 1 both mean plain exponential",
+		"rateSchedule":        "the transition's rate as piecewise-constant segments over model time — the declared day shape; the last segment holds to the horizon, and a scenario's overrides still win",
 	}
 }
