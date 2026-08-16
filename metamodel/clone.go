@@ -41,6 +41,25 @@ func (m *Model) Clone() *Model {
 		Description: m.Description,
 		Decimals:    m.Decimals,
 		Unit:        m.Unit,
+		View:        m.View,
+	}
+
+	if m.Views != nil {
+		out.Views = make([]ViewDecl, len(m.Views))
+		for i, v := range m.Views {
+			v.Places = cloneStrings(v.Places)
+			v.Transitions = cloneStrings(v.Transitions)
+			v.Links = cloneStrings(v.Links)
+			out.Views[i] = v
+		}
+	}
+
+	if m.AssertedClasses != nil {
+		out.AssertedClasses = make([]AssertedClass, len(m.AssertedClasses))
+		for i, ac := range m.AssertedClasses {
+			ac.Members = cloneStrings(ac.Members)
+			out.AssertedClasses[i] = ac
+		}
 	}
 
 	if m.Places != nil {

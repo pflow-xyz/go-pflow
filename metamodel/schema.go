@@ -49,6 +49,16 @@ type Model struct {
 	// its content hash) unchanged.
 	View string `json:"view,omitempty"`
 
+	// Views decomposes the presentation intent into screens. Where View is
+	// one prose statement about the whole application, each ViewDecl is a
+	// named projection of the model — the places and transitions one screen
+	// shows — plus a prompt for whoever renders it and links naming the
+	// screens it can navigate to. The references are checkable (a view
+	// naming a place the model has not got is an error, not a stale
+	// comment), which is what earns the field a place in the content hash.
+	// omitempty keeps every existing model's bytes and id unchanged.
+	Views []ViewDecl `json:"views,omitempty"`
+
 	// ODE Simulation for AI/move evaluation (core analysis feature)
 	Simulation *Simulation `json:"simulation,omitempty"`
 
@@ -64,6 +74,39 @@ type Model struct {
 	// about the net. Tools are expected to re-check each one and report what
 	// the simplification costs rather than quietly adopting it.
 	AssertedClasses []AssertedClass `json:"assertedClasses,omitempty"`
+}
+
+// ViewDecl is one screen of the application a model describes: a validated
+// projection (which places and transitions it presents), a role naming the
+// kind of screen, a prompt addressed to whoever generates it, and links to
+// the views it can navigate to. Together the views form a navigation graph —
+// views as nodes, links as edges — which is itself a checkable structure.
+type ViewDecl struct {
+	// ID names the view; unique within the model, referenced by Links.
+	ID string `json:"id"`
+
+	// Title is the human-readable screen name.
+	Title string `json:"title,omitempty"`
+
+	// Role classifies the screen. Consumers use it to pick a rendering
+	// idiom; validators may restrict it to a known vocabulary.
+	// Conventional values: board (play/act on the state), dashboard
+	// (watch the state), controls (turn the knobs), advisor (derived
+	// recommendations), trust (invariants and anchors), log (event
+	// history).
+	Role string `json:"role,omitempty"`
+
+	// Prompt is this screen's share of the presentation intent — prose to
+	// the generator, in the same spirit as Model.View.
+	Prompt string `json:"prompt,omitempty"`
+
+	// Places and Transitions are the projection: what this screen shows
+	// and which transitions it may fire. Empty means the whole model.
+	Places      []string `json:"places,omitempty"`
+	Transitions []string `json:"transitions,omitempty"`
+
+	// Links names the views reachable from this one.
+	Links []string `json:"links,omitempty"`
 }
 
 // Simulation configures ODE-based simulation for move evaluation and AI.
