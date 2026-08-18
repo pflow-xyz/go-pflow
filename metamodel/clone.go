@@ -122,6 +122,47 @@ func (m *Model) Clone() *Model {
 	}
 
 	out.Simulation = m.Simulation.clone()
+	out.Presentation = m.Presentation.clone()
+	return out
+}
+
+func (p *Presentation) clone() *Presentation {
+	if p == nil {
+		return nil
+	}
+	out := &Presentation{
+		Title:  p.Title,
+		Accent: p.Accent,
+		Labels: cloneStringMap(p.Labels),
+		Units:  cloneStringMap(p.Units),
+	}
+
+	if p.Groups != nil {
+		out.Groups = make([]ControlGroup, len(p.Groups))
+		for i, g := range p.Groups {
+			g.Members = cloneStrings(g.Members)
+			out.Groups[i] = g
+		}
+	}
+
+	if p.Disruptions != nil {
+		out.Disruptions = make([]Disruption, len(p.Disruptions))
+		for i, d := range p.Disruptions {
+			d.Marking = cloneIntMap(d.Marking)
+			d.Rates = cloneFloatMap(d.Rates)
+			if d.Schedule != nil {
+				sched := make(map[string][]RateSegment, len(d.Schedule))
+				for k, segs := range d.Schedule {
+					cp := make([]RateSegment, len(segs))
+					copy(cp, segs)
+					sched[k] = cp
+				}
+				d.Schedule = sched
+			}
+			out.Disruptions[i] = d
+		}
+	}
+
 	return out
 }
 
@@ -216,6 +257,28 @@ func cloneStringMap(in map[string]string) map[string]string {
 		return nil
 	}
 	out := make(map[string]string, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
+}
+
+func cloneIntMap(in map[string]int) map[string]int {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]int, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
+}
+
+func cloneFloatMap(in map[string]float64) map[string]float64 {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]float64, len(in))
 	for k, v := range in {
 		out[k] = v
 	}

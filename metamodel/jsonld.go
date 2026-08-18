@@ -109,6 +109,18 @@ var ModelLDContext = map[string]any{
 	"prompt": "viewPrompt",
 	"links":  map[string]any{"@id": "linksToView", "@type": "@id"},
 
+	// Theming: the machine-readable half of the presentation intent. Groups
+	// caption derived controls and disruptions name one-click hypotheticals;
+	// both are overrides of something a console already derives, which is why
+	// none of these terms describes behaviour the engine needs to know about.
+	"presentation": map[string]any{"@id": "hasPresentation"},
+	"accent":       map[string]any{"@id": "accentColor"},
+	"groups":       map[string]any{"@id": "hasControlGroup"},
+	"disruptions":  map[string]any{"@id": "hasDisruption"},
+	"marking":      map[string]any{"@id": "markingOverride"},
+	"labels":       map[string]any{"@id": "displayLabel"},
+	"units":        map[string]any{"@id": "displayUnit"},
+
 	// The decision layer: objective, players, solver.
 	"simulation": map[string]any{"@id": "hasSimulation"},
 	"objective":  "objectiveExpression",

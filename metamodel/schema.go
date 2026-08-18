@@ -86,6 +86,14 @@ type Model struct {
 	// that probe knobs treat each declared parameter as one more control.
 	// omitempty keeps every existing model's bytes and content id unchanged.
 	Parameters []Parameter `json:"parameters,omitempty"`
+
+	// Presentation is the machine-readable half of the model's presentation
+	// intent, where View and Views are the prose half. A generic console
+	// consumes it to theme itself — title, accent, control grouping, named
+	// disruptions — and must render the model without it, because every
+	// default it overrides is one the console already derives from the net.
+	// See presentation.go for why that constraint is the point.
+	Presentation *Presentation `json:"presentation,omitempty"`
 }
 
 // ViewDecl is one screen of the application a model describes: a validated
