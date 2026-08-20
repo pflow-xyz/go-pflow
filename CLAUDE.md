@@ -786,3 +786,16 @@ grep -r "actor.NewSystem" --include="*.go"
 | Doesn't match JS solver | `Dt=0.01`, `Reltol=1e-3`, `tspan=[0,10]` |
 | Solver unstable | Try `ImplicitEuler()` or `TRBDF2()` for stiff systems |
 | Slow simulation | Use `FastOptions()`, enable caching |
+
+## Decommissioning
+
+Core Petri-net library. No service, no host, no data.
+
+See [Archiving, backing up and taking down a project](../stackdump-com/CLAUDE.md#archiving-backing-up-and-taking-down-a-project) for the ecosystem-wide procedure and the ordering. This section records only what **this** project holds, which is the part that differs.
+
+No host checkout and no untracked data — nothing to back up beyond git itself.
+
+**Specific to this project:**
+
+- **A published Go module cannot be unpublished** — proxy.golang.org caches tags permanently. Retirement means archiving the repo and deprecating, never deleting.
+- Every consumer pins a released version, so archiving breaks no build. Check consumers first: `grep -rl pflow-xyz/go-pflow ~/Workspace/*/go.mod`.
