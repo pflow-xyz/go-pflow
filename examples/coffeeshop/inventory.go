@@ -90,11 +90,6 @@ func NewInventoryNet() *petri.PetriNet {
 	net.AddPlace("sugar_supply", 0, nil, 500, 500, nil)
 	net.AddPlace("syrup_supply", 0, nil, 500, 600, nil)
 
-	// Low stock alert places
-	net.AddPlace("low_beans_alert", 0, nil, 700, 100, nil)
-	net.AddPlace("low_milk_alert", 0, nil, 700, 200, nil)
-	net.AddPlace("low_cups_alert", 0, nil, 700, 400, nil)
-
 	// === Consumption transitions (one per drink type) ===
 	// Espresso: 18g beans, 30ml water, 1 cup
 	net.AddTransition("make_espresso", "consume", 200, 150, nil)
@@ -149,6 +144,26 @@ func NewInventoryNet() *petri.PetriNet {
 	net.AddArc("make_mocha", "syrup_used", 2, false)
 	net.AddArc("make_mocha", "cups_used", 1, false)
 
+	// Iced latte: 18g beans, 30ml water, 200ml milk, 1 cup
+	// (sold by the simulator at ~8% of orders; it needs a transition here or
+	// CanMakeDrink offers a drink the net cannot make)
+	net.AddTransition("make_iced_latte", "consume", 200, 650, nil)
+	net.AddArc("coffee_beans", "make_iced_latte", 18, false)
+	net.AddArc("water", "make_iced_latte", 30, false)
+	net.AddArc("milk", "make_iced_latte", 200, false)
+	net.AddArc("cups", "make_iced_latte", 1, false)
+	net.AddArc("make_iced_latte", "beans_used", 18, false)
+	net.AddArc("make_iced_latte", "water_used", 30, false)
+	net.AddArc("make_iced_latte", "milk_used", 200, false)
+	net.AddArc("make_iced_latte", "cups_used", 1, false)
+
+	// Sugar is a customer-added condiment, not part of any recipe: one packet
+	// per sweetened drink. Without this transition sugar_packets, sugar_used
+	// and refill_sugar are dead places and the conservation law never moves.
+	net.AddTransition("add_sugar", "consume", 200, 750, nil)
+	net.AddArc("sugar_packets", "add_sugar", 1, false)
+	net.AddArc("add_sugar", "sugar_used", 1, false)
+
 	// === Refill transitions ===
 	net.AddTransition("refill_beans", "refill", 400, 100, nil)
 	net.AddArc("beans_supply", "refill_beans", 500, false) // Refill 500g at a time
@@ -186,6 +201,8 @@ func InventoryRates() map[string]float64 {
 		"make_latte":      0.8, // Most popular
 		"make_cappuccino": 0.4,
 		"make_mocha":      0.2,
+		"make_iced_latte": 0.1,
+		"add_sugar":       0.6, // roughly one in four drinks takes a packet
 		// Refill rates (when triggered)
 		"refill_beans": 0.1,
 		"refill_milk":  0.2,

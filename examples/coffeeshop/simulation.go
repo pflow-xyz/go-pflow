@@ -83,11 +83,12 @@ func PredictRunout(currentState map[string]float64, rates map[string]float64) ma
 
 	// Calculate consumption rates per ingredient based on drink rates
 	consumptionRates := map[string]float64{
-		"coffee_beans": 18 * (rates["make_espresso"] + rates["make_americano"] + rates["make_latte"] + rates["make_cappuccino"] + rates["make_mocha"]),
-		"milk":         180*rates["make_latte"] + 120*rates["make_cappuccino"] + 150*rates["make_mocha"],
-		"water":        30*(rates["make_espresso"]+rates["make_latte"]+rates["make_cappuccino"]+rates["make_mocha"]) + 200*rates["make_americano"],
-		"cups":         rates["make_espresso"] + rates["make_americano"] + rates["make_latte"] + rates["make_cappuccino"] + rates["make_mocha"],
-		"syrup":        2 * rates["make_mocha"],
+		"coffee_beans":  18 * (rates["make_espresso"] + rates["make_americano"] + rates["make_latte"] + rates["make_cappuccino"] + rates["make_mocha"] + rates["make_iced_latte"]),
+		"milk":          180*rates["make_latte"] + 120*rates["make_cappuccino"] + 150*rates["make_mocha"] + 200*rates["make_iced_latte"],
+		"water":         30*(rates["make_espresso"]+rates["make_latte"]+rates["make_cappuccino"]+rates["make_mocha"]+rates["make_iced_latte"]) + 200*rates["make_americano"],
+		"cups":          rates["make_espresso"] + rates["make_americano"] + rates["make_latte"] + rates["make_cappuccino"] + rates["make_mocha"] + rates["make_iced_latte"],
+		"syrup":         2 * rates["make_mocha"],
+		"sugar_packets": rates["add_sugar"],
 	}
 
 	// Get initial state for defaults

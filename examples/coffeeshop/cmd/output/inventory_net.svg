@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="50.0 50.0 700.0 600.0" width="700" height="600">
-<rect x="50.0" y="50.0" width="700.0" height="600.0" fill="#f8f9fa" rx="8"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="50.0 50.0 500.0 750.0" width="500" height="750">
+<rect x="50.0" y="50.0" width="500.0" height="750.0" fill="#f8f9fa" rx="8"/>
 <defs><style>.place { fill: #fff; stroke: #333; stroke-width: 2; }.place-cap-full { fill: #ffebee; }.transition { fill: #ffffff; stroke: #000; stroke-width: 1; }.transition-active { fill: #62fa75; stroke: #000; }.arc { stroke: #cfcfcf; stroke-width: 1; fill: none; }.arc-active { stroke: #2a6fb8; }.arrowhead { fill: #cfcfcf; }.arrowhead-active { fill: #2a6fb8; }.inhibitor { fill: #fff; stroke: #cfcfcf; stroke-width: 1.3; }.inhibitor-active { stroke: #2a6fb8; }.token-dot { fill: #333; }.token-text { font-family: system-ui, Arial; font-size: 12px; fill: #333; text-anchor: middle; dominant-baseline: middle; }.weight-badge { font-family: system-ui, Arial; font-size: 10px; fill: #666; text-anchor: middle; dominant-baseline: middle; }.weight-bg { fill: #fafafa; stroke: #ddd; stroke-width: 1; }.weight-bg-active { fill: #e8f0fb; stroke: #2a6fb8; }.label-text { font-family: system-ui, Arial; font-size: 11px; fill: #333; text-anchor: middle; dominant-baseline: hanging; }</style></defs>
 <line x1="116.1" y1="108.0" x2="178.4" y2="139.2" stroke="#000000" stroke-width="1" fill="none"/>
 <path d="M 178.4 139.2 L 169.6 138.8 L 172.8 132.4 Z" fill="#000000"/>
@@ -153,6 +153,46 @@
 <path d="M 286.0 421.0 L 284.6 429.6 L 278.6 425.6 Z" fill="#000000"/>
 <circle cx="247.7" cy="478.4" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
 <text x="247.7" y="478.4" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">1</text>
+<line x1="103.2" y1="117.7" x2="195.7" y2="626.2" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 195.7 626.2 L 190.7 619.0 L 197.8 617.7 Z" fill="#000000"/>
+<circle cx="149.4" cy="372.0" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="149.4" y="372.0" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">18</text>
+<line x1="104.9" y1="317.3" x2="193.4" y2="626.7" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 193.4 626.7 L 187.7 620.0 L 194.6 618.0 Z" fill="#000000"/>
+<circle cx="149.1" cy="472.0" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="149.1" y="472.0" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">30</text>
+<line x1="103.9" y1="217.6" x2="194.8" y2="626.4" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 194.8 626.4 L 189.5 619.3 L 196.5 617.8 Z" fill="#000000"/>
+<circle cx="149.3" cy="422.0" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="149.3" y="422.0" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">200</text>
+<line x1="106.7" y1="416.7" x2="191.0" y2="627.5" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 191.0 627.5 L 184.7 621.4 L 191.4 618.8 Z" fill="#000000"/>
+<circle cx="148.8" cy="522.1" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="148.8" y="522.1" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">1</text>
+<line x1="203.0" y1="633.3" x2="295.5" y2="124.8" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 295.5 124.8 L 297.6 133.3 L 290.5 132.0 Z" fill="#000000"/>
+<circle cx="249.3" cy="379.0" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="249.3" y="379.0" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">18</text>
+<line x1="204.7" y1="633.7" x2="293.1" y2="324.2" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 293.1 324.2 L 294.3 332.9 L 287.4 330.9 Z" fill="#000000"/>
+<circle cx="248.9" cy="478.9" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="248.9" y="478.9" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">30</text>
+<line x1="203.7" y1="633.4" x2="294.5" y2="224.6" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 294.5 224.6 L 296.3 233.2 L 289.3 231.6 Z" fill="#000000"/>
+<circle cx="249.1" cy="429.0" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="249.1" y="429.0" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">200</text>
+<line x1="206.3" y1="634.2" x2="290.6" y2="423.4" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 290.6 423.4 L 291.0 432.2 L 284.3 429.5 Z" fill="#000000"/>
+<circle cx="248.5" cy="528.8" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="248.5" y="528.8" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">1</text>
+<line x1="106.7" y1="516.7" x2="191.0" y2="727.5" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 191.0 727.5 L 184.7 721.4 L 191.4 718.8 Z" fill="#000000"/>
+<circle cx="148.8" cy="622.1" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="148.8" y="622.1" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">1</text>
+<line x1="206.3" y1="734.2" x2="290.6" y2="523.4" stroke="#000000" stroke-width="1" fill="none"/>
+<path d="M 290.6 523.4 L 291.0 532.2 L 284.3 529.5 Z" fill="#000000"/>
+<circle cx="248.5" cy="628.8" r="10" fill="#d8d8d8" stroke="#000000" stroke-width="1"/>
+<text x="248.5" y="628.8" font-family="system-ui, Arial" font-size="10px" fill="#000000" text-anchor="middle" dominant-baseline="middle">1</text>
 <line x1="482.0" y1="100.0" x2="424.2" y2="100.0" stroke="#999999" stroke-width="1" fill="none"/>
 <path d="M 424.2 100.0 L 432.2 96.4 L 432.2 103.6 Z" fill="#999999"/>
 <circle cx="453.1" cy="100.0" r="10" fill="#fafafa" stroke="#999999" stroke-width="1"/>
@@ -201,74 +241,72 @@
 <path d="M 125.2 600.0 L 133.2 596.4 L 133.2 603.6 Z" fill="#999999"/>
 <circle cx="254.1" cy="600.0" r="10" fill="#fafafa" stroke="#999999" stroke-width="1"/>
 <text x="254.1" y="600.0" font-family="system-ui, Arial" font-size="10px" fill="#666" text-anchor="middle" dominant-baseline="middle">100</text>
-<circle cx="100.0" cy="400.0" r="16.0" class="place"/>
-<text x="100.0" y="400.0" class="token-text">100</text>
-<text x="100.0" y="422.0" class="label-text">cups</text>
-<circle cx="300.0" cy="400.0" r="16.0" class="place"/>
-<text x="300.0" y="422.0" class="label-text">cups_used</text>
-<circle cx="700.0" cy="400.0" r="16.0" class="place"/>
-<text x="700.0" y="422.0" class="label-text">low_cups_alert</text>
-<circle cx="500.0" cy="200.0" r="16.0" class="place"/>
-<text x="500.0" y="222.0" class="label-text">milk_supply</text>
 <circle cx="100.0" cy="600.0" r="16.0" class="place"/>
 <text x="100.0" y="600.0" class="token-text">500</text>
 <text x="100.0" y="622.0" class="label-text">syrup</text>
-<circle cx="300.0" cy="600.0" r="16.0" class="place"/>
-<text x="300.0" y="622.0" class="label-text">syrup_used</text>
-<circle cx="100.0" cy="100.0" r="16.0" class="place"/>
-<text x="100.0" y="100.0" class="token-text">1000</text>
-<text x="100.0" y="122.0" class="label-text">coffee_beans</text>
-<circle cx="100.0" cy="500.0" r="16.0" class="place"/>
-<text x="100.0" y="500.0" class="token-text">200</text>
-<text x="100.0" y="522.0" class="label-text">sugar_packets</text>
+<circle cx="100.0" cy="200.0" r="16.0" class="place"/>
+<text x="100.0" y="200.0" class="token-text">5000</text>
+<text x="100.0" y="222.0" class="label-text">milk</text>
+<circle cx="500.0" cy="500.0" r="16.0" class="place"/>
+<text x="500.0" y="522.0" class="label-text">sugar_supply</text>
 <circle cx="300.0" cy="500.0" r="16.0" class="place"/>
 <text x="300.0" y="522.0" class="label-text">sugar_used</text>
 <circle cx="500.0" cy="600.0" r="16.0" class="place"/>
 <text x="500.0" y="622.0" class="label-text">syrup_supply</text>
+<circle cx="100.0" cy="300.0" r="16.0" class="place"/>
+<text x="100.0" y="300.0" class="token-text">10000</text>
+<text x="100.0" y="322.0" class="label-text">water</text>
+<circle cx="100.0" cy="100.0" r="16.0" class="place"/>
+<text x="100.0" y="100.0" class="token-text">1000</text>
+<text x="100.0" y="122.0" class="label-text">coffee_beans</text>
+<circle cx="100.0" cy="400.0" r="16.0" class="place"/>
+<text x="100.0" y="400.0" class="token-text">100</text>
+<text x="100.0" y="422.0" class="label-text">cups</text>
 <circle cx="500.0" cy="400.0" r="16.0" class="place"/>
 <text x="500.0" y="422.0" class="label-text">cups_supply</text>
-<circle cx="100.0" cy="200.0" r="16.0" class="place"/>
-<text x="100.0" y="200.0" class="token-text">5000</text>
-<text x="100.0" y="222.0" class="label-text">milk</text>
+<circle cx="300.0" cy="400.0" r="16.0" class="place"/>
+<text x="300.0" y="422.0" class="label-text">cups_used</text>
+<circle cx="300.0" cy="200.0" r="16.0" class="place"/>
+<text x="300.0" y="222.0" class="label-text">milk_used</text>
+<circle cx="500.0" cy="300.0" r="16.0" class="place"/>
+<text x="500.0" y="322.0" class="label-text">water_supply</text>
+<circle cx="300.0" cy="100.0" r="16.0" class="place"/>
+<text x="300.0" y="122.0" class="label-text">beans_used</text>
+<circle cx="500.0" cy="200.0" r="16.0" class="place"/>
+<text x="500.0" y="222.0" class="label-text">milk_supply</text>
+<circle cx="300.0" cy="600.0" r="16.0" class="place"/>
+<text x="300.0" y="622.0" class="label-text">syrup_used</text>
 <circle cx="300.0" cy="300.0" r="16.0" class="place"/>
 <text x="300.0" y="322.0" class="label-text">water_used</text>
 <circle cx="500.0" cy="100.0" r="16.0" class="place"/>
 <text x="500.0" y="122.0" class="label-text">beans_supply</text>
-<circle cx="300.0" cy="100.0" r="16.0" class="place"/>
-<text x="300.0" y="122.0" class="label-text">beans_used</text>
-<circle cx="700.0" cy="100.0" r="16.0" class="place"/>
-<text x="700.0" y="122.0" class="label-text">low_beans_alert</text>
-<circle cx="700.0" cy="200.0" r="16.0" class="place"/>
-<text x="700.0" y="222.0" class="label-text">low_milk_alert</text>
-<circle cx="300.0" cy="200.0" r="16.0" class="place"/>
-<text x="300.0" y="222.0" class="label-text">milk_used</text>
-<circle cx="500.0" cy="500.0" r="16.0" class="place"/>
-<text x="500.0" y="522.0" class="label-text">sugar_supply</text>
-<circle cx="100.0" cy="300.0" r="16.0" class="place"/>
-<text x="100.0" y="300.0" class="token-text">10000</text>
-<text x="100.0" y="322.0" class="label-text">water</text>
-<circle cx="500.0" cy="300.0" r="16.0" class="place"/>
-<text x="500.0" y="322.0" class="label-text">water_supply</text>
-<rect x="185.0" y="435.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="200.0" y="471.0" class="label-text">make_cappuccino</text>
-<rect x="185.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="200.0" y="371.0" class="label-text">make_latte</text>
+<circle cx="100.0" cy="500.0" r="16.0" class="place"/>
+<text x="100.0" y="500.0" class="token-text">200</text>
+<text x="100.0" y="522.0" class="label-text">sugar_packets</text>
+<rect x="385.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
+<text x="400.0" y="121.0" class="label-text">refill_beans</text>
 <rect x="385.0" y="385.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="400.0" y="421.0" class="label-text">refill_cups</text>
 <rect x="385.0" y="185.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="400.0" y="221.0" class="label-text">refill_milk</text>
-<rect x="185.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="200.0" y="271.0" class="label-text">make_americano</text>
-<rect x="185.0" y="135.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="200.0" y="171.0" class="label-text">make_espresso</text>
-<rect x="185.0" y="535.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
-<text x="200.0" y="571.0" class="label-text">make_mocha</text>
-<rect x="385.0" y="85.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
-<text x="400.0" y="121.0" class="label-text">refill_beans</text>
 <rect x="385.0" y="485.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="400.0" y="521.0" class="label-text">refill_sugar</text>
 <rect x="385.0" y="585.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="400.0" y="621.0" class="label-text">refill_syrup</text>
+<rect x="185.0" y="235.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="200.0" y="271.0" class="label-text">make_americano</text>
+<rect x="185.0" y="635.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="200.0" y="671.0" class="label-text">make_iced_latte</text>
+<rect x="185.0" y="335.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="200.0" y="371.0" class="label-text">make_latte</text>
+<rect x="185.0" y="535.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="200.0" y="571.0" class="label-text">make_mocha</text>
 <rect x="385.0" y="285.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition"/>
 <text x="400.0" y="321.0" class="label-text">refill_water</text>
+<rect x="185.0" y="735.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="200.0" y="771.0" class="label-text">add_sugar</text>
+<rect x="185.0" y="435.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="200.0" y="471.0" class="label-text">make_cappuccino</text>
+<rect x="185.0" y="135.0" width="30.0" height="30.0" rx="4.0" ry="4.0" class="transition transition-active"/>
+<text x="200.0" y="171.0" class="label-text">make_espresso</text>
 </svg>
