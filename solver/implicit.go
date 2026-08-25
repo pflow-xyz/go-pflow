@@ -87,6 +87,7 @@ func ImplicitEuler(prob *Problem, opts *Options) *Solution {
 		T:           t,
 		U:           u,
 		StateLabels: stateLabels,
+		Truncated:   nsteps >= maxiters && tcur < tf,
 		colorMap:    prob.colorMap,
 	}
 }
@@ -277,6 +278,7 @@ func TRBDF2(prob *Problem, opts *Options) *Solution {
 		T:           t,
 		U:           u,
 		StateLabels: stateLabels,
+		Truncated:   nsteps >= maxiters && tcur < tf,
 		colorMap:    prob.colorMap,
 	}
 }

@@ -248,6 +248,15 @@ type Solution struct {
 	U           []map[string]float64 // State at each time point
 	StateLabels []string             // Ordered list of state variable labels
 
+	// Truncated reports that the solve exhausted Options.Maxiters before
+	// reaching the end of the requested time span: the final state is at
+	// T[len(T)-1], not at Tspan[1]. A truncated solution looks exactly
+	// like a complete one otherwise — callers comparing final states
+	// across many solves (calibration, move scoring) should check it, or
+	// raise Maxiters. An intentional early stop (equilibrium reached)
+	// does not set it.
+	Truncated bool
+
 	colorMap *petri.ColorMap // non-nil when the net was color-unfolded
 }
 
@@ -632,6 +641,7 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 		T:           tOut,
 		U:           stateU,
 		StateLabels: prob.stateLabels,
+		Truncated:   nsteps >= maxiters && tcur < tf,
 		colorMap:    prob.colorMap,
 	}
 }
