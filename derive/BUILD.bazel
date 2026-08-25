@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "derive",
+    srcs = ["derive.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/derive",
+    visibility = ["//visibility:public"],
+    deps = ["//petri"],
+)
+
+go_test(
+    name = "derive_test",
+    srcs = ["derive_test.go"],
+    embed = [":derive"],
+    deps = [
+        "//petri",
+        "//solver",
+    ],
+)
