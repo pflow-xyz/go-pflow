@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "learn",
     srcs = [
+        "adjoint.go",
         "dataset.go",
         "gradopt.go",
         "gradrate.go",
@@ -14,6 +15,7 @@ go_library(
         "ratefunc.go",
         "ratefunc_grad.go",
         "sensitivity.go",
+        "tied.go",
     ],
     importpath = "github.com/pflow-xyz/go-pflow/learn",
     visibility = ["//visibility:public"],
@@ -26,12 +28,14 @@ go_library(
 go_test(
     name = "learn_test",
     srcs = [
+        "adjoint_test.go",
         "colors_test.go",
         "gradbench_test.go",
         "gradopt_test.go",
         "learn_test.go",
         "minimize_test.go",
         "sensitivity_test.go",
+        "tied_test.go",
     ],
     embed = [":learn"],
     deps = [

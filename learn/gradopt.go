@@ -14,6 +14,15 @@ import (
 //
 // A solve that truncates, errors, or produces a non-finite loss or gradient
 // is treated as a rejected point (+Inf), never a hard error mid-fit.
+//
+// opts.Sensitivity "adjoint" swaps the forward sensitivity solve for
+// SolveAdjoint: one plain forward trajectory plus one backward solve per
+// gradient, counted as 2 plain-solve equivalents in Evals regardless of the
+// parameter count — the right mode for many-parameter rates (MLPRateFunc,
+// derived nets with many learnable copies), where forward mode's 1 + NumParams
+// cost dominates. The adjoint objective is opts.AdjointLoss (nil -> the MSE
+// terms matching MSELossGrad); GradLoss does not apply in adjoint mode and
+// setting it there is an error.
 func FitGradient(prob *LearnableProblem, data *Dataset, opts *FitOptions) (*FitResult, error) {
 	if opts == nil {
 		opts = DefaultFitOptions()
@@ -33,6 +42,20 @@ func fitGradientCore(prob *LearnableProblem, data *Dataset, opts *FitOptions, re
 	if opts == nil {
 		opts = DefaultFitOptions()
 	}
+	adjoint := false
+	switch opts.Sensitivity {
+	case "", "forward":
+		if opts.AdjointLoss != nil {
+			return nil, fmt.Errorf("AdjointLoss is set but Sensitivity is %q: AdjointLoss applies only to Sensitivity \"adjoint\" (use GradLoss for forward mode)", opts.Sensitivity)
+		}
+	case "adjoint":
+		if opts.GradLoss != nil {
+			return nil, fmt.Errorf("GradLoss is set with Sensitivity \"adjoint\": the adjoint path never builds forward Sensitivities — set AdjointLoss instead")
+		}
+		adjoint = true
+	default:
+		return nil, fmt.Errorf("unknown Sensitivity %q: want \"\", \"forward\" or \"adjoint\"", opts.Sensitivity)
+	}
 	params0, indices := prob.GetAllParams()
 	if len(params0) == 0 {
 		return nil, fmt.Errorf("no learnable parameters found")
@@ -44,17 +67,30 @@ func fitGradientCore(prob *LearnableProblem, data *Dataset, opts *FitOptions, re
 	P := len(params0)
 	evals := 0
 
-	// valueGrad is one sensitivity solve: (1 + P) plain-solve equivalents.
-	// Truncation, solver error, or a non-finite loss/gradient rejects the
-	// point with +Inf rather than erroring the whole fit.
+	// valueGrad is one gradient evaluation: a forward sensitivity solve costs
+	// (1 + P) plain-solve equivalents; an adjoint evaluation costs 2 (one
+	// forward trajectory + one backward solve) regardless of P. Truncation,
+	// solver error, or a non-finite loss/gradient rejects the point with +Inf
+	// rather than erroring the whole fit.
 	valueGrad := func(theta []float64) (float64, []float64) {
 		prob.SetAllParams(theta, indices)
-		evals += 1 + P
-		sens, err := prob.SolveWithSensitivities(opts.SolverMethod, opts.SolverOptions)
-		if err != nil || sens.Truncated {
-			return math.Inf(1), nil
+		var loss float64
+		var grad []float64
+		if adjoint {
+			evals += 2
+			res, err := prob.SolveAdjoint(data, opts.AdjointLoss, opts.SolverMethod, opts.SolverOptions)
+			if err != nil || res.Truncated {
+				return math.Inf(1), nil
+			}
+			loss, grad = res.Loss, res.Grad
+		} else {
+			evals += 1 + P
+			sens, err := prob.SolveWithSensitivities(opts.SolverMethod, opts.SolverOptions)
+			if err != nil || sens.Truncated {
+				return math.Inf(1), nil
+			}
+			loss, grad = gl(sens, data)
 		}
-		loss, grad := gl(sens, data)
 		if math.IsNaN(loss) || math.IsInf(loss, 0) {
 			return math.Inf(1), nil
 		}
@@ -67,11 +103,12 @@ func fitGradientCore(prob *LearnableProblem, data *Dataset, opts *FitOptions, re
 	}
 
 	// value is the cheap objective for line-search trial points: one plain
-	// solve when the gradient objective is the MSELossGrad default; with a
-	// custom GradLoss the value is derived from valueGrad — costlier, but the
-	// two objectives are then guaranteed to agree.
+	// solve when the gradient objective is the MSE default (the adjoint's
+	// default loss IS MSELoss exactly); with a custom GradLoss or AdjointLoss
+	// the value is derived from valueGrad — costlier, but the two objectives
+	// are then guaranteed to agree.
 	var value func([]float64) float64
-	if opts.GradLoss == nil {
+	if opts.GradLoss == nil && opts.AdjointLoss == nil {
 		value = func(theta []float64) float64 {
 			prob.SetAllParams(theta, indices)
 			evals++

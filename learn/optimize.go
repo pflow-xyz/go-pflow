@@ -29,6 +29,18 @@ type FitOptions struct {
 	LearnRate float64      // gradient step size; 0 -> 0.05 for adam, 1.0 initial step for gradient-descent
 	GradTol   float64      // converged when max|∇| < GradTol; 0 -> 1e-6
 	GradLoss  GradLossFunc // gradient objective for gradient methods; nil -> MSELossGrad
+
+	// Sensitivity selects how the gradient methods ("adam"/"gradient-descent")
+	// obtain ∂loss/∂θ: "" or "forward" (forward sensitivities, the default —
+	// right for small nets) or "adjoint" (one backward solve regardless of
+	// parameter count — right for many-parameter rates such as MLPRateFunc).
+	// Any other value is an error. Ignored by gradient-free methods.
+	Sensitivity string
+	// AdjointLoss is the pointwise objective for Sensitivity "adjoint"; nil
+	// selects the MSE terms matching MSELossGrad. Mutually exclusive with
+	// GradLoss (which consumes forward Sensitivities the adjoint path never
+	// builds): setting both, or AdjointLoss with forward mode, is an error.
+	AdjointLoss PointLossGrad
 }
 
 // DefaultFitOptions returns default fitting options.
@@ -54,8 +66,10 @@ type FitResult struct {
 
 	// Evals is the objective cost, in units that depend on the entry point:
 	// Fit and FitGradient count plain-ODE-solve equivalents (a plain solve is
-	// 1, a sensitivity solve is 1 + NumParams); MinimizeGradient counts raw
-	// fg calls; Minimize leaves it 0.
+	// 1, a forward sensitivity solve is 1 + NumParams, and an adjoint
+	// valueGrad is 2 — one forward trajectory plus one backward integration of
+	// width n+P, a single solve regardless of P, which is the point of the
+	// adjoint); MinimizeGradient counts raw fg calls; Minimize leaves it 0.
 	Evals int
 }
 
