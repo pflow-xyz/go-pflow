@@ -17,6 +17,13 @@ func Minimize(f func([]float64) float64, x0 []float64, opts *FitOptions) (*FitRe
 	if len(x0) == 0 {
 		return nil, fmt.Errorf("no parameters to optimize")
 	}
+	// Gradient methods need a gradient; silently running Nelder-Mead instead
+	// would hand back a different optimizer than the one requested. Checked
+	// before the first (possibly expensive) objective evaluation.
+	switch opts.Method {
+	case "adam", "gradient-descent":
+		return nil, fmt.Errorf("gradient method %q requires MinimizeGradient", opts.Method)
+	}
 	initialLoss := f(x0)
 	if opts.Verbose {
 		fmt.Printf("Initial loss: %.6f\n", initialLoss)

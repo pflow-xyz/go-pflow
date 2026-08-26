@@ -32,9 +32,12 @@
 //
 // Dataset: Holds observed trajectories for training.
 //
-// Optimization: Gradient-free methods (Nelder-Mead, coordinate descent),
-// via Fit for trajectory losses or Minimize for arbitrary objectives
-// (e.g. HingeRankLoss for calibrating against ranking labels).
+// Optimization: Gradient-free methods (Nelder-Mead, coordinate descent)
+// AND gradient-based methods (Adam, backtracking gradient descent) driven
+// by forward sensitivities — see SolveWithSensitivities, FitGradient and
+// GradRateFunc. Use Fit for trajectory losses or Minimize /
+// MinimizeGradient for arbitrary objectives (e.g. HingeRankLoss for
+// calibrating against ranking labels).
 //
 // # Example Usage
 //

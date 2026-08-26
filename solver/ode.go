@@ -172,6 +172,15 @@ func buildODEFunction(net *petri.PetriNet, rates map[string]float64) ODEFunc {
 	}
 }
 
+// NOTE: learn/sensitivity.go mirrors these semantics analytically (same input
+// clamp, product over arc entries, weight in stoichiometry only); change them
+// in lockstep. One known asymmetry within THIS file: an input arc whose place
+// is missing from stateIndex/U0 is dropped here (the transition runs without
+// that factor), while buildODEFunction reads the missing place as 0 and clamps
+// the transition OFF — the two paths disagree for such nets.
+// learn.SolveWithSensitivities refuses a missing place outright for that
+// reason.
+//
 // buildVecODEFunction constructs a vectorized ODE derivative function with pre-indexed arcs.
 // This replaces map lookups with array indexing and pre-groups arcs by transition,
 // reducing per-call cost from O(T*A) to O(A).

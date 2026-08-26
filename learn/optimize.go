@@ -9,13 +9,26 @@ import (
 
 // FitOptions configures the parameter fitting process.
 type FitOptions struct {
-	MaxIters      int     // Maximum number of iterations
-	Tolerance     float64 // Convergence tolerance for loss
-	Method        string  // Optimization method: "nelder-mead", "coordinate-descent"
+	MaxIters  int     // Maximum number of iterations
+	Tolerance float64 // Convergence tolerance for loss
+
+	// Method selects the optimizer: "nelder-mead" (default),
+	// "coordinate-descent", "adam", or "gradient-descent". The gradient
+	// methods OPTIMIZE GradLoss (nil -> MSELossGrad) — a caller passing a
+	// non-MSE lossFunc to Fit with Method "adam" must set GradLoss to the
+	// matching *Grad companion (RMSELossGrad / RelativeMSELossGrad are
+	// provided) or the reported losses and the optimized objective diverge.
+	Method string
+
 	StepSize      float64 // Initial step size (for coordinate descent)
 	Verbose       bool    // Print progress during optimization
 	SolverMethod  *solver.Solver
 	SolverOptions *solver.Options
+
+	// Gradient-method options (zero value = default applied internally).
+	LearnRate float64      // gradient step size; 0 -> 0.05 for adam, 1.0 initial step for gradient-descent
+	GradTol   float64      // converged when max|∇| < GradTol; 0 -> 1e-6
+	GradLoss  GradLossFunc // gradient objective for gradient methods; nil -> MSELossGrad
 }
 
 // DefaultFitOptions returns default fitting options.
@@ -38,12 +51,33 @@ type FitResult struct {
 	FinalLoss   float64   // Loss after optimization
 	Iterations  int       // Number of iterations performed
 	Converged   bool      // Whether the optimization converged
+
+	// Evals is the objective cost, in units that depend on the entry point:
+	// Fit and FitGradient count plain-ODE-solve equivalents (a plain solve is
+	// 1, a sensitivity solve is 1 + NumParams); MinimizeGradient counts raw
+	// fg calls; Minimize leaves it 0.
+	Evals int
 }
 
-// Fit optimizes the parameters of a LearnableProblem to minimize the loss on a dataset.
+// Fit optimizes the parameters of a LearnableProblem to minimize the loss on
+// a dataset.
+//
+// With a gradient Method ("adam"/"gradient-descent") the optimizer minimizes
+// opts.GradLoss (nil -> MSELossGrad) while lossFunc is used only to REPORT
+// InitialLoss/FinalLoss — so a non-MSE lossFunc must be paired with its *Grad
+// companion in opts.GradLoss, or the optimized objective and the reported
+// losses diverge silently. See FitOptions.Method.
 func Fit(prob *LearnableProblem, data *Dataset, lossFunc LossFunc, opts *FitOptions) (*FitResult, error) {
 	if opts == nil {
 		opts = DefaultFitOptions()
+	}
+
+	// Gradient methods delegate to the forward-sensitivity core;
+	// InitialLoss/FinalLoss are still reported with the caller's lossFunc so
+	// results stay comparable across methods.
+	switch opts.Method {
+	case "adam", "gradient-descent":
+		return fitGradientCore(prob, data, opts, lossFunc)
 	}
 
 	// Get initial parameters
@@ -52,7 +86,10 @@ func Fit(prob *LearnableProblem, data *Dataset, lossFunc LossFunc, opts *FitOpti
 		return nil, fmt.Errorf("no learnable parameters found")
 	}
 
+	evals := 0
+
 	// Compute initial loss
+	evals++
 	sol := prob.Solve(opts.SolverMethod, opts.SolverOptions)
 	initialLoss := lossFunc(sol, data)
 
@@ -61,8 +98,9 @@ func Fit(prob *LearnableProblem, data *Dataset, lossFunc LossFunc, opts *FitOpti
 		fmt.Printf("Initial params: %v\n", initialParams)
 	}
 
-	// Define objective function
+	// Define objective function (counted: each call is one plain solve)
 	objective := func(params []float64) float64 {
+		evals++
 		prob.SetAllParams(params, indices)
 		sol := prob.Solve(opts.SolverMethod, opts.SolverOptions)
 		return lossFunc(sol, data)
@@ -98,6 +136,7 @@ func Fit(prob *LearnableProblem, data *Dataset, lossFunc LossFunc, opts *FitOpti
 		FinalLoss:   finalLoss,
 		Iterations:  iters,
 		Converged:   converged,
+		Evals:       evals,
 	}, nil
 }
 

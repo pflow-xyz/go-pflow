@@ -4,11 +4,16 @@ go_library(
     name = "learn",
     srcs = [
         "dataset.go",
+        "gradopt.go",
+        "gradrate.go",
+        "lossgrad.go",
         "minimize.go",
         "optimize.go",
         "problem.go",
         "ranking.go",
         "ratefunc.go",
+        "ratefunc_grad.go",
+        "sensitivity.go",
     ],
     importpath = "github.com/pflow-xyz/go-pflow/learn",
     visibility = ["//visibility:public"],
@@ -22,8 +27,11 @@ go_test(
     name = "learn_test",
     srcs = [
         "colors_test.go",
+        "gradbench_test.go",
+        "gradopt_test.go",
         "learn_test.go",
         "minimize_test.go",
+        "sensitivity_test.go",
     ],
     embed = [":learn"],
     deps = [
