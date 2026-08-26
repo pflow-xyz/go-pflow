@@ -15,7 +15,7 @@ Workspace dependency DAG, so it's the pilot for a possible ecosystem-wide migrat
 | `bazel build //...` / `bazel test //...` green (41/41 test targets) | ✅ Done |
 | Phase 1: cross-project consumers on the Bazel graph (beats-bitwrap-io + bitwrap-io) | ✅ Done (×2) |
 | Phase 2: shared remote cache (`bazel.stackdump.com`, auth + TLS) | ✅ Done |
-| Phase 3 (partial): downstream Go↔JS parity tests in the same `bazel test` | 🟡 Started |
+| Phase 3: downstream Go↔JS parity in the same `bazel test`, incl. a LIVE Go-vs-JS diff | ✅ Done |
 
 See [CLAUDE.md → Build systems](./CLAUDE.md#build-systems) for day-to-day commands and gotchas.
 
@@ -103,13 +103,14 @@ credential periodically.
 Bring the **vanilla JS frontends**, **pflow-rs (Rust ZK provers)**, and **Solidity codegen**
 into one dependency graph with a single `bazel test //...`.
 
-- [~] Turn the "Go and JS produce identical state roots" convention into an **enforced
-      build-time test** spanning both languages. **Started:** beats-bitwrap-io's
-      `//scripts:cohesion_parity_test` runs the vanilla-ESM cohesion-parity check under a
-      hermetic Node toolchain (`rules_nodejs`) in the same `bazel test //...` as the Go
-      tests. It asserts JS output against the same pinned fixture the Go test checks, so the
-      two are guarded in one command — but it's not yet a single genrule *diffing live Go vs.
-      JS output*. Tightening it to a direct diff is the remaining work.
+- [x] Turn the "Go and JS produce identical state roots" convention into an **enforced
+      build-time test** spanning both languages. **Done:** beats-bitwrap-io's
+      `//tools/parity:model_cid_parity_test` runs the LIVE Go producer (go_binary) and the
+      LIVE JS producer (hermetic-Node ESM) on one fixture and byte-compares canonical JSON
+      and CID — a direct diff, not fixture-vs-fixture — alongside the earlier
+      `//scripts:cohesion_parity_test`, all inside one `bazel test //...`. The fixture
+      deliberately includes the beat-relative duration encoding, so the newest cross-language
+      convention was born under the guard.
 - [x] Evaluate `rules_rust` for pflow-rs and `rules_js`/`aspect` for the frontends —
       **resolved: adopt neither framework** (docs/bazel-rules-evaluation.md). rules_js is
       npm-lockfile machinery the no-npm ESM frontends deliberately lack; the ~25-line
@@ -128,7 +129,10 @@ into one dependency graph with a single `bazel test //...`.
 
 ## Non-Bazel roadmap items
 
-- [ ] **Beat-relative note-duration encoding.** Across the ecosystem, MIDI note
+- [x] **Beat-relative note-duration encoding.** **Done** (beats-bitwrap-io 1bd9fbc:
+      `durationSteps` sixteenth-steps canonical for new authoring, legacy-ms models keep
+      their bytes/CIDs/playback; landed together with the live parity diff exactly as
+      prescribed below.) Original rationale: Across the ecosystem, MIDI note
       events encode `duration` as fixed **milliseconds** (e.g. beats-bitwrap-io
       `internal/pflow.MidiBinding.Duration`, hashed into the share CID). That's
       tempo-blind: a sustain baked at a genre's nominal BPM (the bossa walking-
