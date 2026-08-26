@@ -110,9 +110,12 @@ into one dependency graph with a single `bazel test //...`.
       tests. It asserts JS output against the same pinned fixture the Go test checks, so the
       two are guarded in one command — but it's not yet a single genrule *diffing live Go vs.
       JS output*. Tightening it to a direct diff is the remaining work.
-- [ ] Evaluate `rules_rust` for pflow-rs and `rules_js`/`aspect` for the frontends. Note:
-      for no-npm vanilla ESM, a ~25-line custom rule over the `rules_nodejs` toolchain
-      (`beats-bitwrap-io/tools/nodejs_test.bzl`) beat pulling in aspect_rules_js.
+- [x] Evaluate `rules_rust` for pflow-rs and `rules_js`/`aspect` for the frontends —
+      **resolved: adopt neither framework** (docs/bazel-rules-evaluation.md). rules_js is
+      npm-lockfile machinery the no-npm ESM frontends deliberately lack; the ~25-line
+      `nodejs_test.bzl` pattern over bare `rules_nodejs` is the keeper (promote with a hash
+      lock when a second repo needs it). rules_rust is deferred with a named revisit
+      trigger: the day any Go/JS repo consumes a pflow-rs artifact at build time.
 
 ## Honest costs (track these, don't let them rot)
 
