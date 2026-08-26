@@ -1,6 +1,6 @@
-# Neural ODE Example
+# Parameter Fitting Example
 
-Demonstrates parameter fitting for Petri net models using gradient-free optimization, similar to Neural ODE approaches.
+Demonstrates mechanistic system identification: fitting the unknown rates of continuous Petri-net models to observed time-series data using gradient-free optimization. Learn the rates, preserve the structure.
 
 ## What It Does
 
@@ -102,17 +102,16 @@ obsA := learn.InterpolateSolution(trueSol, times, "A")
 data, _ := learn.NewDataset(times, map[string][]float64{"A": obsA})
 ```
 
-## Why "Neural ODE-ish"?
+## Relation to Neural ODEs
 
-Like Neural ODEs, this approach:
-- Treats ODE parameters as learnable
-- Uses gradient-free optimization (could extend to gradient-based)
-- Fits continuous dynamics to discrete observations
+This shares the Neural ODE setting — learnable parameters inside an ODE, fitted to discrete observations of continuous dynamics — but it is not one, and the differences are the point:
 
-Unlike true Neural ODEs:
-- Uses mechanistic Petri net structure (not neural network)
-- Parameters have physical interpretation (rates)
-- More interpretable, fewer parameters
+- The vector field comes from mechanistic Petri-net structure, not a neural network
+- The topology is declared, not learned; every fitted parameter is an interpretable transition rate
+- The fitted model stays analyzable: invariants, reachability, and verification all still apply
+- Far fewer parameters, and gradient-free optimization suffices
+
+The precise category is **ODE parameter estimation / system identification for continuous Petri-net models**. (`learn.MLPRateFunc` is the hybrid option when a single rate genuinely needs to be a learned function of state.)
 
 ## Packages Used
 

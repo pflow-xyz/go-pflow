@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	fmt.Println("=== Neural ODE-ish Parameter Fitting Example ===")
+	fmt.Println("=== Petri-Net ODE Parameter Fitting (system identification) ===")
 	fmt.Println()
 
 	// Example 1: Simple A->B decay with constant rate recovery

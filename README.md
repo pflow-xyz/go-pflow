@@ -48,7 +48,7 @@ See [The go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) fo
 | `eventlog` | Event log parsing | [Ch 11: Process Mining](https://book.pflow.xyz/ch11-process-mining.html) |
 | `mining` | Process discovery, rate learning | [Ch 11: Process Mining](https://book.pflow.xyz/ch11-process-mining.html) |
 | `monitoring` | Real-time prediction, SLA alerts | [Ch 11: Process Mining](https://book.pflow.xyz/ch11-process-mining.html) |
-| `learn` | Neural ODE-ish parameter fitting | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |
+| `learn` | ODE parameter fitting and system identification | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |
 | `tokenmodel` | Token model schemas, DSL | [Ch 4: Token Language](https://book.pflow.xyz/ch04-token-language.html) |
 | `tokenmodel/dataflow` | Beam-style streaming pipelines, discrete-event process simulation | — |
 | `codegen/solidity` | Solidity smart contract generation | [Ch 17: Code Generation](https://book.pflow.xyz/ch16-code-generation.html) |

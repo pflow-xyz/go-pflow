@@ -1,14 +1,21 @@
-// Package learn implements learnable rate functions for Neural ODE-style
-// parameter estimation in Petri net models. It allows transition rates to be
-// parameterized functions that can be fit to observed data while preserving
-// the Petri net structure as a prior.
+// Package learn fits the unknown parameters of continuous Petri-net
+// models to observed data — mechanistic system identification. Learn the
+// rates, preserve the structure: the Petri net supplies an explicit,
+// interpretable model (topology, stoichiometry, conservation), and
+// optimization estimates the transition rates that make it reproduce
+// observations. Unlike a Neural ODE, the vector field is not an opaque
+// learned function — the structure is declared, every fitted parameter is
+// a meaningful rate, and the fitted model remains analyzable by the rest
+// of go-pflow (invariants, reachability, verification).
 //
 // # Overview
 //
 // The learn package extends go-pflow's ODE simulation capabilities with
-// data-driven parameter learning. While the Petri net defines the structural
-// prior (topology, stoichiometry, mass conservation), transition rates become
-// learnable functions k_θ(state, t) that can be fitted to observed trajectories.
+// data-driven parameter estimation. While the Petri net defines the
+// structural prior (topology, stoichiometry, mass conservation),
+// transition rates become parameterized functions k_θ(state, t) fitted to
+// observed trajectories — or calibrated against any other objective via
+// Minimize.
 //
 // # Key Components
 //
@@ -17,13 +24,17 @@
 // Concrete implementations:
 //   - ConstantRateFunc: Fixed rate (non-learnable)
 //   - LinearRateFunc: k = θ₀ + Σᵢ θᵢ * state[placeᵢ]
-//   - MLPRateFunc: Small MLP with one hidden layer
+//   - MLPRateFunc: Small MLP with one hidden layer (the hybrid
+//     mechanistic/neural option — structure declared, one rate learned as
+//     a function of state)
 //
 // LearnableProblem: ODE problem with parameterized rates, integrates with solver.
 //
 // Dataset: Holds observed trajectories for training.
 //
-// Optimization: Gradient-free methods (Nelder-Mead, coordinate descent).
+// Optimization: Gradient-free methods (Nelder-Mead, coordinate descent),
+// via Fit for trajectory losses or Minimize for arbitrary objectives
+// (e.g. HingeRankLoss for calibrating against ranking labels).
 //
 // # Example Usage
 //
