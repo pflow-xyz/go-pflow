@@ -149,12 +149,12 @@ preserve the structure.
 
 | Item | State |
 |------|-------|
-| D1. Forward sensitivities for mass-action nets: augment the ODE with ∂x/∂θ equations (analytic — the RHS is polynomial in state and linear in rates), exposed as `solver`/`learn` API | ☐ |
-| D2. Gradient of trajectory losses: chain MSE-family losses through the sensitivities; gradient-check against finite differences as the acceptance gate | ☐ |
-| D3. Gradient-based optimizers in `learn`: Adam + L-BFGS-style, behind the same `Fit`/`Minimize` surface; Nelder-Mead stays the derivative-free fallback | ☐ |
-| D4. Backprop through `MLPRateFunc` (analytic layer gradients composed with D1), making the hybrid mechanistic/neural rate function trainable | ☐ |
+| D1. Forward sensitivities for mass-action nets: augment the ODE with ∂x/∂θ equations (analytic — the RHS is polynomial in state and linear in rates), exposed as `solver`/`learn` API (`learn/sensitivity.go`, `solver/vector.go`) | ✅ Done |
+| D2. Gradient of trajectory losses: chain MSE-family losses through the sensitivities; gradient-check against finite differences as the acceptance gate (`learn/lossgrad.go`, gates in `learn/sensitivity_test.go`) | ✅ Done |
+| D3. Gradient-based optimizers in `learn`: Adam + backtracking gradient descent, behind the same `Fit`/`Minimize` surface (`FitGradient`/`MinimizeGradient`, `learn/gradopt.go`); Nelder-Mead stays the derivative-free default | ✅ Done |
+| D4. Backprop through `MLPRateFunc` (analytic layer gradients composed with D1), making the hybrid mechanistic/neural rate function trainable (`learn/ratefunc_grad.go`, hybrid fit in `learn/gradopt_test.go`) | ✅ Done |
 | D5. Adjoint sensitivities for many-parameter nets: reverse-mode pass so cost stops scaling with parameter count; forward mode (D1) stays the default for small nets | ☐ |
-| D6. Benchmarks: decay + SIR fits, gradient vs Nelder-Mead — iterations, wall clock, and parameter error at convergence | ☐ |
+| D6. Benchmarks: decay + SIR fits, gradient vs Nelder-Mead — solve-equivalent evals, iterations, and parameter error at convergence (`learn/gradbench_test.go`, skipped in `-short`) | ✅ Done |
 | D7. Compose with `derive`: calibrate a derived evaluation net's transform parameters (e.g. catalyzed-copy rates) by gradient, ode-minimax-style ranking losses included | ☐ |
 | D8. Expose via petri-pilot MCP: gradient fitting and sensitivities alongside the existing `petri_fit` / `petri_ode_sensitivity` | ☐ |
 
