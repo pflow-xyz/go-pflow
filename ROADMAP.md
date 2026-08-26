@@ -136,3 +136,29 @@ into one dependency graph with a single `bazel test //...`.
       is the same cross-language state-root convention Phase 3 wants enforced at
       build time, so the two efforts should land together (change the encoding,
       then add the genrule diff that guards it).
+
+## Differentiable fitting track ("path to 10/10")
+
+An external review of the `learn` package (2026-08-26) rated the system-
+identification story 8.5/10, with a concrete gap: everything today is
+gradient-free. The fitted models are right, but Nelder-Mead scales to a
+handful of parameters and `MLPRateFunc` cannot be meaningfully trained
+without gradients. Closing that gap makes "differentiable Petri-net
+modeling" literal while keeping the package's identity — learn the rates,
+preserve the structure.
+
+| Item | State |
+|------|-------|
+| D1. Forward sensitivities for mass-action nets: augment the ODE with ∂x/∂θ equations (analytic — the RHS is polynomial in state and linear in rates), exposed as `solver`/`learn` API | ☐ |
+| D2. Gradient of trajectory losses: chain MSE-family losses through the sensitivities; gradient-check against finite differences as the acceptance gate | ☐ |
+| D3. Gradient-based optimizers in `learn`: Adam + L-BFGS-style, behind the same `Fit`/`Minimize` surface; Nelder-Mead stays the derivative-free fallback | ☐ |
+| D4. Backprop through `MLPRateFunc` (analytic layer gradients composed with D1), making the hybrid mechanistic/neural rate function trainable | ☐ |
+| D5. Adjoint sensitivities for many-parameter nets: reverse-mode pass so cost stops scaling with parameter count; forward mode (D1) stays the default for small nets | ☐ |
+| D6. Benchmarks: decay + SIR fits, gradient vs Nelder-Mead — iterations, wall clock, and parameter error at convergence | ☐ |
+| D7. Compose with `derive`: calibrate a derived evaluation net's transform parameters (e.g. catalyzed-copy rates) by gradient, ode-minimax-style ranking losses included | ☐ |
+| D8. Expose via petri-pilot MCP: gradient fitting and sensitivities alongside the existing `petri_fit` / `petri_ode_sensitivity` | ☐ |
+
+Constraints that make this go-pflow-shaped: no external ML dependencies
+(stdlib only, like the rest of `learn`), the solver's public API stays
+backward compatible, and every gradient is validated against finite
+differences in tests before anything consumes it.
