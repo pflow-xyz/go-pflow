@@ -1,7 +1,6 @@
 package learn
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/pflow-xyz/go-pflow/petri"
@@ -84,79 +83,24 @@ type sensTransition struct {
 // problem has no learnable parameters.
 //
 // Forward mode carries n·P extra state variables — right for small nets and
-// small MLPs; many-parameter nets await an adjoint method (roadmap D5).
+// small MLPs; many-parameter nets should use SolveAdjoint (D5).
+//
+// Tied parameters (one RateFunc value installed at several transitions — see
+// SharedScalar) appear once in θ, with every tied transition's ParamIndex
+// entry aliasing the same block. Each tied transition's flux contributes its
+// own g·dk/dθ to that shared column, so ∂x/∂θ_shared is the total derivative
+// of the repeated parameter.
 func (p *LearnableProblem) SolveWithSensitivities(method *solver.Solver, opts *solver.Options) (*Sensitivities, error) {
-	labels := p.stateLabels
+	idx, err := p.buildRHSIndex()
+	if err != nil {
+		return nil, err
+	}
+	labels := idx.labels
 	n := len(labels)
-	stateIndex := make(map[string]int, n)
-	for i, label := range labels {
-		stateIndex[label] = i
-	}
-
-	// Every net place must be a state variable. A place absent from U0 reads
-	// as 0 in the plain solve (clamping its transitions OFF), but the
-	// pre-indexed RHS below would drop the arc entirely — two different
-	// dynamical systems. Refuse rather than diverge from LearnableProblem.Solve.
-	for name := range p.Net.Places {
-		if _, ok := stateIndex[name]; !ok {
-			return nil, fmt.Errorf("place %q is missing from the initial state: "+
-				"every net place must appear in U0 so the sensitivity RHS matches the plain solve", name)
-		}
-	}
-
-	params, paramIndex := p.GetAllParams()
-	P := len(params)
-	if P == 0 {
-		return nil, fmt.Errorf("no learnable parameters: every RateFunc has NumParams() == 0")
-	}
-
-	// Pre-index arcs per transition, mirroring solver.buildVecODEFunction:
-	// same input clamp, product over arc ENTRIES (a duplicated arc contributes
-	// its factor twice), weight enters ONLY stoichiometry. Change in lockstep
-	// with that function.
-	inputMap := make(map[string][]int)
-	stoichMap := make(map[string][]sensStoich)
-	for _, arc := range p.Net.Arcs {
-		w := arc.GetWeightSum()
-		if _, isTrans := p.Net.Transitions[arc.Target]; isTrans {
-			if idx, ok := stateIndex[arc.Source]; ok {
-				inputMap[arc.Target] = append(inputMap[arc.Target], idx)
-				stoichMap[arc.Target] = append(stoichMap[arc.Target], sensStoich{idx, -w})
-			}
-		}
-		if _, isTrans := p.Net.Transitions[arc.Source]; isTrans {
-			if idx, ok := stateIndex[arc.Target]; ok {
-				stoichMap[arc.Source] = append(stoichMap[arc.Source], sensStoich{idx, +w})
-			}
-		}
-	}
-
-	// Transitions with no RateFunc have rate 0 and are skipped entirely,
-	// matching BuildODEFunc.
-	trs := make([]sensTransition, 0, len(p.RateFuncs))
-	for name := range p.Net.Transitions {
-		rf, ok := p.RateFuncs[name]
-		if !ok {
-			continue
-		}
-		blk := paramIndex[name]
-		var grad func(state map[string]float64, t float64) (float64, []float64, map[string]float64)
-		if g, ok := rf.(GradRateFunc); ok {
-			grad = g.EvalGrad
-		} else {
-			rfc := rf
-			grad = func(state map[string]float64, t float64) (float64, []float64, map[string]float64) {
-				return fdRateGrad(rfc, state, t)
-			}
-		}
-		trs = append(trs, sensTransition{
-			inputs: inputMap[name],
-			stoich: stoichMap[name],
-			ps:     blk[0],
-			pe:     blk[1],
-			grad:   grad,
-		})
-	}
+	stateIndex := idx.stateIndex
+	trs := idx.trs
+	paramIndex := idx.paramIndex
+	P := idx.P
 
 	// Augmented state y, length n*(P+1): y[0:n] = x; y[n+i*P+p] = S_{i,p}.
 	f := func(t float64, y []float64) []float64 {

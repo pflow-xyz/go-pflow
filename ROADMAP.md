@@ -153,9 +153,9 @@ preserve the structure.
 | D2. Gradient of trajectory losses: chain MSE-family losses through the sensitivities; gradient-check against finite differences as the acceptance gate (`learn/lossgrad.go`, gates in `learn/sensitivity_test.go`) | ✅ Done |
 | D3. Gradient-based optimizers in `learn`: Adam + backtracking gradient descent, behind the same `Fit`/`Minimize` surface (`FitGradient`/`MinimizeGradient`, `learn/gradopt.go`); Nelder-Mead stays the derivative-free default | ✅ Done |
 | D4. Backprop through `MLPRateFunc` (analytic layer gradients composed with D1), making the hybrid mechanistic/neural rate function trainable (`learn/ratefunc_grad.go`, hybrid fit in `learn/gradopt_test.go`) | ✅ Done |
-| D5. Adjoint sensitivities for many-parameter nets: reverse-mode pass so cost stops scaling with parameter count; forward mode (D1) stays the default for small nets | ☐ |
+| D5. Adjoint sensitivities for many-parameter nets: reverse-mode pass so cost stops scaling with parameter count; forward mode (D1) stays the default for small nets | ✅ Done (learn/adjoint.go: SolveAdjoint + MSELossAdjoint/RelativeMSELossAdjoint, FitOptions.Sensitivity="adjoint"; 5.1x cost advantage over forward on a 40-param MLP rate) |
 | D6. Benchmarks: decay + SIR fits, gradient vs Nelder-Mead — solve-equivalent evals, iterations, and parameter error at convergence (`learn/gradbench_test.go`, skipped in `-short`) | ✅ Done |
-| D7. Compose with `derive`: calibrate a derived evaluation net's transform parameters (e.g. catalyzed-copy rates) by gradient, ode-minimax-style ranking losses included | ☐ |
+| D7. Compose with `derive`: calibrate a derived evaluation net's transform parameters (e.g. catalyzed-copy rates) by gradient, ode-minimax-style ranking losses included | ✅ Done (learn/tied.go TiedScalar parameter sharing; petri-pilot experiments/ode-minimax `fitgrad` mode: gradient-calibrated champion passes the exhaustive referee 0/0 — and exposed a training-proxy Goodhart case, see the experiment's finding 16) |
 | D8. Expose via petri-pilot MCP: gradient fitting and sensitivities alongside the existing `petri_fit` / `petri_ode_sensitivity` | ✅ Done (petri-pilot c2b9d8b: petri_fit method="adam", petri_ode_sensitivity method="analytic") |
 
 Constraints that make this go-pflow-shaped: no external ML dependencies

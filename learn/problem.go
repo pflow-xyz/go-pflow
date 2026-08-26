@@ -1,6 +1,8 @@
 package learn
 
 import (
+	"reflect"
+
 	"github.com/pflow-xyz/go-pflow/petri"
 	"github.com/pflow-xyz/go-pflow/solver"
 )
@@ -140,6 +142,20 @@ func (p *LearnableProblem) Solve(solverMethod *solver.Solver, opts *solver.Optio
 
 // GetAllParams extracts all parameters from all RateFuncs in a flat vector.
 // Returns the parameter vector and a mapping from transition name to parameter indices.
+//
+// Tied parameters: installing the SAME RateFunc value at several transitions
+// (see SharedScalar) packs its parameters ONCE. The first carrier — the
+// lexicographically smallest transition name — allocates the block; every
+// later carrier's index entry aliases that same [start, end) range, so the
+// forward-sensitivity RHS accumulates each tied transition's own g·dk/dθ into
+// the shared column and ∂x/∂θ_shared is the total derivative of the repeated
+// parameter. Learn the rate once, preserve the structure that repeats it.
+//
+// Dedup keys on interface equality, consulted only when the dynamic type is
+// comparable (every in-package implementation is a pointer, hence comparable);
+// a non-comparable custom type silently never dedupes — the pre-dedup
+// behavior. The pre-existing double count for a shared pointer was a bug:
+// SetAllParams wrote conflicting values into one cell, last-write-wins.
 func (p *LearnableProblem) GetAllParams() ([]float64, map[string][2]int) {
 	params := []float64{}
 	indices := make(map[string][2]int)
@@ -159,14 +175,25 @@ func (p *LearnableProblem) GetAllParams() ([]float64, map[string][2]int) {
 	}
 
 	offset := 0
+	seen := make(map[RateFunc][2]int)
 	for _, transName := range transNames {
 		rateFunc := p.RateFuncs[transName]
+		comparable := rateFunc != nil && reflect.TypeOf(rateFunc).Comparable()
+		if comparable {
+			if blk, ok := seen[rateFunc]; ok {
+				indices[transName] = blk
+				continue
+			}
+		}
 		transParams := rateFunc.GetParams()
 		start := offset
 		end := offset + len(transParams)
 		indices[transName] = [2]int{start, end}
 		params = append(params, transParams...)
 		offset = end
+		if comparable {
+			seen[rateFunc] = [2]int{start, end}
+		}
 	}
 
 	return params, indices
@@ -174,6 +201,10 @@ func (p *LearnableProblem) GetAllParams() ([]float64, map[string][2]int) {
 
 // SetAllParams sets parameters for all RateFuncs from a flat vector.
 // indices maps transition names to [start, end) indices in the params vector.
+//
+// Tied parameters: transitions sharing one RateFunc alias one block in
+// indices, so the shared function is written repeatedly with the same values —
+// idempotent, never conflicting (see GetAllParams).
 func (p *LearnableProblem) SetAllParams(params []float64, indices map[string][2]int) {
 	for transName, idx := range indices {
 		if rateFunc, ok := p.RateFuncs[transName]; ok {
@@ -183,10 +214,19 @@ func (p *LearnableProblem) SetAllParams(params []float64, indices map[string][2]
 	}
 }
 
-// NumParams returns the total number of learnable parameters.
+// NumParams returns the total number of learnable parameters. A RateFunc
+// installed at several transitions counts once, so this always equals the
+// length of the vector GetAllParams returns.
 func (p *LearnableProblem) NumParams() int {
 	total := 0
+	seen := make(map[RateFunc]bool)
 	for _, rateFunc := range p.RateFuncs {
+		if rateFunc != nil && reflect.TypeOf(rateFunc).Comparable() {
+			if seen[rateFunc] {
+				continue
+			}
+			seen[rateFunc] = true
+		}
 		total += rateFunc.NumParams()
 	}
 	return total
