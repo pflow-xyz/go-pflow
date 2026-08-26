@@ -156,7 +156,7 @@ preserve the structure.
 | D5. Adjoint sensitivities for many-parameter nets: reverse-mode pass so cost stops scaling with parameter count; forward mode (D1) stays the default for small nets | ☐ |
 | D6. Benchmarks: decay + SIR fits, gradient vs Nelder-Mead — solve-equivalent evals, iterations, and parameter error at convergence (`learn/gradbench_test.go`, skipped in `-short`) | ✅ Done |
 | D7. Compose with `derive`: calibrate a derived evaluation net's transform parameters (e.g. catalyzed-copy rates) by gradient, ode-minimax-style ranking losses included | ☐ |
-| D8. Expose via petri-pilot MCP: gradient fitting and sensitivities alongside the existing `petri_fit` / `petri_ode_sensitivity` | ☐ |
+| D8. Expose via petri-pilot MCP: gradient fitting and sensitivities alongside the existing `petri_fit` / `petri_ode_sensitivity` | ✅ Done (petri-pilot c2b9d8b: petri_fit method="adam", petri_ode_sensitivity method="analytic") |
 
 Constraints that make this go-pflow-shaped: no external ML dependencies
 (stdlib only, like the rest of `learn`), the solver's public API stays
