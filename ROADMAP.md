@@ -169,3 +169,40 @@ Constraints that make this go-pflow-shaped: no external ML dependencies
 (stdlib only, like the rest of `learn`), the solver's public API stays
 backward compatible, and every gradient is validated against finite
 differences in tests before anything consumes it.
+
+## Discrete-stochastic simulation track ("Petri.jl parity")
+
+Julia's Petri.jl/AlgebraicPetri.jl wraps one declared net into whichever
+`DifferentialEquations.jl` problem type a question calls for — `ODEProblem`
+(what `solver` already does), or `DiscreteProblem`/`JumpProblem` (discrete
+Gillespie/tau-leaping) — off the same structure. go-pflow has only the first
+half. It's not a gap that needs inventing from scratch, though: petri-pilot
+already runs a correct, working Gillespie SSA engine
+(`pkg/runtime/sim/sim.go`) built on `metamodel.Model` — a type that already
+lives here — and `metamodel/firing.go:41` already has a comment naming
+"petri-pilot's two stochastic simulators" that this repo doesn't implement.
+Promoting that engine is mostly extraction, not new algorithm work; the
+harder, genuinely new piece is extending `learn`'s gradient-fitting story to
+discrete/stochastic data, which nothing here or in `mining` does today.
+
+| Item | State |
+|------|-------|
+| G1. Promote petri-pilot's Gillespie SSA core (propensity computation, `combinations`, the `ssa` event loop — `pkg/runtime/sim/sim.go`'s first ~1250 lines, not the HTTP/scenario scaffolding in `scenario.go`/`supply.go`/`http.go`) into a new go-pflow package, rebased on `metamodel.Model`/`ArcRef.Kinetic` (already the right input type — no new modeling concepts). petri-pilot then imports it back instead of owning the algorithm, closing the two-simulators gap `firing.go:41` already flags. | Planned |
+| G2. A uniform "pick your solver" entry point mirroring Petri.jl's dispatch: the same declared net produces either an ODE trajectory (existing `solver`) or a discrete SSA sample path (G1), with no separate conversion step between them. | Planned |
+| G3. Consistency gate: SSA's long-run ensemble average must converge to the ODE relaxation's trajectory on the same mass-action net (the law-of-large-numbers relationship between the two is what makes them "the same model," not two independently-drifting implementations) — a fixture-based test in the style this workspace already holds Go↔JS state roots to. | Planned |
+| G4. Julia side (tracked in pflow-jl, not here — much smaller lift): pflow-jl already depends on `AlgebraicPetri.jl`, which can generate `JumpProblem`/`SDEProblem` via `DifferentialEquations.jl` — pflow-jl's own bridge (`src/algebraic.jl`) only wires up `to_ode_problem`. Add `to_jump_problem` alongside it; the capability already exists upstream and unused, this is additive, not a new dependency. | Planned (pflow-jl) |
+| G5. Gradient-based fitting against discrete/stochastic data — the real novel item, not wiring. `mining.FitRateFunctionsFromLog` is a closed-form estimator from event-log timing stats today; nothing threads SSA-simulated or observed discrete sample paths through `learn.MinimizeGradient` the way `SolveWithSensitivities` does for ODE trajectories. Needs a real differentiable objective first (a CTMC/SSA likelihood, or a scoring rule over observed event-time distributions) — exploratory, scope it only after G1-G3 land and the shape of "what data is actually available to fit against" is concrete. | Exploratory |
+
+Related but out of scope for this track: pflow-jl's CID computation
+(`src/pflow.jl:270-286`, `"z" + sha256[:20]`) and go-pflow's
+(`tokenmodel/cid.go`, `"cid:" + sha256` full digest) are independently
+implemented and not cross-checked — a real inconsistency, but a
+content-addressing one, not a simulation one; it belongs with the
+ecosystem's existing CID-parity initiative, not this track.
+
+Constraints: G1 is a promotion of already-correct code, so land it before
+G2-G3 build on it rather than reimplementing propensity/event-loop logic
+here from a blank page. G5 should not be scoped in detail until G1-G3 exist
+to generate the data it would fit against — naming it now is so the track
+doesn't quietly stop at "parity in name only" (ODE and SSA coexisting but
+neither learnable the way the other is).
