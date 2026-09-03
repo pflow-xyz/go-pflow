@@ -1,0 +1,40 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "stochastic",
+    srcs = [
+        "guard.go",
+        "schedule.go",
+        "solve.go",
+        "stochastic.go",
+        "supply.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/stochastic",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metamodel",
+        "//petri",
+        "//reachability",
+        "//solver",
+    ],
+)
+
+go_test(
+    name = "stochastic_test",
+    srcs = [
+        "consistency_test.go",
+        "contention_test.go",
+        "gating_test.go",
+        "kinetic_test.go",
+        "parity_test.go",
+        "schedule_test.go",
+        "stochastic_test.go",
+        "supply_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":stochastic"],
+    deps = [
+        "//metamodel",
+        "//solver",
+    ],
+)

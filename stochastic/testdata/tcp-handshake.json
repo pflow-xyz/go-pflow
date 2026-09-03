@@ -1,0 +1,60 @@
+{
+  "name": "tcp-handshake",
+  "description": "TCP 3-way handshake and connection teardown modeled as two parallel state machines in a Petri net",
+  "debug": {
+    "enabled": true
+  },
+  "graphql": {
+    "enabled": true,
+    "playground": true
+  },
+  "places": [
+    {"id": "client_closed", "description": "Client in CLOSED state", "initial": 1, "x": 100, "y": 100},
+    {"id": "client_syn_sent", "description": "Client sent SYN, waiting for SYN-ACK", "initial": 0, "x": 300, "y": 100},
+    {"id": "client_established", "description": "Client connection established", "initial": 0, "x": 600, "y": 100},
+    {"id": "client_fin_wait", "description": "Client sent FIN, waiting to close", "initial": 0, "x": 800, "y": 100},
+    {"id": "server_listen", "description": "Server listening for connections", "initial": 1, "x": 100, "y": 400},
+    {"id": "server_syn_received", "description": "Server received SYN, sent SYN-ACK", "initial": 0, "x": 400, "y": 400},
+    {"id": "server_established", "description": "Server connection established", "initial": 0, "x": 600, "y": 400},
+    {"id": "server_closed", "description": "Server connection closed", "initial": 0, "x": 900, "y": 400}
+  ],
+  "transitions": [
+    {"id": "send_syn", "description": "Client sends SYN to server", "x": 200, "y": 250},
+    {"id": "send_syn_ack", "description": "Server receives SYN, sends SYN-ACK", "x": 400, "y": 250},
+    {"id": "send_ack", "description": "Client receives SYN-ACK, sends ACK - connection established", "x": 600, "y": 250},
+    {"id": "send_fin", "description": "Client initiates connection teardown with FIN", "x": 750, "y": 250},
+    {"id": "send_fin_ack", "description": "Server acknowledges FIN", "x": 850, "y": 250},
+    {"id": "close", "description": "Both sides close the connection", "x": 950, "y": 250}
+  ],
+  "arcs": [
+    {"from": "client_closed", "to": "send_syn"},
+    {"from": "server_listen", "to": "send_syn"},
+    {"from": "send_syn", "to": "client_syn_sent"},
+
+    {"from": "client_syn_sent", "to": "send_syn_ack"},
+    {"from": "send_syn_ack", "to": "server_syn_received"},
+
+    {"from": "server_syn_received", "to": "send_ack"},
+    {"from": "send_ack", "to": "client_established"},
+    {"from": "send_ack", "to": "server_established"},
+
+    {"from": "client_established", "to": "send_fin"},
+    {"from": "send_fin", "to": "client_fin_wait"},
+
+    {"from": "server_established", "to": "send_fin_ack"},
+    {"from": "client_fin_wait", "to": "send_fin_ack"},
+    {"from": "send_fin_ack", "to": "server_closed"},
+
+    {"from": "server_closed", "to": "close"},
+    {"from": "close", "to": "client_closed"},
+    {"from": "close", "to": "server_listen"}
+  ],
+  "metadata": {
+    "protocol": {
+      "description": "TCP connection lifecycle: 3-way handshake (SYN, SYN-ACK, ACK) and teardown (FIN, FIN-ACK, CLOSE)",
+      "handshake": ["send_syn", "send_syn_ack", "send_ack"],
+      "teardown": ["send_fin", "send_fin_ack", "close"],
+      "concepts": ["protocol state machine", "3-way handshake", "connection teardown", "client-server"]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "stoplight",
+  "description": "Traffic light state machine cycling through red, yellow, and green phases",
+  "debug": {
+    "enabled": true
+  },
+  "graphql": {
+    "enabled": true,
+    "playground": true
+  },
+  "places": [
+    {"id": "red", "description": "Red light is on", "initial": 1, "x": 300, "y": 100},
+    {"id": "green", "description": "Green light is on", "initial": 0, "x": 300, "y": 300},
+    {"id": "yellow", "description": "Yellow light is on", "initial": 0, "x": 300, "y": 500}
+  ],
+  "transitions": [
+    {"id": "go", "description": "Red to green", "x": 150, "y": 200, "rate": 0.1},
+    {"id": "slow", "description": "Green to yellow", "x": 450, "y": 400, "rate": 0.2},
+    {"id": "stop", "description": "Yellow to red", "x": 150, "y": 400, "rate": 0.5}
+  ],
+  "arcs": [
+    {"from": "red", "to": "go"},
+    {"from": "go", "to": "green"},
+    {"from": "green", "to": "slow"},
+    {"from": "slow", "to": "yellow"},
+    {"from": "yellow", "to": "stop"},
+    {"from": "stop", "to": "red"}
+  ]
+}
