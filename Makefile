@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt vet lint examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all
+.PHONY: help build test test-coverage clean install fmt vet lint ssa-goldens examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all
 
 # Default target
 help:
@@ -26,6 +26,7 @@ help:
 	@echo "  make run-coffeeshop-inventory - Run coffee shop inventory stress test"
 	@echo "  make run-coffeeshop-happy - Run coffee shop happy customer scenario (90%+ satisfied)"
 	@echo "  make rebuild-all-svg - Regenerate all SVG visualizations"
+	@echo "  make ssa-goldens     - Regenerate the portable SSA goldens (deliberate act, see stochastic/testdata/README.md)"
 
 # Build the main CLI tool
 build:
@@ -208,6 +209,14 @@ rebuild-all-svg:
 	@cd examples/visualization_demo && go run main.go
 	@echo ""
 	@echo "✓ All SVG files regenerated!"
+
+# Regenerate the portable SSA goldens (stochastic/testdata/portable/*.json),
+# the byte-exact contract with pflow-rs, pflow-xyz and pflow-jl. A deliberate
+# act, never a test side effect: a golden that changes is a finding about the
+# engine. Copies in the other repos must be refreshed byte-identical afterwards.
+ssa-goldens:
+	@echo "Regenerating portable SSA goldens..."
+	go run ./cmd/ssa-goldens -o stochastic/testdata/portable
 
 # Quick check before publishing
 publish-check: clean check

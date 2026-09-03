@@ -36,6 +36,32 @@ import (
 	"github.com/pflow-xyz/go-pflow/solver"
 )
 
+// sampler supplies the two variates each SSA step consumes. The seam exists so
+// the default and portable paths share one ssa() and differ only in where the
+// numbers come from: stdSampler below, or portableSampler in portable.go.
+type sampler interface {
+	// wait returns a unit-exponential variate: -log(u) for the step's first draw.
+	wait() float64
+	// uniform returns the step's second draw, in [0,1).
+	uniform() float64
+}
+
+// stdSampler is the default path's behaviour, byte for byte: math/rand and
+// math.Log, with the historical clamp that keeps log(0) out of the trajectory.
+// It lives here rather than in portable.go so that file never names math.Log
+// (ssa-spec.md §5.1).
+type stdSampler struct{ rng *rand.Rand }
+
+func (s stdSampler) wait() float64 {
+	u := s.rng.Float64()
+	if u <= 0 {
+		u = 1e-300
+	}
+	return -math.Log(u)
+}
+
+func (s stdSampler) uniform() float64 { return s.rng.Float64() }
+
 // DefaultRate is used for a transition whose model declares none. Mass-action
 // with unit rate means "as fast as tokens allow", which is the least surprising
 // reading of an unannotated net.
@@ -90,6 +116,12 @@ type Options struct {
 	// consecutive segments sharing one seed by SimulateSchedule. A transition
 	// in both Rates and Schedule takes the schedule.
 	Schedule map[string][]metamodel.RateSegment
+	// Portable selects the byte-exact SSA path shared with pflow-rs, pflow-xyz
+	// and pflow-jl: a fixed PRNG (SplitMix64 -> xoshiro256**) and an explicit
+	// logarithm in place of math/rand and math.Log, per ssa-spec.md. The zero
+	// value is today's default path, unchanged; the goldens petri-pilot
+	// depends on are produced by that path and stay so.
+	Portable bool
 }
 
 // startFrom overlays a caller's marking onto the one the model declares.
@@ -431,14 +463,29 @@ func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 			start[i] = initial[p]
 		}
 		counts := make([]int, len(trs))
-		traj := ssa(trs, places, start, times, rand.New(rand.NewSource(seed+int64(r))), counts, blk, ts) //nolint:gosec // not cryptographic
+		// Seed rule, both paths: base+r per realization, applied after the
+		// zero rule. The portable path reinterprets the int64 as uint64.
+		var s sampler
+		if opts.Portable {
+			s = &portableSampler{x: newXoshiro256(uint64(seed) + uint64(r))}
+		} else {
+			s = stdSampler{rand.New(rand.NewSource(seed + int64(r)))} //nolint:gosec // not cryptographic
+		}
+		traj := ssa(trs, places, start, times, s, counts, blk, ts)
 		for i, c := range counts {
 			firings[i] += float64(c)
 		}
 		for p := range places {
 			for i, v := range traj[p] {
+				// float64(v*v) forbids the compiler fusing the square into
+				// the add (arm64 would); on amd64 it is the same two roundings
+				// as before, so the default-path goldens are untouched. This
+				// and the variance below are the two lines the default path
+				// shares with the portable one, and the portable contract
+				// needs them unfused on every GOARCH; the default path gains
+				// the same cross-platform determinism as a side effect.
 				sums[p][i] += v
-				sumSquares[p][i] += v * v
+				sumSquares[p][i] += float64(v * v)
 			}
 		}
 	}
@@ -454,7 +501,8 @@ func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 		for j := range times {
 			mean[j] = sums[i][j] / n
 			if sd != nil {
-				variance := sumSquares[i][j]/n - mean[j]*mean[j]
+				// float64(...) for the same reason as sumSquares above.
+				variance := sumSquares[i][j]/n - float64(mean[j]*mean[j])
 				if variance < 0 {
 					variance = 0 // floating-point noise around zero
 				}
@@ -1080,7 +1128,7 @@ func (t *transition) soleShortInput(marking []int) int {
 	return short
 }
 
-func ssa(trs []transition, places []string, marking []int, times []float64, rng *rand.Rand, fired []int, blk *blockage, ts *timeStats) [][]float64 {
+func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats) [][]float64 {
 	nPlaces := len(marking)
 	blk.credit(0) // a step cut short by maxSteps leaves scratch behind
 	traj := make([][]float64, nPlaces)
@@ -1156,11 +1204,10 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 			break
 		}
 
-		u := rng.Float64()
-		if u <= 0 {
-			u = 1e-300
-		}
-		dt := -math.Log(u) / total
+		// The sampler owns the first draw and its logarithm (the default
+		// path's u <= 0 clamp lives in stdSampler); this is the same
+		// -log(u) / total as before, in the same two operations.
+		dt := rng.wait() / total
 		// The marking is held from here until the firing, or until the horizon
 		// if the draw overshoots it. Both the blocked-time bookkeeping and the
 		// time-weighted metrics are credited against that interval, clipped —
@@ -1174,7 +1221,7 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 			break
 		}
 
-		r := rng.Float64() * total
+		r := rng.uniform() * total
 		chosen, acc := len(trs)-1, 0.0
 		for i, a := range propensities {
 			if acc += a; r <= acc {

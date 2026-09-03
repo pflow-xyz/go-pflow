@@ -36,6 +36,7 @@ See [The go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) fo
 |---------|---------|--------------|
 | `petri` | Core types, fluent Builder API | [Ch 1: Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html) |
 | `solver` | ODE solvers (Tsit5, RK45, implicit) | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) |
+| `stochastic` | Gillespie SSA, SSA/ODE dispatch; `Options{Portable: true}` is byte-exact with pflow-rs, pflow-xyz and pflow-jl (goldens in `stochastic/testdata/portable/`, `make ssa-goldens`) | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) |
 | `stateutil` | State map utilities | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |
 | `hypothesis` | Move evaluation for game AI | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) |
 | `sensitivity` | Parameter sensitivity analysis | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |

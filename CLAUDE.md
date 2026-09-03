@@ -104,6 +104,7 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | `petri` | Core Petri net types, fluent Builder API |
 | `metamodel` | Application schema; **CompositeNet** — compose subnets via typed links (`Bundle`/`Flatten`) |
 | `solver` | ODE solvers (Tsit5, RK45, implicit), equilibrium detection |
+| `stochastic` | Gillespie SSA (direct method) on a `metamodel.Model`; `Solve` dispatches one declared net to SSA or the `solver` ODE. `Options{Portable: true}` is the byte-exact path shared with pflow-rs, pflow-xyz and pflow-jl (fixed PRNG + ported log, `stochastic/portable.go`); goldens in `stochastic/testdata/portable/`, regenerated only by `make ssa-goldens` (`cmd/ssa-goldens`) |
 | `stateutil` | State map utilities (Copy, Apply, Merge, Sum, Diff) |
 | `hypothesis` | Move evaluation for game AI |
 | `sensitivity` | Parameter sensitivity analysis |

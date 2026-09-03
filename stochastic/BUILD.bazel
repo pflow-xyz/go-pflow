@@ -4,6 +4,7 @@ go_library(
     name = "stochastic",
     srcs = [
         "guard.go",
+        "portable.go",
         "schedule.go",
         "solve.go",
         "stochastic.go",
@@ -27,6 +28,8 @@ go_test(
         "gating_test.go",
         "kinetic_test.go",
         "parity_test.go",
+        "portable_parity_test.go",
+        "portable_test.go",
         "schedule_test.go",
         "stochastic_test.go",
         "supply_test.go",
