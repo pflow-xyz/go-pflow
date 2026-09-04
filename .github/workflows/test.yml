@@ -23,11 +23,8 @@ jobs:
       - name: vet
         run: go vet ./...
 
-      # ./learn/... has pre-existing failing tests (TestLearnableProblemSolve,
-      # TestFitSimpleRecovery — rate-recovery diverges). Excluded until the
-      # gradient/fit code there is repaired. Everything else is gated.
       - name: test
-        run: go test $(go list ./... | grep -v '/learn$')
+        run: go test ./...
 
       # F4: the prover/zkcompile binaries use gnark-crypto's asm field
       # arithmetic; the Bazel verification build also uses asm now (inlined
