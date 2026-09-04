@@ -4,6 +4,7 @@ go_library(
     name = "stochastic",
     srcs = [
         "guard.go",
+        "likelihood.go",
         "portable.go",
         "schedule.go",
         "sde.go",
@@ -14,6 +15,7 @@ go_library(
     importpath = "github.com/pflow-xyz/go-pflow/stochastic",
     visibility = ["//visibility:public"],
     deps = [
+        "//learn",
         "//metamodel",
         "//petri",
         "//reachability",
@@ -28,6 +30,7 @@ go_test(
         "contention_test.go",
         "gating_test.go",
         "kinetic_test.go",
+        "likelihood_test.go",
         "parity_test.go",
         "portable_parity_test.go",
         "portable_test.go",

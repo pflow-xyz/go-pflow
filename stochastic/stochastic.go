@@ -22,6 +22,13 @@
 // its arc weight") describes chemical mass action, not solver's rate law
 // (weight in stoichiometry only, as above); it was moved from petri-pilot
 // unchanged and is kept byte-for-byte for parity.
+//
+// FitDiscrete and NegLogLikelihood (likelihood.go) are this package's
+// counterpart to learn.SolveWithSensitivities: where that fits an ODE's
+// rates to a continuous trajectory via forward sensitivities, these fit a
+// CTMC's rates to one or more exactly-observed discrete sample paths (as
+// recorded by Options.OnFire) via the exact CTMC log-likelihood and its
+// closed-form gradient, handed to the same learn.MinimizeGradient optimizer.
 package stochastic
 
 import (
@@ -129,6 +136,13 @@ type Options struct {
 	// value is today's default path, unchanged; the goldens petri-pilot
 	// depends on are produced by that path and stay so.
 	Portable bool
+	// OnFire is called immediately after a transition fires, once per
+	// firing, with the realization index (0-based), the firing time, the
+	// transition id, and the POST-firing marking in TokenPlaces(m) order.
+	// Never called for a dead marking or after the horizon. No RNG draws
+	// happen in this hook and it runs after fired[chosen]++, so observing
+	// the sample path here cannot change it.
+	OnFire func(realization int, t float64, transition string, marking []int)
 }
 
 // startFrom overlays a caller's marking onto the one the model declares.
@@ -480,7 +494,7 @@ func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 		} else {
 			s = stdSampler{rand.New(rand.NewSource(seed + int64(r)))} //nolint:gosec // not cryptographic
 		}
-		traj := ssa(trs, places, start, times, s, counts, blk, ts)
+		traj := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire)
 		for i, c := range counts {
 			firings[i] += float64(c)
 		}
@@ -1053,6 +1067,13 @@ func (t *transition) allows(places []string, marking []int) bool {
 	return err == nil && ok
 }
 
+// TokenPlaces returns the token places of m, in the order every
+// Options.OnFire marking and Result series use.
+func TokenPlaces(m *metamodel.Model) ([]string, error) {
+	places, _, err := tokenPlaces(m)
+	return places, err
+}
+
 func tokenPlaces(m *metamodel.Model) ([]string, map[string]int, error) {
 	var places []string
 	index := map[string]int{}
@@ -1162,7 +1183,7 @@ func (t *transition) soleShortInput(marking []int) int {
 	return short
 }
 
-func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats) [][]float64 {
+func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int)) [][]float64 {
 	nPlaces := len(marking)
 	blk.credit(0) // a step cut short by maxSteps leaves scratch behind
 	traj := make([][]float64, nPlaces)
@@ -1271,6 +1292,11 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 		}
 		if fired != nil {
 			fired[chosen]++
+		}
+		if onFire != nil {
+			post := make([]int, len(marking))
+			copy(post, marking)
+			onFire(realization, t, trs[chosen].id, post)
 		}
 	}
 
