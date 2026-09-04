@@ -373,14 +373,18 @@ func TestAdjointCostAdvantageMLP(t *testing.T) {
 	// (c) deterministic cost gate under adaptive stepping (the production
 	// configuration): forward work = steps * n * (1+P) state-derivative
 	// evaluations vs adjoint work = forward-trajectory steps * n plus
-	// backward steps * (n+P). Measured ratio on this fixture is ~5x
-	// (forward 73776 vs adjoint 14555 at the time of writing); the gate is
-	// set at 4x, not the full measured margin, because the backward pass
-	// integrates over the piecewise-linear reconstruction of the forward
-	// trajectory — its C0 kinks pin the backward accepted-step count to
-	// roughly the forward grid density, which caps the achievable ratio for
-	// this small-n fixture near 5 regardless of P. The point being gated is
-	// that the advantage exists and is a multiple, not marginal.
+	// backward steps * (n+P). Measured ratio on this fixture is ~2.6x
+	// (forward 6678 = 42 steps vs adjoint 2601 = 42 forward + 45 backward
+	// steps, re-measured 2026-09-02 after the Tsit5 error-estimate fix; it
+	// was ~5x — 73776 vs 14555 — while the buggy estimate forced ~460
+	// forward steps). The gate is set at 2x, not the full measured margin,
+	// because the backward pass integrates over the piecewise-linear
+	// reconstruction of the forward trajectory — its C0 kinks pin the
+	// backward accepted-step count to roughly the forward grid density, and
+	// with an honest forward grid of ~40 steps that caps the achievable
+	// ratio for this small-n fixture near (1+P)/(1 + (n+P)/n) ≈ 2.7
+	// regardless of how large P grows. The point being gated is that the
+	// advantage exists and is a multiple, not marginal.
 	opts := solver.DefaultOptions()
 	sens, err := prob.SolveWithSensitivities(nil, opts)
 	if err != nil {
@@ -393,8 +397,8 @@ func TestAdjointCostAdvantageMLP(t *testing.T) {
 	t.Logf("forward work %d (steps %d), adjoint work %d (fwd steps %d + backward steps %d), ratio %.2f",
 		forwardWork, len(sens.T)-1, adjointWork, len(ares.Sol.T)-1, ares.BackwardSteps,
 		float64(forwardWork)/float64(adjointWork))
-	if adjointWork*4 >= forwardWork {
-		t.Errorf("adjoint work %d not < forward work %d / 4", adjointWork, forwardWork)
+	if adjointWork*2 >= forwardWork {
+		t.Errorf("adjoint work %d not < forward work %d / 2", adjointWork, forwardWork)
 	}
 }
 

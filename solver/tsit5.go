@@ -38,6 +38,14 @@ func Tsit5() *Solver {
 			2.324710524099774,
 			0,
 		},
+		// Bhat is the error-difference vector b - b̂ (5th-order weights minus
+		// the embedded 4th-order weights), the same convention as
+		// OrdinaryDiffEq.jl's btilde_i = b_i - bhat_i. The last entry is
+		// b_7 - b̂_7 = 0 - 1/66 = -1/66 (OrdinaryDiffEq's btilde7 = -1/66).
+		// Until 2026-09-02 it was +1/66, so the vector summed to 2/66 instead
+		// of 0 and the estimate carried an O(dt·f) term: step control ran as
+		// first order (step count grew ~10x per decade of Reltol rather than
+		// ~10^(1/5)x). See tsit5_test.go for the invariants that pin this.
 		Bhat: []float64{
 			0.001780011052226,
 			0.000816434459657,
@@ -45,7 +53,7 @@ func Tsit5() *Solver {
 			0.144711007173263,
 			-0.582357165452555,
 			0.458082105929187,
-			1.0 / 66.0,
+			-1.0 / 66.0,
 		},
 	}
 }

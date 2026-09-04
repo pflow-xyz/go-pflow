@@ -9,12 +9,16 @@ import (
 )
 
 // tightOpts returns solver options tight enough that integration noise sits
-// below the 1e-3 gradient-check gate. Fixed-step (the sanctioned escape
-// hatch): this solver's Tsit5 embedded error weights carry an O(dt·f) bias,
-// so an Abstol of 1e-10 pins adaptive stepping at Dtmin whenever a component
-// passes near zero with nonzero derivative, truncating the solve. A fixed
-// small step keeps Tsit5's O(dt⁵) accuracy far below the gate AND removes
-// step-sequence noise from the finite differences entirely.
+// below the 1e-3 gradient-check gate. Fixed-step, deliberately: a fixed small
+// step keeps Tsit5's O(dt⁵) accuracy far below the gate AND removes
+// step-sequence noise from the finite differences entirely — an adaptive
+// solve re-chooses its grid for every perturbed parameter, which shows up in
+// a finite difference as noise of order the local tolerance. (Until
+// 2026-09-02 this was also the escape hatch from a bug: the Tsit5 embedded
+// error weights carried an O(dt·f) bias, so an Abstol of 1e-10 pinned
+// adaptive stepping at Dtmin whenever a component passed near zero with
+// nonzero derivative. That is fixed; the fixed step stays for the reason
+// above.)
 func tightOpts() *solver.Options {
 	return &solver.Options{
 		Dt:       0.001,

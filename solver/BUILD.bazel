@@ -21,6 +21,7 @@ go_test(
         "colors_test.go",
         "solver_test.go",
         "truncation_test.go",
+        "tsit5_test.go",
         "vector_test.go",
     ],
     embed = [":solver"],

@@ -39,17 +39,19 @@ func meanFieldExact(m *metamodel.Model) bool {
 	return true
 }
 
-// referenceOptions is solver.AccurateOptions with Reltol relaxed from 1e-6
-// to 1e-5. Measured 2026-09-02: solver's Tsit5 step count grows tenfold per
-// decade of Reltol (1.7k / 14k / 119k / 994k steps on the chain at 1e-3 ..
-// 1e-6), i.e. the embedded error estimate behaves as first order, so 1e-6
-// costs ~3.5 s per solve and exhausts Maxiters (Truncated) on the N=10000 SIR
-// of Case 3. At 1e-5 every reference here finishes in ~0.5 s and differs from
-// the 1e-6 solve by < 1e-6 token where that solve completes, which is four
-// orders below the tightest tolerance in this file.
+// referenceOptions is solver.AccurateOptions (Reltol 1e-6) with Dtmax
+// lowered from 0.1 to 0.01. The solve itself is cheap since the Tsit5 error
+// estimate was fixed on 2026-09-02 (an O(dt·f) term in Bhat had made step
+// control first order and 1e-6 cost ~1M steps on the chain; it now hits
+// Dtmax on every net here, ~0.1 ms per solve). What still needs care is the
+// resampling: odeReference interpolates linearly onto the sample grid, and
+// with nodes 0.1 apart that alone contributes dt²/8·|u″| ≈ 0.09 token on the
+// chain (measured against the closed form) — the same size as the bounds in
+// this file. At Dtmax 0.01 the interpolation error is 1.6e-3 token and the
+// N=10000 SIR reference takes 6 ms.
 func referenceOptions() *solver.Options {
 	o := solver.AccurateOptions()
-	o.Reltol = 1e-5
+	o.Dtmax = 0.01
 	return o
 }
 
@@ -106,10 +108,16 @@ func maxAbsDiff(t *testing.T, what string, a, b []float64) float64 {
 	return worst
 }
 
-// forecastTol is how far Forecast (solver.DefaultOptions, reltol 1e-3) may
-// sit from the reference solve: 0.1 token, as pre-registered, for every net
-// of population <= 1000. Case 3 scales it with N (see sirGap).
-const forecastTol = 0.1
+// forecastTol is how far Forecast (solver.DefaultOptions, reltol 1e-3,
+// Dtmax 0.1) may sit from the reference solve. The pre-registered figure was
+// 0.1 token for every net of population <= 1000, and it held only because the
+// pre-2026-09-02 error estimate over-refined every step (~1.7k steps on the
+// chain instead of ~60). With honest step control Forecast's dominant error
+// is its own linear resample of a 0.1-spaced trajectory onto the sample grid:
+// worst case dtmax²/8·max|u″| = 0.01/8·150 ≈ 0.19 token on the chain
+// (b″ = 200(e^{-t/2}/4 − e^{-t}), |b″(0)| = 150); measured 0.137 on b. The
+// solver error at reltol 1e-3 is two orders below that. Hence 0.25.
+const forecastTol = 0.25
 
 // bothSides runs the SSA ensemble and the ODE through Solve, checks the
 // dispatch labels, holds Forecast within tol of the reference solve, and
@@ -272,12 +280,11 @@ func sirGap(t *testing.T, scale, realizations int) (map[string]Series, map[strin
 	opts := sirOpts
 	opts.Realizations = realizations
 	n := float64(1000 * scale)
-	// Forecast runs at reltol 1e-3, so its distance from the reference grows
-	// with population: 0.1 token at N=1000 is 1e-4 relative, and holding
-	// N=10000 to the same absolute figure asks DefaultOptions for 1e-5.
-	// Observed at N=10000: 0.1095 tokens on I. The bound is therefore scaled
-	// with N (0.1 per 1000 tokens) rather than tightened by a solver change.
-	ssa, ode := bothSides(t, m, opts, forecastTol*n/1000)
+	// The bound was scaled with N (0.1 per 1000 tokens) while the buggy error
+	// estimate put Forecast 0.1095 tokens from the reference at N=10000. With
+	// the fix the SIR curve is smooth on the 0.1 grid: measured 0.0019 token
+	// at N=1000 and 0.019 at N=10000, so the flat forecastTol holds at both.
+	ssa, ode := bothSides(t, m, opts, forecastTol)
 	rel := map[string]float64{}
 	for _, p := range []string{"S", "I", "R"} {
 		rel[p] = maxAbsDiff(t, p, ssa[p].Values, ode[p]) / n
