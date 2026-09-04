@@ -245,3 +245,67 @@ func TestReadArcsDoNotConsume(t *testing.T) {
 		t.Errorf("gate = %v after firing, want 5 — a read arc must not be consumed", res.Final["gate"])
 	}
 }
+
+// TestForecastResampleErrorIsSmall pins the fix for item 1b: with the Tsit5
+// estimator honest, DefaultOptions' Dtmax could leave the linear resample in
+// Forecast as the dominant error on a coarse sample grid. forecastSolverOptions
+// caps Dtmax to a quarter of the grid spacing so that error stays well under
+// the solver's own Reltol.
+func TestForecastResampleErrorIsSmall(t *testing.T) {
+	m := linearChain()
+	opts := Options{Horizon: 6, Samples: 61}
+	res, err := Forecast(m, marking(m), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	grid := sampleTimes(opts.withDefaults(m))
+	byPlace := map[string][]float64{}
+	for _, s := range res.Series {
+		byPlace[s.Place] = s.Values
+	}
+	closed := map[string][]float64{"a": {}, "b": {}, "c": {}}
+	for _, tt := range grid {
+		a := 100 * math.Exp(-tt)
+		b := 200 * (math.Exp(-tt/2) - math.Exp(-tt))
+		closed["a"] = append(closed["a"], a)
+		closed["b"] = append(closed["b"], b)
+		closed["c"] = append(closed["c"], 100-a-b)
+	}
+	for _, p := range []string{"a", "b", "c"} {
+		worst := 0.0
+		for i := range grid {
+			if d := math.Abs(byPlace[p][i] - closed[p][i]); d > worst {
+				worst = d
+			}
+		}
+		// Before the grid cap this was ~0.16 (dominated by a Dtmax=0.1
+		// resample); with it, the observed worst case is ~0.01, close to
+		// DefaultOptions' own Reltol=1e-3 floor on a place near 50-100
+		// tokens. 0.05 is comfortably above that floor and well below the
+		// pre-fix number, so a regression back to resample-dominated error
+		// still trips this.
+		if worst > 0.05 {
+			t.Errorf("%s: max|forecast − closed form| = %.4f, want <= 0.05 (resample error should not dominate)", p, worst)
+		}
+	}
+}
+
+// TestForecastSolverOptionsCapsDtmaxToGrid documents the cap directly, not
+// just its downstream effect on accuracy.
+func TestForecastSolverOptionsCapsDtmaxToGrid(t *testing.T) {
+	opts := Options{Horizon: 6, Samples: 61} // spacing = 0.1, cap = 0.025
+	so := forecastSolverOptions(opts.withDefaults(&metamodel.Model{}))
+	if so.Dtmax != 0.025 {
+		t.Errorf("Dtmax = %v, want 0.025 (a quarter of the 0.1 grid spacing)", so.Dtmax)
+	}
+	if so.Dt > so.Dtmax {
+		t.Errorf("Dt = %v exceeds capped Dtmax = %v", so.Dt, so.Dtmax)
+	}
+
+	// A grid coarser than the default Dtmax must not raise it.
+	coarse := Options{Horizon: 100, Samples: 3} // spacing = 50
+	soCoarse := forecastSolverOptions(coarse.withDefaults(&metamodel.Model{}))
+	if soCoarse.Dtmax != 0.1 {
+		t.Errorf("Dtmax = %v, want unchanged default 0.1 on a coarse grid", soCoarse.Dtmax)
+	}
+}

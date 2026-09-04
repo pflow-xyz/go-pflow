@@ -345,7 +345,7 @@ func Forecast(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	}
 
 	prob := solver.NewProblem(net, state, [2]float64{0, opts.Horizon}, opts.Rates)
-	sol := solver.Solve(prob, solver.Tsit5(), solver.DefaultOptions())
+	sol := solver.Solve(prob, solver.Tsit5(), forecastSolverOptions(opts))
 	if sol == nil {
 		return nil, fmt.Errorf("solver returned no solution")
 	}
@@ -355,7 +355,9 @@ func Forecast(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	for _, p := range places {
 		// The solver chooses its own adaptive timesteps, so the trajectory is
 		// resampled onto the caller's grid rather than reported at whatever
-		// points Tsit5 happened to take.
+		// points Tsit5 happened to take. forecastSolverOptions caps the step
+		// size to the grid spacing so that resample, which is linear, cannot
+		// dominate the error the caller sees.
 		vals := resample(sol.T, sol.GetVariable(p), res.Times)
 		res.Series = append(res.Series, Series{Place: p, Values: vals})
 		res.Final[p] = vals[len(vals)-1]
@@ -771,6 +773,31 @@ func resample(srcT, srcV, dstT []float64) []float64 {
 		}
 	}
 	return out
+}
+
+// forecastSolverOptions caps the solver's Dtmax to a quarter of the caller's
+// sample spacing.
+//
+// resample (below) draws a straight line between whichever two solver steps
+// bracket each grid point, so its error is O(Dtmax^2) in the solver's own
+// step size. Before the Tsit5 error-estimate fix (2026-09-03) the estimator
+// was accidentally first order, which over-refined every step and hid this;
+// with honest step control DefaultOptions' Dtmax=0.1 can leave resample as
+// the dominant source of error on a coarse sample grid (observed: ~0.16
+// token on a 100-token chain at the default 60-sample grid). A quarter of
+// the grid spacing keeps the resample error at least an order of magnitude
+// below Reltol without the cost of dense output.
+func forecastSolverOptions(opts Options) *solver.Options {
+	so := *solver.DefaultOptions()
+	if opts.Samples > 1 {
+		if gridCap := (opts.Horizon / float64(opts.Samples-1)) / 4; gridCap > 0 && gridCap < so.Dtmax {
+			so.Dtmax = gridCap
+			if so.Dt > so.Dtmax {
+				so.Dt = so.Dtmax
+			}
+		}
+	}
+	return &so
 }
 
 func sampleTimes(opts Options) []float64 {
