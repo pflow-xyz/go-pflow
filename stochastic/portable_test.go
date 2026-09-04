@@ -311,3 +311,32 @@ func TestPortableOptionZeroValueIsDefaultPath(t *testing.T) {
 		t.Errorf("sir final = %v, want S:9.625 I:71.5 R:918.875", portable.Final)
 	}
 }
+
+// TestPortableNormalVectors pins normal()'s output at seed 42 — the
+// reference values for pflow-rs/pflow-xyz/pflow-jl to match if SDE is ever
+// ported to be byte-exact there too (not yet done; see go-pflow ROADMAP.md
+// G6 and CAPABILITIES.md). Go is the reference implementation here, the
+// same role it played for wait()/uniform() in ssa-spec.md — there is no
+// external SDE spec these come from, only this implementation's own Marsaglia
+// polar draws over the already-pinned xoshiro256**/plog primitives.
+//
+// Index 0-1 and 2-3 are each one accepted (u1, u2) pair (the polar method's
+// spare-caching means indices 0 and 1 share one rejection-sampling draw,
+// as do 2 and 3); index 4 starts a third pair whose spare (index 5) is not
+// checked here.
+func TestPortableNormalVectors(t *testing.T) {
+	s := &portableSampler{x: newXoshiro256(42)}
+	want := []uint64{
+		0xbfe73d2feb0fb377,
+		0xbfcb088028693f9c,
+		0x3fcc5e21f7812a4c,
+		0x3fe0ba8bb0c5fa51,
+		0x3fddb514bfac5b4e,
+	}
+	for i, w := range want {
+		v := s.normal()
+		if got := math.Float64bits(v); got != w {
+			t.Errorf("normal()[%d] = %v (%#x), want %#x", i, v, got, w)
+		}
+	}
+}

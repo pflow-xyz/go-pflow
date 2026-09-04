@@ -5,10 +5,11 @@ import (
 	"math/bits"
 )
 
-// This file is the portable SSA path: everything the byte-exact contract with
-// pflow-rs, pflow-xyz and pflow-jl needs that the default path leaves to the
-// platform. The default path (math/rand + the runtime logarithm) stays the
-// default and is untouched; Options.Portable selects this one.
+// This file is the portable SSA and SDE path: everything the byte-exact
+// contract with pflow-rs, pflow-xyz and pflow-jl needs that the default path
+// leaves to the platform. The default path (math/rand + the runtime
+// logarithm) stays the default and is untouched; Options.Portable selects
+// this one.
 //
 // Three things are pinned here, because each of them varies across languages
 // and none of them may:
@@ -26,17 +27,58 @@ import (
 //     be evaluated, with explicit float64 conversions wherever the Go compiler
 //     would otherwise be free to fuse a multiply-add (it does, on arm64).
 //
+// normal() (SDE's draw) needs no fourth pinned primitive: it is built
+// entirely from the three above plus math.Sqrt, which — unlike log — IEEE
+// 754 requires to be correctly rounded, so it is already bit-identical
+// across every conformant runtime and needs no port.
+//
 // The spec is ssa-spec.md; the vectors in portable_test.go are its §1.5 and
-// §2.5 tables.
+// §2.5 tables. normal()'s own vectors are in portable_test.go, not yet named
+// in ssa-spec.md — SDE has no spec of its own the way SSA does.
 
 // portableSampler implements the sampler seam declared in stochastic.go with
 // the spec's stream: u = 1 - x1 is exact for every x1 in [0, 1) and never
 // zero, so there is no clamp and no redraw — a clamp here would consume a
 // draw the other languages do not.
-type portableSampler struct{ x xoshiro256 }
+type portableSampler struct {
+	x xoshiro256
+
+	// normal()'s cache: the Marsaglia polar method produces two independent
+	// standard normals per accepted pair of uniforms, so the second is
+	// stashed here rather than discarded.
+	hasSpare bool
+	spare    float64
+}
 
 func (s *portableSampler) wait() float64    { return -plog(1 - s.x.uniform()) }
 func (s *portableSampler) uniform() float64 { return s.x.uniform() }
+
+// normal draws a standard normal variate via the Marsaglia polar method:
+// deliberately not Box-Muller, which needs sin/cos — a second transcendental
+// port on top of plog, and one with no portable reference implementation
+// this codebase already carries. Polar needs only sqrt (already exact and
+// identical across every IEEE 754 implementation — never approximated the
+// way log is, so it needs no port) and plog, both already in this file's
+// contract. u1, u2 are drawn from (-1, 1) and accepted when 0 < u1²+u2² < 1;
+// mul = sqrt(-2·plog(s)/s) turns the pair into two independent N(0,1)
+// values, u1·mul and u2·mul.
+func (s *portableSampler) normal() float64 {
+	if s.hasSpare {
+		s.hasSpare = false
+		return s.spare
+	}
+	for {
+		u1 := 2*s.x.uniform() - 1
+		u2 := 2*s.x.uniform() - 1
+		sq := u1*u1 + u2*u2
+		if sq > 0 && sq < 1 {
+			mul := math.Sqrt(-2 * plog(sq) / sq)
+			s.spare = u2 * mul
+			s.hasSpare = true
+			return u1 * mul
+		}
+	}
+}
 
 // splitmix64 expands one 64-bit seed into the four xoshiro state words. All
 // arithmetic wraps modulo 2^64, which is what uint64 does natively.

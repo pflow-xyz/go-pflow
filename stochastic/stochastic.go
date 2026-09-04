@@ -44,6 +44,11 @@ type sampler interface {
 	wait() float64
 	// uniform returns the step's second draw, in [0,1).
 	uniform() float64
+	// normal returns a standard normal variate — SDE's only draw. Unlike
+	// wait/uniform this is not part of the SSA byte-parity contract (no
+	// fixture pins its stream the way ssa-spec.md's do), so stdSampler and
+	// portableSampler are free to use whatever generator is natural to each.
+	normal() float64
 }
 
 // stdSampler is the default path's behaviour, byte for byte: math/rand and
@@ -61,6 +66,8 @@ func (s stdSampler) wait() float64 {
 }
 
 func (s stdSampler) uniform() float64 { return s.rng.Float64() }
+
+func (s stdSampler) normal() float64 { return s.rng.NormFloat64() }
 
 // DefaultRate is used for a transition whose model declares none. Mass-action
 // with unit rate means "as fast as tokens allow", which is the least surprising
