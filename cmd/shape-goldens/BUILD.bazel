@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "shape-goldens_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/cmd/shape-goldens",
+    visibility = ["//visibility:private"],
+    deps = ["//parser"],
+)
+
+go_binary(
+    name = "shape-goldens",
+    embed = [":shape-goldens_lib"],
+    visibility = ["//visibility:public"],
+)

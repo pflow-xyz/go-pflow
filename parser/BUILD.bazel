@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "parser",
     srcs = [
+        "editor_shape.go",
         "json.go",
         "model.go",
     ],
@@ -17,10 +18,12 @@ go_library(
 go_test(
     name = "parser_test",
     srcs = [
+        "editor_shape_test.go",
         "fuzz_test.go",
         "json_test.go",
         "model_test.go",
     ],
+    data = glob(["testdata/**"]),
     embed = [":parser"],
     deps = [
         "//metamodel",
