@@ -1086,7 +1086,9 @@
     "initial": [
      0
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 600,
     "y": 2500
    }
@@ -1894,7 +1896,9 @@
     "initial": [
      0
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 600,
     "y": 2500
    }

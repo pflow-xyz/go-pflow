@@ -268,7 +268,9 @@
     "initial": [
      15
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 730,
     "y": 541
    },
@@ -276,7 +278,9 @@
     "initial": [
      1
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 351,
     "y": 140
    },
@@ -284,7 +288,9 @@
     "initial": [
      1
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 353,
     "y": 265
    },
@@ -292,7 +298,9 @@
     "initial": [
      1
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 351,
     "y": 417
    },
@@ -300,7 +308,9 @@
     "initial": [
      1
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 350,
     "y": 543
    },
@@ -477,7 +487,9 @@
     "initial": [
      15
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 730,
     "y": 541
    },
@@ -485,7 +497,9 @@
     "initial": [
      1
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 351,
     "y": 140
    },
@@ -493,7 +507,9 @@
     "initial": [
      1
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 353,
     "y": 265
    },
@@ -501,7 +517,9 @@
     "initial": [
      1
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 351,
     "y": 417
    },
@@ -509,7 +527,9 @@
     "initial": [
      1
     ],
-    "capacity": [],
+    "capacity": [
+     0
+    ],
     "x": 350,
     "y": 543
    },

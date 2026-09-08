@@ -212,10 +212,18 @@ func toFloatSlice(v interface{}) []float64 {
 	}
 	switch x := v.(type) {
 	case []interface{}:
+		// A null (or non-finite) entry is the editor's "unbounded" — it
+		// serialises Infinity as null — and becomes 0, which every engine
+		// already reads as unbounded. Keeping the slot, rather than dropping
+		// it, keeps a mixed vector like [5, null] aligned with its colors.
+		// pflow-jl and pflow-xyz apply the same rule; the editor-shape
+		// goldens (parser/testdata/editor-shape) pin all three together.
 		out := make([]float64, 0, len(x))
 		for _, xi := range x {
 			if f, ok := asFloat64(xi); ok && isFinite(f) {
 				out = append(out, f)
+			} else {
+				out = append(out, 0)
 			}
 		}
 		return out
@@ -224,6 +232,8 @@ func toFloatSlice(v interface{}) []float64 {
 		for _, f := range x {
 			if isFinite(f) {
 				out = append(out, f)
+			} else {
+				out = append(out, 0)
 			}
 		}
 		return out
