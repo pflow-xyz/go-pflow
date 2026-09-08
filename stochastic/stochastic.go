@@ -189,8 +189,8 @@ type Series struct {
 
 // Result is a trajectory: sample times plus one series per token place.
 type Result struct {
-	Times  []float64          `json:"times"`
-	Series []Series           `json:"series"`
+	Times  []float64          `json:"times,omitempty"`
+	Series []Series           `json:"series,omitempty"`
 	Final  map[string]float64 `json:"final"`
 	// Depleted names places that reach zero within the horizon, earliest first.
 	// This is the question a resource model is usually being asked.
@@ -468,8 +468,15 @@ type runStats struct {
 	// mid-service job back into its carrier and restarting the segment would
 	// put the job back at stage one, quietly resetting the Erlang clock at
 	// every boundary.
-	expansion     *metamodel.StageExpansion
-	expandedFinal map[string]float64
+	expansion *metamodel.StageExpansion
+	// ends holds every realization's own final marking, in the expanded
+	// places' order. A scheduled run continues realization r of the next
+	// segment from ends[r], so each sample path stays one path: restarting
+	// every realization from a rounded MEAN marking (what this did before)
+	// put a shop at "1.4 baristas free → 1" for all of them, discarded the
+	// spread the segment had just produced, and could round the carried
+	// marking off a conservation law the net guarantees.
+	ends [][]int
 }
 
 func newRunStats(nPlaces int) *runStats {
@@ -500,6 +507,14 @@ func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 // folds stage places back onto their carriers and stage firings onto their
 // original transition for every report: Series, Final, Metrics, Contended.
 func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, opts Options) (*Result, *runStats, error) {
+	return simulateFrom(orig, m2, exp, marking, nil, opts)
+}
+
+// simulateFrom is simulateExpanded with an optional per-realization start:
+// when starts is non-nil, realization r begins at starts[r] (expanded places'
+// order) instead of the shared marking. Every realization's final marking is
+// returned in runStats.ends either way.
+func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, starts [][]int, opts Options) (*Result, *runStats, error) {
 	opts.Rates = exp.TranslateRates(opts.Rates)
 	opts = opts.withDefaults(m2)
 
@@ -546,16 +561,20 @@ func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, 
 	acc := newRunStats(len(places))
 	acc.times = newTimeStats(len(report))
 	acc.expansion = exp
+	acc.ends = make([][]int, opts.Realizations)
 	if exp != nil {
 		acc.times.foldIdx = foldIdx
-		acc.expandedFinal = map[string]float64{}
 	}
 	blk, ts := acc.blocked, acc.times
 	folded := make([]float64, len(times))
 	for r := 0; r < opts.Realizations; r++ {
 		start := make([]int, len(places))
-		for i, p := range places {
-			start[i] = initial[p]
+		if starts != nil && r < len(starts) && starts[r] != nil {
+			copy(start, starts[r])
+		} else {
+			for i, p := range places {
+				start[i] = initial[p]
+			}
 		}
 		counts := make([]int, len(trs))
 		// Seed rule, both paths: base+r per realization, applied after the
@@ -567,6 +586,7 @@ func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, 
 			s = stdSampler{rand.New(rand.NewSource(seed + int64(r)))} //nolint:gosec // not cryptographic
 		}
 		traj := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire)
+		acc.ends[r] = start // ssa mutates the marking in place; this is where r ended
 		for i, c := range counts {
 			firings[i] += float64(c)
 		}
@@ -594,20 +614,9 @@ func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, 
 				sumSquares[ri][j] += float64(v * v)
 			}
 		}
-		if acc.expandedFinal != nil {
-			last := len(times) - 1
-			for p := range places {
-				acc.expandedFinal[places[p]] += traj[p][last]
-			}
-		}
 	}
 
 	n := float64(opts.Realizations)
-	if acc.expandedFinal != nil {
-		for p := range acc.expandedFinal {
-			acc.expandedFinal[p] /= n
-		}
-	}
 	res := &Result{Method: "ssa", Times: times, Final: map[string]float64{}}
 	for i, p := range report {
 		mean := make([]float64, len(times))

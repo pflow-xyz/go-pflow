@@ -7,9 +7,10 @@ import (
 )
 
 // SimulateSchedule runs the horizon in pieces, one per schedule boundary,
-// carrying the marking across. It is the SSA under opts.Schedule: every
-// segment restarts realization r at Seed+r, Final is rounded to a token count
-// as the next segment's marking, and the statistics are merged across
+// carrying each realization's own marking across. It is the SSA under
+// opts.Schedule and under a model-declared Transition.Schedule: every segment
+// restarts realization r's sampler at Seed+r, realization r continues from
+// the integer marking it reached, and the statistics are merged across
 // segments so one Metrics and one Contended are derived for the whole run.
 //
 // Splitting the run is the honest way to do this with a Gillespie engine: SSA
@@ -41,7 +42,10 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 		return nil, err
 	}
 	bounds := runBoundaries(m, userSchedule, opts.Horizon)
-	start := startFrom(m2, marking)
+	// Realization r of every segment continues from where r ended in the
+	// previous one — one sample path per realization across the whole
+	// horizon. The first segment starts every realization at the marking.
+	var starts [][]int
 	combined := &Result{Method: "ssa", Final: map[string]float64{}}
 	series := map[string][]float64{}
 	throughput := map[string]float64{}
@@ -80,11 +84,12 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 			Portable: opts.Portable,
 			OnFire:   opts.OnFire,
 		}
-		res, segStats, err := simulateExpanded(m, m2, exp, start, segment)
+		res, segStats, err := simulateFrom(m, m2, exp, marking, starts, segment)
 		if err != nil {
 			return nil, err
 		}
 		stats.merge(segStats)
+		starts = segStats.ends
 
 		for _, t := range res.Times {
 			combined.Times = append(combined.Times, from+t)
@@ -101,18 +106,6 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 			caveats = res.Caveats
 		}
 
-		// The next segment starts where this one ended. Rounded because a
-		// marking is a token count: half a customer is not a state. Staged
-		// runs carry the expanded final, for the boundary reason above.
-		final := res.Final
-		if segStats.expandedFinal != nil {
-			final = segStats.expandedFinal
-		}
-		next := map[string]int{}
-		for p, v := range final {
-			next[p] = int(v + 0.5)
-		}
-		start = startFrom(m2, next)
 		from = to
 	}
 
