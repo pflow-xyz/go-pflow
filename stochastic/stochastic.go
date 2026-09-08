@@ -341,6 +341,18 @@ func Forecast(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	// and is consumed without accelerating anything. Refuse rather than plot
 	// it: the caller has a discrete engine one call away. Gating() names which
 	// of these the model leans on.
+	if m.HasSchedules() {
+		return &Result{
+			Method:   "ode",
+			Times:    sampleTimes(opts),
+			Final:    map[string]float64{},
+			Diverged: true,
+			Reason: "this model declares rate schedules, and a continuous solution here integrates one constant " +
+				"rate per transition; the declared day shape would be run flat. Use the discrete engine (Simulate), " +
+				"which honours the schedule segment by segment.",
+			Caveats: []string{"model-declared schedule: a time-varying rate is not a mass-action constant"},
+		}, nil
+	}
 	if gating := m.Gating(); len(gating) > 0 {
 		return &Result{
 			Method:   "ode",
@@ -418,11 +430,19 @@ func checkDivergence(res *Result) {
 // is the honest way to report a stochastic answer: a single run of a queue is
 // an anecdote.
 func Simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result, error) {
-	res, _, err := simulate(m, marking, opts)
+	// A model-declared day shape (Transition.Schedule) routes through the
+	// scheduled runner even when the caller supplied no schedule of its own
+	// — otherwise the declaration would hold only for whoever came in
+	// through SimulateSchedule, and every direct caller would quietly get
+	// the flat rates.
+	if m.HasSchedules() || len(opts.Schedule) > 0 {
+		return SimulateSchedule(m, marking, opts)
+	}
+	res, stats, err := simulate(m, marking, opts)
 	if err != nil {
 		return nil, err
 	}
-	res.Assumptions = append(res.Assumptions, ExponentialServiceAssumption)
+	res.Assumptions = append(res.Assumptions, assumptionsFor(stats.expansion)...)
 	return res, nil
 }
 
@@ -441,6 +461,15 @@ func Simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 type runStats struct {
 	times   *timeStats
 	blocked *blockage
+	// expansion is the stage expansion the run was made under (nil when the
+	// model declares no stages); expandedFinal is the mean final marking in
+	// the expanded vocabulary. A scheduled run carries the expanded marking
+	// across segment boundaries instead of the folded Final: folding a
+	// mid-service job back into its carrier and restarting the segment would
+	// put the job back at stage one, quietly resetting the Erlang clock at
+	// every boundary.
+	expansion     *metamodel.StageExpansion
+	expandedFinal map[string]float64
 }
 
 func newRunStats(nPlaces int) *runStats {
@@ -455,20 +484,56 @@ func (rs *runStats) merge(o *runStats) {
 	rs.blocked.merge(o.blocked)
 }
 
-// simulate is Simulate plus that bookkeeping.
+// simulate is Simulate plus that bookkeeping. Stage declarations are expanded
+// here — the engine runs the expanded net and reports in the model's own
+// vocabulary — so every caller, not only the scenario runner, gets the
+// phase-type durations the model declared.
 func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result, *runStats, error) {
-	opts = opts.withDefaults(m)
-
-	trs, places, caveats, err := compile(m, opts.Rates, opts.Guard)
+	m2, exp, err := m.ExpandStages()
 	if err != nil {
 		return nil, nil, err
 	}
+	return simulateExpanded(m, m2, exp, marking, opts)
+}
+
+// simulateExpanded runs the expanded net m2 (exp nil when m2 == orig) and
+// folds stage places back onto their carriers and stage firings onto their
+// original transition for every report: Series, Final, Metrics, Contended.
+func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, opts Options) (*Result, *runStats, error) {
+	opts.Rates = exp.TranslateRates(opts.Rates)
+	opts = opts.withDefaults(m2)
+
+	trs, places, caveats, err := compile(m2, opts.Rates, opts.Guard)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// The reporting vocabulary: every expanded place folds to itself except
+	// stage places, which fold to their carrier.
+	report := make([]string, 0, len(places))
+	reportIdx := map[string]int{}
+	for _, p := range places {
+		if exp.IsStagePlace(p) {
+			continue
+		}
+		reportIdx[p] = len(report)
+		report = append(report, p)
+	}
+	foldIdx := make([]int, len(places))
+	for i, p := range places {
+		if c, ok := carrierOf(exp, p); ok {
+			foldIdx[i] = reportIdx[c]
+		} else {
+			foldIdx[i] = reportIdx[p]
+		}
+	}
+
 	times := sampleTimes(opts)
 	firings := make([]float64, len(trs))
 
-	sums := make([][]float64, len(places))
-	sumSquares := make([][]float64, len(places))
-	for i := range places {
+	sums := make([][]float64, len(report))
+	sumSquares := make([][]float64, len(report))
+	for i := range report {
 		sums[i] = make([]float64, len(times))
 		sumSquares[i] = make([]float64, len(times))
 	}
@@ -477,9 +542,16 @@ func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	if seed == 0 {
 		seed = 1
 	}
-	initial := startFrom(m, marking)
+	initial := startFrom(m2, marking)
 	acc := newRunStats(len(places))
+	acc.times = newTimeStats(len(report))
+	acc.expansion = exp
+	if exp != nil {
+		acc.times.foldIdx = foldIdx
+		acc.expandedFinal = map[string]float64{}
+	}
 	blk, ts := acc.blocked, acc.times
+	folded := make([]float64, len(times))
 	for r := 0; r < opts.Realizations; r++ {
 		start := make([]int, len(places))
 		for i, p := range places {
@@ -498,8 +570,19 @@ func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 		for i, c := range counts {
 			firings[i] += float64(c)
 		}
-		for p := range places {
-			for i, v := range traj[p] {
+		for ri := range report {
+			for j := range folded {
+				folded[j] = 0
+			}
+			for p := range places {
+				if foldIdx[p] != ri {
+					continue
+				}
+				for j, v := range traj[p] {
+					folded[j] += v
+				}
+			}
+			for j, v := range folded {
 				// float64(v*v) forbids the compiler fusing the square into
 				// the add (arm64 would); on amd64 it is the same two roundings
 				// as before, so the default-path goldens are untouched. This
@@ -507,15 +590,26 @@ func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 				// shares with the portable one, and the portable contract
 				// needs them unfused on every GOARCH; the default path gains
 				// the same cross-platform determinism as a side effect.
-				sums[p][i] += v
-				sumSquares[p][i] += float64(v * v)
+				sums[ri][j] += v
+				sumSquares[ri][j] += float64(v * v)
+			}
+		}
+		if acc.expandedFinal != nil {
+			last := len(times) - 1
+			for p := range places {
+				acc.expandedFinal[places[p]] += traj[p][last]
 			}
 		}
 	}
 
 	n := float64(opts.Realizations)
+	if acc.expandedFinal != nil {
+		for p := range acc.expandedFinal {
+			acc.expandedFinal[p] /= n
+		}
+	}
 	res := &Result{Method: "ssa", Times: times, Final: map[string]float64{}}
-	for i, p := range places {
+	for i, p := range report {
 		mean := make([]float64, len(times))
 		var sd []float64
 		if opts.Realizations > 1 {
@@ -535,11 +629,106 @@ func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 		res.Series = append(res.Series, Series{Place: p, Values: mean, StdDev: sd})
 		res.Final[p] = mean[len(mean)-1]
 	}
-	res.Depleted = depletions(m, res)
-	res.Contended = contentions(m, places, blk, opts.Horizon*n)
+	res.Depleted = depletions(orig, res)
+	res.Contended = dropStageContentions(exp, contentions(m2, places, blk, opts.Horizon*n))
 	res.Caveats = caveats
-	res.Metrics = metricsOf(trs, firings, places, ts, n)
+	res.Metrics = metricsOf(foldThroughput(exp, trs, firings), report, ts, n)
 	return res, acc, nil
+}
+
+// carrierOf is StageExpansion.CarrierOf as a lookup that tolerates nil.
+func carrierOf(exp *metamodel.StageExpansion, place string) (string, bool) {
+	if exp == nil {
+		return "", false
+	}
+	c, ok := exp.CarrierOf[place]
+	return c, ok
+}
+
+// foldThroughput maps stage-transition firing counts back to the original
+// vocabulary: the final stage's firings are the original transition's
+// completions, and intermediate stages are internal — reporting them would
+// count one job as several. Unstaged transitions pass through.
+func foldThroughput(exp *metamodel.StageExpansion, trs []transition, firings []float64) map[string]float64 {
+	out := make(map[string]float64, len(trs))
+	intermediate := map[string]bool{}
+	if exp != nil {
+		for _, ids := range exp.StageIDs {
+			for _, id := range ids[:len(ids)-1] {
+				intermediate[id] = true
+			}
+		}
+	}
+	for i := range trs {
+		id := trs[i].id
+		if intermediate[id] {
+			continue
+		}
+		if exp != nil {
+			if o, ok := exp.FinalStage[id]; ok {
+				id = o
+			}
+		}
+		out[id] += firings[i]
+	}
+	return out
+}
+
+// dropStageContentions removes internal stage places from the contention
+// report — a job mid-service is not waiting for anything, and a stage place
+// "blocking" the next stage is just the service taking its declared time —
+// and folds stage-transition names in the surviving entries' blocking lists
+// back to the original id, so no report speaks the expanded vocabulary.
+func dropStageContentions(exp *metamodel.StageExpansion, in []Contention) []Contention {
+	if exp == nil {
+		return in
+	}
+	original := map[string]string{}
+	for id, stages := range exp.StageIDs {
+		for _, sid := range stages {
+			original[sid] = id
+		}
+	}
+	out := in[:0]
+	for _, c := range in {
+		if exp.IsStagePlace(c.Place) {
+			continue
+		}
+		var blocking []string
+		seen := map[string]bool{}
+		for _, id := range c.Blocking {
+			if o, ok := original[id]; ok {
+				id = o
+			}
+			if !seen[id] {
+				seen[id] = true
+				blocking = append(blocking, id)
+			}
+		}
+		c.Blocking = blocking
+		out = append(out, c)
+	}
+	return out
+}
+
+// assumptionsFor is the engine's assumption list, adjusted for a stage
+// expansion: staged transitions have declared their way out of the
+// exponential worst case, and the note must say so rather than repeat a
+// claim the model no longer makes wholesale.
+func assumptionsFor(exp *metamodel.StageExpansion) []string {
+	if exp == nil {
+		return []string{ExponentialServiceAssumption}
+	}
+	ids := make([]string, 0, len(exp.Stages))
+	for id := range exp.Stages {
+		ids = append(ids, fmt.Sprintf("%s (Erlang-%d)", id, exp.Stages[id]))
+	}
+	sort.Strings(ids)
+	return []string{
+		"unstaged transitions draw exponential durations — the most erratic a step can be for a given average. " +
+			"Staged transitions are the exception: " + strings.Join(ids, ", ") +
+			" draw phase-type durations with the declared lower spread, so their waiting reflects the declaration rather than the worst case.",
+	}
 }
 
 // contentions turns the SSA's blocked-time bookkeeping into the report.
@@ -597,14 +786,14 @@ func sortContentions(out []Contention) {
 }
 
 // metricsOf turns a run into the numbers an operator asks for.
-func metricsOf(trs []transition, firings []float64, places []string, ts *timeStats, n float64) *Metrics {
+func metricsOf(throughput map[string]float64, places []string, ts *timeStats, n float64) *Metrics {
 	mt := &Metrics{
-		Throughput: make(map[string]float64, len(trs)),
+		Throughput: make(map[string]float64, len(throughput)),
 		Mean:       make(map[string]float64, len(places)),
 		P95:        make(map[string]float64, len(places)),
 	}
-	for i := range trs {
-		mt.Throughput[trs[i].id] = firings[i] / n
+	for id, firings := range throughput {
+		mt.Throughput[id] = firings / n
 	}
 	for i, p := range places {
 		mt.Mean[p] = ts.mean(i)
@@ -638,6 +827,14 @@ type timeStats struct {
 	total    float64
 	integral []float64   // place -> ∫ tokens dt
 	dwell    [][]float64 // place -> token count -> time spent holding it
+	// foldIdx, when set, maps the marking vector hold() receives (expanded
+	// places) onto the accumulator's indices (report places). Folding at
+	// hold time is what makes a staged carrier's mean and P95 exact: the
+	// dwell table then holds the distribution of carrier + stages as one
+	// count, which no after-the-fact combination of per-place summaries
+	// can reconstruct.
+	foldIdx []int
+	scratch []int
 }
 
 func newTimeStats(nPlaces int) *timeStats {
@@ -651,6 +848,18 @@ func newTimeStats(nPlaces int) *timeStats {
 func (ts *timeStats) hold(marking []int, dt float64) {
 	if ts == nil || dt <= 0 {
 		return
+	}
+	if ts.foldIdx != nil {
+		if ts.scratch == nil {
+			ts.scratch = make([]int, len(ts.integral))
+		}
+		for i := range ts.scratch {
+			ts.scratch[i] = 0
+		}
+		for i, v := range marking {
+			ts.scratch[ts.foldIdx[i]] += v
+		}
+		marking = ts.scratch
 	}
 	ts.total += dt
 	for i, v := range marking {
@@ -1183,6 +1392,57 @@ func (t *transition) soleShortInput(marking []int) int {
 	return short
 }
 
+// propensitiesAt fills out with the SSA propensity of every transition at
+// marking and returns their total. It is the one rate law: the sampler calls
+// it every step, and Compiled.Propensities exposes the same function to
+// analyses that enumerate a state space (exact CTMC lumpability), so a proof
+// over the chain is a proof over the chain the sampler samples. blk may be
+// nil; when set, each blocked transition's sole short input is noted.
+func propensitiesAt(trs []transition, marking []int, places []string, out []float64, blk *blockage) float64 {
+	total := 0.0
+	for i := range trs {
+		a := trs[i].rate
+		for _, in := range trs[i].inputs {
+			m := marking[in.place]
+			if m < in.weight {
+				a = 0
+				break
+			}
+			if in.kinetic {
+				a *= combinations(m, in.weight)
+			}
+		}
+		// Read arcs, inhibitors, capacity and marking guards decide
+		// enablement without appearing in the propensity: a blocked
+		// transition has rate zero, it does not merely fire more slowly.
+		//
+		// A non-kinetic input is the third case: it appears in the
+		// enablement test above and its tokens are consumed on firing, but
+		// it is left out of the product. Mass action over every input is
+		// the law for chemistry and a lie about a service system — with the
+		// staff pool in the product, two drinks in progress made both
+		// finish twice as fast, and a drink was favoured for using *more*
+		// milk than its neighbour.
+		if a > 0 && (!trs[i].gated(marking) || !trs[i].allows(places, marking)) {
+			a = 0
+		}
+		out[i] = a
+		total += a
+
+		// Why this transition is not firing, when it is not. Only the
+		// consuming arcs are attributed: a read arc or an inhibitor is the
+		// model refusing the firing outright, not a shortage anyone can go
+		// and buy more of.
+		if a == 0 && blk != nil {
+			if short := trs[i].soleShortInput(marking); short >= 0 &&
+				trs[i].gated(marking) && trs[i].allows(places, marking) {
+				blk.note(short, trs[i].id)
+			}
+		}
+	}
+	return total
+}
+
 func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int)) [][]float64 {
 	nPlaces := len(marking)
 	blk.credit(0) // a step cut short by maxSteps leaves scratch behind
@@ -1208,47 +1468,7 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 	propensities := make([]float64, len(trs))
 
 	for step := 0; step < maxSteps && t < tEnd; step++ {
-		total := 0.0
-		for i := range trs {
-			a := trs[i].rate
-			for _, in := range trs[i].inputs {
-				m := marking[in.place]
-				if m < in.weight {
-					a = 0
-					break
-				}
-				if in.kinetic {
-					a *= combinations(m, in.weight)
-				}
-			}
-			// Read arcs, inhibitors, capacity and marking guards decide
-			// enablement without appearing in the propensity: a blocked
-			// transition has rate zero, it does not merely fire more slowly.
-			//
-			// A non-kinetic input is the third case: it appears in the
-			// enablement test above and its tokens are consumed on firing, but
-			// it is left out of the product. Mass action over every input is
-			// the law for chemistry and a lie about a service system — with the
-			// staff pool in the product, two drinks in progress made both
-			// finish twice as fast, and a drink was favoured for using *more*
-			// milk than its neighbour.
-			if a > 0 && (!trs[i].gated(marking) || !trs[i].allows(places, marking)) {
-				a = 0
-			}
-			propensities[i] = a
-			total += a
-
-			// Why this transition is not firing, when it is not. Only the
-			// consuming arcs are attributed: a read arc or an inhibitor is the
-			// model refusing the firing outright, not a shortage anyone can go
-			// and buy more of.
-			if a == 0 && blk != nil {
-				if short := trs[i].soleShortInput(marking); short >= 0 &&
-					trs[i].gated(marking) && trs[i].allows(places, marking) {
-					blk.note(short, trs[i].id)
-				}
-			}
-		}
+		total := propensitiesAt(trs, marking, places, propensities, blk)
 		if total <= 0 {
 			// Dead marking: nothing can fire, and no amount of time changes
 			// that. The rest of the horizon is spent waiting for whatever is

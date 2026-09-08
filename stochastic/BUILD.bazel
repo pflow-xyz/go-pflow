@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "stochastic",
     srcs = [
+        "compiled.go",
         "guard.go",
         "likelihood.go",
         "portable.go",
@@ -26,16 +27,19 @@ go_library(
 go_test(
     name = "stochastic_test",
     srcs = [
+        "compiled_test.go",
         "consistency_test.go",
         "contention_test.go",
         "gating_test.go",
         "kinetic_test.go",
         "likelihood_test.go",
+        "model_schedule_test.go",
         "parity_test.go",
         "portable_parity_test.go",
         "portable_test.go",
         "schedule_test.go",
         "sde_test.go",
+        "stages_test.go",
         "stochastic_test.go",
         "supply_test.go",
     ],

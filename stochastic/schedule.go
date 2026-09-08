@@ -18,15 +18,30 @@ import (
 // applies. Restarting at each boundary keeps every draw consistent with the
 // rates in force when it was made.
 func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) (*Result, error) {
-	opts = opts.withDefaults(m)
-	places, _, err := tokenPlaces(m)
+	// The caller's own rate and schedule tables, kept apart from the merged
+	// defaults: a scenario's constant rate or schedule for a transition beats
+	// the model's declared day shape for that transition, and only for it.
+	userRates, userSchedule := opts.Rates, opts.Schedule
+	// Expand stage declarations once, before the segment loop, and run every
+	// segment in the expanded vocabulary. The marking carried across a
+	// boundary must be the expanded one: folding a mid-service job back into
+	// its carrier and restarting would put it back at stage one, quietly
+	// resetting the Erlang clock at every boundary.
+	m2, exp, err := m.ExpandStages()
 	if err != nil {
 		return nil, err
 	}
-
-	bounds := scheduleBoundaries(opts.Schedule, opts.Horizon)
-	start := startFrom(m, marking)
-
+	opts = opts.withDefaults(m)
+	expandedPlaces, _, err := tokenPlaces(m2)
+	if err != nil {
+		return nil, err
+	}
+	report, _, err := tokenPlaces(m)
+	if err != nil {
+		return nil, err
+	}
+	bounds := runBoundaries(m, userSchedule, opts.Horizon)
+	start := startFrom(m2, marking)
 	combined := &Result{Method: "ssa", Final: map[string]float64{}}
 	series := map[string][]float64{}
 	throughput := map[string]float64{}
@@ -34,10 +49,11 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 	// marking summary and the blocked-time ledger. Averaging the segments' own
 	// means would weight a ten-minute rush the same as a seven-hour lull, which
 	// is the smoothing a schedule exists to avoid, and a segment's Contended
-	// fractions are shares of that segment rather than of the run.
-	stats := newRunStats(len(places))
+	// fractions are shares of that segment rather than of the run. The
+	// marking summary lives in report space (segments fold as they run); the
+	// blocked ledger stays expanded and is filtered at the end.
+	stats := &runStats{times: newTimeStats(len(report)), blocked: newBlockage(len(expandedPlaces))}
 	var caveats []string
-
 	from := 0.0
 	for _, to := range bounds {
 		span := to - from
@@ -50,20 +66,21 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 		if samples < 2 {
 			samples = 2
 		}
-
 		segment := Options{
 			Horizon:      span,
 			Samples:      samples,
 			Realizations: opts.Realizations,
 			Seed:         opts.Seed,
-			Rates:        scheduleRates(opts.Rates, opts.Schedule, from),
+			Rates:        ratesAt(m, userRates, userSchedule, from),
 			// The guard evaluator must reach every segment: simulate compiles
 			// the model afresh per segment, and a segment compiled without it
 			// caveats every guard instead of enforcing the marking-decidable
 			// ones, silently changing the scheduled run's behaviour.
-			Guard: opts.Guard,
+			Guard:    opts.Guard,
+			Portable: opts.Portable,
+			OnFire:   opts.OnFire,
 		}
-		res, segStats, err := simulate(m, start, segment)
+		res, segStats, err := simulateExpanded(m, m2, exp, start, segment)
 		if err != nil {
 			return nil, err
 		}
@@ -85,12 +102,17 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 		}
 
 		// The next segment starts where this one ended. Rounded because a
-		// marking is a token count: half a customer is not a state.
+		// marking is a token count: half a customer is not a state. Staged
+		// runs carry the expanded final, for the boundary reason above.
+		final := res.Final
+		if segStats.expandedFinal != nil {
+			final = segStats.expandedFinal
+		}
 		next := map[string]int{}
-		for p, v := range res.Final {
+		for p, v := range final {
 			next[p] = int(v + 0.5)
 		}
-		start = startFrom(m, next)
+		start = startFrom(m2, next)
 		from = to
 	}
 
@@ -104,21 +126,69 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 	// contended is the shape of silence Contention exists to eliminate — the
 	// café console's Rush box read "waiting on nothing" for a shop at 87%
 	// utilization, because this was never populated at all.
-	combined.Contended = contentions(m, places, stats.blocked, opts.Horizon*float64(opts.Realizations))
+	combined.Contended = dropStageContentions(exp,
+		contentions(m2, expandedPlaces, stats.blocked, opts.Horizon*float64(opts.Realizations)))
 	combined.Caveats = caveats
 	// Once for the whole run, not once per segment: splitting a horizon into
 	// rate segments does not make the engine assume anything extra.
-	combined.Assumptions = append(combined.Assumptions, ExponentialServiceAssumption)
+	combined.Assumptions = append(combined.Assumptions, assumptionsFor(exp)...)
 
 	mt := &Metrics{Throughput: throughput, Mean: map[string]float64{}, P95: map[string]float64{}}
-	for i, p := range places {
+	for i, p := range report {
 		mt.Mean[p] = stats.times.mean(i)
 		mt.P95[p] = stats.times.percentile(i, 0.95)
 	}
-	mt.Utilization = utilization(places, mt.Mean)
+	mt.Utilization = utilization(report, mt.Mean)
 	combined.Metrics = mt
 
 	return combined, nil
+}
+
+// runBoundaries collects every segment end inside the horizon — the caller's
+// schedule and the model's own declared day shape — plus the horizon itself.
+// A model boundary the caller has overridden away still appears; an extra
+// boundary costs one segment restart and misses nothing.
+func runBoundaries(m *metamodel.Model, schedule map[string][]metamodel.RateSegment, horizon float64) []float64 {
+	seen := map[float64]bool{}
+	var out []float64
+	note := func(until float64) {
+		if until > 0 && until < horizon && !seen[until] {
+			seen[until] = true
+			out = append(out, until)
+		}
+	}
+	for _, segs := range schedule {
+		for _, seg := range segs {
+			note(seg.Until)
+		}
+	}
+	for i := range m.Transitions {
+		for _, seg := range m.Transitions[i].Schedule {
+			note(seg.Until)
+		}
+	}
+	sort.Float64s(out)
+	return append(out, horizon)
+}
+
+// ratesAt is the rate table in force at time t: the model's rates, then its
+// own declared day shape for every transition the caller left alone, then
+// the caller's constant overrides, then the caller's schedule segment.
+func ratesAt(m *metamodel.Model, userRates map[string]float64, userSchedule map[string][]metamodel.RateSegment, t float64) map[string]float64 {
+	rates := Rates(m)
+	for i := range m.Transitions {
+		tr := &m.Transitions[i]
+		if _, overridden := userRates[tr.ID]; overridden {
+			continue
+		}
+		if _, scheduled := userSchedule[tr.ID]; scheduled {
+			continue
+		}
+		if v, ok := tr.ScheduledRate(t); ok {
+			rates[tr.ID] = v
+		}
+	}
+	return scheduleRates(rates, userSchedule, t, userRates)
 }
 
 func sortedKeys[V any](m map[string]V) []string {
@@ -150,10 +220,15 @@ func scheduleBoundaries(schedule map[string][]metamodel.RateSegment, horizon flo
 // scheduleRates is the rate table in force at time t: base — the already
 // merged model + override table withDefaults produces — with the schedule's
 // segment for t overlaid.
-func scheduleRates(base map[string]float64, schedule map[string][]metamodel.RateSegment, t float64) map[string]float64 {
+func scheduleRates(base map[string]float64, schedule map[string][]metamodel.RateSegment, t float64, overrides ...map[string]float64) map[string]float64 {
 	rates := make(map[string]float64, len(base))
 	for id, r := range base {
 		rates[id] = r
+	}
+	for _, ov := range overrides {
+		for id, r := range ov {
+			rates[id] = r
+		}
 	}
 	for id, segs := range schedule {
 		// The last segment extends past its own Until, so a schedule that stops
