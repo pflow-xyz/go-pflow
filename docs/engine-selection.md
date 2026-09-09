@@ -16,6 +16,17 @@ descriptions (`petri_ode`, `petri_stochastic`, `petri_sde`) link back to
 this file rather than re-stating it, so there is exactly one place this
 prose can drift from itself.
 
+## Capability matrix
+
+This page is the reasoning. The cell-by-cell contract — what each engine
+does with every arc type, capacity, guard, `kinetic:false`, stages,
+model-declared and option schedules, seeds, portable mode, and which
+result fields each populates, with a file:line for every claim and a list
+of the constructs an engine still ignores silently — is
+[`docs/solver-matrix.md`](solver-matrix.md) in go-pflow. Read that when
+the question is "will this model run on this engine, and what will it
+refuse"; read on here when the question is "which engine should I want".
+
 ## The three engines
 
 | | ODE (`solver`) | SSA (`stochastic`) | SDE (planned, G6) |
