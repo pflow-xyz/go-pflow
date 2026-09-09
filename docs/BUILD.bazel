@@ -3,10 +3,16 @@ load("@io_bazel_rules_go//go:def.bzl", "go_test")
 go_test(
     name = "docs_test",
     srcs = ["solver_matrix_test.go"],
-    # The test resolves every file:line citation in the matrix, so the
-    # document and the sources it cites must both be in the runfiles.
+    # The test resolves every reference in the matrix — file:line citations,
+    # bare file and directory references, and the test functions it names as
+    # pins — so the document and everything it points at must be in the
+    # runfiles. engine-selection.md and this test's own source are referenced
+    # by the matrix; without them here the bare-reference check would fail
+    # under Bazel while passing under `go test`.
     data = [
+        "engine-selection.md",
         "solver-matrix.md",
+        "solver_matrix_test.go",
         "//metamodel:cited_sources",
         "//solver:cited_sources",
         "//stochastic:cited_sources",
