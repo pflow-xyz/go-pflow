@@ -1,0 +1,11 @@
+{
+ "rates": {
+  "arrive": 6,
+  "brew_espresso": 0.01,
+  "brew_latte": 0.002,
+  "serve": 3,
+  "leave": 0.5,
+  "restock": 0.2
+ },
+ "_comment": "cafe-kinetics.json declared rates, gathered in one place. petri_ode / petri_stochastic / petri_sde read the model's rate fields since petri-pilot ae425b5 and take this only as an override; an older build defaulted every rate to 1.0 and needed it"
+}

@@ -1,0 +1,74 @@
+{
+  "name": "cafe-order",
+  "version": "1.0.0",
+  "description": "Variation III — one café order as an event-sourced workflow, the shape petri-pilot generates applications from. Token places only, so every codegen target applies: the full Go application, the single-file cores (go-core, rust, python, javascript) in all four forms, gnark ZK circuits, and the Lean proof form. Transitions name the events they emit, events carry typed fields, roles gate transitions through access rules, and one constraint states that an order is always in exactly one state.",
+  "places": [
+    { "id": "new",       "description": "order placed, not yet paid",          "initial": 1, "x": 80,   "y": 200 },
+    { "id": "paid",      "description": "payment taken",                       "initial": 0, "x": 280,  "y": 200 },
+    { "id": "brewing",   "description": "a barista is making it",              "initial": 0, "x": 480,  "y": 200 },
+    { "id": "ready",     "description": "on the counter",                      "initial": 0, "x": 680,  "y": 200 },
+    { "id": "picked_up", "description": "handed to the customer (terminal)",   "initial": 0, "x": 880,  "y": 200 },
+    { "id": "cancelled", "description": "cancelled before brewing",            "initial": 0, "x": 280,  "y": 400 },
+    { "id": "refunded",  "description": "money returned (terminal)",           "initial": 0, "x": 480,  "y": 400 }
+  ],
+  "transitions": [
+    { "id": "pay",         "description": "customer pays",                       "event": "order_paid",     "x": 180, "y": 200 },
+    { "id": "start_brew",  "description": "barista starts the drink",            "event": "brew_started",   "x": 380, "y": 200 },
+    { "id": "finish_brew", "description": "drink is on the counter",             "event": "brew_finished",  "x": 580, "y": 200 },
+    { "id": "pick_up",     "description": "customer collects it",                "event": "order_picked_up","x": 780, "y": 200 },
+    { "id": "cancel",      "description": "cancel while still unpaid or paid",   "event": "order_cancelled","x": 180, "y": 400 },
+    { "id": "refund",      "description": "manager refunds a cancelled order",   "event": "order_refunded", "x": 380, "y": 400 }
+  ],
+  "arcs": [
+    { "from": "new",       "to": "pay" },
+    { "from": "pay",       "to": "paid" },
+    { "from": "paid",      "to": "start_brew" },
+    { "from": "start_brew","to": "brewing" },
+    { "from": "brewing",   "to": "finish_brew" },
+    { "from": "finish_brew","to": "ready" },
+    { "from": "ready",     "to": "pick_up" },
+    { "from": "pick_up",   "to": "picked_up" },
+    { "from": "paid",      "to": "cancel" },
+    { "from": "cancel",    "to": "cancelled" },
+    { "from": "cancelled", "to": "refund" },
+    { "from": "refund",    "to": "refunded" }
+  ],
+  "constraints": [
+    { "id": "one_state", "expr": "new + paid + brewing + ready + picked_up + cancelled + refunded == 1" }
+  ],
+  "events": [
+    { "id": "order_paid",      "description": "Payment taken",           "fields": [ { "name": "amount", "type": "number" }, { "name": "method", "type": "string" } ] },
+    { "id": "brew_started",    "description": "Barista started the drink","fields": [ { "name": "barista", "type": "string" }, { "name": "drink", "type": "string" } ] },
+    { "id": "brew_finished",   "description": "Drink placed on counter", "fields": [ { "name": "barista", "type": "string" } ] },
+    { "id": "order_picked_up", "description": "Customer collected it",   "fields": [] },
+    { "id": "order_cancelled", "description": "Order cancelled",         "fields": [ { "name": "reason", "type": "string" } ] },
+    { "id": "order_refunded",  "description": "Refund issued",           "fields": [ { "name": "amount", "type": "number" } ] }
+  ],
+  "roles": [
+    { "id": "customer", "name": "Customer" },
+    { "id": "barista",  "name": "Barista" },
+    { "id": "manager",  "name": "Manager", "inherits": ["barista"] }
+  ],
+  "access": [
+    { "transition": "pay",         "roles": ["customer"] },
+    { "transition": "cancel",      "roles": ["customer", "manager"] },
+    { "transition": "start_brew",  "roles": ["barista"] },
+    { "transition": "finish_brew", "roles": ["barista"] },
+    { "transition": "pick_up",     "roles": ["customer", "barista"] },
+    { "transition": "refund",      "roles": ["manager"] }
+  ],
+  "status": {
+    "places": { "new": "New", "paid": "Paid", "brewing": "Brewing", "ready": "Ready", "picked_up": "Done", "cancelled": "Cancelled", "refunded": "Refunded" },
+    "default": "New"
+  },
+  "admin": { "enabled": true, "path": "/admin", "roles": ["manager"], "features": ["list", "detail", "history", "transitions"] },
+  "navigation": {
+    "brand": "Café orders",
+    "items": [
+      { "label": "Orders", "path": "/", "icon": "coffee" },
+      { "label": "Admin",  "path": "/admin", "icon": "settings", "roles": ["manager"] }
+    ]
+  },
+  "eventSourcing": { "snapshots": { "enabled": true, "frequency": 50 }, "retention": { "events": "90d", "snapshots": "1y" } },
+  "graphql": { "enabled": true, "playground": true }
+}

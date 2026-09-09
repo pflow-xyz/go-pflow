@@ -1,0 +1,46 @@
+{
+  "name": "cafe-kinetics",
+  "version": "1.0.0",
+  "description": "Variation I — the café as mass-action kinetics. Same story as cafe.jsonld flattened to one color and stripped of every gate, so the continuous engines have nothing to refuse: ODE (Tsit5), SSA, chemical-Langevin SDE, rate scans, sweeps, phase portraits, sensitivities, parameter heatmaps, Pareto optimisation, Sankey flow and curve fitting all run on this file. Espresso draws two beans per shot (weight 2), which is where ODE mass action (rate x beans, once) and SSA propensity (rate x C(beans,2)) visibly disagree — by design. Demand (arrive) outruns restock, so beans deplete and orders pile up: the equilibrium and the restock rate scan are the story.",
+  "places": [
+    { "id": "beans",   "description": "bean shots in the hopper",     "initial": 40, "x": 80,  "y": 80 },
+    { "id": "milk",    "description": "milk portions",                "initial": 20, "x": 80,  "y": 200 },
+    { "id": "cups",    "description": "clean cups",                   "initial": 30, "x": 80,  "y": 320 },
+    { "id": "orders",  "description": "orders waiting to be brewed",  "initial": 0,  "x": 320, "y": 200 },
+    { "id": "brewing", "description": "drinks in progress",           "initial": 0,  "x": 560, "y": 200 },
+    { "id": "served",  "description": "drinks handed over",           "initial": 0,  "x": 800, "y": 200 }
+  ],
+  "transitions": [
+    { "id": "arrive",        "description": "customers arrive and order (per hour)", "rate": 6,    "x": 200, "y": 80 },
+    { "id": "brew_espresso", "description": "espresso: 2 beans + 1 cup",             "rate": 0.01, "x": 440, "y": 120 },
+    { "id": "brew_latte",    "description": "latte: 1 bean + 1 milk + 1 cup",        "rate": 0.002,"x": 440, "y": 280 },
+    { "id": "serve",         "description": "hand the drink over",                  "rate": 3,    "x": 680, "y": 200 },
+    { "id": "leave",         "description": "customer leaves with the drink",       "rate": 0.5,  "x": 920, "y": 200 },
+    { "id": "restock",       "description": "delivery: 10 beans, 5 milk, 6 cups",    "rate": 0.2,  "x": 200, "y": 440 }
+  ],
+  "arcs": [
+    { "from": "arrive",        "to": "orders" },
+
+    { "from": "orders",        "to": "brew_espresso" },
+    { "from": "beans",         "to": "brew_espresso", "weight": 2 },
+    { "from": "cups",          "to": "brew_espresso" },
+    { "from": "brew_espresso", "to": "brewing" },
+
+    { "from": "orders",        "to": "brew_latte" },
+    { "from": "beans",         "to": "brew_latte" },
+    { "from": "milk",          "to": "brew_latte" },
+    { "from": "cups",          "to": "brew_latte" },
+    { "from": "brew_latte",    "to": "brewing" },
+
+    { "from": "brewing",       "to": "serve" },
+    { "from": "serve",         "to": "served" },
+    { "from": "served",        "to": "leave" },
+
+    { "from": "restock",       "to": "beans", "weight": 10 },
+    { "from": "restock",       "to": "milk",  "weight": 5 },
+    { "from": "restock",       "to": "cups",  "weight": 6 }
+  ],
+  "simulation": {
+    "solver": { "tspan": [0, 24], "dt": 0.01 }
+  }
+}

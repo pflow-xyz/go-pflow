@@ -22,6 +22,10 @@ examples/dataset_comparison/cmd/measles_sir_fixed/measles_sir_fixed
 examples/dataset_comparison/cmd/synthetic_sir/synthetic_sir
 examples/coffeeshop/dataflow/cmd/cmd
 
+/cafe
+examples/cafe/cafe
+cafe-out/
+
 # Test binary, built with `go test -c`
 *.test
 
