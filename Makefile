@@ -14,7 +14,7 @@ help:
 	@echo "  make fmt-check       - Fail if any Go file is not gofmt-clean"
 	@echo "  make vet             - Run go vet on all packages"
 	@echo "  make lint            - Run static analysis (requires golangci-lint)"
-	@echo "  make check           - Run fmt, vet, and tests"
+	@echo "  make check           - Run fmt-check, vet, and tests (does not rewrite files)"
 	@echo "  make all             - Run check and build"
 	@echo "  make examples        - Build all example programs"
 	@echo "  make run-basic       - Run basic example"
@@ -65,10 +65,19 @@ fmt:
 	@echo "Formatting Go code..."
 	go fmt ./...
 
-# Fail if any Go file is not gofmt-clean (lists the offenders)
+# Fail if any Go file is not gofmt-clean (lists the offenders).
+# The exit status of gofmt itself is checked separately from its output, so a
+# missing or broken toolchain fails the gate instead of silently passing it.
+# The offenders go to stderr with a plain redirect: `tee /dev/stderr` truncates
+# the log when stderr is a regular file (make fmt-check > log 2>&1).
 fmt-check:
 	@echo "Checking gofmt..."
-	@test -z "$$(gofmt -l . | tee /dev/stderr)"
+	@out=$$(gofmt -l .) || exit 1; \
+	if [ -n "$$out" ]; then \
+		echo "Not gofmt-clean:" >&2; \
+		echo "$$out" >&2; \
+		exit 1; \
+	fi
 
 # Run go vet
 vet:
@@ -84,8 +93,8 @@ lint:
 		echo "golangci-lint not found. Install it from https://golangci-lint.run/"; \
 	fi
 
-# Check code quality
-check: fmt vet test
+# Check code quality (fmt-check, not fmt: reproduce CI rather than repair drift)
+check: fmt-check vet test
 
 # Build everything
 all: check build

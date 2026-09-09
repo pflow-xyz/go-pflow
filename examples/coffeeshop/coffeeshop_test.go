@@ -489,6 +489,22 @@ func TestCoffeeShopAvailableDrinks(t *testing.T) {
 	}
 }
 
+// waitForMetrics polls GetMetrics until cond holds or the timeout expires, and
+// returns the last snapshot either way so the caller's assertion still runs
+// (and still fails) if the condition never became true. The bus is
+// asynchronous, so a fixed sleep is either flaky or needlessly slow; each
+// snapshot is taken under the shop's lock, which is what makes the read safe.
+func waitForMetrics(shop *CoffeeShop, timeout time.Duration, cond func(*ShopMetrics) bool) *ShopMetrics {
+	deadline := time.Now().Add(timeout)
+	for {
+		metrics := shop.GetMetrics()
+		if cond(metrics) || time.Now().After(deadline) {
+			return metrics
+		}
+		time.Sleep(time.Millisecond)
+	}
+}
+
 func TestCoffeeShopCustomerSimulation(t *testing.T) {
 	shop := NewCoffeeShop()
 	shop.Start()
@@ -496,9 +512,10 @@ func TestCoffeeShopCustomerSimulation(t *testing.T) {
 
 	// Simulate customer arrival
 	shop.SimulateCustomerArrival("CUST-TEST")
-	time.Sleep(50 * time.Millisecond)
 
-	metrics := shop.GetMetrics()
+	metrics := waitForMetrics(shop, 2*time.Second, func(m *ShopMetrics) bool {
+		return m.CustomersToday >= 1
+	})
 	if metrics.CustomersToday != 1 {
 		t.Errorf("Expected 1 customer, got %d", metrics.CustomersToday)
 	}
@@ -558,10 +575,11 @@ func TestFullOrderFlow(t *testing.T) {
 
 	// Place order
 	orderID := shop.SimulateOrder(customerID, "cappuccino", PriorityNormal)
-	time.Sleep(100 * time.Millisecond)
 
 	// Verify order was recorded
-	metrics := shop.GetMetrics()
+	metrics := waitForMetrics(shop, 2*time.Second, func(m *ShopMetrics) bool {
+		return m.OrdersToday >= 1 && m.DrinkCounts["cappuccino"] >= 1
+	})
 	if metrics.OrdersToday != 1 {
 		t.Errorf("Expected 1 order, got %d", metrics.OrdersToday)
 	}
