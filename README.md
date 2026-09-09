@@ -164,19 +164,19 @@ sol := solver.Solve(prob, solver.Tsit5(), solver.DefaultOptions())
 fmt.Println("Final state:", sol.GetFinalState())
 ```
 
-See [The go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) for the full API guide.
+See [The go-pflow Library](https://book.pflow.xyz/ch19-go-pflow-library.html) for the full API guide.
 
 ## Packages
 
 | Package | Purpose | Book chapter |
 |---------|---------|--------------|
-| `metamodel` | The engine input schema; `CompositeNet` composes typed subnets (`Bundle`/`Flatten`) | [Ch 4: Token Language](https://book.pflow.xyz/ch04-token-language.html) |
-| `parser` | pflow.xyz JSON-LD import/export; `ModelFromJSON` is the one editor-shape → metamodel converter | [Ch 15: Visual Editor](https://book.pflow.xyz/ch15-visual-editor.html) |
+| `metamodel` | The engine input schema; `NewBundle` composes typed subnets into a `*Bundle`, and `Bundle.Flatten` lowers it to one `Model` | [Ch 4: Token Language](https://book.pflow.xyz/ch04-token-language.html) |
+| `parser` | pflow.xyz JSON-LD import/export; `ModelFromJSON` is the one editor-shape → metamodel converter | [Ch 17: Visual Editor](https://book.pflow.xyz/ch17-visual-editor.html) |
 | `petri` | Core net types, colors, fluent Builder | [Ch 1: Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html) |
 | `solver` | ODE solvers (Tsit5, RK45, implicit), equilibrium detection | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) |
 | `stochastic` | `Solve` dispatch; Gillespie SSA, schedules, chemical-Langevin SDE, `FitDiscrete` CTMC likelihood fitting. `Options{Portable: true}` is byte-exact with pflow-rs, pflow-xyz and pflow-jl (goldens in `stochastic/testdata/portable/`, `make ssa-goldens`) | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) |
-| `learn` | ODE parameter fitting and system identification: Nelder-Mead, Adam, forward and adjoint sensitivities, tied parameters, hybrid MLP rates | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |
-| `sensitivity` | Parameter sensitivity analysis | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |
+| `learn` | ODE parameter fitting and system identification: Nelder-Mead, Adam, forward and adjoint sensitivities, tied parameters, hybrid MLP rates | [Ch 19: go-pflow Library](https://book.pflow.xyz/ch19-go-pflow-library.html) |
+| `sensitivity` | Parameter sensitivity analysis | [Ch 19: go-pflow Library](https://book.pflow.xyz/ch19-go-pflow-library.html) |
 | `derive` | Evaluation variants of a declared net | — |
 | `reachability` | Discrete state space, deadlock/liveness, Farkas P/T-invariants, unboundedness witnesses | [Ch 2: Mathematics of Flow](https://book.pflow.xyz/ch02-mathematics-of-flow.html) |
 | `verify` | Declarative property checking — proved / refuted / unknown + counterexample | [Model correctness](docs/MODEL-CORRECTNESS.md) |
@@ -185,10 +185,10 @@ See [The go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) fo
 | `hypothesis` | Move evaluation for game AI | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) |
 | `statemachine`, `workflow`, `actor` | Statecharts, task dependencies and SLAs, message-passing actors — all on a Petri-net backend | [Ch 10: Complex State Machines](https://book.pflow.xyz/ch10-complex-state-machines.html) |
 | `tokenmodel` (+ `dsl`, `petri`, `subnet`, `windowing`, `dataflow`) | Token model schemas, S-expression DSL, Beam-style streaming pipelines | [Ch 4: Token Language](https://book.pflow.xyz/ch04-token-language.html) |
-| `codegen/solidity`, `templates` | Solidity generation from token models; common net patterns | [Ch 16: Code Generation](https://book.pflow.xyz/ch16-code-generation.html) |
+| `codegen/solidity`, `templates` | Solidity generation from token models; common net patterns | [Ch 18: Code Generation](https://book.pflow.xyz/ch18-code-generation.html) |
 | `prover`, `zkcompile` | Groth16 proofs of state transitions with gnark; net → circuit compilation | [Ch 12: Zero-Knowledge Proofs](https://book.pflow.xyz/ch12-zero-knowledge-proofs.html) |
-| `eventsource`, `graphql`, `schema`, `results`, `compat` | Event sourcing, GraphQL over models, JSON-LD vocabulary, structured simulation output, bridge between the two Petri implementations | [Ch 14: Declarative Infrastructure](https://book.pflow.xyz/ch14-declarative-infrastructure.html) |
-| `visualization`, `plotter`, `cache`, `stateutil` | SVG rendering, time-series plots, simulation memoization, state-map utilities | [Ch 18: go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html) |
+| `eventsource`, `graphql`, `results`, `compat` | Event sourcing, GraphQL over models, structured simulation output, bridge between the two Petri implementations. `schema/` beside them is JSON Schema and JSON-LD assets, not a Go package | [Ch 16: Declarative Infrastructure](https://book.pflow.xyz/ch16-declarative-infrastructure.html) |
+| `visualization`, `plotter`, `cache`, `stateutil` | SVG rendering, time-series plots, simulation memoization, state-map utilities | [Ch 19: go-pflow Library](https://book.pflow.xyz/ch19-go-pflow-library.html) |
 
 ## Examples
 
@@ -215,9 +215,11 @@ and a complexity progression.
 
 **Part II: Applications** — [Resource Modeling](https://book.pflow.xyz/ch05-resource-modeling.html), [Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html), [Constraint Satisfaction](https://book.pflow.xyz/ch07-constraint-satisfaction.html), [Optimization](https://book.pflow.xyz/ch08-optimization.html), [Enzyme Kinetics](https://book.pflow.xyz/ch09-enzyme-kinetics.html), [Complex State Machines](https://book.pflow.xyz/ch10-complex-state-machines.html)
 
-**Part III: Advanced** — [Process Mining](https://book.pflow.xyz/ch11-process-mining.html), [Zero-Knowledge Proofs](https://book.pflow.xyz/ch12-zero-knowledge-proofs.html), [Topology-Driven Verification](https://book.pflow.xyz/ch13-topology-driven-verification.html), [Declarative Infrastructure](https://book.pflow.xyz/ch14-declarative-infrastructure.html)
+**Part III: Advanced** — [Process Mining](https://book.pflow.xyz/ch11-process-mining.html), [Zero-Knowledge Proofs](https://book.pflow.xyz/ch12-zero-knowledge-proofs.html), [Topology-Driven Verification](https://book.pflow.xyz/ch13-topology-driven-verification.html), [On-Chain ZK Verification](https://book.pflow.xyz/ch14-on-chain-verification.html), [Exponential Weights and Scoring Systems](https://book.pflow.xyz/ch15-exponential-weights.html), [Declarative Infrastructure](https://book.pflow.xyz/ch16-declarative-infrastructure.html)
 
-**Part IV: Building** — [Visual Editor](https://book.pflow.xyz/ch15-visual-editor.html), [Code Generation](https://book.pflow.xyz/ch16-code-generation.html), [go-pflow Library](https://book.pflow.xyz/ch17-go-pflow-library.html), [Dual Implementation](https://book.pflow.xyz/ch18-dual-implementation.html)
+**Part IV: Building** — [Visual Editor](https://book.pflow.xyz/ch17-visual-editor.html), [Code Generation](https://book.pflow.xyz/ch18-code-generation.html), [go-pflow Library](https://book.pflow.xyz/ch19-go-pflow-library.html), [Dual Implementation](https://book.pflow.xyz/ch20-dual-implementation.html)
+
+**Epilogue** — [What the Abstraction Sits On](https://book.pflow.xyz/ch21-epilogue.html)
 
 ## Testing
 
@@ -233,7 +235,7 @@ The `pflow` CLI provides simulation, analysis, verification and plotting from th
 
 ## Compatibility
 
-- Go 1.23+
+- Go 1.24.9+ (the `go` directive in `go.mod`; CI builds on 1.24)
 - Reads and writes the [pflow.xyz](https://pflow.xyz) JSON-LD format
 - SSA output byte-exact with pflow-rs, pflow-xyz and pflow-jl under
   `stochastic.Options{Portable: true}`; parse goldens replayed by pflow-xyz
