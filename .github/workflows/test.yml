@@ -18,8 +18,18 @@ jobs:
           cache: true
 
       # Fail on any formatting drift; the offending files are echoed to stderr.
+      # gofmt's own exit status is checked separately from its output, so a
+      # missing or broken toolchain fails the gate instead of silently passing
+      # it. Plain `>&2`, not `tee /dev/stderr`: tee truncates the log when
+      # stderr is a regular file.
       - name: gofmt
-        run: test -z "$(gofmt -l . | tee /dev/stderr)"
+        run: |
+          out=$(gofmt -l .) || exit 1
+          if [ -n "$out" ]; then
+            echo "Not gofmt-clean:" >&2
+            echo "$out" >&2
+            exit 1
+          fi
 
       - name: vet
         run: go vet ./...
@@ -29,8 +39,6 @@ jobs:
 
       # Race detector, limited to the packages whose non-test sources spawn
       # goroutines or use sync primitives, so CI time stays bounded.
-      # examples/coffeeshop is excluded: its tests read CoffeeShop state while
-      # the actor bus goroutine writes it (pre-existing race in the tests).
       - name: test -race (concurrent packages)
         run: |
           go test -race \
@@ -39,6 +47,7 @@ jobs:
             ./cmd/pflow \
             ./engine \
             ./eventsource \
+            ./examples/coffeeshop \
             ./graphql \
             ./hypothesis \
             ./metamodel \

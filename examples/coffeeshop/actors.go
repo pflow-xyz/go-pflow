@@ -88,10 +88,12 @@ type CoffeeShop struct {
 	orderSeq int64
 }
 
-// ShopMetrics tracks operational metrics
+// ShopMetrics tracks operational metrics.
+//
+// The live instance is owned by CoffeeShop and guarded by CoffeeShop.mu, the
+// lock every handler already holds while updating a counter; GetMetrics hands
+// out a private snapshot rather than a pointer into it.
 type ShopMetrics struct {
-	mu sync.RWMutex
-
 	CustomersToday       int
 	OrdersToday          int
 	DrinksServed         int
@@ -565,11 +567,27 @@ func (cs *CoffeeShop) SimulateCustomerLeaveWithoutPurchase(customerID string) {
 	})
 }
 
-// GetMetrics returns current shop metrics
+// GetMetrics returns a snapshot of the current shop metrics.
+//
+// The snapshot is taken under cs.mu — the same lock the actor-bus goroutine
+// holds while incrementing the counters — and the maps are copied, so the
+// caller may read the result without synchronising against the bus. Returning
+// the live *ShopMetrics instead would hand every reader an unsynchronised view
+// of state the bus keeps writing.
 func (cs *CoffeeShop) GetMetrics() *ShopMetrics {
-	cs.metrics.mu.RLock()
-	defer cs.metrics.mu.RUnlock()
-	return cs.metrics
+	cs.mu.RLock()
+	defer cs.mu.RUnlock()
+
+	snapshot := *cs.metrics
+	snapshot.DrinkCounts = make(map[string]int, len(cs.metrics.DrinkCounts))
+	for drink, count := range cs.metrics.DrinkCounts {
+		snapshot.DrinkCounts[drink] = count
+	}
+	snapshot.PeakHourOrders = make(map[int]int, len(cs.metrics.PeakHourOrders))
+	for hour, count := range cs.metrics.PeakHourOrders {
+		snapshot.PeakHourOrders[hour] = count
+	}
+	return &snapshot
 }
 
 // GetShopState returns the current shop state

@@ -2,11 +2,26 @@
 
 go-pflow's canonical example: one model, the whole stack, one command.
 
+From the repository root:
+
 ```bash
-go run ./examples/cafe                 # from the repository root; results under ./cafe-out
-go run ./examples/cafe -out /tmp/cafe  # anywhere else, or to choose the output directory
+go run ./examples/cafe                 # results under ./cafe-out
+go run ./examples/cafe -out /tmp/cafe  # -out chooses the output directory
 go test ./examples/cafe                # the same pipeline with assertions (~10 s)
 ```
+
+A bare `./examples/cafe` package path only resolves inside the module, so from
+another working directory name the repository or run inside the package
+directory:
+
+```bash
+go run -C /path/to/go-pflow ./examples/cafe -out /tmp/cafe
+cd /path/to/go-pflow/examples/cafe && go run . -out /tmp/cafe
+```
+
+Either way the example finds its own model files (`-data` overrides the
+search), and `-out` is relative to the working directory — hence the absolute
+path above.
 
 The model is the **same café the pflow ecosystem showcase uses**
 ([pflow-xyz/examples/showcase](https://github.com/pflow-xyz/pflow-xyz/tree/main/examples/showcase)):
