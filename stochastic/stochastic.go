@@ -200,7 +200,9 @@ func (o Options) withDefaults(m *metamodel.Model) Options {
 type Series struct {
 	Place  string    `json:"place"`
 	Values []float64 `json:"values"`
-	// StdDev is populated only by Simulate with Realizations > 1.
+	// StdDev is the ensemble spread, populated by the two sampling engines
+	// — Simulate and SimulateSDE — when Realizations > 1. Forecast is
+	// deterministic and never sets it.
 	StdDev []float64 `json:"std_dev,omitempty"`
 }
 
@@ -211,6 +213,10 @@ type Result struct {
 	Final  map[string]float64 `json:"final"`
 	// Depleted names places that reach zero within the horizon, earliest first.
 	// This is the question a resource model is usually being asked.
+	//
+	// Populated by Simulate and by Forecast. SimulateSDE never calls
+	// depletions, so on an SDE result an empty list means "not computed"
+	// rather than "nothing ran out"; see docs/solver-matrix.md.
 	Depleted []Depletion `json:"depleted,omitempty"`
 	// Contended names what the run spent its time waiting for, capacity
 	// constraints first and the longest wait first within each kind. Depleted

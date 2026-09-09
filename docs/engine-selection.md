@@ -29,7 +29,7 @@ refuse"; read on here when the question is "which engine should I want".
 
 ## The three engines
 
-| | ODE (`solver`) | SSA (`stochastic`) | SDE (planned, G6) |
+| | ODE (`solver`) | SSA (`stochastic`) | SDE (`stochastic`) |
 |---|---|---|---|
 | State | continuous, real-valued | discrete, integer tokens | continuous, real-valued |
 | What it computes | the mean-field trajectory | one exact sample path (or an ensemble mean ± stdev) | one noisy sample path, cheap enough to sweep |
