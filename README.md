@@ -89,9 +89,13 @@ flowchart LR
 The rule: an editor document reaches an engine through exactly one converter,
 `parser.ModelFromJSON`. Colors unfold to `place.color`, an output-side
 inhibitor becomes an explicit read arc, per-color capacity is summed. The
-seven goldens under `parser/testdata/editor-shape/` pin that reading, and
-pflow-xyz and pflow-jl replay byte-identical copies in their CI
-(`go run ./cmd/shape-goldens` regenerates them).
+seven goldens under `parser/testdata/editor-shape/` pin that reading
+(`go run ./cmd/shape-goldens` regenerates them). pflow-xyz keeps byte-identical
+copies as `parity/editor-shape/` and replays them in CI from
+`public/petri-shape_test.ts`; pflow-jl keeps the same bytes as
+`test/testdata/editor-shape/` and replays them from `test/test_editor_shape.jl`,
+but on its `algebraic-petri` branch — not yet on its default branch, `main`.
+pflow-rs has no editor-shape parser yet and replays only the SSA goldens.
 
 ## Installation
 
@@ -237,9 +241,13 @@ The `pflow` CLI provides simulation, analysis, verification and plotting from th
 
 - Go 1.24.9+ (the `go` directive in `go.mod`; CI builds on 1.24)
 - Reads and writes the [pflow.xyz](https://pflow.xyz) JSON-LD format
-- SSA output byte-exact with pflow-rs, pflow-xyz and pflow-jl under
-  `stochastic.Options{Portable: true}`; parse goldens replayed by pflow-xyz
-  and pflow-jl
+- SSA goldens (`stochastic/testdata/portable/`, produced under
+  `stochastic.Options{Portable: true}`) are replayed byte-for-byte by pflow-xyz
+  in JS and by pflow-rs in Rust; pflow-jl replays them on its `algebraic-petri`
+  branch, not yet on its default branch
+- Editor-shape parse goldens (`parser/testdata/editor-shape/`) are replayed by
+  pflow-xyz in JS, and by pflow-jl on `algebraic-petri`; pflow-rs has no
+  editor-shape parser yet
 
 ## License
 
