@@ -1,6 +1,8 @@
 package stochastic
 
 import (
+	"fmt"
+	"math"
 	"strings"
 	"testing"
 
@@ -199,5 +201,169 @@ func TestMarkingGuardIsEnforcedUnderSchedule(t *testing.T) {
 				t.Errorf("%s: a marking-decidable guard should be enforced, not caveated: %q", name, c)
 			}
 		}
+	}
+}
+
+// closedCycle is a three-place ring holding n tokens: a → b → c → a with
+// unequal rates, so a short segment leaves the realizations spread over
+// many distinct markings and the total is conserved by construction.
+func closedCycle(n int) *metamodel.Model {
+	return &metamodel.Model{
+		Name: "cycle",
+		Places: []metamodel.Place{
+			{ID: "a", Initial: n},
+			{ID: "b"},
+			{ID: "c"},
+		},
+		Transitions: []metamodel.Transition{
+			{ID: "ab", Rate: 2},
+			{ID: "bc", Rate: 1},
+			{ID: "ca", Rate: 0.5},
+		},
+		Arcs: []metamodel.Arc{
+			{From: "a", To: "ab"}, {From: "ab", To: "b"},
+			{From: "b", To: "bc"}, {From: "bc", To: "c"},
+			{From: "c", To: "ca"}, {From: "ca", To: "a"},
+		},
+	}
+}
+
+// lastMarkings records, through OnFire, the marking each realization was
+// last seen in. A realization that never fired keeps the initial marking.
+func lastMarkings(m *metamodel.Model, realizations int) ([][]int, func(int, float64, string, []int)) {
+	places, _ := TokenPlaces(m)
+	ends := make([][]int, realizations)
+	initial := m.InitialMarking()
+	for r := range ends {
+		ends[r] = make([]int, len(places))
+		for i, p := range places {
+			ends[r][i] = initial[p]
+		}
+	}
+	return ends, func(r int, _ float64, _ string, marking []int) {
+		copy(ends[r], marking)
+	}
+}
+
+// TestScheduleCarriesEachRealizationSeparately pins the v0.28.1 fix: across
+// a schedule boundary, realization r of the next segment continues from the
+// marking realization r reached, not from the ensemble's rounded mean.
+//
+// The oracle is the run done by hand. Segment one alone, N realizations,
+// gives N end markings; continuing each one individually under segment
+// two's rate at seed Seed+r is exactly what SimulateSchedule does per
+// realization, so the scheduled run's Final must equal the mean of those N
+// individual finals to floating-point precision. Under the rounded-mean
+// carry every realization restarted from one shared marking, and the two
+// answers part company on the first draw.
+func TestScheduleCarriesEachRealizationSeparately(t *testing.T) {
+	const (
+		n       = 16
+		seed    = int64(11)
+		split   = 1.0
+		horizon = 2.0
+	)
+	m := closedCycle(4)
+	places, _ := TokenPlaces(m)
+	schedule := map[string][]metamodel.RateSegment{
+		"ab": {{Until: split, Value: 2}, {Until: horizon, Value: 0.5}},
+	}
+
+	// Segment one by itself: the population is small enough that sixteen
+	// paths do not all land on the same marking.
+	ends, record := lastMarkings(m, n)
+	if _, err := Simulate(m, nil, Options{
+		Horizon: split, Samples: 20, Realizations: n, Seed: seed, Portable: true, OnFire: record,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	distinct := map[string]bool{}
+	for _, e := range ends {
+		distinct[fmt.Sprint(e)] = true
+	}
+	if len(distinct) < 3 {
+		t.Fatalf("segment one left only %d distinct end markings across %d realizations; the test cannot tell the two carries apart", len(distinct), n)
+	}
+
+	// Continue each realization on its own from where it ended, with the
+	// rate segment two will use, at the seed segment two will use for it.
+	want := map[string]float64{}
+	for r, e := range ends {
+		start := map[string]int{}
+		for i, p := range places {
+			start[p] = e[i]
+		}
+		res, err := Simulate(m, start, Options{
+			Horizon: horizon - split, Samples: 20, Realizations: 1, Seed: seed + int64(r), Portable: true,
+			Rates: map[string]float64{"ab": 0.5},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for p, v := range res.Final {
+			want[p] += v / n
+		}
+	}
+
+	got, err := Solve(m, nil, Options{
+		Horizon: horizon, Samples: 40, Realizations: n, Seed: seed, Portable: true, Schedule: schedule,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range places {
+		if math.Abs(got.Final[p]-want[p]) > 1e-9 {
+			t.Errorf("%s: scheduled run ended at %.4f, per-realization continuation at %.4f — "+
+				"segment two did not start each realization from its own marking", p, got.Final[p], want[p])
+		}
+	}
+}
+
+// TestScheduleConservesTokensAcrossBoundaries: a closed net keeps its token
+// total through every segment of a scheduled run — at every firing of every
+// realization, at every reported sample, and at the end. The rounded-mean
+// carry could round the ensemble off the invariant (means 1.5, 1.5, 1.0 →
+// 2, 2, 1 = 5 tokens in a 4-token net) and every later segment would run
+// the wrong population.
+func TestScheduleConservesTokensAcrossBoundaries(t *testing.T) {
+	const total = 5
+	m := closedCycle(total)
+	sum := func(xs []int) int {
+		s := 0
+		for _, x := range xs {
+			s += x
+		}
+		return s
+	}
+	res, err := Solve(m, nil, Options{
+		Horizon: 4, Samples: 80, Realizations: 12, Seed: 1, Portable: true,
+		Schedule: map[string][]metamodel.RateSegment{
+			"ab": {{Until: 0.5, Value: 6}, {Until: 1, Value: 0.1}, {Until: 2.5, Value: 3}, {Until: 4, Value: 1}},
+			"ca": {{Until: 1.5, Value: 0.2}, {Until: 4, Value: 4}},
+		},
+		OnFire: func(r int, tm float64, id string, marking []int) {
+			if got := sum(marking); got != total {
+				t.Fatalf("realization %d after %s at t=%.3f holds %d tokens, want %d: %v", r, id, tm, got, total, marking)
+			}
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for j := range res.Times {
+		var s float64
+		for _, sr := range res.Series {
+			s += sr.Values[j]
+		}
+		if math.Abs(s-total) > 1e-9 {
+			t.Errorf("ensemble mean at t=%.3f sums to %.6f tokens, want %d", res.Times[j], s, total)
+		}
+	}
+	var final float64
+	for _, v := range res.Final {
+		final += v
+	}
+	if math.Abs(final-total) > 1e-9 {
+		t.Errorf("Final sums to %.6f tokens, want %d", final, total)
 	}
 }

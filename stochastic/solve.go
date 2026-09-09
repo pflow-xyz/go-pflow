@@ -28,10 +28,15 @@ const (
 // an SDE ensemble (SimulateSDE). There is no caller-visible conversion step:
 // the net is built internally.
 //
-// opts.Schedule is ignored on the ODE and SDE paths. Forecast and
-// SimulateSDE both refuse a gated net (Diverged set, Gating() in Caveats) —
+// opts.Schedule is SSA-only. With MethodODE or MethodSDE and a non-empty
+// Schedule, Solve returns an error rather than a smooth answer to a question
+// the caller did not ask; the check lives in Forecast and SimulateSDE
+// themselves (see refuseSchedule), so a direct call is refused the same way.
+// Both engines also refuse a gated net (Diverged set, Gating() in Caveats) —
 // neither has a firing instant to test a read arc, inhibitor, reachable
-// capacity or guard against — as they do when called directly.
+// capacity or guard against — and a model-declared Transition.Schedule, for
+// the same reason as opts.Schedule. Every other Options field is either
+// honoured by the method or documented on the field as harmless there.
 func Solve(m *metamodel.Model, marking map[string]int, opts Options) (*Result, error) {
 	switch opts.Method {
 	case MethodODE:
@@ -45,4 +50,20 @@ func Solve(m *metamodel.Model, marking map[string]int, opts Options) (*Result, e
 		return Simulate(m, marking, opts)
 	}
 	return nil, fmt.Errorf("stochastic: unknown method %q (want %q, %q or %q)", opts.Method, MethodSSA, MethodODE, MethodSDE)
+}
+
+// refuseSchedule is the error a continuous engine returns when handed
+// opts.Schedule. It is an error, not a Diverged result: a Diverged result is
+// the engine's verdict on the MODEL (a gated net, a declared day shape), and
+// still carries a usable time grid; a schedule in Options is a caller asking
+// for something this engine cannot run at all, and the honest answer is to
+// not run. The wording follows Forecast's model-declared-schedule refusal so
+// the two read as one rule.
+func refuseSchedule(method Method, opts Options) error {
+	if len(opts.Schedule) == 0 {
+		return nil
+	}
+	return fmt.Errorf("stochastic: opts.Schedule is SSA-only: the %s method integrates one constant rate "+
+		"per transition, so the schedule would be run flat. Use the discrete engine (MethodSSA: Simulate or "+
+		"SimulateSchedule), which honours the schedule segment by segment", method)
 }

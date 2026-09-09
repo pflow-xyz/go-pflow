@@ -163,10 +163,28 @@ const ChemicalLangevinAssumption = "this engine approximates the discrete firing
 // MethodSDE's engine, reachable directly or through Solve. Refuses a gated
 // model exactly as Forecast does — a firing instant is what a read arc, an
 // inhibitor, a reachable capacity or a guard need, and continuous diffusion
-// has none, same as the ODE.
+// has none, same as the ODE — and refuses a schedule the same two ways
+// Forecast does: opts.Schedule is an error, a model-declared day shape is a
+// Diverged result. The CLE drift is one constant rate per transition, so
+// either would be run flat.
 func SimulateSDE(m *metamodel.Model, marking map[string]int, opts Options) (*Result, error) {
+	if err := refuseSchedule(MethodSDE, opts); err != nil {
+		return nil, err
+	}
 	opts = opts.withDefaults(m)
 
+	if m.HasSchedules() {
+		return &Result{
+			Method:   string(MethodSDE),
+			Times:    sampleTimes(opts),
+			Final:    map[string]float64{},
+			Diverged: true,
+			Reason: "this model declares rate schedules, and continuous diffusion here integrates one constant " +
+				"rate per transition; the declared day shape would be run flat. Use the discrete engine (Simulate), " +
+				"which honours the schedule segment by segment.",
+			Caveats: []string{"model-declared schedule: a time-varying rate is not a mass-action constant"},
+		}, nil
+	}
 	if gating := m.Gating(); len(gating) > 0 {
 		return &Result{
 			Method:   string(MethodSDE),
