@@ -1,19 +1,23 @@
 // Package docs holds the guard that keeps docs/solver-matrix.md honest.
 //
-// The matrix is a contract page: every claim in it carries a file:line into
-// the engine sources. It went stale within one commit of being written —
-// the commit that changed the semantics it documents landed in parallel, and
-// nothing tied the two together. This test is the cheap tie. It cannot check
-// that a citation points at the *right* code; it checks that the file exists
-// and the lines do, which is what actually rots as the sources move.
+// The matrix is a contract page: every claim in it carries a reference into
+// the sources — a file:line citation, a bare file or directory, or the name
+// of the test that pins the behaviour. It went stale within one commit of
+// being written — the commit that changed the semantics it documents landed
+// in parallel, and nothing tied the two together. This test is the cheap
+// tie. It cannot check that a reference points at the *right* code; it
+// checks that every referenced file, line range and test function still
+// exists, which is what actually rots as the sources move.
 package docs
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -129,4 +133,158 @@ func mustAtoi(t *testing.T, s string) int {
 		t.Fatalf("parsing line number %q: %v", s, err)
 	}
 	return n
+}
+
+// bareRef matches a backticked reference that carries no line number: a file
+// (`stochastic/guard.go`, `docs/engine-selection.md`) or a directory
+// (`stochastic/testdata/`). The whole backticked span must be the reference,
+// so a file:line citation — which ends in digits, not in `.go` — is left to
+// citation above, and prose spans like `Series.StdDev` or `Metrics.Mean`/`P95`
+// cannot be mistaken for paths: the first character may not be `.` or `/`.
+var bareRef = regexp.MustCompile("`([A-Za-z0-9_-][A-Za-z0-9_./-]*(?:\\.go|\\.md|/))`")
+
+// citedTest matches a backticked Go test-function name. The matrix cites these
+// as the pins for behaviour it describes in prose, so a rename that orphans one
+// is exactly the rot this file exists to catch.
+var citedTest = regexp.MustCompile("`(Test[A-Za-z0-9_]+)`")
+
+// TestSolverMatrixBareReferencesResolve checks every reference that names a
+// file or directory without a line number. A reference carrying a directory is
+// resolved repo-relative; a bare basename is searched for across the tree and
+// must match exactly one file, because two of the matrix's original basenames
+// (kinetic_test.go, stages_test.go) name a file in two different packages.
+func TestSolverMatrixBareReferencesResolve(t *testing.T) {
+	root := repoRoot(t)
+	body := readMatrix(t, root)
+	idx := indexRepo(t, root)
+
+	seen := 0
+	for _, m := range bareRef.FindAllStringSubmatch(body, -1) {
+		seen++
+		ref := m[1]
+		if strings.Contains(ref, "..") {
+			t.Errorf("%s references %q, which is not repo-relative", matrixDoc, ref)
+			continue
+		}
+		if !strings.Contains(strings.TrimSuffix(ref, "/"), "/") {
+			// A bare basename: unambiguous only if the tree holds exactly one.
+			switch hits := idx.byBase[ref]; len(hits) {
+			case 1:
+			case 0:
+				t.Errorf("%s references %q, which no file in the repository is named", matrixDoc, ref)
+			default:
+				t.Errorf("%s references %q, but %d files are named that (%s); qualify it with its directory",
+					matrixDoc, ref, len(hits), strings.Join(hits, ", "))
+			}
+			continue
+		}
+		info, err := os.Stat(filepath.Join(root, filepath.FromSlash(strings.TrimSuffix(ref, "/"))))
+		switch {
+		case err != nil:
+			t.Errorf("%s references %s, which does not resolve: %v", matrixDoc, ref, err)
+		case strings.HasSuffix(ref, "/") && !info.IsDir():
+			t.Errorf("%s references %s as a directory, but it is a file", matrixDoc, ref)
+		case !strings.HasSuffix(ref, "/") && info.IsDir():
+			t.Errorf("%s references %s as a file, but it is a directory", matrixDoc, ref)
+		}
+	}
+
+	// Same reason as the citation floor: a pattern that stops matching would
+	// leave this test green while checking nothing.
+	if seen < 10 {
+		t.Errorf("found only %d bare file references in %s; the page carries more, so the pattern is probably broken", seen, matrixDoc)
+	}
+}
+
+// TestSolverMatrixCitedTestsExist checks that every test function the matrix
+// names as the pin for a behaviour is still defined somewhere in the repo.
+func TestSolverMatrixCitedTestsExist(t *testing.T) {
+	root := repoRoot(t)
+	body := readMatrix(t, root)
+	idx := indexRepo(t, root)
+
+	seen := 0
+	for _, m := range citedTest.FindAllStringSubmatch(body, -1) {
+		seen++
+		name := m[1]
+		if _, ok := idx.tests[name]; !ok {
+			t.Errorf("%s cites %s as the test pinning a behaviour, but no _test.go in the repository defines it", matrixDoc, name)
+		}
+	}
+	if seen < 8 {
+		t.Errorf("found only %d cited test names in %s; the page carries more, so the pattern is probably broken", seen, matrixDoc)
+	}
+}
+
+func readMatrix(t *testing.T, root string) string {
+	t.Helper()
+	b, err := os.ReadFile(filepath.Join(root, matrixDoc))
+	if err != nil {
+		t.Fatalf("reading %s: %v", matrixDoc, err)
+	}
+	return string(b)
+}
+
+// treeIndex is one walk of the tree: every file by basename, and every test
+// function by name. Walking once keeps both checks cheap and, under Bazel,
+// confines them to what the data attribute actually staged — a reference to a
+// file nobody put in the runfiles fails there rather than passing vacuously.
+type treeIndex struct {
+	byBase map[string][]string
+	tests  map[string]string
+}
+
+// testFuncDef matches a top-level test function definition.
+var testFuncDef = regexp.MustCompile(`(?m)^func (Test[A-Za-z0-9_]*)\(`)
+
+func indexRepo(t *testing.T, root string) treeIndex {
+	t.Helper()
+	idx := treeIndex{byBase: map[string][]string{}, tests: map[string]string{}}
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		name := d.Name()
+		if d.IsDir() {
+			if path != root && (name == ".git" || strings.HasPrefix(name, "bazel-")) {
+				return fs.SkipDir
+			}
+			return nil
+		}
+		// Under Bazel the runfiles tree is made of symlinks, so "regular
+		// file" has to be decided after resolving one — otherwise the index
+		// comes back empty there and both checks pass vacuously.
+		if !d.Type().IsRegular() {
+			info, err := os.Stat(path)
+			if err != nil || !info.Mode().IsRegular() {
+				return nil
+			}
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		idx.byBase[name] = append(idx.byBase[name], rel)
+		if !strings.HasSuffix(name, "_test.go") {
+			return nil
+		}
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		for _, m := range testFuncDef.FindAllStringSubmatch(string(b), -1) {
+			if _, ok := idx.tests[m[1]]; !ok {
+				idx.tests[m[1]] = rel
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walking %s: %v", root, err)
+	}
+	for _, paths := range idx.byBase {
+		sort.Strings(paths)
+	}
+	return idx
 }
