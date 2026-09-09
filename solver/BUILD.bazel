@@ -27,3 +27,11 @@ go_test(
     embed = [":solver"],
     deps = ["//petri"],
 )
+
+# keep: docs/solver-matrix.md cites file:line into these sources and
+# //docs:docs_test resolves every citation, so they have to reach its runfiles.
+filegroup(
+    name = "cited_sources",
+    srcs = glob(["*.go"]),
+    visibility = ["//docs:__pkg__"],
+)

@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "docs_test",
+    srcs = ["solver_matrix_test.go"],
+    # The test resolves every file:line citation in the matrix, so the
+    # document and the sources it cites must both be in the runfiles.
+    data = [
+        "solver-matrix.md",
+        "//metamodel:cited_sources",
+        "//solver:cited_sources",
+        "//stochastic:cited_sources",
+    ],  # keep
+)
