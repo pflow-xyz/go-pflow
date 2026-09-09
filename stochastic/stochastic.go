@@ -13,8 +13,11 @@
 // exactly when every kinetic input has weight 1 and Gating() is empty; the
 // consistency test pins that regime and pins that they disagree outside it.
 //
-// Transition.Stages > 1 and Transition.Schedule are ignored by the SSA
-// (as in petri-pilot today); Forecast refuses them through Gating().
+// Transition.Stages > 1 is honoured by every SSA entry point (stage
+// expansion) and Transition.Schedule by SimulateSchedule, which Simulate
+// routes to; Forecast and SimulateSDE refuse a scheduled model, and refuse
+// opts.Schedule with an error, because a continuous engine integrates one
+// constant rate per transition.
 //
 // Known and accepted: the seed rule is seed+r per realization, so runs with
 // seeds S and S+1 share N-1 realizations, and every schedule segment reuses
@@ -114,34 +117,48 @@ type Options struct {
 	Samples int
 	// Rates overrides individual transition rates; unset ones come from the model.
 	Rates map[string]float64
-	// Seed makes an SSA run reproducible. Zero picks a fixed seed rather than a
-	// random one, so an unconfigured call is still repeatable — a forecast that
-	// changes on refresh is indistinguishable from a bug.
+	// Seed makes an SSA or SDE run reproducible. Zero picks a fixed seed rather
+	// than a random one, so an unconfigured call is still repeatable — a
+	// forecast that changes on refresh is indistinguishable from a bug.
+	// Forecast is deterministic and ignores it; setting it there is harmless.
 	Seed int64
-	// Realizations is how many independent SSA runs to average. Ignored by Forecast.
+	// Realizations is how many independent SSA or SDE sample paths to
+	// average. Forecast is deterministic — one path is every path — and
+	// ignores it; setting it there is harmless.
 	Realizations int
 	// Guard evaluates a transition's guard expression against a marking. Nil
 	// means every guard is caveated rather than enforced; see GuardFunc.
+	// SSA-only in effect: Forecast and SimulateSDE refuse any model that
+	// declares a guard (Gating()), so on those paths the evaluator is never
+	// consulted and setting it is harmless.
 	Guard GuardFunc
 	// Method selects the engine Solve dispatches to. The zero value is
 	// MethodSSA.
 	Method Method
 	// Schedule is a piecewise-constant rate override per transition, run as
 	// consecutive segments sharing one seed by SimulateSchedule. A transition
-	// in both Rates and Schedule takes the schedule.
+	// in both Rates and Schedule takes the schedule. SSA-only: Forecast and
+	// SimulateSDE (MethodODE, MethodSDE) return an error when it is set,
+	// because a continuous engine integrates one constant rate per transition
+	// and would run the schedule flat.
 	Schedule map[string][]metamodel.RateSegment
 	// Portable selects the byte-exact SSA path shared with pflow-rs, pflow-xyz
 	// and pflow-jl: a fixed PRNG (SplitMix64 -> xoshiro256**) and an explicit
 	// logarithm in place of math/rand and math.Log, per ssa-spec.md. The zero
 	// value is today's default path, unchanged; the goldens petri-pilot
-	// depends on are produced by that path and stay so.
+	// depends on are produced by that path and stay so. SSA and SDE share the
+	// PRNG choice; Forecast draws nothing and ignores it, harmlessly.
 	Portable bool
 	// OnFire is called immediately after a transition fires, once per
 	// firing, with the realization index (0-based), the firing time, the
 	// transition id, and the POST-firing marking in TokenPlaces(m) order.
 	// Never called for a dead marking or after the horizon. No RNG draws
 	// happen in this hook and it runs after fired[chosen]++, so observing
-	// the sample path here cannot change it.
+	// the sample path here cannot change it. SSA-only: Forecast and
+	// SimulateSDE have no firing events and never call it, so a hook set on
+	// those paths records nothing rather than something wrong. Under
+	// SimulateSchedule t is segment-local, restarting at zero at every
+	// schedule boundary.
 	OnFire func(realization int, t float64, transition string, marking []int)
 }
 
@@ -330,6 +347,9 @@ type Contention struct {
 // Deterministic: the same marking and rates always give the same answer, which
 // is what makes it usable as a cached projection.
 func Forecast(m *metamodel.Model, marking map[string]int, opts Options) (*Result, error) {
+	if err := refuseSchedule(MethodODE, opts); err != nil {
+		return nil, err
+	}
 	opts = opts.withDefaults(m)
 
 	// A continuous solution has no firing instant, so there is nowhere to test a

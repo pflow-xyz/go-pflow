@@ -39,6 +39,7 @@ go_test(
         "portable_test.go",
         "schedule_test.go",
         "sde_test.go",
+        "solve_test.go",
         "stages_test.go",
         "stochastic_test.go",
         "supply_test.go",
