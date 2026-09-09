@@ -17,14 +17,37 @@ jobs:
           go-version: '1.24'
           cache: true
 
-      # gofmt is not enforced: the existing tree has pre-existing fmt drift.
-      # Add a `gofmt -l .` gate after a one-off `gofmt -w .` cleanup pass.
+      # Fail on any formatting drift; the offending files are echoed to stderr.
+      - name: gofmt
+        run: test -z "$(gofmt -l . | tee /dev/stderr)"
 
       - name: vet
         run: go vet ./...
 
       - name: test
         run: go test ./...
+
+      # Race detector, limited to the packages whose non-test sources spawn
+      # goroutines or use sync primitives, so CI time stays bounded.
+      # examples/coffeeshop is excluded: its tests read CoffeeShop state while
+      # the actor bus goroutine writes it (pre-existing race in the tests).
+      - name: test -race (concurrent packages)
+        run: |
+          go test -race \
+            ./actor \
+            ./cache \
+            ./cmd/pflow \
+            ./engine \
+            ./eventsource \
+            ./graphql \
+            ./hypothesis \
+            ./metamodel \
+            ./monitoring \
+            ./prover \
+            ./sensitivity \
+            ./tokenmodel/dataflow/transport \
+            ./tokenmodel/petri \
+            ./workflow
 
       # F4: the prover/zkcompile binaries use gnark-crypto's asm field
       # arithmetic; the Bazel verification build also uses asm now (inlined

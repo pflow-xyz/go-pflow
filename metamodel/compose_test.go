@@ -733,7 +733,7 @@ func TestGuardLoweringTable(t *testing.T) {
 		inhibit int // expected inhibitor-arc weight, 0 = none
 		opaque  bool
 	}{
-		{op: ">=", n: 0},                 // vacuously true: no arc at all
+		{op: ">=", n: 0}, // vacuously true: no arc at all
 		{op: ">=", n: 1, read: 1},
 		{op: ">=", n: 2, read: 2},
 		{op: ">=", n: 3, read: 3},

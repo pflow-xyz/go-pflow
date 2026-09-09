@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt vet lint ssa-goldens examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all
+.PHONY: help build test test-coverage clean install fmt fmt-check vet lint ssa-goldens examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all
 
 # Default target
 help:
@@ -11,6 +11,7 @@ help:
 	@echo "  make clean           - Remove build artifacts and generated files"
 	@echo "  make install         - Install the pflow CLI tool"
 	@echo "  make fmt             - Format all Go code"
+	@echo "  make fmt-check       - Fail if any Go file is not gofmt-clean"
 	@echo "  make vet             - Run go vet on all packages"
 	@echo "  make lint            - Run static analysis (requires golangci-lint)"
 	@echo "  make check           - Run fmt, vet, and tests"
@@ -63,6 +64,11 @@ install:
 fmt:
 	@echo "Formatting Go code..."
 	go fmt ./...
+
+# Fail if any Go file is not gofmt-clean (lists the offenders)
+fmt-check:
+	@echo "Checking gofmt..."
+	@test -z "$$(gofmt -l . | tee /dev/stderr)"
 
 # Run go vet
 vet:
