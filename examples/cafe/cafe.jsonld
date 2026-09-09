@@ -1,0 +1,433 @@
+{
+  "@context": "https://pflow.xyz/schema",
+  "@type": "PetriNet",
+  "@id": "z4EBG9j2LEJJjfnMKd5fHJbdApLuTTomntzkb2E8FqszCS4CEm4",
+  "@version": "1.1",
+  "name": "cafe",
+  "description": "The showcase theme: a one-barista caf\u00e9 as a colored Petri net. Four token colors share the pantry (people, beans, milk, cups); every arc weight is a per-color vector with explicit zeros; the pantry has a per-color capacity; restocking is gated by a weighted inhibitor on the bean component; ordering requires the Open sign through a read (test) arc; closing is inhibited while a drink is brewing; and each transition carries a role. Every variation in this directory is a re-telling of this net for one family of tools.",
+  "author": {
+    "@type": "Person",
+    "id": "github:243500",
+    "identifier": "https://github.com/stackdump",
+    "name": "stackdump"
+  },
+  "parents": [
+    "z4EBG9jDsuUdvVN4bUXRHxoDG3p274FfhcJd8BiruRcE1jLCHi8"
+  ],
+  "token": [
+    "https://pflow.xyz/tokens/red",
+    "https://pflow.xyz/tokens/brown",
+    "https://pflow.xyz/tokens/white",
+    "https://pflow.xyz/tokens/blue"
+  ],
+  "places": {
+    "open": {
+      "@type": "Place",
+      "label": "Open sign",
+      "initial": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "capacity": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "offset": 0,
+      "x": 120,
+      "y": 80
+    },
+    "queue": {
+      "@type": "Place",
+      "label": "Queue (6 max)",
+      "initial": [
+        3,
+        0,
+        0,
+        0
+      ],
+      "capacity": [
+        6,
+        0,
+        0,
+        0
+      ],
+      "offset": 1,
+      "x": 120,
+      "y": 240
+    },
+    "pantry": {
+      "@type": "Place",
+      "label": "Pantry: beans, milk, cups",
+      "initial": [
+        0,
+        12,
+        6,
+        8
+      ],
+      "capacity": [
+        0,
+        24,
+        12,
+        20
+      ],
+      "offset": 2,
+      "x": 120,
+      "y": 400
+    },
+    "barista_free": {
+      "@type": "Place",
+      "label": "Barista free",
+      "initial": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "capacity": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "offset": 3,
+      "x": 360,
+      "y": 480
+    },
+    "brewing": {
+      "@type": "Place",
+      "label": "Brewing (one machine)",
+      "initial": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "capacity": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "offset": 4,
+      "x": 600,
+      "y": 240
+    },
+    "served": {
+      "@type": "Place",
+      "label": "Served",
+      "initial": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "offset": 5,
+      "x": 840,
+      "y": 240
+    }
+  },
+  "transitions": {
+    "arrive": {
+      "@type": "Transition",
+      "label": "Customer arrives",
+      "role": "customer",
+      "x": 120,
+      "y": 320
+    },
+    "order_espresso": {
+      "@type": "Transition",
+      "label": "Order espresso (2 beans, 1 cup)",
+      "role": "barista",
+      "x": 360,
+      "y": 180
+    },
+    "order_latte": {
+      "@type": "Transition",
+      "label": "Order latte (2 beans, 1 milk, 1 cup)",
+      "role": "barista",
+      "x": 360,
+      "y": 300
+    },
+    "serve": {
+      "@type": "Transition",
+      "label": "Serve",
+      "role": "barista",
+      "x": 720,
+      "y": 240
+    },
+    "leave": {
+      "@type": "Transition",
+      "label": "Customer leaves",
+      "role": "customer",
+      "x": 960,
+      "y": 240
+    },
+    "restock": {
+      "@type": "Transition",
+      "label": "Restock (only when beans < 6)",
+      "role": "manager",
+      "x": 120,
+      "y": 520
+    },
+    "close": {
+      "@type": "Transition",
+      "label": "Close (not while brewing)",
+      "role": "manager",
+      "x": 280,
+      "y": 80
+    },
+    "reopen": {
+      "@type": "Transition",
+      "label": "Reopen",
+      "role": "manager",
+      "x": 440,
+      "y": 80
+    }
+  },
+  "arcs": [
+    {
+      "@type": "Arrow",
+      "source": "arrive",
+      "target": "queue",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "queue",
+      "target": "order_espresso",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "pantry",
+      "target": "order_espresso",
+      "weight": [
+        0,
+        2,
+        0,
+        1
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "barista_free",
+      "target": "order_espresso",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "order_espresso",
+      "target": "brewing",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "order_espresso",
+      "target": "open",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": true
+    },
+    {
+      "@type": "Arrow",
+      "source": "queue",
+      "target": "order_latte",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "pantry",
+      "target": "order_latte",
+      "weight": [
+        0,
+        2,
+        1,
+        1
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "barista_free",
+      "target": "order_latte",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "order_latte",
+      "target": "brewing",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "order_latte",
+      "target": "open",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": true
+    },
+    {
+      "@type": "Arrow",
+      "source": "brewing",
+      "target": "serve",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "serve",
+      "target": "served",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "serve",
+      "target": "barista_free",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "served",
+      "target": "leave",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "restock",
+      "target": "pantry",
+      "weight": [
+        0,
+        12,
+        6,
+        8
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "pantry",
+      "target": "restock",
+      "weight": [
+        0,
+        6,
+        0,
+        0
+      ],
+      "inhibitTransition": true
+    },
+    {
+      "@type": "Arrow",
+      "source": "open",
+      "target": "close",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    },
+    {
+      "@type": "Arrow",
+      "source": "brewing",
+      "target": "close",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": true
+    },
+    {
+      "@type": "Arrow",
+      "source": "reopen",
+      "target": "open",
+      "weight": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "inhibitTransition": false
+    }
+  ]
+}

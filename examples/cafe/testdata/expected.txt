@@ -1,0 +1,120 @@
+== 1. declare
+cafe-kinetics.json  metamodel shape (json.Unmarshal → metamodel.Model): 6 places, 6 transitions, 16 arcs
+  places: beans milk cups orders brewing served
+  declared rates: arrive=6 brew_espresso=0.01 brew_latte=0.002 leave=0.5 restock=0.2 serve=3
+cafe.jsonld         editor shape (parser.ModelFromJSON): colors red/brown/white/blue → 8 unfolded places, 8 transitions, 25 arcs
+  unfolded places: barista_free.red brewing.red open.red pantry.blue pantry.brown pantry.white queue.red served.red
+  2 read arcs (the editor's output-side inhibitors), 2 inhibitor arcs, per-color capacity carried
+cafe-order.json     metamodel shape: 7 places, 6 transitions — the order workflow step 7 verifies
+metapetri.Convert reaches the same engine from both shapes: kinetics net 6 places / 6 transitions (0 conversion notes), theme net 8 places / 8 transitions (10 notes, all lossless)
+
+== 2. observe
+ODE (solver.Tsit5, DefaultOptions) at the declared rates over [0, 24]: 250 steps
+  final: beans=6.058 milk=8.515 cups=0.087 orders=85.287 brewing=0.404 served=2.442
+  vs the showcase's petri_ode samples (fixtures/observations.json): max relative deviation 4.96e-04
+synthetic observations: 12 times × beans/orders/served, 2% multiplicative noise, seed 42
+       t     beans    orders    served
+     2.0    30.422     0.273     6.473
+     4.0    18.490     0.983     9.630
+     6.0     9.130     3.874     9.376
+     8.0     5.046    10.911     7.115
+    10.0     3.684    18.975     4.948
+    12.0     3.492    27.499     3.637
+    14.0     3.469    37.478     3.040
+    16.0     3.868    47.047     2.683
+    18.0     4.394    57.106     2.553
+    20.0     4.716    67.291     2.504
+    22.0     5.258    76.281     2.478
+    24.0     6.164    86.370     2.439
+
+== 3. fit
+hidden rates and starting guesses:  arrive true 6.0000 guess 3.0000  leave true 0.5000 guess 1.5000  restock true 0.2000 guess 0.6000
+objective: MSE over beans/orders/served at 12 times; parameters θ = ln k so no step can make a rate negative
+Adam, forward sensitivities (400 iterations, learn rate 0.1)
+  rate            true    fitted  rel.err
+  arrive        6.0000    6.0150    0.25%
+  leave         0.5000    0.4967    0.66%
+  restock       0.2000    0.1989    0.53%
+  loss 2277 → 0.1017   iterations 400   plain-solve equivalents 1606   gradient below tolerance: false
+Adam, adjoint sensitivities (400 iterations, learn rate 0.1)
+  rate            true    fitted  rel.err
+  arrive        6.0000    6.0150    0.25%
+  leave         0.5000    0.4967    0.66%
+  restock       0.2000    0.1989    0.53%
+  loss 2277 → 0.1017   iterations 400   plain-solve equivalents 804   gradient below tolerance: false
+forward vs adjoint: largest relative difference 1.14e-05 — one objective, two gradient paths, one answer
+recovery within 3% of truth on both paths: PASS (forward max 0.66%, adjoint max 0.66%)
+
+== 4. ode / ssa / sde
+stochastic.Solve on the fitted model, horizon 24, 25 grid points, seed 42; SSA and SDE average 200 realizations (portable PRNG)
+  place          ODE  SSA mean     ± sd  SDE mean     ± sd
+  beans        6.000     1.270    2.034     1.329    1.220
+  milk         8.497    16.035    4.465     3.461    2.803
+  cups         0.087     1.205    1.638     0.691    0.711
+  orders      85.800    86.140   19.573    75.154   15.090
+  brewing      0.402     0.300    0.794     1.055    1.159
+  served       2.445     2.980    3.118     6.589    2.619
+  SSA assumes: this engine assumes every step takes a random, exponentially distributed amount of time, which is the most erratic a shop can be for a given average.
+  SDE assumes: this engine approximates the discrete firing process as continuous diffusion (the chemical Langevin equation), which is accurate when populations are large enough that the gap between SSA and this engine's mean is small (see the model's own consistency margin) and breaks down near zero, where a place's state is clamped rather than allowed to go negative.
+portable SSA at the declared rates, seed 42, horizon 8, 5 samples, 1 realization: beans=0.000 milk=12.000 cups=6.000 orders=21.000 brewing=0.000 served=4.000
+  equals fixtures/ssa-go-seed42.json (the showcase's cross-language golden): true
+
+== 5. compare
+  place          ODE  SSA mean  SDE mean    ODE-SSA    SDE-SSA
+  beans        6.000     1.270     1.329     372.5%       4.6%
+  milk         8.497    16.035     3.461      47.0%      78.4%
+  cups         0.087     1.205     0.691      92.8%      42.6%
+  orders      85.800    86.140    75.154       0.4%      12.8%
+  brewing      0.402     0.300     1.055      10.2%      75.5%
+  served       2.445     2.980     6.589      17.9%     121.1%
+max relative gap ODE vs SSA mean: 372.5% at beans (relative to max(SSA mean, 1))
+  orders (large population, weight-1 arcs) agree to 0.4%; the gap concentrates where beans run low.
+  brew_espresso draws 2 beans: the ODE rate law is k·orders·beans·cups while the SSA and SDE propensity is k·orders·C(beans,2)·cups
+  (docs/engine-selection.md, rule 3) — so the discrete engines empty the hopper faster and the continuous relaxation keeps more beans.
+  spread      SSA sd    SDE sd   ratio
+  beans        2.034     1.220    0.60
+  milk         4.465     2.803    0.63
+  cups         1.638     0.711    0.43
+  orders      19.573    15.090    0.77
+  brewing      0.794     1.159    1.46
+  served       3.118     2.619    0.84
+  the SDE carries SSA's propensities and a real variance band, but the chemical Langevin step is clamped at zero,
+  so its mean and spread depart from SSA on the places that sit near empty (beans, cups) — the regime its own assumption names.
+
+== 6. sensitivities
+∂served(t=24)/∂k per transition at the fitted rates: learn forward sensitivities (analytic) beside sensitivity.Analyzer (central difference, h = 1% of k)
+  transition             k     analytic  finite-diff  elasticity
+  arrive            6.0150      -0.0114      -0.0114      -0.028
+  brew_espresso     0.0100       1.5277       1.5278       0.006
+  brew_latte        0.0020     -24.7051     -24.7127      -0.020
+  leave             0.4967      -5.0087      -5.0092      -1.017
+  restock           0.1989      11.9710      11.9710       0.974
+  serve             3.0000      -0.0011      -0.0011      -0.001
+  elasticity = (k/served)·∂served/∂k: a 1% change in the rate moves served by that many percent.
+
+== 7. verify
+cafe-kinetics.json: 0 P-invariants — an open system (arrive is a source, leave a sink); conservation lives in the workflow and the theme
+cafe-order.json via metapetri.Convert + metapetri.Verify: 7 states explored, 7 proved / 1 refuted / 0 unknown
+  proved   structural  one order token, conserved
+  proved   structural  total tokens never change
+  proved   structural  never both picked up and refunded
+  proved   exhaustive  no refund on a collected drink
+  proved   exhaustive  a refund is possible
+  proved   structural  bounded
+  proved   exhaustive  every order ends
+  refuted  exhaustive  deadlock-free (expected refuted: an order that ends is a deadlock)
+           witness: pay → cancel → refund → {refunded=1}
+cafe.jsonld (unfolded theme): 2 proved / 0 refuted / 0 unknown; the conversion recorded 10 notes, none lossy
+  proved   structural  one barista: free or brewing
+  proved   structural  never free and brewing at once
+
+== 8. mcp
+the same files reach petri-pilot's MCP server (https://pilot.pflow.xyz/mcp, or `petri-pilot mcp` on stdio) as these calls.
+<file> stands for the file's contents passed as the string argument; observations.json is step 2's output. Documentation only — nothing here touches the network.
+  petri_analyze    {"full":true,"model":"<cafe-kinetics.json>"}
+  petri_stochastic {"model":"<cafe-kinetics.json>","rates":{"arrive":6.015,"brew_espresso":0.01,"brew_latte":0.002,"leave":0.4967,"restock":0.1989,"serve":3},"realizations":50,"samples":25,"seed":42,"tspan":"[0, 24]"}
+  petri_fit        {"fixed_rates":{"brew_espresso":0.01,"brew_latte":0.002,"serve":3},"max_iter":400,"method":"adam","model":"<cafe-kinetics.json>","observations":"<observations.json>","parameters":{"arrive":[0.6,60],"leave":[0.05,5],"restock":[0.02,2]}}
+  petri_verify     {"model":"<cafe-order.json>","properties":["new + paid + brewing + ready + picked_up + cancelled + refunded == 1","conserves","mutex:picked_up,refunded","unreachable:picked_up=1,refunded=1","reachable:refunded=1","bounded","terminating","deadlock-free"]}
+  petri_verify     {"model":"<cafe.jsonld>","properties":["barista_free + brewing == 1","mutex:barista_free,brewing"]}
+  notes: petri_stochastic caps realizations at 50; petri_fit is bounded Nelder-Mead or Adam in k (not ln k) and defaults to the midpoint of each bound;
+  the pilot unfolds cafe.jsonld through parser.ModelFromJSON itself, and a base name in a property sums over its colors.

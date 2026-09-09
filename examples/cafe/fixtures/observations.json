@@ -1,0 +1,55 @@
+{
+ "_comment": "ODE trajectory samples of cafe-kinetics.json at the declared rates (petri_ode, tspan=[0,24]); the observations petri_fit recovers arrive=6 and restock=0.2 from",
+ "served": [
+  [
+   0.377,
+   0.785
+  ],
+  [
+   1.171,
+   3.953
+  ],
+  [
+   2.436,
+   7.576
+  ],
+  [
+   5.328,
+   9.801
+  ],
+  [
+   10.53,
+   4.408
+  ],
+  [
+   16.68,
+   2.657
+  ],
+  [
+   24,
+   2.442
+  ]
+ ],
+ "orders": [
+  [
+   2.436,
+   0.344
+  ],
+  [
+   5.328,
+   2.525
+  ],
+  [
+   10.53,
+   21.52
+  ],
+  [
+   16.68,
+   50.33
+  ],
+  [
+   24,
+   85.29
+  ]
+ ]
+}

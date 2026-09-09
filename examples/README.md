@@ -6,6 +6,7 @@ Working demonstrations organized by the [book](https://book.pflow.xyz) chapter p
 
 | Example | Domain | Book Chapter | Run |
 |---------|--------|--------------|-----|
+| [cafe](cafe/) | **Start here.** The canonical end-to-end run on the ecosystem's café model: declare (both JSON shapes), observe, fit (forward + adjoint), ODE / SSA / SDE, compare, sensitivities, verify, MCP | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) | `go run ./examples/cafe` |
 | [basic](basic/) | Token flow, producer-consumer | [Ch 1: Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html) | `cd basic && go run main.go` |
 | [coffeeshop](coffeeshop/) | Actors, workflows, state machines, mining | [Ch 5: Resource Modeling](https://book.pflow.xyz/ch05-resource-modeling.html) | `cd coffeeshop/cmd && go run main.go` |
 | [tictactoe](tictactoe/) | Minimax, ODE move evaluation | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) | `cd tictactoe && go run ./cmd` |

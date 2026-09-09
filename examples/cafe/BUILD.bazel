@@ -1,0 +1,47 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "cafe_lib",
+    srcs = [
+        "cafe.go",
+        "main.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/cafe",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//learn",
+        "//metamodel",
+        "//metamodel/metapetri",
+        "//parser",
+        "//petri",
+        "//reachability",
+        "//sensitivity",
+        "//solver",
+        "//stochastic",
+        "//verify",
+    ],
+)
+
+go_binary(
+    name = "cafe",
+    embed = [":cafe_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "cafe_test",
+    srcs = ["cafe_test.go"],
+    # The pipeline reads the showcase model copies and fixtures beside the
+    # sources (cafe-*.json, cafe.jsonld, fixtures/*.json), not only testdata/.
+    data = glob([
+        "testdata/**",
+        "*.json",
+        "*.jsonld",
+        "fixtures/*.json",
+    ]),  # keep
+    embed = [":cafe_lib"],
+    deps = [
+        "//metamodel",
+        "//verify",
+    ],
+)
