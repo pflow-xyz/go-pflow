@@ -4,26 +4,35 @@ Working demonstrations organized by the [book](https://book.pflow.xyz) chapter p
 
 ## Examples
 
+Every command in the **Run** column is relative to this `examples/` directory —
+`cd` here first. Rows marked *(interactive)* read input from stdin and expect a
+terminal — `nim` and `connect4` reject an empty or closed stdin and loop rather
+than exit. The row marked *(runs until Ctrl+C)* streams output until
+interrupted. Every other row runs to completion and exits.
+
 | Example | Domain | Book Chapter | Run |
 |---------|--------|--------------|-----|
-| [cafe](cafe/) | **Start here.** The canonical end-to-end run on the ecosystem's café model: declare (both JSON shapes), observe, fit (forward + adjoint), ODE / SSA / SDE, compare, sensitivities, verify, MCP | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) | `go run ./examples/cafe` |
+| [cafe](cafe/) | **Start here.** The canonical end-to-end run on the ecosystem's café model: declare (both JSON shapes), observe, fit (forward + adjoint), ODE / SSA / SDE, compare, sensitivities, verify, MCP | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) | `go run ./cafe` |
 | [basic](basic/) | Token flow, producer-consumer | [Ch 1: Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html) | `cd basic && go run main.go` |
+| [stoplight](stoplight/) | Smallest hand-built net: three light states, one cycle | [Ch 1: Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html) | `go run ./stoplight` |
+| [trafficlight](trafficlight/) | The same cycle plus a pedestrian crossing region | [Ch 1: Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html) | `go run ./trafficlight` |
 | [coffeeshop](coffeeshop/) | Actors, workflows, state machines, mining | [Ch 5: Resource Modeling](https://book.pflow.xyz/ch05-resource-modeling.html) | `cd coffeeshop/cmd && go run main.go` |
 | [tictactoe](tictactoe/) | Minimax, ODE move evaluation | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) | `cd tictactoe/cmd && go run .` |
-| [nim](nim/) | Optimal strategy, Grundy numbers | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) | `cd nim && go run ./cmd` |
-| [connect4](connect4/) | Pattern recognition, lookahead | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) | `cd connect4 && go run ./cmd` |
+| [nim](nim/) | Optimal strategy, Grundy numbers | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) | `cd nim && go run ./cmd` *(interactive)* |
+| [connect4](connect4/) | Pattern recognition, lookahead | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) | `cd connect4 && go run ./cmd` *(interactive)* |
 | [sudoku](sudoku/) | Constraint satisfaction, colored nets | [Ch 7: Constraint Satisfaction](https://book.pflow.xyz/ch07-constraint-satisfaction.html) | `cd sudoku/cmd && go run .` |
 | [chess](chess/) | N-Queens, Knight's Tour | [Ch 7: Constraint Satisfaction](https://book.pflow.xyz/ch07-constraint-satisfaction.html) | `cd chess/cmd && go run *.go` |
 | [knapsack](knapsack/) | Combinatorial optimization | [Ch 8: Optimization](https://book.pflow.xyz/ch08-optimization.html) | `cd knapsack/cmd && go run *.go` |
 | [poker](poker/) | Multi-phase state machines | [Ch 10: Complex State Machines](https://book.pflow.xyz/ch10-complex-state-machines.html) | `cd poker && go run ./cmd` |
+| [f91w](f91w/) | Casio F-91W watch: nested modes, parallel backlight region | [Ch 10: Complex State Machines](https://book.pflow.xyz/ch10-complex-state-machines.html) | `go run ./f91w/cmd` *(interactive)* |
 | [erc](erc/) | Token standards, Solidity codegen | [Ch 4: Token Language](https://book.pflow.xyz/ch04-token-language.html) | `go run ./erc` |
 | [eventlog_demo](eventlog_demo/) | Event log parsing | [Ch 11: Process Mining](https://book.pflow.xyz/ch11-process-mining.html) | `cd eventlog_demo && go run main.go` |
 | [mining_demo](mining_demo/) | Process discovery, rate learning | [Ch 11: Process Mining](https://book.pflow.xyz/ch11-process-mining.html) | `cd mining_demo && go run main.go` |
 | [monitoring_demo](monitoring_demo/) | Real-time prediction, SLA alerts | [Ch 11: Process Mining](https://book.pflow.xyz/ch11-process-mining.html) | `cd monitoring_demo && go run main.go` |
-| [incident_simulator](incident_simulator/) | IT incident lifecycle | [Ch 11: Process Mining](https://book.pflow.xyz/ch11-process-mining.html) | `cd incident_simulator && go run main.go` |
+| [incident_simulator](incident_simulator/) | IT incident lifecycle | [Ch 11: Process Mining](https://book.pflow.xyz/ch11-process-mining.html) | `cd incident_simulator && go run main.go` *(runs until Ctrl+C)* |
 | [neural](neural/) | Parameter fitting from data | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) | `cd neural && go run ./cmd/main` |
 | [dataset_comparison](dataset_comparison/) | Model calibration | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) | `cd dataset_comparison && go run ./cmd/synthetic_sir` |
-| [visualization_demo](visualization_demo/) | SVG rendering | [Ch 17: Visual Editor](https://book.pflow.xyz/ch17-visual-editor.html) | `make run-visualization` |
+| [visualization_demo](visualization_demo/) | SVG rendering | [Ch 17: Visual Editor](https://book.pflow.xyz/ch17-visual-editor.html) | `cd visualization_demo && go run main.go` |
 
 ## Complexity Progression
 
