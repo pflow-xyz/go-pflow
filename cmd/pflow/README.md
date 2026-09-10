@@ -217,6 +217,177 @@ pflow verify model.json -p "pool.red == 3"   # exactly 3 red
 pflow verify model.json -p "pool == 3"       # 3 tokens of any color
 ```
 
+### `create` - Create model from template
+
+Generates a Petri net model from a built-in template instead of hand-writing
+JSON.
+
+```bash
+pflow create [flags]
+
+Flags:
+  --template string  Template name (required)
+  --output string    Output file (required)
+  --params string    Template parameters (format: "key=value,key2=value2")
+  --list             List available templates
+  --show string      Show a template's parameters
+```
+
+**Templates**: `sir`, `seir`, `queue`, `producer-consumer`, `workflow`
+
+**Examples**:
+```bash
+# List templates
+pflow create --list
+
+# Show a template's parameters
+pflow create --show sir
+
+# Create an SIR model with custom parameters
+pflow create --template sir --params "population=5000,infection_rate=0.0005" --output sir.json
+
+# Create a queue with 3 servers
+pflow create --template queue --params "servers=3,queue_capacity=50" --output queue.json
+```
+
+### `validate` - Validate model structure
+
+Checks structural integrity (negative tokens, invalid weights), connectivity,
+deadlocks, unbounded places and token conservation. `--reachability`
+additionally explores the full discrete state space.
+
+```bash
+pflow validate <model.json> [flags]
+
+Flags:
+  --reachability    Perform reachability analysis (explores state space)
+  --max-states int  Maximum states to explore for reachability (default: 10000)
+  --json            Output results as JSON
+  --output string   Write JSON results to file
+```
+
+**Output**: Structural warnings and info; with `--reachability`, also states
+explored, boundedness, deadlock states and maximum tokens per place.
+
+**Examples**:
+```bash
+# Basic validation
+pflow validate model.json
+
+# With reachability analysis
+pflow validate model.json --reachability
+
+# Limit state exploration and save a JSON report
+pflow validate model.json --reachability --max-states 5000 --json --output validation.json
+```
+
+### `verify` - Check declarative properties
+
+Checks declarative properties against a model's reachable state space. Each
+property returns **proved**, **refuted** or **unknown** — a refutation carries
+a replayable firing sequence. The process exits non-zero if any property is
+refuted.
+
+```bash
+pflow verify <model.json> -p <property> [-p <property> ...] [flags]
+
+Flags:
+  --json    Output results as JSON
+
+Property forms:
+  deadlock-free              no reachable marking is a deadlock
+  bounded                    no place accumulates tokens without limit
+  live                       every transition can fire from some marking
+  terminating                every execution eventually stops
+  conserves                  total token count never changes
+  reachable:<marking>        some reachable marking matches, e.g. reachable:done=1
+  unreachable:<marking>      no reachable marking matches (safety)
+  mutex:<p1,p2,...>[<=n]     at most n of these places hold a token at once
+  <linear expression>        holds at every reachable marking, e.g. "a + 2*b == 10"
+```
+
+A verdict's `method` says how far it generalizes: `structural` (proved by
+linear algebra, for any initial marking), `exhaustive` (the marking's full
+state space was enumerated), `witness` (a constructive witness, e.g. an
+unbounded pump), or `partial` (exploration was truncated — only refutations
+found under a partial search are sound).
+
+**Examples**:
+```bash
+pflow verify model.json -p deadlock-free -p bounded
+pflow verify model.json -p "mutex:busy1,busy2"
+pflow verify model.json -p "minted == circulating + burned"
+pflow verify model.json -p unreachable:busy1=1,busy2=1 --json
+```
+
+### `sweep` - Parameter sweep and optimization
+
+Runs a model across a grid of rate or initial-state values and ranks the
+variants against an optimization objective.
+
+```bash
+pflow sweep <model.json> [flags]
+
+Flags:
+  --rates string       Sweep rates: "name=min:max:count,..."
+  --initial string     Sweep initial state: "name=min:max:count,..."
+  --objective string   Optimization objective (default: "minimize_peak")
+  --time float         End time for simulation (default: 100)
+  --parallel int       Number of parallel simulations (default: 4)
+  --output string      Output file for sweep results (default: "sweep_results.json")
+  --save-variants      Save individual variant results
+  --variant-dir string Directory for variant results (default: "variants")
+
+Objectives:
+  minimize_peak            Minimize maximum peak across all variables
+  maximize_peak            Maximize peak (useful for throughput)
+  minimize_final           Minimize sum of final state
+  maximize_throughput      Maximize "Completed" or "Output" place
+  minimize_time_to_steady  Minimize time to reach steady state
+```
+
+**Output**: Ranked variants (best/worst configuration, score, peak) and, with
+`--save-variants`, each variant's full simulation result under `--variant-dir`.
+
+**Examples**:
+```bash
+# Sweep a single rate
+pflow sweep model.json --rates "infection=0.0001:0.001:10" --output sweep.json
+
+# Sweep multiple parameters
+pflow sweep model.json --rates "arrive=1:5:5,process=0.5:2:4" --output sweep.json
+
+# Sweep initial state
+pflow sweep model.json --initial "Queue=0:100:11" --output sweep.json
+
+# Custom objective, saving every variant
+pflow sweep model.json --rates "r=0.1:0.5:5" --objective minimize_time_to_steady --save-variants --variant-dir variants/
+```
+
+### `visualize` - Render Petri net structure
+
+Renders the net's places, transitions and arcs as an SVG using the pflow-xyz
+layout, independent of any simulation run.
+
+```bash
+pflow visualize <model.json> [flags]
+
+Flags:
+  --output string  Output SVG file (required)
+```
+
+**Output**: SVG file of the net structure (not a plot of simulation results —
+see `plot` for that).
+
+**Examples**:
+```bash
+# Visualize model structure
+pflow visualize model.json --output model.svg
+
+# Visualize from JSON-LD
+pflow visualize model.jsonld --output model.svg
+```
+
 ## AI-Assisted Workflows
 
 The CLI is designed to work seamlessly with AI assistants like Claude:

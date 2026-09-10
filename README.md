@@ -9,10 +9,12 @@ system identification and parameter fitting (gradient-free, and gradient-based
 with forward or adjoint sensitivities), structural analysis and verification
 (reachability, P/T-invariants, declarative properties with proved / refuted /
 unknown verdicts and counterexamples), and a cross-language compatibility
-contract: byte-exact SSA goldens and editor-shape parse goldens shared with the
-[pflow.xyz](https://pflow.xyz) JavaScript engine,
-[pflow-jl](https://github.com/pflow-xyz/pflow-jl) and
-[pflow-rs](https://github.com/pflow-xyz/pflow-rs).
+contract: byte-exact SSA and editor-shape parse goldens held against the
+[pflow.xyz](https://pflow.xyz) JavaScript engine, with
+[pflow-rs](https://github.com/pflow-xyz/pflow-rs) replaying the SSA half and
+[pflow-jl](https://github.com/pflow-xyz/pflow-jl) replaying both on a branch
+not yet merged to its default (see [Compatibility](#compatibility) for the
+full matrix).
 
 For the long form, read **[the book](https://book.pflow.xyz)**; for why the
 byte-exact contract exists, the
@@ -76,7 +78,7 @@ flowchart LR
     ODE & SSA --> FIT
     MM --> R & V & M
     engines & learn & analysis --> PILOT
-    MM -. "editor-shape + SSA goldens" .-> PORTS
+    MM -. "cross-language goldens" .-> PORTS
 ```
 
 ## Two JSON shapes, one rule
@@ -95,7 +97,9 @@ copies as `parity/editor-shape/` and replays them in CI from
 `public/petri-shape_test.ts`; pflow-jl keeps the same bytes as
 `test/testdata/editor-shape/` and replays them from `test/test_editor_shape.jl`,
 but on its `algebraic-petri` branch — not yet on its default branch, `main`.
-pflow-rs has no editor-shape parser yet and replays only the SSA goldens.
+pflow-rs has no editor-shape parser yet; it replays the SSA goldens, plus (a
+separate contract) go-pflow's ODE parity corpus and the generated-learn
+goldens.
 
 ## Installation
 
@@ -178,7 +182,7 @@ See [The go-pflow Library](https://book.pflow.xyz/ch19-go-pflow-library.html) fo
 | `parser` | pflow.xyz JSON-LD import/export; `ModelFromJSON` is the one editor-shape → metamodel converter | [Ch 17: Visual Editor](https://book.pflow.xyz/ch17-visual-editor.html) |
 | `petri` | Core net types, colors, fluent Builder | [Ch 1: Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html) |
 | `solver` | ODE solvers (Tsit5, RK45, implicit), equilibrium detection | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) |
-| `stochastic` | `Solve` dispatch; Gillespie SSA, schedules, chemical-Langevin SDE, `FitDiscrete` CTMC likelihood fitting. `Options{Portable: true}` is byte-exact with pflow-rs, pflow-xyz and pflow-jl (goldens in `stochastic/testdata/portable/`, `make ssa-goldens`) | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) |
+| `stochastic` | `Solve` dispatch; Gillespie SSA, schedules, chemical-Langevin SDE, `FitDiscrete` CTMC likelihood fitting. `Options{Portable: true}` is byte-exact with pflow-rs and pflow-xyz, and with pflow-jl on its `algebraic-petri` branch (goldens in `stochastic/testdata/portable/`, `make ssa-goldens`) | [Ch 3: Discrete to Continuous](https://book.pflow.xyz/ch03-discrete-to-continuous.html) |
 | `learn` | ODE parameter fitting and system identification: Nelder-Mead, Adam, forward and adjoint sensitivities, tied parameters, hybrid MLP rates | [Ch 19: go-pflow Library](https://book.pflow.xyz/ch19-go-pflow-library.html) |
 | `sensitivity` | Parameter sensitivity analysis | [Ch 19: go-pflow Library](https://book.pflow.xyz/ch19-go-pflow-library.html) |
 | `derive` | Evaluation variants of a declared net | — |

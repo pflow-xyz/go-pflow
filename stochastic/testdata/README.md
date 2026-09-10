@@ -64,7 +64,8 @@ consumer READMEs (pflow-rs, pflow-xyz, pflow-jl) must be refreshed together.
 | `sir.json` | `192035da7d6b848479a8f2586f1330caed19c8bf26ece2f4743017aef240e683` |
 
 The other repos carry **byte-identical copies** (`pflow-rs
-crates/pflow-solver/tests/fixtures/ssa/`, `pflow-xyz parity/ssa/`, `pflow-jl
-test/testdata/ssa/`), each with a README naming the go-pflow commit and the
+crates/pflow-solver/tests/fixtures/ssa/`, `pflow-xyz parity/ssa/`, and on
+pflow-jl's `algebraic-petri` branch — not yet its default `main` —
+`test/testdata/ssa/`), each with a README naming the go-pflow commit and the
 sha256 of every file. Refresh them with `cp` after any regeneration here, and
 verify with `sha256sum` on both sides against the table above.
