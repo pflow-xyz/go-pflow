@@ -7,14 +7,24 @@ They can disagree, sometimes sharply, on the same net. This page says when
 to trust which one, using two real nets and their actual output rather
 than a description of what should happen.
 
-This is the canonical copy. `pflow-rs`, `pflow-xyz` and `pflow-jl` each
-carry a byte-identical copy under a hash lock (`docs.lock` in each repo) —
-edit here, then run each consumer's `scripts/docs-sync.sh sync`, the same
-pattern the shared browser JS modules use (see the root `CLAUDE.md`,
-"Shared browser JS: pflow-xyz is canonical"). petri-pilot's MCP tool
-descriptions (`petri_ode`, `petri_stochastic`, `petri_sde`) link back to
-this file rather than re-stating it, so there is exactly one place this
-prose can drift from itself.
+This is the canonical copy. `pflow-rs` and `pflow-xyz` each vendor a copy
+under a hash lock (`docs.lock` in each repo) — edit here, then run each
+consumer's `scripts/docs-sync.sh sync`, the same pattern the shared browser
+JS modules use (see the root `CLAUDE.md`, "Shared browser JS: pflow-xyz is
+canonical"). `pflow-jl` carries a copy only on its `algebraic-petri`
+branch; it is absent from `pflow-jl`'s default `main` branch. **As of this
+writing the vendored copies have drifted from this canonical version and
+are not byte-identical to it**: this file has since gained the "Capability
+matrix" section below and updated the SDE column from "SDE (planned, G6)"
+to "SDE (`stochastic`)" — accurate, because `stochastic/solve.go` declares
+`MethodSDE` and dispatches to `SimulateSDE`, so SDE is implemented, not
+planned — while the committed copies in `pflow-rs`, `pflow-xyz` and
+`pflow-jl`'s `algebraic-petri` branch still lack the Capability matrix
+section and still say "planned". A re-sync of all three is pending; until
+that runs, treat this file as the source of truth and the vendored copies
+as stale. petri-pilot's MCP tool descriptions (`petri_ode`,
+`petri_stochastic`, `petri_sde`) link back to this file rather than
+re-stating it, so there is exactly one canonical place this prose lives.
 
 ## Capability matrix
 
