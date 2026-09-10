@@ -144,6 +144,43 @@ into one dependency graph with a single `bazel test //...`.
       build time, so the two efforts should land together (change the encoding,
       then add the genrule diff that guards it).
 
+## Modelling boundaries (what the library cannot yet express naturally)
+
+The README's "where the edges are" table is the user-facing statement; this is
+the work behind each row. None of it is scheduled — the list exists so the
+gaps are declared rather than discovered.
+
+- [ ] **Data-carrying tokens.** Colors are a fixed index unfolded by
+      `petri.ExpandColors`; a token cannot carry a record, and a transition
+      cannot branch on a field. The poker example encodes around it. Anything
+      Jensen-style (typed tokens, arc expressions) is a new layer over `petri`,
+      and has to keep the ODE/SSA/invariant paths meaningful — which is the
+      hard part, not the parser.
+- [x] **Guards in simulation are opt-in, and a missing evaluator says so.**
+      `stochastic.Options.Guard` stays an injection seam (petri-pilot has its
+      own dialect), but a nil evaluator now caveats *"Options.Guard is nil"*
+      rather than blaming the expression, and `stochastic/markingguard.Eval`
+      decides the `tokens("p") op n` guards that metamodel's own patterns emit.
+- [x] **Timed transitions.** `metamodel.Transition.Delay` is a deterministic
+      firing duration: inputs consumed at start, outputs produced exactly
+      `Delay` later, every enabling on its own clock, priority over the
+      exponential race for shared tokens. The SSA honours it (scheduled runs
+      carry in-flight firings across segment seams; `Metrics.InFlight` reports
+      what a horizon cut off); `Gating` names it so `Forecast` and the SDE
+      refuse. The rule is portable: the `timed` golden replays byte-for-byte in
+      pflow-rs, pflow-xyz and pflow-jl, whose SDEs refuse it too. Still
+      outside the net: deadlines and pre-emption.
+- [ ] **Symbolic reachability.** `reachability` enumerates explicitly, and
+      is already bounded (`WithMaxStates`, `WithMaxTokens`, with
+      `ExplorationStats` saying how much of the space was covered). Anything
+      beyond a few hundred thousand markings needs BDD or unfolding, not a
+      larger bound.
+- [ ] **A v1 API freeze.** Twenty-seven minor versions in ten months is fine
+      for an engine with one consumer group, but every bump is a manual pin in
+      seven repos (`stackedup-gg` sat on v0.11 behind a local replace). Freeze
+      `petri`, `metamodel`, `solver`, `stochastic` and `reachability` first;
+      the rest can keep moving.
+
 ## Differentiable fitting track ("path to 10/10")
 
 An external review of the `learn` package (2026-08-26) rated the system-

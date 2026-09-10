@@ -46,9 +46,14 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 	// previous one — one sample path per realization across the whole
 	// horizon. The first segment starts every realization at the marking.
 	var starts [][]int
+	// Delayed firings that straddle a segment boundary complete in the next
+	// segment: a brew started in the last minute of the lull finishes during
+	// the rush. Without this the seam would swallow them.
+	var carry [][]pending
 	combined := &Result{Method: "ssa", Final: map[string]float64{}}
 	series := map[string][]float64{}
 	throughput := map[string]float64{}
+	var inFlight map[string]float64
 	// One accumulator for the whole horizon, carrying both the time-weighted
 	// marking summary and the blocked-time ledger. Averaging the segments' own
 	// means would weight a ten-minute rush the same as a seven-hour lull, which
@@ -84,12 +89,13 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 			Portable: opts.Portable,
 			OnFire:   opts.OnFire,
 		}
-		res, segStats, err := simulateFrom(m, m2, exp, marking, starts, segment)
+		res, segStats, segCarry, err := simulateFrom(m, m2, exp, marking, starts, carry, segment)
 		if err != nil {
 			return nil, err
 		}
 		stats.merge(segStats)
 		starts = segStats.ends
+		carry = segCarry
 
 		for _, t := range res.Times {
 			combined.Times = append(combined.Times, from+t)
@@ -101,6 +107,11 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 			for id, n := range res.Metrics.Throughput {
 				throughput[id] += n
 			}
+			// Only what is left in flight at the very end of the horizon is
+			// still in flight; a mid-run carry already left via the next
+			// segment's queue and would double count if summed like
+			// throughput.
+			inFlight = res.Metrics.InFlight
 		}
 		if len(caveats) == 0 {
 			caveats = res.Caveats
@@ -126,7 +137,7 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 	// rate segments does not make the engine assume anything extra.
 	combined.Assumptions = append(combined.Assumptions, assumptionsFor(exp)...)
 
-	mt := &Metrics{Throughput: throughput, Mean: map[string]float64{}, P95: map[string]float64{}}
+	mt := &Metrics{Throughput: throughput, InFlight: inFlight, Mean: map[string]float64{}, P95: map[string]float64{}}
 	for i, p := range report {
 		mt.Mean[p] = stats.times.mean(i)
 		mt.P95[p] = stats.times.percentile(i, 0.95)

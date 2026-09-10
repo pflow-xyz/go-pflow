@@ -364,6 +364,27 @@ type Transition struct {
 	// every existing model's bytes and content id unchanged.
 	Stages int `json:"stages,omitempty"`
 
+	// Delay declares a deterministic firing duration, in model time units.
+	// A delayed transition has no rate: it starts the instant it is enabled,
+	// consuming its inputs then, and produces its outputs exactly Delay
+	// later. Every enabling runs its own clock (infinite-server), so three
+	// washers loaded together finish together, and a delayed transition
+	// takes shared tokens ahead of the exponential race, the way an
+	// immediate transition does in a GSPN. Between start and completion the
+	// consumed tokens are in flight — in no place — which is what lets "a
+	// barista held for the whole brew" be one transition rather than a
+	// start/finish pair with a stage place between them.
+	//
+	// Only an engine with a firing instant can honour it: the SSA schedules
+	// the completion, and Gating names it so a continuous engine refuses
+	// rather than running the transition as plain exponential. For a
+	// duration that is roughly constant but must stay continuous-compatible,
+	// declare Stages instead. Rate is ignored on a delayed transition, and a
+	// delayed transition must consume something — one with no input would
+	// restart the instant it completed, forever, in zero time. omitempty
+	// keeps every existing model's bytes and content id unchanged.
+	Delay float64 `json:"delay,omitempty"`
+
 	// ClearsHistory resets the aggregate to initial state
 	ClearsHistory bool `json:"clearsHistory,omitempty"`
 

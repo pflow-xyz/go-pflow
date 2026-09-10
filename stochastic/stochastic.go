@@ -285,6 +285,11 @@ type Metrics struct {
 	// pair of places named "<pool>/busy" and "<pool>/available" (or "busy" and
 	// "available" within one subnet). Absent when the model has no such pair.
 	Utilization map[string]float64 `json:"utilization,omitempty"`
+	// InFlight is the mean number of delayed firings still in progress at
+	// the horizon, per timed transition. The tokens they consumed are in no
+	// place, so a place total that does not add up at the end is accounted
+	// for here rather than lost. Absent when the model declares no delay.
+	InFlight map[string]float64 `json:"inFlight,omitempty"`
 }
 
 // Depletion records when a place first runs out.
@@ -464,7 +469,7 @@ func Simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	if m.HasSchedules() || len(opts.Schedule) > 0 {
 		return SimulateSchedule(m, marking, opts)
 	}
-	res, stats, err := simulate(m, marking, opts)
+	res, stats, _, err := simulate(m, marking, opts, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -521,33 +526,41 @@ func (rs *runStats) merge(o *runStats) {
 // here — the engine runs the expanded net and reports in the model's own
 // vocabulary — so every caller, not only the scenario runner, gets the
 // phase-type durations the model declared.
-func simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result, *runStats, error) {
+func simulate(m *metamodel.Model, marking map[string]int, opts Options, carry [][]pending) (*Result, *runStats, [][]pending, error) {
 	m2, exp, err := m.ExpandStages()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return simulateExpanded(m, m2, exp, marking, opts)
+	return simulateExpanded(m, m2, exp, marking, opts, carry)
 }
 
 // simulateExpanded runs the expanded net m2 (exp nil when m2 == orig) and
 // folds stage places back onto their carriers and stage firings onto their
 // original transition for every report: Series, Final, Metrics, Contended.
-func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, opts Options) (*Result, *runStats, error) {
-	return simulateFrom(orig, m2, exp, marking, nil, opts)
+func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, opts Options, carry [][]pending) (*Result, *runStats, [][]pending, error) {
+	return simulateFrom(orig, m2, exp, marking, nil, carry, opts)
 }
 
 // simulateFrom is simulateExpanded with an optional per-realization start:
 // when starts is non-nil, realization r begins at starts[r] (expanded places'
 // order) instead of the shared marking. Every realization's final marking is
-// returned in runStats.ends either way.
-func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, starts [][]int, opts Options) (*Result, *runStats, error) {
+// returned in runStats.ends either way. carry, when non-nil, is one delayed-
+// firing queue per realization (see pending) picked up where the previous
+// segment left it; the queue each realization ends with is returned so the
+// next segment can do the same.
+func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, starts [][]int, carry [][]pending, opts Options) (*Result, *runStats, [][]pending, error) {
 	opts.Rates = exp.TranslateRates(opts.Rates)
 	opts = opts.withDefaults(m2)
 
 	trs, places, caveats, err := compile(m2, opts.Rates, opts.Guard)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
+	if carry != nil && len(carry) != opts.Realizations {
+		return nil, nil, nil, fmt.Errorf("stochastic: %d carried realizations for a run of %d", len(carry), opts.Realizations)
+	}
+	left := make([][]pending, opts.Realizations)
+	inflight := make([]float64, len(trs))
 
 	// The reporting vocabulary: every expanded place folds to itself except
 	// stage places, which fold to their carrier.
@@ -611,8 +624,16 @@ func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, mark
 		} else {
 			s = stdSampler{rand.New(rand.NewSource(seed + int64(r)))} //nolint:gosec // not cryptographic
 		}
-		traj := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire)
+		var carried []pending
+		if carry != nil {
+			carried = carry[r]
+		}
+		traj, rest := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire, carried)
 		acc.ends[r] = start // ssa mutates the marking in place; this is where r ended
+		left[r] = rest
+		for _, p := range rest {
+			inflight[p.tr]++
+		}
 		for i, c := range counts {
 			firings[i] += float64(c)
 		}
@@ -668,7 +689,15 @@ func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, mark
 	res.Contended = dropStageContentions(exp, contentions(m2, places, blk, opts.Horizon*n))
 	res.Caveats = caveats
 	res.Metrics = metricsOf(foldThroughput(exp, trs, firings), report, ts, n)
-	return res, acc, nil
+	for i := range trs {
+		if trs[i].delay > 0 {
+			if res.Metrics.InFlight == nil {
+				res.Metrics.InFlight = map[string]float64{}
+			}
+			res.Metrics.InFlight[trs[i].id] = inflight[i] / n
+		}
+	}
+	return res, acc, left, nil
 }
 
 // carrierOf is StageExpansion.CarrierOf as a lookup that tolerates nil.
@@ -1168,6 +1197,43 @@ type transition struct {
 	// a caveat rather than guessed at.
 	guard string
 	eval  GuardFunc // nil when guard == ""
+
+	// delay > 0 makes this a timed transition: it has no rate, starts the
+	// instant it is enabled, and completes exactly delay later. See
+	// metamodel.Transition.Delay.
+	delay float64
+}
+
+// pending is a delayed firing that has started and not yet completed. at is
+// the completion time on the run's own clock; between segments of a
+// scheduled run it is re-based to the next segment's start.
+type pending struct {
+	at float64
+	tr int
+}
+
+// enabled reports whether every constraint — consuming inputs, non-consuming
+// gates and the marking guard — lets t start at marking. The exponential
+// path folds the input test into the propensity; delayed transitions have
+// no propensity and ask directly.
+func (t *transition) enabled(places []string, marking []int) bool {
+	for _, in := range t.inputs {
+		if marking[in.place] < in.weight {
+			return false
+		}
+	}
+	return t.gated(marking) && t.allows(places, marking)
+}
+
+// schedulePending inserts p keeping the queue sorted by completion time,
+// after any completion already due at the same instant, so two washers
+// loaded together finish in the order they were loaded.
+func schedulePending(q []pending, p pending) []pending {
+	i := sort.Search(len(q), func(i int) bool { return q[i].at > p.at })
+	q = append(q, pending{})
+	copy(q[i+1:], q[i:])
+	q[i] = p
+	return q
 }
 
 // gated reports whether the non-consuming constraints allow this transition to
@@ -1208,6 +1274,9 @@ func compile(m *metamodel.Model, rates map[string]float64, guard GuardFunc) ([]t
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	if errs := m.ValidateDelays(); len(errs) > 0 {
+		return nil, nil, nil, fmt.Errorf("stochastic: %w", errs[0])
+	}
 	if rates == nil {
 		rates = Rates(m)
 	}
@@ -1225,7 +1294,15 @@ func compile(m *metamodel.Model, rates map[string]float64, guard GuardFunc) ([]t
 	out := make([]transition, 0, len(m.Transitions))
 	for i := range m.Transitions {
 		t := &m.Transitions[i]
-		tr := transition{id: t.ID, rate: rates[t.ID]}
+		tr := transition{id: t.ID, rate: rates[t.ID], delay: t.Delay}
+		if t.Delay > 0 {
+			// A timer, not a race: the rate has nothing to say.
+			if t.Rate > 0 {
+				caveats = append(caveats, fmt.Sprintf(
+					"%s declares both a delay and a rate; the delay is the firing rule and the rate is ignored", t.ID))
+			}
+			tr.rate = 0
+		}
 
 		delta := map[string]int{}
 		for _, in := range m.Inputs(t.ID) {
@@ -1257,10 +1334,19 @@ func compile(m *metamodel.Model, rates map[string]float64, guard GuardFunc) ([]t
 		}
 
 		if t.Guard != "" {
-			if decidableFromMarking(t.Guard, m, guard) {
+			switch {
+			case guard == nil:
+				// Distinct from the parameter case below: nothing was tried.
+				// Blaming the expression would send the reader to the model
+				// when the fix is in the Options.
+				caveats = append(caveats, fmt.Sprintf(
+					"no guard evaluator was supplied (Options.Guard is nil), so the guard on %s is not enforced; "+
+						"this run may fire it where the application would refuse — "+
+						"stochastic/markingguard.Eval decides guards written over tokens(...)", t.ID))
+			case decidableFromMarking(t.Guard, m, guard):
 				tr.guard = t.Guard
 				tr.eval = guard
-			} else {
+			default:
 				caveats = append(caveats, fmt.Sprintf(
 					"the guard on %s needs action parameters, so it is not enforced here; "+
 						"this run may fire it where the application would refuse", t.ID))
@@ -1478,8 +1564,38 @@ func propensitiesAt(trs []transition, marking []int, places []string, out []floa
 	return total
 }
 
-func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int)) [][]float64 {
+func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int), carried []pending) ([][]float64, []pending) {
 	nPlaces := len(marking)
+	queue := append([]pending(nil), carried...)
+	timed := false
+	for i := range trs {
+		if trs[i].delay > 0 {
+			timed = true
+			break
+		}
+	}
+	// start fires every enabled delayed transition at the current instant,
+	// in declaration order, until none is: each start consumes tokens, so
+	// the loop ends. Delay-free nets never enter it, which is what keeps the
+	// default and portable paths' random streams — and their goldens — as
+	// they were.
+	start := func(t float64) {
+		if !timed {
+			return
+		}
+		for again := true; again; {
+			again = false
+			for i := range trs {
+				if trs[i].delay > 0 && trs[i].enabled(places, marking) {
+					for _, in := range trs[i].inputs {
+						marking[in.place] -= in.weight
+					}
+					queue = schedulePending(queue, pending{at: t + trs[i].delay, tr: i})
+					again = true
+				}
+			}
+		}
+	}
 	blk.credit(0) // a step cut short by maxSteps leaves scratch behind
 	traj := make([][]float64, nPlaces)
 	for p := range traj {
@@ -1503,8 +1619,9 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 	propensities := make([]float64, len(trs))
 
 	for step := 0; step < maxSteps && t < tEnd; step++ {
+		start(t)
 		total := propensitiesAt(trs, marking, places, propensities, blk)
-		if total <= 0 {
+		if total <= 0 && len(queue) == 0 {
 			// Dead marking: nothing can fire, and no amount of time changes
 			// that. The rest of the horizon is spent waiting for whatever is
 			// short, so it is credited rather than dropped — a shop that ran
@@ -1517,7 +1634,39 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 		// The sampler owns the first draw and its logarithm (the default
 		// path's u <= 0 clamp lives in stdSampler); this is the same
 		// -log(u) / total as before, in the same two operations.
-		dt := rng.wait() / total
+		dt := math.Inf(1)
+		if total > 0 {
+			dt = rng.wait() / total
+		}
+		// A completion due before the exponential draw pre-empts it. The
+		// draw is discarded, not deferred: the race is memoryless, so the
+		// residual after the completion is a fresh exponential over whatever
+		// the new marking enables, and that is drawn on the next step.
+		if len(queue) > 0 && queue[0].at <= t+dt {
+			due := queue[0]
+			held := math.Min(due.at-t, tEnd-t)
+			blk.credit(held)
+			ts.hold(marking, held)
+			t = due.at
+			record()
+			if t > tEnd {
+				t = tEnd
+				break
+			}
+			queue = queue[1:]
+			for _, out := range trs[due.tr].outputs {
+				marking[out.place] += out.weight
+			}
+			if fired != nil {
+				fired[due.tr]++
+			}
+			if onFire != nil {
+				post := make([]int, len(marking))
+				copy(post, marking)
+				onFire(realization, t, trs[due.tr].id, post)
+			}
+			continue
+		}
 		// The marking is held from here until the firing, or until the horizon
 		// if the draw overshoots it. Both the blocked-time bookkeeping and the
 		// time-weighted metrics are credited against that interval, clipped —
@@ -1561,7 +1710,11 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 			traj[p][next] = float64(marking[p])
 		}
 	}
-	return traj
+	// What is still in flight leaves on the next segment's clock.
+	for i := range queue {
+		queue[i].at -= tEnd
+	}
+	return traj, queue
 }
 
 // combinations is C(m, w), the number of distinct ways to select w tokens from

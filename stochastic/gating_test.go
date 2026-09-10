@@ -425,10 +425,11 @@ func TestDepletionDistinguishesAPoolFromStock(t *testing.T) {
 		pool.At, pool.Recovered, stock.At, stock.Recovered)
 }
 
-// TestNilGuardCaveatsLikeAParameterGuard pins the injection seam: with no
-// evaluator at all, a marking-decidable guard gets the same caveat a parameter
-// guard gets, rather than being silently enforced or silently dropped.
-func TestNilGuardCaveatsLikeAParameterGuard(t *testing.T) {
+// TestNilGuardIsCaveatedNotEnforced pins the injection seam: with no
+// evaluator at all, a marking-decidable guard is caveated rather than silently
+// enforced or silently dropped — and the caveat names the missing evaluator,
+// which is a different diagnosis from a guard that genuinely needs parameters.
+func TestNilGuardIsCaveatedNotEnforced(t *testing.T) {
 	m := &metamodel.Model{
 		Name:        "guarded",
 		Places:      []metamodel.Place{{ID: "orders", Initial: 10}, {ID: "done"}, {ID: "reserve", Initial: 3}},
@@ -449,9 +450,15 @@ func TestNilGuardCaveatsLikeAParameterGuard(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(withNil.Caveats) != 1 || len(withStub.Caveats) != 1 || withNil.Caveats[0] != withStub.Caveats[0] {
-		t.Errorf("nil guard caveats %v, stub-on-parameter-guard caveats %v; want the same single string",
+	if len(withNil.Caveats) != 1 || len(withStub.Caveats) != 1 {
+		t.Fatalf("nil guard caveats %v, stub-on-parameter-guard caveats %v; want exactly one each",
 			withNil.Caveats, withStub.Caveats)
+	}
+	if !strings.Contains(withNil.Caveats[0], "Options.Guard is nil") {
+		t.Errorf("nil-evaluator caveat should name the missing evaluator: %s", withNil.Caveats[0])
+	}
+	if !strings.Contains(withStub.Caveats[0], "needs action parameters") {
+		t.Errorf("parameter-guard caveat should blame the parameters: %s", withStub.Caveats[0])
 	}
 	if withNil.Metrics.Throughput["serve"] == 0 {
 		t.Error("with no evaluator the guard must not be enforced; serve never fired")

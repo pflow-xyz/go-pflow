@@ -30,6 +30,7 @@ go_test(
         "compiled_test.go",
         "consistency_test.go",
         "contention_test.go",
+        "delay_test.go",
         "gating_test.go",
         "kinetic_test.go",
         "likelihood_test.go",

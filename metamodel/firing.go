@@ -295,6 +295,15 @@ func (m *Model) Gating() []string {
 	// is named here for every engine that consults Gating before running.
 	// Expanding engines expand first: the expansion clears Stages, so the
 	// expanded model does not carry this entry.
+	var delayed []string
+	for i := range m.Transitions {
+		if m.Transitions[i].Delay > 0 {
+			delayed = append(delayed, m.Transitions[i].ID)
+		}
+	}
+	if len(delayed) > 0 {
+		out = append(out, fmt.Sprintf("delays on %v are deterministic timers — inputs consumed at start, outputs produced a fixed time later — which mass action cannot express; declare stages instead for a continuous-compatible near-constant duration", delayed))
+	}
 	var staged []string
 	for i := range m.Transitions {
 		if m.Transitions[i].Stages > 1 {

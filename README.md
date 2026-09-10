@@ -174,6 +174,34 @@ fmt.Println("Final state:", sol.GetFinalState())
 
 See [The go-pflow Library](https://book.pflow.xyz/ch19-go-pflow-library.html) for the full API guide.
 
+## What you can model, and where the edges are
+
+The formalism is Turing-complete once inhibitor arcs are in play, so the
+question is never *can* it be expressed but whether the tooling makes it
+natural. Natural today:
+
+- **Anything with a discrete state and countable resources** — workflows,
+  queues, inventories, protocols, game rules, token standards. Places hold
+  integer counts, transitions fire, and every analysis package reads the same net.
+- **Population dynamics** — epidemics, chemical kinetics, market flows — where
+  the same net runs as a mass-action ODE, an exact Gillespie sample path, or a
+  chemical Langevin SDE. [Which engine for which question](docs/engine-selection.md)
+  says when each one is telling the truth.
+- **Correctness questions**, not just trajectories: invariants, deadlocks,
+  boundedness, declared properties with counterexamples, conformance against
+  event logs, and a Groth16 proof of an execution. The ladder is in
+  [MODEL-CORRECTNESS.md](docs/MODEL-CORRECTNESS.md).
+
+Where you will be working against the grain:
+
+| You want | What exists | What it costs you |
+|---|---|---|
+| Tokens that carry data (a struct per token) | Vector-valued tokens: a fixed set of colors, unfolded by `petri.ExpandColors` | Encode the data as places or colors; predicates over token fields become guard strings |
+| Guards enforced in simulation | `stochastic.Options.Guard` is an injected evaluator; `stochastic/markingguard` decides guards over `tokens(...)` | A nil evaluator caveats every guard rather than enforcing it — read `Result.Caveats` |
+| Deterministic durations | `delay` on a transition: inputs consumed at start, outputs exactly `delay` later, one clock per enabling; `stages` for an Erlang-k approximation | Only the discrete engine honours `delay`, byte-exact in all four languages; the ODE and SDE refuse it. Deadlines and pre-emption are still outside the net |
+| Exhaustive analysis of a large state space | `reachability` enumerates explicitly | Fine for a café, not for a board game; the chess example is N-Queens for that reason |
+| Continuous dynamics with gating | `stochastic.Forecast` refuses a gated net rather than running it unconstrained | Use `Simulate` (SSA); the refusal is the engine doing its job |
+
 ## Packages
 
 | Package | Purpose | Book chapter |

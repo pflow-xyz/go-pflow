@@ -11,8 +11,10 @@ import "github.com/pflow-xyz/go-pflow/metamodel"
 // decidableFromMarking did with pkg/dsl. A run-time error after compile
 // refuses the firing.
 //
-// A nil GuardFunc means every guard is caveated, never enforced. go-pflow
-// ships no implementation — tokenmodel/guard is a diverged dialect and
-// imports uint256 — so a caller with a guard language injects its own
-// evaluator; petri-pilot injects pkg/dsl.
+// A nil GuardFunc means every guard is caveated, never enforced, and the
+// caveat says so. stochastic itself ships no implementation — tokenmodel/guard
+// is a diverged dialect and imports uint256 — so a caller with a guard
+// language injects its own evaluator; petri-pilot injects pkg/dsl. For guards
+// written over the marking alone (tokens("p") >= n, the form metamodel's
+// patterns emit) stochastic/markingguard.Eval is the opt-in default.
 type GuardFunc func(expr string, marking metamodel.Marking) (bool, error)

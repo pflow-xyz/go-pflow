@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "markingguard",
+    srcs = ["guard.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/stochastic/markingguard",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metamodel",
+        "//tokenmodel/guard",
+    ],
+)
+
+go_test(
+    name = "markingguard_test",
+    srcs = ["guard_test.go"],
+    embed = [":markingguard"],
+    deps = ["//metamodel"],
+)

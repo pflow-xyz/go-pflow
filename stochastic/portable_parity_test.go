@@ -18,7 +18,7 @@ import (
 
 // portableFixtures are the files that must exist. A glob alone would let a
 // deleted golden pass silently.
-var portableFixtures = []string{"chain", "sir", "dimer", "gates", "coffeeshop"}
+var portableFixtures = []string{"chain", "sir", "dimer", "gates", "coffeeshop", "timed"}
 
 type portableFixture struct {
 	Model   json.RawMessage `json:"model"`

@@ -41,8 +41,9 @@ type fxPlace struct {
 }
 
 type fxTransition struct {
-	ID   string  `json:"id"`
-	Rate float64 `json:"rate,omitempty"`
+	ID    string  `json:"id"`
+	Rate  float64 `json:"rate,omitempty"`
+	Delay float64 `json:"delay,omitempty"`
 }
 
 type fxArc struct {
@@ -284,12 +285,57 @@ func toMetamodel(m fxModel) *metamodel.Model {
 		out.Places = append(out.Places, metamodel.Place{ID: p.ID, Initial: p.Initial, Capacity: p.Capacity})
 	}
 	for _, t := range m.Transitions {
-		out.Transitions = append(out.Transitions, metamodel.Transition{ID: t.ID, Rate: t.Rate})
+		out.Transitions = append(out.Transitions, metamodel.Transition{ID: t.ID, Rate: t.Rate, Delay: t.Delay})
 	}
 	for _, a := range m.Arcs {
 		out.Arcs = append(out.Arcs, metamodel.Arc{From: a.From, To: a.To, Weight: a.Weight, Type: metamodel.ArcType(a.Type), Kinetic: a.Kinetic})
 	}
 	return out
+}
+
+// timed reaches every branch of the delayed-transition rule (§5):
+//
+//   - arrive is an exponential source, so the queue fills on the random
+//     stream while the clocks run;
+//   - serve holds one of two baristas for exactly 1.5 — a shared resource on
+//     a deterministic clock, starting the instant an order and a barista are
+//     both present, ahead of the race for the order;
+//   - abandon is the exponential rival for a queued order: it can only win
+//     while both baristas are busy, so the priority rule is exercised, not
+//     just declared;
+//   - cool has no shared resource, so every served drink runs its own clock
+//     (infinite-server) and several complete on the same instant;
+//   - the horizon (12) is not a multiple of either delay, so the run is cut
+//     mid-firing with tokens in flight, and completions fall between grid
+//     points as well as on them.
+func timed() (fxModel, fxOptions) {
+	return fxModel{
+		Name: "timed",
+		Places: []fxPlace{
+			{ID: "queue", Initial: 0},
+			{ID: "barista", Initial: 2},
+			{ID: "served", Initial: 0},
+			{ID: "cooled", Initial: 0},
+			{ID: "lost", Initial: 0},
+		},
+		Transitions: []fxTransition{
+			{ID: "arrive", Rate: 1.5},
+			{ID: "serve", Delay: 1.5},
+			{ID: "abandon", Rate: 0.2},
+			{ID: "cool", Delay: 0.7},
+		},
+		Arcs: []fxArc{
+			{From: "arrive", To: "queue"},
+			{From: "queue", To: "serve"},
+			{From: "barista", To: "serve"},
+			{From: "serve", To: "served"},
+			{From: "serve", To: "barista"},
+			{From: "queue", To: "abandon"},
+			{From: "abandon", To: "lost"},
+			{From: "served", To: "cool"},
+			{From: "cool", To: "cooled"},
+		},
+	}, fxOptions{Horizon: 12, Samples: 25, Realizations: 3, Seed: 9}
 }
 
 func finite(what string, vs []float64) error {
@@ -364,7 +410,7 @@ func main() {
 		o fxOptions
 	}
 	var entries []entry
-	for _, f := range []func() (fxModel, fxOptions){chain, sir, dimer, gates} {
+	for _, f := range []func() (fxModel, fxOptions){chain, sir, dimer, gates, timed} {
 		m, o := f()
 		entries = append(entries, entry{m, o})
 	}

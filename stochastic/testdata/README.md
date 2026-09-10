@@ -43,6 +43,7 @@ path changed; it is never fixed by regenerating.
 | `dimer.json` | 5, 21, 4, 7 | `combinations()` with `w = 2`, reverse reaction, `m < w` |
 | `gates.json` | 20, 41, 4, 5 | read arc, inhibitor, non-kinetic input, capacity bound, self-loop on a full place — the §3.1/§3.3 branches the spec's four fixtures never reach |
 | `coffeeshop.json` | 8, 60, 5, 42 | `coffeeshop.json` stripped to the §4.1 keys; capacities, no-input transitions, `C(1000, 20)`, twelve transitions, `8/59` inexact grid |
+| `timed.json` | 12, 25, 3, 9 | §5 delayed transitions: a shared resource on a 1.5 clock with priority over an exponential rival, an infinite-server 0.7 clock, an exponential source, completions between grid points, and a horizon that cuts firings mid-flight |
 
 ### Provenance
 
@@ -62,6 +63,40 @@ consumer READMEs (pflow-rs, pflow-xyz, pflow-jl) must be refreshed together.
 | `dimer.json` | `5b260cc9b3027c660d87d5a041839941f4deb1107a22728782549bc700e23341` |
 | `gates.json` | `9a2a35ef18b5218a1afcda49f1755e47feb9942bf07254533971e1d490df7009` |
 | `sir.json` | `192035da7d6b848479a8f2586f1330caed19c8bf26ece2f4743017aef240e683` |
+| `timed.json` | `53c7140c779bc7ce9dde590f2559a345e68cb547ebff0eff2e79da0a99fc3e28` |
+
+`timed.json` was added later, by the same generator, once the engine gained
+delayed transitions; its `_comment` names the commit that produced it. The
+five earlier files were confirmed unchanged double-for-double by that run.
+
+
+### §5 — delayed transitions (`timed.json`)
+
+`timed.json` is the sixth golden and pins the timed-transition rule, which
+`ssa-spec.md` predates. Normatively, for the portable path:
+
+1. A transition with `delay > 0` has **no propensity** (its rate is 0); a
+   negative delay, or a delay on a transition with no consuming input, is a
+   compile error.
+2. At the top of every step, **before** propensities: scan transitions in
+   declaration order; each delayed transition that is enabled (inputs
+   present, read/inhibitor/capacity gates open) starts once — its inputs are
+   consumed and `(t + delay, j)` is inserted into a queue sorted by time,
+   after any entry with an equal time. Repeat the scan until a pass starts
+   nothing.
+3. If the propensity total is 0 **and** the queue is empty, the marking is
+   dead: break, no draw.
+4. Draw `x1` and compute `dt` only if the total is > 0; otherwise `dt = +Inf`.
+5. If the queue's head is due at or before `t + dt`: set `t` to that time
+   (assign, do not accumulate), record, break if `t > tEnd`, pop the head,
+   add its outputs, and go to the next step. The `x1` draw, if taken, is
+   discarded — the race is memoryless.
+6. Otherwise proceed exactly as before (advance by `dt`, record, draw `x2`,
+   select, fire).
+
+A sample on the completion instant reads the marking before the completion,
+as for an exponential firing. Tokens in flight at the horizon are in no
+place; Go reports them in `Metrics.InFlight`, which the golden does not carry.
 
 The other repos carry **byte-identical copies** (`pflow-rs
 crates/pflow-solver/tests/fixtures/ssa/`, `pflow-xyz parity/ssa/`, and on
