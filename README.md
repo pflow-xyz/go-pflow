@@ -243,6 +243,8 @@ The `pflow` CLI provides simulation, analysis, verification and plotting from th
 
 ## Compatibility
 
+See [CHANGELOG.md](CHANGELOG.md) for breaking changes since the last tag.
+
 - Go 1.24.9+ (the `go` directive in `go.mod`; CI builds on 1.24)
 - Reads and writes the [pflow.xyz](https://pflow.xyz) JSON-LD format
 - SSA goldens (`stochastic/testdata/portable/`, produced under

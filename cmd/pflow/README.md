@@ -388,6 +388,54 @@ pflow visualize model.json --output model.svg
 pflow visualize model.jsonld --output model.svg
 ```
 
+### `help` - Show usage
+
+Prints the command list and quick examples.
+
+```bash
+pflow help
+```
+
+**Output**:
+```
+pflow - Petri net modeling and simulation tool
+
+Usage:
+  pflow <command> [options]
+
+Commands:
+  create     Create model from template
+  validate   Validate model structure
+  verify     Check declarative properties (proved/refuted + counterexample)
+  expand     Unfold a colored net into an equivalent single-color net
+  simulate   Run ODE simulation from Petri net model
+  analyze    Compute insights from simulation results
+  plot       Generate SVG visualization from simulation results
+  visualize  Generate SVG visualization of Petri net structure
+  summary    Display quick summary of results
+  compare    Compare two simulation results
+  sweep      Parameter sweep and optimization
+  events     Show timeline of events
+  help       Show this help message
+  version    Show version information
+  ...
+```
+
+Also shown when `pflow` is run with no arguments, an unknown command, or `-h`/`--help`.
+
+### `version` - Show version information
+
+```bash
+pflow version
+```
+
+**Output**:
+```
+pflow version 1.0.0
+```
+
+Also available as `-v` or `--version`.
+
 ## AI-Assisted Workflows
 
 The CLI is designed to work seamlessly with AI assistants like Claude:
