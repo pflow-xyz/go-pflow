@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<pnml xmlns="http://www.pnml.org/version-2009/grammar/pnml">
+    <net id="ComposedModel" type="http://www.pnml.org/version-2009/grammar/ptnet">
+        <page id="page0">
+            <place id="p">
+                <graphics>
+                    <position x="425" y="275"/>
+                </graphics>
+                <name>
+                    <graphics>
+                        <offset x="-5" y="35"/>
+                    </graphics>
+                    <text>p</text>
+                </name>
+                <initialMarking>
+                    <text>4</text>
+                </initialMarking>
+            </place>
+            <transition id="T0">
+                <name>
+                    <graphics>
+                        <offset x="-5" y="35"/>
+                    </graphics>
+                    <text>T0</text>
+                </name>
+                <graphics>
+                    <position x="345" y="275"/>
+                </graphics>
+            </transition>
+            <transition id="T1">
+                <name>
+                    <graphics>
+                        <offset x="-5" y="35"/>
+                    </graphics>
+                    <text>T1</text>
+                </name>
+                <graphics>
+                    <position x="425" y="195"/>
+                </graphics>
+            </transition>
+            <arc id="p_to_T0" source="p" target="T0" type="normal">
+                <inscription>
+                    <text>4</text>
+                </inscription>
+                <graphics>
+                    <position x="395" y="320"/>
+                </graphics>
+            </arc>
+            <arc id="p_to_T1" source="p" target="T1" type="normal">
+                <inscription>
+                    <text>2</text>
+                </inscription>
+                <graphics>
+                    <position x="470" y="250"/>
+                </graphics>
+            </arc>
+            <arc id="T0_to_p" source="T0" target="p" type="normal">
+                <inscription>
+                    <text>3</text>
+                </inscription>
+                <graphics>
+                    <position x="395" y="257"/>
+                </graphics>
+            </arc>
+            <arc id="T1_to_p" source="T1" target="p" type="normal">
+                <inscription>
+                    <text>3</text>
+                </inscription>
+                <graphics>
+                    <position x="410" y="250"/>
+                </graphics>
+            </arc>
+        </page>
+        <name>
+            <text>ComposedModel</text>
+        </name>
+    </net>
+</pnml>

@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<pnml xmlns="http://www.pnml.org/version-2009/grammar/pnml">
+	<net id="net" type="http://www.pnml.org/version-2009/grammar/ptnet">
+		<name><text>processes_0_1_min_lang.dot</text></name>
+		<page id="page-0">
+			<name><text>a page has no name</text></name>
+			<place id="p121">
+				<name><text>121</text></name>
+				<initialMarking><text>0</text></initialMarking></place>
+			<place id="p110">
+				<name><text>110</text></name>
+				<initialMarking><text>1</text></initialMarking></place>
+			<place id="p114">
+				<name><text>114</text></name>
+				<initialMarking><text>0</text></initialMarking></place>
+			<place id="p120">
+				<name><text>120</text></name>
+				<initialMarking><text>1</text></initialMarking></place>
+			<place id="p111">
+				<name><text>111</text></name>
+				<initialMarking><text>0</text></initialMarking></place>
+			<place id="p113">
+				<name><text>113</text></name>
+				<initialMarking><text>0</text></initialMarking></place>
+			<place id="p122">
+				<name><text>122</text></name>
+				<initialMarking><text>0</text></initialMarking></place>
+			<place id="p112">
+				<name><text>112</text></name>
+				<initialMarking><text>0</text></initialMarking></place>
+			<transition id="t_6_d_1">
+				<name><text>d_1</text></name></transition>
+			<transition id="t_0_">
+				<name><text></text></name></transition>
+			<transition id="t_1_b_1">
+				<name><text>b_1</text></name></transition>
+			<transition id="t_2_b_1">
+				<name><text>b_1</text></name></transition>
+			<transition id="t_3_a_1">
+				<name><text>a_1</text></name></transition>
+			<transition id="t_4_c_1">
+				<name><text>c_1</text></name></transition>
+			<transition id="t_5_d_1">
+				<name><text>d_1</text></name></transition>
+			<arc id="out_t_3_a_1_p112" source="t_3_a_1" target="p112">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p113_t_4_c_1" source="p113" target="t_4_c_1">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_4_c_1_p114" source="t_4_c_1" target="p114">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p114_t_5_d_1" source="p114" target="t_5_d_1">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_5_d_1_p111" source="t_5_d_1" target="p111">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p122_t_5_d_1" source="p122" target="t_5_d_1">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_5_d_1_p121" source="t_5_d_1" target="p121">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p122_t_6_d_1" source="p122" target="t_6_d_1">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_6_d_1_p121" source="t_6_d_1" target="p121">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p111_t_6_d_1" source="p111" target="t_6_d_1">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_6_d_1_p111" source="t_6_d_1" target="p111">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p120_t_0_" source="p120" target="t_0_">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_0__p121" source="t_0_" target="p121">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p110_t_0_" source="p110" target="t_0_">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_0__p111" source="t_0_" target="p111">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p122_t_1_b_1" source="p122" target="t_1_b_1">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_1_b_1_p122" source="t_1_b_1" target="p122">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p112_t_1_b_1" source="p112" target="t_1_b_1">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_1_b_1_p113" source="t_1_b_1" target="p113">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p112_t_2_b_1" source="p112" target="t_2_b_1">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_2_b_1_p113" source="t_2_b_1" target="p113">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p121_t_2_b_1" source="p121" target="t_2_b_1">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="out_t_2_b_1_p122" source="t_2_b_1" target="p122">
+				<inscription><text>1</text></inscription></arc>
+			<arc id="in_p111_t_3_a_1" source="p111" target="t_3_a_1">
+				<inscription><text>1</text></inscription></arc>
+			<toolspecific tool="nupn" version="1.1">
+				<size places="8" transitions="7" arcs="24" />
+				<structure units="2" root="root" safe="true">
+					<unit id="root">
+						<places />
+						<subunits>ucomponent1 ucomponent0</subunits></unit>
+					<unit id="ucomponent1">
+						<places>p120 p121 p122</places>
+						<subunits /></unit>
+					<unit id="ucomponent0">
+						<places>p113 p112 p110 p114 p111</places>
+						<subunits /></unit>
+				</structure></toolspecific></page></net></pnml>

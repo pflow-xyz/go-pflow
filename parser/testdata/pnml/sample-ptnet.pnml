@@ -1,0 +1,47 @@
+<pnml xmlns="http://www.pnml.org/version-2009/grammar/pnml">
+  <net type="http://www.pnml.org/version-2009/grammar/ptnet" id="n1">
+    <page id="top-level">
+      <name>
+        <text>An example P/T-net</text>
+      </name>
+      <place id="p1">
+        <name>
+          <graphics>
+            <offset y="-10.0"/>
+          </graphics>
+          <text>ready</text>
+        </name>
+        <graphics>
+          <position x="20.0" y="20.0"/>
+        </graphics>
+        <initialMarking>
+          <toolspecific tool="org.pnml.tool" version="1.0">
+            <tokengraphics>
+              <tokenposition x="-2.0" y="-2.0"/>
+              <tokenposition x="2.0"/>
+              <tokenposition x="-2.0" y="2.0"/>
+            </tokengraphics>
+          </toolspecific>
+          <text>3</text>
+        </initialMarking>
+      </place>
+      <transition id="t1">
+        <graphics>
+          <position x="60.0" y="20.0"/>
+        </graphics>
+      </transition>
+      <arc id="a1" source="p1" target="t1">
+        <graphics>
+          <position x="30.0" y="5.0"/>
+          <position x="60.0" y="5.0"/>
+        </graphics>
+        <inscription>
+          <graphics>
+            <offset y="5.0"/>
+          </graphics>
+          <text>2</text>
+        </inscription>
+      </arc>
+    </page>
+  </net>
+</pnml>

@@ -1,0 +1,140 @@
+<?xml version="1.0"?>
+<pnml xmlns="http://www.pnml.org/version-2009/grammar/pnml">
+	<net id="traffic_light_nightly" type="http://www.pnml.org/version-2009/grammar/ptnet">
+		<page id="page0">
+			<name>
+				<text>DefaultPage</text>
+			</name>
+			<place id="green">
+				<name>
+					<graphics>
+						<offset x="68" y="93"/>
+					</graphics>
+					<text>green</text>
+				</name>
+				<graphics>
+					<position x="80" y="80"/>
+				</graphics>
+			</place>
+			<place id="yellow">
+				<name>
+					<graphics>
+						<offset x="146" y="93"/>
+					</graphics>
+					<text>yellow</text>
+				</name>
+				<graphics>
+					<position x="160" y="80"/>
+				</graphics>
+				<initialMarking>
+					<text>1</text>
+				</initialMarking>
+			</place>
+			<place id="red">
+				<name>
+					<graphics>
+						<offset x="232" y="93"/>
+					</graphics>
+					<text>red</text>
+				</name>
+				<graphics>
+					<position x="240" y="80"/>
+				</graphics>
+			</place>
+			<place id="night_service">
+				<name>
+					<graphics>
+						<offset x="172" y="143"/>
+					</graphics>
+					<text>night_service</text>
+				</name>
+				<graphics>
+					<position x="200" y="130"/>
+				</graphics>
+			</place>
+			<transition id="caution">
+				<name>
+					<graphics>
+						<offset x="104" y="58"/>
+					</graphics>
+					<text>caution</text>
+				</name>
+				<graphics>
+					<position x="120" y="80"/>
+				</graphics>
+			</transition>
+			<transition id="stop">
+				<name>
+					<graphics>
+						<offset x="190" y="58"/>
+					</graphics>
+					<text>stop</text>
+				</name>
+				<graphics>
+					<position x="200" y="80"/>
+				</graphics>
+			</transition>
+			<transition id="go">
+				<name>
+					<graphics>
+						<offset x="279" y="58"/>
+					</graphics>
+					<text>go</text>
+				</name>
+				<graphics>
+					<position x="280" y="80"/>
+				</graphics>
+			</transition>
+			<transition id="dawn">
+				<name>
+					<graphics>
+						<offset x="118" y="148"/>
+					</graphics>
+					<text>dawn</text>
+				</name>
+				<graphics>
+					<position x="130" y="130"/>
+				</graphics>
+			</transition>
+			<transition id="sunset">
+				<name>
+					<graphics>
+						<offset x="256" y="143"/>
+					</graphics>
+					<text>sunset</text>
+				</name>
+				<graphics>
+					<position x="270" y="130"/>
+				</graphics>
+			</transition>
+			<arc id="id1" source="green" target="caution">
+			</arc>
+			<arc id="id2" source="caution" target="yellow">
+			</arc>
+			<arc id="id3" source="yellow" target="stop">
+			</arc>
+			<arc id="id4" source="stop" target="red">
+			</arc>
+			<arc id="id5" source="red" target="go">
+			</arc>
+			<arc id="id6" source="go" target="green">
+			</arc>
+			<arc id="id7" source="night_service" target="stop">
+				<inscription>
+					<text>2</text>
+				</inscription>
+				<type value="inhibitor"/>
+			</arc>
+			<arc id="id8" source="dawn" target="night_service">
+			</arc>
+			<arc id="id9" source="night_service" target="sunset">
+			</arc>
+			<arc id="id10" source="night_service" target="dawn">
+				<type value="inhibitor"/>
+			</arc>
+		</page>
+		<name>
+			<text>traffic_light_nightly</text>
+		</name>
+	</net>
+</pnml>
