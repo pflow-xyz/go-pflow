@@ -104,3 +104,39 @@ pflow-jl's `algebraic-petri` branch — not yet its default `main` —
 `test/testdata/ssa/`), each with a README naming the go-pflow commit and the
 sha256 of every file. Refresh them with `cp` after any regeneration here, and
 verify with `sha256sum` on both sides against the table above.
+
+## `scheduled/` — the scheduled+staged SSA golden
+
+`scheduled/cafe-service.json` is the golden for `stochastic.Simulate` (which
+dispatches to `SimulateSchedule` because the model declares
+`Transition.Schedule`) on the pflow showcase's `cafe-service.json`
+("Variation II" — day-shaped demand on `arrive`, Erlang-3 `finish_brew` via
+`stages: 3`, a read arc, an inhibitor arc, non-kinetic inputs, a bounded
+queue). It is the first go-pflow-produced golden for the engine's
+schedule-boundary carry — `runBoundaries`/`ratesAt`/`simulateFrom` — and pins
+the **post-v0.28.1** behavior: each realization continues from the *integer*
+marking it actually reached at a boundary, never the pre-fix rounded mean.
+`Options{Portable: true}`, so the doubles are the same byte-exact SSA path
+`portable/` holds, just run through the scheduled/staged dispatch instead of
+the flat one.
+
+It also carries `forecastRefusal`: the exact `Result` (`diverged: true`,
+`reason`, `caveats`, `method: "ode"`) `stochastic.Forecast` returns for this
+same model — a model-declared schedule cannot run on a continuous engine, so
+Forecast refuses rather than integrating it flat. This is not an `error`;
+`Forecast` returns `(*Result, nil)` with `Diverged: true`. pflow-rs's
+Forecast is expected to produce the identical `reason` string, not a
+paraphrase.
+
+Written by `cmd/scheduled-goldens` — `make scheduled-goldens` — and never by
+a test. Requires a `pflow-xyz` checkout as a sibling of this repo
+(`../pflow-xyz`) for the showcase source; override with `-showcase` if it
+lives elsewhere.
+
+| File | Options (horizon, samples, realizations, seed) | Source |
+|---|---|---|
+| `cafe-service.json` | 8, 65, 8, 42 | `pflow-xyz/examples/showcase/cafe-service.json` |
+
+| File | sha256 |
+|---|---|
+| `cafe-service.json` | `e257b5870b1677c1e9e70751fd5337429fd55a101b4cc8ffcdeab70ebf271449` |

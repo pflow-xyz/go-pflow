@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt fmt-check vet lint ssa-goldens examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all
+.PHONY: help build test test-coverage clean install fmt fmt-check vet lint ssa-goldens scheduled-goldens examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all
 
 # Default target
 help:
@@ -28,6 +28,7 @@ help:
 	@echo "  make run-coffeeshop-happy - Run coffee shop happy customer scenario (90%+ satisfied)"
 	@echo "  make rebuild-all-svg - Regenerate all SVG visualizations"
 	@echo "  make ssa-goldens     - Regenerate the portable SSA goldens (deliberate act, see stochastic/testdata/README.md)"
+	@echo "  make scheduled-goldens - Regenerate the scheduled+staged SSA golden against the pflow showcase (deliberate act, see stochastic/testdata/README.md)"
 
 # Build the main CLI tool
 build:
@@ -232,6 +233,16 @@ rebuild-all-svg:
 ssa-goldens:
 	@echo "Regenerating portable SSA goldens..."
 	go run ./cmd/ssa-goldens -o stochastic/testdata/portable
+
+# Regenerate the scheduled+staged SSA golden (stochastic/testdata/scheduled/*.json)
+# against the pflow showcase's cafe-service.json — SimulateSchedule/ExpandStages
+# with per-realization marking carry across schedule boundaries (the v0.28.1 fix),
+# plus the Forecast refusal reason string for the same model. Requires a
+# pflow-xyz checkout as a sibling of this one (../pflow-xyz); override with
+# -showcase if yours lives elsewhere. A deliberate act, never a test side effect.
+scheduled-goldens:
+	@echo "Regenerating scheduled+staged SSA golden..."
+	go run ./cmd/scheduled-goldens -showcase ../pflow-xyz/examples/showcase/cafe-service.json -o stochastic/testdata/scheduled
 
 # Quick check before publishing
 publish-check: clean check

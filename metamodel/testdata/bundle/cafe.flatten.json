@@ -1,0 +1,217 @@
+{
+  "arcs": [
+    {
+      "from": "counter/order",
+      "to": "counter/pending",
+      "weight": 1
+    },
+    {
+      "from": "counter/pending",
+      "to": "espresso_started",
+      "weight": 1
+    },
+    {
+      "from": "espresso_started",
+      "to": "counter/in_progress",
+      "weight": 1
+    },
+    {
+      "from": "counter/pending",
+      "to": "latte_started",
+      "weight": 1
+    },
+    {
+      "from": "latte_started",
+      "to": "counter/in_progress",
+      "weight": 1
+    },
+    {
+      "from": "counter/in_progress",
+      "to": "espresso_finished",
+      "weight": 1
+    },
+    {
+      "from": "espresso_finished",
+      "to": "counter/done",
+      "weight": 1
+    },
+    {
+      "from": "counter/in_progress",
+      "to": "latte_finished",
+      "weight": 1
+    },
+    {
+      "from": "latte_finished",
+      "to": "counter/done",
+      "weight": 1
+    },
+    {
+      "from": "pantry/beans",
+      "kinetic": false,
+      "to": "espresso_started",
+      "weight": 2
+    },
+    {
+      "from": "pantry/beans",
+      "kinetic": false,
+      "to": "latte_started",
+      "weight": 1
+    },
+    {
+      "from": "pantry/milk",
+      "kinetic": false,
+      "to": "latte_started",
+      "weight": 1
+    },
+    {
+      "from": "pantry/restock",
+      "to": "pantry/beans",
+      "weight": 30
+    },
+    {
+      "from": "pantry/restock",
+      "to": "pantry/milk",
+      "weight": 15
+    },
+    {
+      "from": "staff/available",
+      "kinetic": false,
+      "to": "espresso_started",
+      "weight": 1
+    },
+    {
+      "from": "espresso_started",
+      "to": "staff/busy",
+      "weight": 1
+    },
+    {
+      "from": "staff/busy",
+      "kinetic": false,
+      "to": "espresso_finished",
+      "weight": 1
+    },
+    {
+      "from": "espresso_finished",
+      "to": "staff/available",
+      "weight": 1
+    },
+    {
+      "from": "staff/available",
+      "kinetic": false,
+      "to": "latte_started",
+      "weight": 1
+    },
+    {
+      "from": "latte_started",
+      "to": "staff/busy",
+      "weight": 1
+    },
+    {
+      "from": "staff/busy",
+      "kinetic": false,
+      "to": "latte_finished",
+      "weight": 1
+    },
+    {
+      "from": "latte_finished",
+      "to": "staff/available",
+      "weight": 1
+    },
+    {
+      "from": "pantry/beans",
+      "to": "espresso_started",
+      "type": "read",
+      "weight": 2
+    }
+  ],
+  "description": "Variation VI — the café as three independently authored nets composed by links. The counter runs orders, the pantry holds stock, the staff net is the people who can only do one thing at a time. An event link fuses each start_X with the brew_X that pays for it and the acquire_X that takes a barista off the floor; finish_X releases the barista. The staff net names its transitions per drink on purpose: event fusion is transitive, and one shared acquire would fuse espresso and latte into a single start. A guard link lets the counter observe the pantry: start_espresso is gated on beans >= 2 without the counter ever owning a bean. Resource arcs in the pantry and staff nets are kinetic:false so a bigger pantry does not brew faster: demand sets the pace, everything else sets permission. Links that fuse the same transition share one id (espresso_started names both the stock draw and the barista seizure) because the fused transition is named after the link.",
+  "name": "cafe-bundle",
+  "places": [
+    {
+      "id": "counter/pending",
+      "initial": 0,
+      "kind": "token"
+    },
+    {
+      "id": "counter/in_progress",
+      "initial": 0,
+      "kind": "token"
+    },
+    {
+      "id": "counter/done",
+      "initial": 0,
+      "kind": "token"
+    },
+    {
+      "exported": true,
+      "id": "pantry/beans",
+      "initial": 60,
+      "kind": "token"
+    },
+    {
+      "exported": true,
+      "id": "pantry/milk",
+      "initial": 30,
+      "kind": "token"
+    },
+    {
+      "exported": true,
+      "id": "staff/available",
+      "initial": 2,
+      "kind": "token"
+    },
+    {
+      "id": "staff/busy",
+      "initial": 0,
+      "kind": "token"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "counter/order",
+      "rate": 20
+    },
+    {
+      "description": "fires with: counter/start_espresso, pantry/brew_espresso, staff/acquire_espresso",
+      "emits": [
+        "start_espresso",
+        "brew_espresso",
+        "acquire_espresso"
+      ],
+      "id": "espresso_started",
+      "rate": 720
+    },
+    {
+      "description": "fires with: counter/start_latte, pantry/brew_latte, staff/acquire_latte",
+      "emits": [
+        "start_latte",
+        "brew_latte",
+        "acquire_latte"
+      ],
+      "id": "latte_started",
+      "rate": 720
+    },
+    {
+      "description": "fires with: counter/finish_espresso, staff/release_espresso",
+      "emits": [
+        "finish_espresso",
+        "release_espresso"
+      ],
+      "id": "espresso_finished",
+      "rate": 20
+    },
+    {
+      "description": "fires with: counter/finish_latte, staff/release_latte",
+      "emits": [
+        "finish_latte",
+        "release_latte"
+      ],
+      "id": "latte_finished",
+      "rate": 12
+    },
+    {
+      "id": "pantry/restock",
+      "rate": 0.5
+    }
+  ]
+}

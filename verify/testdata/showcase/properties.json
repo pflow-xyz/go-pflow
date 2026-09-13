@@ -1,0 +1,233 @@
+{
+  "model": "cafe-order.json",
+  "source": "pflow-xyz/examples/showcase/cafe-order.json",
+  "places": 7,
+  "transitions": 6,
+  "arcs": 12,
+  "properties": [
+    {
+      "label": "bounded",
+      "kind": "bounded",
+      "name": "bounded"
+    },
+    {
+      "label": "deadlock-free",
+      "kind": "deadlock-free",
+      "name": "deadlock-free"
+    },
+    {
+      "label": "live",
+      "kind": "live",
+      "name": "live"
+    },
+    {
+      "label": "terminating",
+      "kind": "terminating",
+      "name": "terminating"
+    },
+    {
+      "label": "conserves",
+      "kind": "conserves",
+      "name": "conserves"
+    },
+    {
+      "label": "one_state invariant (the model's own declared constraint)",
+      "kind": "invariant",
+      "name": "one_state",
+      "expr": "new + paid + brewing + ready + picked_up + cancelled + refunded == 1"
+    },
+    {
+      "label": "mutex: at most one active state",
+      "kind": "mutual-exclusion",
+      "name": "mutex: order states",
+      "places": [
+        "new",
+        "paid",
+        "brewing",
+        "ready",
+        "picked_up",
+        "cancelled",
+        "refunded"
+      ],
+      "bound": 1
+    },
+    {
+      "label": "reachable: order picked up",
+      "kind": "reachable",
+      "name": "reachable: picked_up",
+      "target": {
+        "picked_up": 1
+      }
+    },
+    {
+      "label": "reachable: order refunded after cancellation",
+      "kind": "reachable",
+      "name": "reachable: refunded",
+      "target": {
+        "refunded": 1
+      }
+    },
+    {
+      "label": "unreachable: paid and cancelled at once",
+      "kind": "unreachable",
+      "name": "unreachable: paid \u0026 cancelled simultaneously",
+      "target": {
+        "cancelled": 1,
+        "paid": 1
+      }
+    }
+  ],
+  "report": {
+    "verdicts": [
+      {
+        "property": {
+          "kind": "bounded",
+          "name": "bounded"
+        },
+        "status": "proved",
+        "method": "structural",
+        "detail": "every place is covered by a P-invariant, so the net is bounded for any initial marking",
+        "evidence": "P-invariants: brewing + cancelled + new + paid + picked_up + ready + refunded == 1"
+      },
+      {
+        "property": {
+          "kind": "deadlock-free",
+          "name": "deadlock-free"
+        },
+        "status": "refuted",
+        "method": "exhaustive",
+        "detail": "2 deadlock state(s) reachable",
+        "counterexample": {
+          "trace": [
+            "pay",
+            "cancel",
+            "refund"
+          ],
+          "marking": {
+            "brewing": 0,
+            "cancelled": 0,
+            "new": 0,
+            "paid": 0,
+            "picked_up": 0,
+            "ready": 0,
+            "refunded": 1
+          },
+          "explanation": "no transition is enabled in this marking"
+        }
+      },
+      {
+        "property": {
+          "kind": "live",
+          "name": "live"
+        },
+        "status": "proved",
+        "method": "exhaustive",
+        "detail": "all 6 transitions can fire from some reachable state"
+      },
+      {
+        "property": {
+          "kind": "terminating",
+          "name": "terminating"
+        },
+        "status": "proved",
+        "method": "exhaustive",
+        "detail": "the reachability graph is acyclic across all 7 states, so every execution terminates"
+      },
+      {
+        "property": {
+          "kind": "conserves",
+          "name": "conserves"
+        },
+        "status": "proved",
+        "method": "structural",
+        "detail": "brewing + cancelled + new + paid + picked_up + ready + refunded is a P-invariant of the net and holds at the initial marking",
+        "evidence": "y*C = 0 for y = brewing + cancelled + new + paid + picked_up + ready + refunded; value at initial marking = 1"
+      },
+      {
+        "property": {
+          "kind": "invariant",
+          "name": "one_state",
+          "expr": "new + paid + brewing + ready + picked_up + cancelled + refunded == 1"
+        },
+        "status": "proved",
+        "method": "structural",
+        "detail": "brewing + cancelled + new + paid + picked_up + ready + refunded is a P-invariant of the net and holds at the initial marking",
+        "evidence": "y*C = 0 for y = brewing + cancelled + new + paid + picked_up + ready + refunded; value at initial marking = 1"
+      },
+      {
+        "property": {
+          "kind": "mutual-exclusion",
+          "name": "mutex: order states",
+          "places": [
+            "new",
+            "paid",
+            "brewing",
+            "ready",
+            "picked_up",
+            "cancelled",
+            "refunded"
+          ],
+          "bound": 1
+        },
+        "status": "proved",
+        "method": "structural",
+        "detail": "brewing + cancelled + new + paid + picked_up + ready + refunded is bounded by the P-invariant brewing + cancelled + new + paid + picked_up + ready + refunded == 1",
+        "evidence": "P-invariant brewing + cancelled + new + paid + picked_up + ready + refunded == 1 dominates the asserted expression, and its constant is 1 \u003c= 1"
+      },
+      {
+        "property": {
+          "kind": "reachable",
+          "name": "reachable: picked_up",
+          "target": {
+            "picked_up": 1
+          }
+        },
+        "status": "proved",
+        "method": "exhaustive",
+        "detail": "target reachable in 4 firing(s)",
+        "evidence": "firing sequence: pay → start_brew → finish_brew → pick_up"
+      },
+      {
+        "property": {
+          "kind": "reachable",
+          "name": "reachable: refunded",
+          "target": {
+            "refunded": 1
+          }
+        },
+        "status": "proved",
+        "method": "exhaustive",
+        "detail": "target reachable in 3 firing(s)",
+        "evidence": "firing sequence: pay → cancel → refund"
+      },
+      {
+        "property": {
+          "kind": "unreachable",
+          "name": "unreachable: paid \u0026 cancelled simultaneously",
+          "target": {
+            "cancelled": 1,
+            "paid": 1
+          }
+        },
+        "status": "proved",
+        "method": "exhaustive",
+        "detail": "marking is unreachable — searched all 7 reachable states"
+      }
+    ],
+    "proved": 9,
+    "refuted": 1,
+    "unknown": 0,
+    "ok": false,
+    "state_count": 7,
+    "truncated": false
+  },
+  "summary": "9 proved, 1 refuted, 0 unknown",
+  "conversion_diagnostics": {},
+  "caveats": [
+    "Access-control roles (the model's \"access\" block) are not checked by verify at all — proved/refuted answers \"can this transition fire\", never \"who is allowed to fire it\".",
+    "Event field types and values (the model's \"events\" block, e.g. order_paid.amount) are not modeled as data — verify sees only that the \"pay\" transition can fire, not what amount it was paid.",
+    "deadlock-free is checked against go-pflow's shared terminal-state heuristic (reachability.BuildGraph): a marking with no enabled transition is flagged as a deadlock regardless of whether it is an intentional accepting final state. This model ends in picked_up or refunded, both terminal by design, so deadlock-free is expected to REFUTE here — that is go-pflow's documented behavior, not a defect in the model.",
+    "live here is L1 quasi-liveness (every transition fires on SOME path), not L4 liveness (every transition remains fireable from EVERY reachable marking). A proved live verdict does not imply deadlock-free, and this golden checks both as separate questions with different answers on the same model.",
+    "conversion_diagnostics above (from metamodel/metapetri) is the machine-checked half of \"what a static check cannot see\": it records every place/transition/arc the model→net bridge had to approximate (e.g. GUARD_DROPPED for an expression guard nothing evaluates during state-space exploration) and which verdicts were capped to Unknown as a result. cafe-order.json declares no transition guards, so that particular note does not fire on this model — see metamodel/metapetri/verify_test.go's TestDroppedGuardCapsLiveness for a model where it does."
+  ]
+}
