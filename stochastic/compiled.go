@@ -51,6 +51,23 @@ func (c *Compiled) Propensities(marking []int, out []float64) float64 {
 	return propensitiesAt(c.trs, marking, c.places, out, nil)
 }
 
+// Enabled reports whether transition i may start at marking under the
+// sampler's own rule: consuming inputs present, gates (read, inhibitor,
+// capacity, guard) satisfied. It exists for the timed path: a delayed
+// transition has no propensity, so Propensities cannot say whether it is
+// enabled, and a caller that re-derived the answer from the arcs would be
+// one more copy of the firing rule.
+func (c *Compiled) Enabled(i int, marking []int) bool {
+	return c.trs[i].enabled(c.places, marking)
+}
+
+// Delay is transition i's declared fixed duration, 0 for an exponential
+// transition. A caller replaying the sampler's timed semantics starts a
+// delayed transition the instant Enabled says so (drawing its inputs then)
+// and applies its outputs exactly Delay later; FireInto applies both halves
+// at once and is the exponential case only.
+func (c *Compiled) Delay(i int) float64 { return c.trs[i].delay }
+
 // FireInto returns the marking after firing transition i at marking, applying
 // exactly the delta the sampler applies: inputs decrement, outputs increment,
 // nothing else moves. marking is not mutated; enablement is not checked.
