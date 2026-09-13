@@ -27,6 +27,7 @@ go_test(
     srcs = [
         "colors_test.go",
         "conformance_final_place_test.go",
+        "conformance_gates_test.go",
         "conformance_test.go",
         "dataflow_discovery_test.go",
         "mining_test.go",
