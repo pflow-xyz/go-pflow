@@ -135,7 +135,7 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 	combined.Caveats = caveats
 	// Once for the whole run, not once per segment: splitting a horizon into
 	// rate segments does not make the engine assume anything extra.
-	combined.Assumptions = append(combined.Assumptions, assumptionsFor(exp)...)
+	combined.Assumptions = append(combined.Assumptions, assumptionsFor(m, exp)...)
 
 	mt := &Metrics{Throughput: throughput, InFlight: inFlight, Mean: map[string]float64{}, P95: map[string]float64{}}
 	for i, p := range report {

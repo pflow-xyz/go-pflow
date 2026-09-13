@@ -473,7 +473,7 @@ func Simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	if err != nil {
 		return nil, err
 	}
-	res.Assumptions = append(res.Assumptions, assumptionsFor(stats.expansion)...)
+	res.Assumptions = append(res.Assumptions, assumptionsFor(m, stats.expansion)...)
 	return res, nil
 }
 
@@ -775,24 +775,41 @@ func dropStageContentions(exp *metamodel.StageExpansion, in []Contention) []Cont
 	return out
 }
 
-// assumptionsFor is the engine's assumption list, adjusted for a stage
-// expansion: staged transitions have declared their way out of the
-// exponential worst case, and the note must say so rather than repeat a
-// claim the model no longer makes wholesale.
-func assumptionsFor(exp *metamodel.StageExpansion) []string {
-	if exp == nil {
+// assumptionsFor is the engine's assumption list, adjusted for the
+// transitions that have declared their way out of the exponential worst
+// case: a stage expansion (Erlang durations) and delays (deterministic
+// timers). The note must name them rather than repeat a claim the model no
+// longer makes wholesale — a laundromat whose two machine cycles are both
+// fixed delays was being told every step it takes is exponential, on the
+// result that exists to show the opposite.
+func assumptionsFor(m *metamodel.Model, exp *metamodel.StageExpansion) []string {
+	var staged []string
+	if exp != nil {
+		for id := range exp.Stages {
+			staged = append(staged, fmt.Sprintf("%s (Erlang-%d)", id, exp.Stages[id]))
+		}
+		sort.Strings(staged)
+	}
+	var delayed []string
+	for i := range m.Transitions {
+		if t := &m.Transitions[i]; t.Delay > 0 {
+			delayed = append(delayed, fmt.Sprintf("%s (%g h)", t.ID, t.Delay))
+		}
+	}
+	sort.Strings(delayed)
+	if len(staged)+len(delayed) == 0 {
 		return []string{ExponentialServiceAssumption}
 	}
-	ids := make([]string, 0, len(exp.Stages))
-	for id := range exp.Stages {
-		ids = append(ids, fmt.Sprintf("%s (Erlang-%d)", id, exp.Stages[id]))
+	note := "transitions declaring neither stages nor a delay draw exponential durations — the most erratic a step can be for a given average."
+	if len(staged) > 0 {
+		note += " Staged transitions are the exception: " + strings.Join(staged, ", ") +
+			" draw phase-type durations with the declared lower spread, so their waiting reflects the declaration rather than the worst case."
 	}
-	sort.Strings(ids)
-	return []string{
-		"unstaged transitions draw exponential durations — the most erratic a step can be for a given average. " +
-			"Staged transitions are the exception: " + strings.Join(ids, ", ") +
-			" draw phase-type durations with the declared lower spread, so their waiting reflects the declaration rather than the worst case.",
+	if len(delayed) > 0 {
+		note += " Delayed transitions are the exception: " + strings.Join(delayed, ", ") +
+			" take exactly their declared time, with no spread at all, so their waiting reflects the declaration rather than the worst case."
 	}
+	return []string{note}
 }
 
 // contentions turns the SSA's blocked-time bookkeeping into the report.
