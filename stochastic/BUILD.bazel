@@ -38,6 +38,7 @@ go_test(
         "parity_test.go",
         "portable_parity_test.go",
         "portable_test.go",
+        "result_gaps_test.go",
         "schedule_test.go",
         "sde_test.go",
         "solve_test.go",

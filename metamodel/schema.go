@@ -161,13 +161,16 @@ type Player struct {
 	Transitions []string `json:"transitions,omitempty"`
 }
 
-// SolverConfig contains ODE solver parameters.
+// SolverConfig carries model-level solver hints. stochastic.Solve,
+// Forecast, Simulate and SimulateSDE use Rates but take their horizon and
+// sample grid from stochastic.Options; they do not apply Tspan or Dt.
 type SolverConfig struct {
-	// Tspan is the simulation time span [start, end].
-	// Default: [0, 10]
+	// Tspan is a time-span hint [start, end] for clients that consume it.
+	// The stochastic package does not use it.
 	Tspan [2]float64 `json:"tspan,omitempty"`
 
-	// Dt is the initial time step. Default: 0.01
+	// Dt is a time-step hint for clients that consume it.
+	// The stochastic package does not use it.
 	Dt float64 `json:"dt,omitempty"`
 
 	// Rates maps transition IDs to firing rates.

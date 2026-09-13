@@ -125,6 +125,11 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 		combined.Final[p] = series[p][len(series[p])-1]
 	}
 	combined.Depleted = depletions(m, combined)
+	if stats.truncated {
+		combined.Truncated = true
+		combined.Diverged = true
+		combined.Reason = "SSA stopped before the horizon after exhausting its 1000000-step limit in at least one realization"
+	}
 	// Contention is the diagnostic a schedule is usually run to get: a rush is
 	// the interval where capacity binds, so a scheduled run reporting nothing
 	// contended is the shape of silence Contention exists to eliminate — the

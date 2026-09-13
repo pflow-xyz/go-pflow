@@ -82,11 +82,11 @@ law to enumerating analyses; where it differs from `Simulate` a row says so.
 |---|---|---|---|
 | **`Transition.Rate` / default** | unset rate is `DefaultRate = 1` (`stochastic/stochastic.go:82-109`) | same `Rates()` table | same |
 | **`Simulation.Solver.Rates`** | overrides per-transition `Rate` (`stochastic/stochastic.go:101-107`) | same | same |
-| **`Simulation.Solver.Tspan`, `.Dt`** | **ignored** — only `.Rates` is read; horizon and grid come from `Options` | **ignored**, same (the field doc calls them "ODE solver parameters", `metamodel/schema.go:164-176`) | **ignored** |
+| **`Simulation.Solver.Tspan`, `.Dt`** | **ignored by this API** — horizon and grid come from `Options`; the fields are documented as hints for other clients (`metamodel/schema.go`) | same | same |
 | **`Options.Rates`** | overrides the model table (`stochastic/stochastic.go:191-195`); addressed to a staged transition it is spread over every stage ×k (`stochastic/stochastic.go:544`; `metamodel/stages.go:40-56`) | overrides | overrides |
 | **Model-declared `Transition.Schedule`** | enforced. `Simulate` reroutes to `SimulateSchedule` whenever `HasSchedules()` (`stochastic/stochastic.go:459-466`); the model's boundaries join the caller's (`stochastic/schedule.go:144-165`); precedence at any instant is model rate → model schedule → `Options.Rates` → `Options.Schedule`, per transition (`stochastic/schedule.go:170-185`). `stochastic/model_schedule_test.go` | **refused** with its own message, checked before `Gating()` (`stochastic/stochastic.go:370-381`). `TestModelScheduleRefusedByODE` | **refused**, the same message in the same position ahead of `Gating()` (`stochastic/sde.go:176-187`). `TestModelScheduleRefusedBySDE` |
 | **`Options.Schedule`** | enforced. Horizon split at every `Until`, one restart per segment, last segment's value holds to the horizon (`stochastic/schedule.go:216-240`); a transition in both `Rates` and `Schedule` takes the schedule (`stochastic/stochastic.go:138-144`) | **error** — `refuseSchedule` runs before anything else in `Forecast`, so a direct call and a `Solve` call are refused identically (`stochastic/stochastic.go:356-358`, `stochastic/solve.go:62-69`); documented on the field and on `Solve` (`stochastic/stochastic.go:138-144`, `stochastic/solve.go:31-34`). `TestForecastRefusesScheduleDirectly`, `TestSolveRefusesScheduleOnODE` | **error**, the same call at the head of `SimulateSDE` (`stochastic/sde.go:171-173`). `TestSimulateSDERefusesScheduleDirectly`, `TestSolveRefusesScheduleOnSDE` |
-| **Delay (fixed or distributed firing latency)** | no such construct exists in the metamodel. `Transition.Stages` is the only duration-shaping declaration (`metamodel/schema.go:353-365`); `metamodel/features.go` declares a `Timer` type that no engine reads | — | — |
+| **`Transition.Delay` (fixed firing latency)** | enforced: inputs are consumed at start and outputs appear after the declared delay; in-flight firings carry across schedule segments (`metamodel/schema.go`, `stochastic/stochastic.go`, `stochastic/schedule.go`) | refused by `Gating()` | refused by `Gating()` |
 | **`Transition.Stages` (Erlang-k)** | enforced by expansion: `ExpandStages` runs before compile in both `simulate` (`stochastic/stochastic.go:525`) and `SimulateSchedule` (`stochastic/schedule.go:31`); every report folds back to the model's vocabulary (`stochastic/stochastic.go:552-570`, `stochastic/stochastic.go:683-747`); the `Assumptions` text names the staged transitions (`stochastic/stochastic.go:749-767`). An ill-formed declaration (guard, read/inhibitor arc, weight >1, non-kinetic input, capacity on or shared use of the input place) is an **error** (`metamodel/stages.go:79-157`, `metamodel/stages_test.go`). `stochastic/stages_test.go` | **refused** — `Gating()` names staged transitions because an unexpanding engine would run them exponential (`metamodel/firing.go:298-306`) | **refused**, same entry |
 | **Stages in `Compile`** | **not expanded** — documented on `Compile` (`stochastic/compiled.go:19-22`); a caller enumerating a staged model must `ExpandStages` first | — | — |
 | **`Model.Parameters`** | not read by any engine. A parameter's value *is* the bound arc weight or capacity, so the structure already carries it; a scenario materialises an assignment with `ApplyParameters` and passes the result (`metamodel/parameters.go:147-201`). Not a gap: by design, one source of truth | same | same |
@@ -109,7 +109,7 @@ law to enumerating analyses; where it differs from `Simulate` a row says so.
 |---|---|---|---|
 | **`Times`, `Series`, `Final`** | grid values are ensemble means of the integer marking sampled at each instant (`stochastic/stochastic.go:645-666`) | trajectory linearly resampled from the solver's adaptive steps onto the grid (`stochastic/stochastic.go:412-423`, `stochastic/stochastic.go:1014-1041`) | ensemble means on the grid (`stochastic/sde.go:243-264`) |
 | **`Series.StdDev`** | when `Realizations > 1` (`stochastic/stochastic.go:650-662`) | never | when `Realizations > 1` (`stochastic/sde.go:247-261`) |
-| **`Depleted`** | populated, threshold = smallest input weight drawing on the place, with `Recovered` (`stochastic/stochastic.go:667`, `stochastic/stochastic.go:1077-1125`; `stochastic/schedule.go:116`) | populated (`stochastic/stochastic.go:424`) | **not populated** — `SimulateSDE` never calls `depletions`. Now stated on the field (`stochastic/stochastic.go:214-220`), still a hole in the answer. See [Known gaps](#known-gaps) |
+| **`Depleted`** | populated, threshold = smallest input weight drawing on the place, with `Recovered` (`stochastic/stochastic.go`; `stochastic/schedule.go`) | populated (`stochastic/stochastic.go`) | populated from the ensemble mean (`stochastic/sde.go`); an individual path may deplete even when its mean does not |
 | **`Contended`** | populated; only consuming arcs are attributed, a place must be the *sole* short input, entries under 1% of the horizon are dropped, capacity kinds rank first (`stochastic/stochastic.go:1410-1428`, `stochastic/stochastic.go:1467-1476`, `stochastic/stochastic.go:769-821`); merged across segments (`stochastic/schedule.go:122-123`) | nil (doc: discrete engine only, `stochastic/stochastic.go:221-227`) | nil |
 | **`Metrics`** (throughput, time-weighted mean/P95, utilization) | populated (`stochastic/stochastic.go:670`, `stochastic/stochastic.go:823-839`; `stochastic/schedule.go:129-135`) | nil (doc: `stochastic/stochastic.go:256-259`) | nil |
 | **`Caveats`** | unenforced guards only (`stochastic/stochastic.go:1264-1267`); a scheduled run reports the first segment's non-empty list (`stochastic/schedule.go:105-107`) | on refusal: the `Gating()` strings or the schedule note; otherwise empty | on refusal: the `Gating()` strings or the schedule note; otherwise empty |
@@ -122,7 +122,7 @@ law to enumerating analyses; where it differs from `Simulate` a row says so.
 | situation | SSA | ODE | SDE |
 |---|---|---|---|
 | **Dead marking** (total propensity 0) | stops; the rest of the horizon is credited to the blocked ledger and the dwell table, so `Metrics` and `Contended` cover the whole horizon (`stochastic/stochastic.go:1507-1515`) | flux clamps to 0 when any input is ≤ 0 (`solver/ode.go:229-231`) | a transition with zero propensity is skipped (`stochastic/sde.go:129-131`) |
-| **Step limit** | `maxSteps = 1_000_000` per realization; on hitting it the last marking is held through the remaining samples and **nothing in the result says so** (`stochastic/stochastic.go:1502-1505`, `stochastic/stochastic.go:1558-1563`). `Metrics.Mean`/`P95` divide by covered time and stay honest (`stochastic/stochastic.go:858-861`); `Throughput` and `Series` do not. **Confirmed**: rate 1e8 over horizon 1 reported throughput totalling 1e6, `Caveats` empty and `Diverged` false. See [Known gaps](#known-gaps) | `solver.Solution.Truncated` is set when `Maxiters` runs out (`solver/ode.go:260-267`, `solver/ode.go:653`) and **`Forecast` never reads it** (`stochastic/stochastic.go:406-426`); the resampler holds the last value to the horizon (`stochastic/stochastic.go:1028-1029`). See [Known gaps](#known-gaps) | fixed step count; cannot run out |
+| **Step limit** | `maxSteps = 1_000_000` per realization; `Truncated`, `Diverged`, and `Reason` now flag a stopped path. Trailing samples still hold its last marking, so do not treat its `Final` as a horizon answer (`stochastic/stochastic.go`) | `Forecast` now propagates `solver.Solution.Truncated` into `Truncated`, `Diverged`, and `Reason`; trailing samples still hold the last computed value (`stochastic/stochastic.go`) | fixed step count; cannot run out |
 
 ## The `Solve` dispatcher
 
@@ -157,31 +157,15 @@ sampler samples. Differences from a `Simulate` call:
 
 ## Known gaps
 
-Behaviour an engine does not deliver: a construct it ignores, or a result
-field it leaves empty where a sibling engine fills it. Listed for the
-release audit; none is fixed here. Gap 3 now carries a doc comment saying
-so — which makes it honest, not absent, so it stays on the list until the
-behaviour changes.
+Remaining limitations after the truncation and depletion reporting fixes.
 
-1. **SSA `maxSteps` truncation is silent.** `stochastic/stochastic.go:1502-1505`
-   and `stochastic/stochastic.go:1558-1563`: after 1,000,000 steps the marking
-   is frozen to the horizon with no `Caveat`, `Reason` or flag;
-   `Metrics.Throughput` and `Series` under-report. The comment at
-   `stochastic/stochastic.go:858-861` acknowledges "a run cut short by the
-   step limit" for the mean estimator only. Confirmed again at this commit.
-2. **`Forecast` discards `solver.Solution.Truncated`.**
-   `stochastic/stochastic.go:406-426` never reads the flag that
-   `solver/ode.go:653` sets; a `Maxiters`-exhausted solve is reported as a
-   full trajectory that flat-lines from the truncation point.
-3. **`SimulateSDE` does not populate `Depleted`.** `stochastic/sde.go:243-267`
-   builds the result without calling `depletions`, while `Forecast`, the other
-   continuous engine, does (`stochastic/stochastic.go:424`). Documented on the
-   field since this commit (`stochastic/stochastic.go:214-220`), which is why
-   a caller can no longer be misled — but an empty list is still not an answer.
-4. **`Simulation.Solver.Tspan` and `.Dt` are read by no engine.**
-   `stochastic/stochastic.go:101-107` reads only `.Rates`; the struct doc
-   (`metamodel/schema.go:164-176`) presents all three as ODE solver
-   parameters. `Forecast` takes horizon and step from `Options`.
+1. **A truncated run still fills trailing samples with its last state.**
+   `Truncated`, `Diverged`, and `Reason` now identify this explicitly, but
+   `Final`, throughput, and trailing series values must not be used as
+   full-horizon estimates when that flag is set.
+2. **`Simulation.Solver.Tspan` and `.Dt` are not inputs to this API.**
+   The schema now calls them hints for other clients. `stochastic.Options`
+   controls the horizon and sample grid; only `Simulation.Solver.Rates` is read.
 
 Documented and therefore *not* listed as gaps, for completeness: `Compile`
 not expanding stages (`stochastic/compiled.go:19-22`); `Options.Seed`,

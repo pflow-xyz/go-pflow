@@ -263,6 +263,7 @@ func SimulateSDE(m *metamodel.Model, marking map[string]int, opts Options) (*Res
 		res.Final[label] = mean[len(mean)-1]
 	}
 	res.Assumptions = append(res.Assumptions, ChemicalLangevinAssumption)
+	res.Depleted = depletions(m, res)
 	checkDivergence(res)
 	return res, nil
 }

@@ -214,9 +214,7 @@ type Result struct {
 	// Depleted names places that reach zero within the horizon, earliest first.
 	// This is the question a resource model is usually being asked.
 	//
-	// Populated by Simulate and by Forecast. SimulateSDE never calls
-	// depletions, so on an SDE result an empty list means "not computed"
-	// rather than "nothing ran out"; see docs/solver-matrix.md.
+	// Populated by Simulate, Forecast, and SimulateSDE.
 	Depleted []Depletion `json:"depleted,omitempty"`
 	// Contended names what the run spent its time waiting for, capacity
 	// constraints first and the longest wait first within each kind. Depleted
@@ -233,6 +231,10 @@ type Result struct {
 	// truth than a good one, it is noise, and a dashboard will happily plot it.
 	Diverged bool   `json:"diverged,omitempty"`
 	Reason   string `json:"reason,omitempty"`
+	// Truncated means at least one realization or the ODE solver stopped
+	// before the requested horizon. Final and the trailing series values
+	// then represent the last computed state, not a horizon forecast.
+	Truncated bool `json:"truncated,omitempty"`
 
 	// Caveats name constraints the model expresses that this run could not
 	// enforce. An empty list is a claim: everything the net says was applied.
@@ -428,6 +430,11 @@ func Forecast(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	}
 	res.Depleted = depletions(m, res)
 	checkDivergence(res)
+	if sol.Truncated {
+		res.Truncated = true
+		res.Diverged = true
+		res.Reason = fmt.Sprintf("ODE solver stopped at t=%g before horizon %g after exhausting its step limit", sol.T[len(sol.T)-1], opts.Horizon)
+	}
 	return res, nil
 }
 
@@ -490,8 +497,9 @@ func Simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 // scheduled run report the same estimators as an unscheduled one rather than a
 // second, worse approximation of them.
 type runStats struct {
-	times   *timeStats
-	blocked *blockage
+	times     *timeStats
+	blocked   *blockage
+	truncated bool
 	// expansion is the stage expansion the run was made under (nil when the
 	// model declares no stages); expandedFinal is the mean final marking in
 	// the expanded vocabulary. A scheduled run carries the expanded marking
@@ -520,6 +528,7 @@ func (rs *runStats) merge(o *runStats) {
 	}
 	rs.times.merge(o.times)
 	rs.blocked.merge(o.blocked)
+	rs.truncated = rs.truncated || o.truncated
 }
 
 // simulate is Simulate plus that bookkeeping. Stage declarations are expanded
@@ -628,7 +637,10 @@ func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, mark
 		if carry != nil {
 			carried = carry[r]
 		}
-		traj, rest := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire, carried)
+		traj, rest, truncated := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire, carried)
+		if truncated {
+			acc.truncated = true
+		}
 		acc.ends[r] = start // ssa mutates the marking in place; this is where r ended
 		left[r] = rest
 		for _, p := range rest {
@@ -665,6 +677,11 @@ func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, mark
 
 	n := float64(opts.Realizations)
 	res := &Result{Method: "ssa", Times: times, Final: map[string]float64{}}
+	if acc.truncated {
+		res.Truncated = true
+		res.Diverged = true
+		res.Reason = "SSA stopped before the horizon after exhausting its 1000000-step limit in at least one realization"
+	}
 	for i, p := range report {
 		mean := make([]float64, len(times))
 		var sd []float64
@@ -1581,7 +1598,7 @@ func propensitiesAt(trs []transition, marking []int, places []string, out []floa
 	return total
 }
 
-func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int), carried []pending) ([][]float64, []pending) {
+func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int), carried []pending) ([][]float64, []pending, bool) {
 	nPlaces := len(marking)
 	queue := append([]pending(nil), carried...)
 	timed := false
@@ -1634,8 +1651,11 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 	tEnd := times[len(times)-1]
 	const maxSteps = 1_000_000
 	propensities := make([]float64, len(trs))
+	steps := 0
+	dead := false
 
 	for step := 0; step < maxSteps && t < tEnd; step++ {
+		steps++
 		start(t)
 		total := propensitiesAt(trs, marking, places, propensities, blk)
 		if total <= 0 && len(queue) == 0 {
@@ -1645,6 +1665,7 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 			// out at noon was short of beans for half a day, not for an instant.
 			blk.credit(tEnd - t)
 			ts.hold(marking, tEnd-t)
+			dead = true
 			break
 		}
 
@@ -1731,7 +1752,7 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 	for i := range queue {
 		queue[i].at -= tEnd
 	}
-	return traj, queue
+	return traj, queue, steps == maxSteps && t < tEnd && !dead
 }
 
 // combinations is C(m, w), the number of distinct ways to select w tokens from

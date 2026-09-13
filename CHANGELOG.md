@@ -5,6 +5,15 @@ project versions with `vMAJOR.MINOR.PATCH` tags and bumps minor (not patch)
 for a behavior change comparable in scope to this one — e.g. `v0.28.0` for
 stage-expansion and schedules landing in the engine.
 
+## v0.31.0
+
+- SSA and ODE results now set `Truncated`, `Diverged`, and `Reason` when a
+  step limit stops the run before its horizon. Callers must not treat `Final`
+  or trailing series values as a full-horizon answer in that case.
+- SDE results now populate `Depleted` from the reported ensemble mean.
+- Clarified that `stochastic.Options` controls horizon and sampling; model
+  `Simulation.Solver.Tspan` and `.Dt` are hints for other clients.
+
 ## Unreleased (next version: v0.29.0)
 
 ### Breaking
