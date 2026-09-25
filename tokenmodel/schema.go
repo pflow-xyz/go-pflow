@@ -84,14 +84,38 @@ type Action struct {
 
 // Arc connects states and actions, defining state transformation flow.
 // Semantics depend on the connected state's Kind:
-//   - TokenState: arc weight is 1, decrement on input, increment on output
+//   - TokenState: Weight tokens (default 1) are consumed on input and produced
+//     on output; Type selects normal, inhibitor or read semantics
 //   - DataState: Keys specify map access path, Value specifies the binding name
 type Arc struct {
-	Source string   `json:"source"`          // state or action ID
-	Target string   `json:"target"`          // state or action ID
-	Keys   []string `json:"keys,omitempty"`  // for DataState: binding names for map keys
-	Value  string   `json:"value,omitempty"` // for DataState: binding name for value (default: "amount")
+	Source string   `json:"source"`           // state or action ID
+	Target string   `json:"target"`           // state or action ID
+	Keys   []string `json:"keys,omitempty"`   // for DataState: binding names for map keys
+	Value  string   `json:"value,omitempty"`  // for DataState: binding name for value (default: "amount")
+	Weight int      `json:"weight,omitempty"` // for TokenState: tokens moved/tested (0 = 1)
+	Type   ArcType  `json:"type,omitempty"`   // for TokenState: normal (""), "inhibitor" or "read"
 }
+
+// ArcType discriminates normal, inhibitor and read arcs. Wire-compatible with
+// pflow-rs's tokenmodel ArcType and metamodel.ArcType.
+type ArcType string
+
+const (
+	NormalArc    ArcType = ""
+	InhibitorArc ArcType = "inhibitor"
+	ReadArc      ArcType = "read"
+)
+
+// EffectiveWeight returns Weight, defaulting an unset (or non-positive) weight to 1.
+func (a Arc) EffectiveWeight() int {
+	if a.Weight <= 0 {
+		return 1
+	}
+	return a.Weight
+}
+
+// IsReadOnly reports whether the arc only tests the marking and moves no tokens.
+func (a Arc) IsReadOnly() bool { return a.Type == InhibitorArc || a.Type == ReadArc }
 
 // Constraint represents a property that must hold across all snapshots.
 // Constraints are checked after each action executes (unless disabled).
