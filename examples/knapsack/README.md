@@ -63,13 +63,23 @@ Disabling each item's transition reveals its contribution:
   Excluded   Final Value   Relative
   --------   -----------   --------
   none             35.71   100.0%
-  item0            33.81    94.7%
-  item1            37.75   105.7%
+  item0            31.58    88.4%
+  item1            35.29    98.8%
   item2            37.75   105.7%
   item3            32.00    89.6%
 ```
 
-Note: item3 has the highest impact when excluded (drops to 89.6%).
+item0 has the highest impact when excluded (drops to 88.4%); excluding item2 is
+the only exclusion that raises the value.
+
+These values have a closed form. With `flux = rate × [item] × [capacity]` and
+uniform rates, every item place follows the same curve `e^(−τ)`, where `τ` is
+the time integral of capacity — so all active items are taken in one common
+fraction, and item values never affect the dynamics. With `W` and `V` the total
+weight and value of the active items, the net settles at `15·V/W` when
+`W > 15`, and collects all of `V` when `W ≤ 15`. Excluding item2 leaves
+`W = 15` exactly, so the value approaches 38 as `38·(1 − 1/(1 + 15t))` — the
+convergence table below.
 
 ### ODE vs Discrete
 - **Discrete optimal**: Pick items 0,1,3 → value=38
