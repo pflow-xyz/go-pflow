@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "bundle-goldens_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/cmd/bundle-goldens",
+    visibility = ["//visibility:private"],
+    deps = ["//metamodel"],
+)
+
+go_binary(
+    name = "bundle-goldens",
+    embed = [":bundle-goldens_lib"],
+    visibility = ["//visibility:public"],
+)

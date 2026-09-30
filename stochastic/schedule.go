@@ -2,6 +2,7 @@ package stochastic
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/pflow-xyz/go-pflow/metamodel"
 )
@@ -29,6 +30,12 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 	// its carrier and restarting would put it back at stage one, quietly
 	// resetting the Erlang clock at every boundary.
 	m2, exp, err := m.ExpandStages()
+	if err != nil {
+		return nil, err
+	}
+	// One guard for every segment: the MaxSteps budget is the call's, not
+	// each segment's, and the context is checked at every boundary.
+	lim, err := newLimits(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +96,7 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 			Portable: opts.Portable,
 			OnFire:   opts.OnFire,
 		}
-		res, segStats, segCarry, err := simulateFrom(m, m2, exp, marking, starts, carry, segment)
+		res, segStats, segCarry, err := simulateFrom(m, m2, exp, marking, starts, carry, segment, lim)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +135,7 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 	if stats.truncated {
 		combined.Truncated = true
 		combined.Diverged = true
-		combined.Reason = "SSA stopped before the horizon after exhausting its 1000000-step limit in at least one realization"
+		combined.Reason = strings.Join(stats.reasons, "; ")
 	}
 	// Contention is the diagnostic a schedule is usually run to get: a rush is
 	// the interval where capacity binds, so a scheduled run reporting nothing

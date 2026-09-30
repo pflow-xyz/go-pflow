@@ -1,6 +1,7 @@
 package stochastic
 
 import (
+	"context"
 	"math"
 	"math/rand"
 	"strings"
@@ -104,7 +105,9 @@ func (t *sdeTransition) propensity(x []float64) float64 {
 
 // sdePath runs one Euler-Maruyama realization, recording the state at every
 // grid point in times (times[0] must be 0, ascending, matching sampleTimes).
-func sdePath(trs []sdeTransition, x0 []float64, times []float64, rng sampler) [][]float64 {
+// ctx, when non-nil, is checked at every grid point; a cancelled path returns
+// nil and the context's error (unwrapped — SimulateSDE wraps it).
+func sdePath(ctx context.Context, trs []sdeTransition, x0 []float64, times []float64, rng sampler) ([][]float64, error) {
 	n := len(x0)
 	out := make([][]float64, len(times))
 	x := append([]float64(nil), x0...)
@@ -119,6 +122,9 @@ func sdePath(trs []sdeTransition, x0 []float64, times []float64, rng sampler) []
 
 	drift := make([]float64, n)
 	for gi := 1; gi < len(times); gi++ {
+		if ctx != nil && ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 		if dt > 0 {
 			for sub := 0; sub < sdeInternalSubsteps; sub++ {
 				for i := range drift {
@@ -149,7 +155,7 @@ func sdePath(trs []sdeTransition, x0 []float64, times []float64, rng sampler) []
 		}
 		out[gi] = append([]float64(nil), x...)
 	}
-	return out
+	return out, nil
 }
 
 // ChemicalLangevinAssumption is SDE's method assumption, the intrinsic-noise
@@ -169,6 +175,12 @@ const ChemicalLangevinAssumption = "this engine approximates the discrete firing
 // either would be run flat.
 func SimulateSDE(m *metamodel.Model, marking map[string]int, opts Options) (*Result, error) {
 	if err := refuseSchedule(MethodSDE, opts); err != nil {
+		return nil, err
+	}
+	if err := opts.checkLimits(); err != nil {
+		return nil, err
+	}
+	if err := ctxErr(opts.Context); err != nil {
 		return nil, err
 	}
 	opts = opts.withDefaults(m)
@@ -231,7 +243,10 @@ func SimulateSDE(m *metamodel.Model, marking map[string]int, opts Options) (*Res
 		} else {
 			rng = stdSampler{rand.New(rand.NewSource(seed + int64(r)))} //nolint:gosec // not cryptographic
 		}
-		path := sdePath(trs, x0, times, rng)
+		path, err := sdePath(opts.Context, trs, x0, times, rng)
+		if err != nil {
+			return nil, ctxErr(opts.Context)
+		}
 		for gi, x := range path {
 			for p, v := range x {
 				sums[p][gi] += v
