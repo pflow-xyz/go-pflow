@@ -35,6 +35,7 @@ go_test(
         "gating_test.go",
         "kinetic_test.go",
         "likelihood_test.go",
+        "limits_test.go",
         "model_schedule_test.go",
         "parity_test.go",
         "portable_parity_test.go",

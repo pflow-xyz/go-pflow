@@ -133,7 +133,7 @@ Section C notes the enablement semantics of `Transition.Guard` as FULL while fla
 | Feature | PNML Description | go-pflow Verdict | Evidence |
 |---|---|---|---|
 | Standardized timed-net PNTD | No published ISO PNTD for timed nets | N/A | — |
-| Deterministic firing delay | Abstract "Petri net with time" concept only, no interchange schema | FULL | `Transition.Delay` (`schema.go:367-386`); validated by `ValidateDelays` (`metamodel/delay.go:11-23`); scheduled by the SSA engine (`stochastic/stochastic.go:1201-1204,1277,1297-1302,1572-1593`). |
+| Deterministic firing delay | Abstract "Petri net with time" concept only, no interchange schema | FULL | `Transition.Delay` (`schema.go:367-386`); validated by `ValidateDelays` (`metamodel/delay.go:11-23`); scheduled by the SSA engine (`stochastic/stochastic.go:1399-1402,1277,1297-1302,1572-1593`). |
 | Phase-type / Erlang-k duration | No PNML equivalent | go-pflow-only | `Transition.Stages` (`schema.go:353-365`); `ExpandStages` (`metamodel/stages.go:58-200`). |
 | Piecewise-constant scheduled rate | No PNML equivalent | go-pflow-only | `RateSegment`/`ScheduledRate` (`metamodel/schedule.go:1-81`). |
 | Interval/age-based timed arcs (TAPN) | TAPAAL's proprietary PNML-extension dialect | ABSENT | No per-token age, no arc-level time window anywhere. |

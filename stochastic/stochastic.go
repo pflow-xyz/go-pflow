@@ -35,6 +35,7 @@
 package stochastic
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/rand"
@@ -160,6 +161,161 @@ type Options struct {
 	// SimulateSchedule t is segment-local, restarting at zero at every
 	// schedule boundary.
 	OnFire func(realization int, t float64, transition string, marking []int)
+
+	// The three fields below bound one call's work and memory. Each is
+	// opt-in: its zero value is exactly the behaviour before it existed, so
+	// every golden — default and portable path alike — is untouched, and none
+	// of the checks they enable draws from the random stream.
+
+	// Context, when non-nil, cancels the call. The SSA checks it before a
+	// realization's first step and every 1024 steps after, which is also
+	// between realizations and between schedule segments; SimulateSDE checks
+	// it between realizations and at every sample point; Forecast checks it
+	// before and after the solve (solver.Solve itself is not interruptible,
+	// and is bounded by its own step limit). A cancelled call returns a nil
+	// Result and an error wrapping ctx.Err(), so errors.Is(err,
+	// context.Canceled) or context.DeadlineExceeded holds — a partial answer
+	// to a question nobody is waiting for is not returned.
+	Context context.Context
+	// MaxSteps is a budget on SSA steps summed across every realization and
+	// every schedule segment of one call — the unit of work a caller can
+	// bound, where the engine's own 1000000-step limit is granted afresh to
+	// each realization of each segment. Zero means no call-level budget; the
+	// per-realization limit applies either way. When the budget runs out the
+	// realization in progress stops where it is, every later realization and
+	// segment stops at its own start, and the Result is Truncated (and
+	// Diverged, as for the per-realization limit) with a Reason naming the
+	// budget. Realizations run one after another, so where the budget runs
+	// out is deterministic for a given seed. A step is one pass of the
+	// engine's loop: one firing, or one delayed completion. SSA-only:
+	// Forecast and SimulateSDE do a fixed amount of work set by Horizon,
+	// Samples and Realizations, and ignore it. Negative is an error.
+	MaxSteps int64
+	// MaxPlaceTokens caps any single place's token count. Zero means
+	// unbounded. A firing (or delayed completion) that would leave a place
+	// above it is not applied: that realization stops at the instant of the
+	// refused firing, OnFire is not called for it, and the Result is
+	// Truncated with a Reason naming the place and the cap; a starting
+	// marking already above it stops the realization at t=0. The check runs
+	// before the time-weighted ledger sees the new count, and that ledger is
+	// sized by the count, so memory stays bounded by the cap — for a staged
+	// transition's carrier by the cap times one plus its stage count, since
+	// the ledger folds stages onto the carrier. SSA-only, like MaxSteps.
+	// Negative is an error.
+	MaxPlaceTokens int
+}
+
+// limits is the call-level guard every ssa() of one public call shares: the
+// caller's Context, the MaxSteps budget and what has been spent of it, and the
+// MaxPlaceTokens cap. Nil when none is set, which is what keeps the zero-value
+// path the loop it always was. Realizations and segments run sequentially, so
+// used needs no synchronisation.
+type limits struct {
+	ctx       context.Context
+	budget    int64
+	used      int64
+	maxTokens int
+}
+
+// newLimits validates the opt-in bounds and returns the shared guard, or nil
+// when the caller set none of them.
+func newLimits(o Options) (*limits, error) {
+	if err := o.checkLimits(); err != nil {
+		return nil, err
+	}
+	if o.Context == nil && o.MaxSteps == 0 && o.MaxPlaceTokens == 0 {
+		return nil, nil
+	}
+	return &limits{ctx: o.Context, budget: o.MaxSteps, maxTokens: o.MaxPlaceTokens}, nil
+}
+
+// checkLimits refuses a negative bound. Every entry point calls it, including
+// the two that ignore the bounds, so a malformed Options fails the same way
+// whichever engine it is handed to.
+func (o Options) checkLimits() error {
+	if o.MaxSteps < 0 {
+		return fmt.Errorf("stochastic: Options.MaxSteps is %d; it must be zero (no budget) or positive", o.MaxSteps)
+	}
+	if o.MaxPlaceTokens < 0 {
+		return fmt.Errorf("stochastic: Options.MaxPlaceTokens is %d; it must be zero (unbounded) or positive", o.MaxPlaceTokens)
+	}
+	return nil
+}
+
+// cancelled returns the wrapped context error once the caller's context is
+// done, and nil otherwise (including when no context was given).
+func (l *limits) cancelled() error {
+	if l == nil {
+		return nil
+	}
+	return ctxErr(l.ctx)
+}
+
+// ctxErr is the one wording of a cancelled call, for every engine.
+func ctxErr(ctx context.Context) error {
+	if ctx == nil {
+		return nil
+	}
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("stochastic: run cancelled: %w", err)
+	}
+	return nil
+}
+
+// stopKind says why ssa() returned before its horizon, if it did.
+type stopKind int
+
+const (
+	stopNone      stopKind = iota
+	stopStepLimit          // the per-realization 1000000-step limit
+	stopBudget             // Options.MaxSteps, shared by the whole call
+	stopPlaceCap           // Options.MaxPlaceTokens
+	stopCancelled          // Options.Context
+)
+
+// ssaStop is ssa()'s account of how a realization ended. place and count are
+// set for stopPlaceCap: the place that would have gone over and the count it
+// would have reached, or held already when atStart.
+type ssaStop struct {
+	kind    stopKind
+	place   int
+	count   int
+	atStart bool
+}
+
+// stepLimitReason is the per-realization limit's text, unchanged from when it
+// was the only way a run could be truncated.
+const stepLimitReason = "SSA stopped before the horizon after exhausting its 1000000-step limit in at least one realization"
+
+// reason is the Result.Reason text for a stop, or "" for stopNone and
+// stopCancelled (which is an error, not a truncated result).
+func (s ssaStop) reason(places []string, lim *limits) string {
+	switch s.kind {
+	case stopStepLimit:
+		return stepLimitReason
+	case stopBudget:
+		return fmt.Sprintf("SSA stopped before the horizon after exhausting the call's %d-step budget (Options.MaxSteps), "+
+			"which every realization and schedule segment shares; the realizations and segments after the point it "+
+			"ran out did not advance", lim.budget)
+	case stopPlaceCap:
+		if s.atStart {
+			return fmt.Sprintf("SSA did not run in at least one realization: the starting marking holds %d tokens in %s, "+
+				"above the %d-token cap (Options.MaxPlaceTokens)", s.count, places[s.place], lim.maxTokens)
+		}
+		return fmt.Sprintf("SSA stopped before the horizon in at least one realization: a firing would have raised %s "+
+			"to %d tokens, above the %d-token cap (Options.MaxPlaceTokens)", places[s.place], s.count, lim.maxTokens)
+	}
+	return ""
+}
+
+// overCap returns the first place in arcs holding more than cap tokens, or -1.
+func overCap(arcs []arc, marking []int, limit int) int {
+	for _, a := range arcs {
+		if marking[a.place] > limit {
+			return a.place
+		}
+	}
+	return -1
 }
 
 // startFrom overlays a caller's marking onto the one the model declares.
@@ -363,6 +519,12 @@ func Forecast(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	if err := refuseSchedule(MethodODE, opts); err != nil {
 		return nil, err
 	}
+	if err := opts.checkLimits(); err != nil {
+		return nil, err
+	}
+	if err := ctxErr(opts.Context); err != nil {
+		return nil, err
+	}
 	opts = opts.withDefaults(m)
 
 	// A continuous solution has no firing instant, so there is nowhere to test a
@@ -414,6 +576,11 @@ func Forecast(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	sol := solver.Solve(prob, solver.Tsit5(), forecastSolverOptions(opts))
 	if sol == nil {
 		return nil, fmt.Errorf("solver returned no solution")
+	}
+	// The solve itself cannot be interrupted; a caller who gave up during it
+	// still gets the refusal rather than an answer nobody is waiting for.
+	if err := ctxErr(opts.Context); err != nil {
+		return nil, err
 	}
 
 	res := &Result{Method: "ode", Final: map[string]float64{}}
@@ -476,7 +643,11 @@ func Simulate(m *metamodel.Model, marking map[string]int, opts Options) (*Result
 	if m.HasSchedules() || len(opts.Schedule) > 0 {
 		return SimulateSchedule(m, marking, opts)
 	}
-	res, stats, _, err := simulate(m, marking, opts, nil)
+	lim, err := newLimits(opts)
+	if err != nil {
+		return nil, err
+	}
+	res, stats, _, err := simulate(m, marking, opts, nil, lim)
 	if err != nil {
 		return nil, err
 	}
@@ -500,6 +671,11 @@ type runStats struct {
 	times     *timeStats
 	blocked   *blockage
 	truncated bool
+	// reasons are the distinct Result.Reason texts behind truncated, in the
+	// order they first happened, joined with "; " when reported. A run cut
+	// short only by the per-realization step limit carries exactly the one
+	// text it always did.
+	reasons []string
 	// expansion is the stage expansion the run was made under (nil when the
 	// model declares no stages); expandedFinal is the mean final marking in
 	// the expanded vocabulary. A scheduled run carries the expanded marking
@@ -529,25 +705,38 @@ func (rs *runStats) merge(o *runStats) {
 	rs.times.merge(o.times)
 	rs.blocked.merge(o.blocked)
 	rs.truncated = rs.truncated || o.truncated
+	for _, r := range o.reasons {
+		rs.note(r)
+	}
+}
+
+// note records a truncation reason once.
+func (rs *runStats) note(reason string) {
+	for _, r := range rs.reasons {
+		if r == reason {
+			return
+		}
+	}
+	rs.reasons = append(rs.reasons, reason)
 }
 
 // simulate is Simulate plus that bookkeeping. Stage declarations are expanded
 // here — the engine runs the expanded net and reports in the model's own
 // vocabulary — so every caller, not only the scenario runner, gets the
 // phase-type durations the model declared.
-func simulate(m *metamodel.Model, marking map[string]int, opts Options, carry [][]pending) (*Result, *runStats, [][]pending, error) {
+func simulate(m *metamodel.Model, marking map[string]int, opts Options, carry [][]pending, lim *limits) (*Result, *runStats, [][]pending, error) {
 	m2, exp, err := m.ExpandStages()
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	return simulateExpanded(m, m2, exp, marking, opts, carry)
+	return simulateExpanded(m, m2, exp, marking, opts, carry, lim)
 }
 
 // simulateExpanded runs the expanded net m2 (exp nil when m2 == orig) and
 // folds stage places back onto their carriers and stage firings onto their
 // original transition for every report: Series, Final, Metrics, Contended.
-func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, opts Options, carry [][]pending) (*Result, *runStats, [][]pending, error) {
-	return simulateFrom(orig, m2, exp, marking, nil, carry, opts)
+func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, opts Options, carry [][]pending, lim *limits) (*Result, *runStats, [][]pending, error) {
+	return simulateFrom(orig, m2, exp, marking, nil, carry, opts, lim)
 }
 
 // simulateFrom is simulateExpanded with an optional per-realization start:
@@ -556,8 +745,13 @@ func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, 
 // returned in runStats.ends either way. carry, when non-nil, is one delayed-
 // firing queue per realization (see pending) picked up where the previous
 // segment left it; the queue each realization ends with is returned so the
-// next segment can do the same.
-func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, starts [][]int, carry [][]pending, opts Options) (*Result, *runStats, [][]pending, error) {
+// next segment can do the same. lim is the call's shared guard (see limits),
+// nil when the caller set no bound; a cancelled context returns an error and
+// no Result.
+func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, starts [][]int, carry [][]pending, opts Options, lim *limits) (*Result, *runStats, [][]pending, error) {
+	if err := lim.cancelled(); err != nil {
+		return nil, nil, nil, err
+	}
 	opts.Rates = exp.TranslateRates(opts.Rates)
 	opts = opts.withDefaults(m2)
 
@@ -637,9 +831,13 @@ func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, mark
 		if carry != nil {
 			carried = carry[r]
 		}
-		traj, rest, truncated := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire, carried)
-		if truncated {
+		traj, rest, stop := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire, carried, lim)
+		if stop.kind == stopCancelled {
+			return nil, nil, nil, lim.cancelled()
+		}
+		if stop.kind != stopNone {
 			acc.truncated = true
+			acc.note(stop.reason(places, lim))
 		}
 		acc.ends[r] = start // ssa mutates the marking in place; this is where r ended
 		left[r] = rest
@@ -680,7 +878,7 @@ func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, mark
 	if acc.truncated {
 		res.Truncated = true
 		res.Diverged = true
-		res.Reason = "SSA stopped before the horizon after exhausting its 1000000-step limit in at least one realization"
+		res.Reason = strings.Join(acc.reasons, "; ")
 	}
 	for i, p := range report {
 		mean := make([]float64, len(times))
@@ -1598,7 +1796,12 @@ func propensitiesAt(trs []transition, marking []int, places []string, out []floa
 	return total
 }
 
-func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int), carried []pending) ([][]float64, []pending, bool) {
+// ssa runs one realization to the horizon, or until something stops it; the
+// returned ssaStop says which. lim is the call's shared guard (nil when the
+// caller set no Context, MaxSteps or MaxPlaceTokens); none of its checks draws
+// from rng, so a run that finishes inside every bound is the run it was
+// without them.
+func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int), carried []pending, lim *limits) ([][]float64, []pending, ssaStop) {
 	nPlaces := len(marking)
 	queue := append([]pending(nil), carried...)
 	timed := false
@@ -1653,8 +1856,39 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 	propensities := make([]float64, len(trs))
 	steps := 0
 	dead := false
+	var stop ssaStop
+	capTokens := 0
+	if lim != nil {
+		capTokens = lim.maxTokens
+	}
+	// A starting marking already over the cap never reaches the ledger: the
+	// realization stops before its first hold.
+	if capTokens > 0 {
+		for p, v := range marking {
+			if v > capTokens {
+				stop = ssaStop{kind: stopPlaceCap, place: p, count: v, atStart: true}
+				break
+			}
+		}
+	}
 
-	for step := 0; step < maxSteps && t < tEnd; step++ {
+	for step := 0; stop.kind == stopNone && step < maxSteps && t < tEnd; step++ {
+		if lim != nil {
+			// Every 1024 steps, starting with the first: cheap next to a
+			// step, and prompt — a microsecond-scale step makes it about a
+			// millisecond between looks.
+			if lim.ctx != nil && step&1023 == 0 && lim.ctx.Err() != nil {
+				stop.kind = stopCancelled
+				break
+			}
+			if lim.budget > 0 {
+				if lim.used >= lim.budget {
+					stop.kind = stopBudget
+					break
+				}
+				lim.used++
+			}
+		}
 		steps++
 		start(t)
 		total := propensitiesAt(trs, marking, places, propensities, blk)
@@ -1691,10 +1925,21 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 				t = tEnd
 				break
 			}
-			queue = queue[1:]
 			for _, out := range trs[due.tr].outputs {
 				marking[out.place] += out.weight
 			}
+			if capTokens > 0 {
+				if p := overCap(trs[due.tr].outputs, marking, capTokens); p >= 0 {
+					// Refused: undo, and leave the completion in the queue —
+					// it is still in flight, not lost.
+					stop = ssaStop{kind: stopPlaceCap, place: p, count: marking[p]}
+					for _, out := range trs[due.tr].outputs {
+						marking[out.place] -= out.weight
+					}
+					break
+				}
+			}
+			queue = queue[1:]
 			if fired != nil {
 				fired[due.tr]++
 			}
@@ -1732,6 +1977,20 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 		for _, out := range trs[chosen].outputs {
 			marking[out.place] += out.weight
 		}
+		if capTokens > 0 {
+			if p := overCap(trs[chosen].outputs, marking, capTokens); p >= 0 {
+				// Refused before any ledger sees the count: undo the firing
+				// and stop here, at the instant it would have happened.
+				stop = ssaStop{kind: stopPlaceCap, place: p, count: marking[p]}
+				for _, out := range trs[chosen].outputs {
+					marking[out.place] -= out.weight
+				}
+				for _, in := range trs[chosen].inputs {
+					marking[in.place] += in.weight
+				}
+				break
+			}
+		}
 		if fired != nil {
 			fired[chosen]++
 		}
@@ -1752,7 +2011,10 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 	for i := range queue {
 		queue[i].at -= tEnd
 	}
-	return traj, queue, steps == maxSteps && t < tEnd && !dead
+	if stop.kind == stopNone && steps == maxSteps && t < tEnd && !dead {
+		stop.kind = stopStepLimit
+	}
+	return traj, queue, stop
 }
 
 // combinations is C(m, w), the number of distinct ways to select w tokens from
