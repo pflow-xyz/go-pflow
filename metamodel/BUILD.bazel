@@ -69,6 +69,7 @@ go_test(
         "stages_test.go",
         "views_test.go",
     ],
+    data = glob(["testdata/**"]),
     embed = [":metamodel"],
     deps = [
         "//metamodel/metapetri",

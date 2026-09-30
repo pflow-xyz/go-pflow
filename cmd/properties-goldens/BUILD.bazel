@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "properties-goldens_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/cmd/properties-goldens",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//metamodel",
+        "//metamodel/metapetri",
+        "//verify",
+    ],
+)
+
+go_binary(
+    name = "properties-goldens",
+    embed = [":properties-goldens_lib"],
+    visibility = ["//visibility:public"],
+)
