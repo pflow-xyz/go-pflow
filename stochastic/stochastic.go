@@ -20,11 +20,12 @@
 // constant rate per transition.
 //
 // Known and accepted: the seed rule is seed+r per realization, so runs with
-// seeds S and S+1 share N-1 realizations, and every schedule segment reuses
-// the seed; checkDivergence's Reason prose ("raises a place to the power of
-// its arc weight") describes chemical mass action, not solver's rate law
-// (weight in stoichiometry only, as above); it was moved from petri-pilot
-// unchanged and is kept byte-for-byte for parity.
+// seeds S and S+1 share N-1 realizations, and by default every schedule
+// segment reuses the seed (Options.ContinueStreams opts out: one stream per
+// realization for the whole horizon); checkDivergence's Reason prose
+// ("raises a place to the power of its arc weight") describes chemical mass
+// action, not solver's rate law (weight in stoichiometry only, as above); it
+// was moved from petri-pilot unchanged and is kept byte-for-byte for parity.
 //
 // FitDiscrete and NegLogLikelihood (likelihood.go) are this package's
 // counterpart to learn.SolveWithSensitivities: where that fits an ODE's
@@ -137,11 +138,14 @@ type Options struct {
 	// MethodSSA.
 	Method Method
 	// Schedule is a piecewise-constant rate override per transition, run as
-	// consecutive segments sharing one seed by SimulateSchedule. A transition
-	// in both Rates and Schedule takes the schedule. SSA-only: Forecast and
-	// SimulateSDE (MethodODE, MethodSDE) return an error when it is set,
-	// because a continuous engine integrates one constant rate per transition
-	// and would run the schedule flat.
+	// consecutive segments by SimulateSchedule. By default every segment
+	// restarts realization r's sampler at Seed+r, so each segment replays
+	// r's first draws; ContinueStreams instead keeps one stream per
+	// realization across segments. A transition in both Rates and Schedule
+	// takes the schedule. SSA-only: Forecast and SimulateSDE (MethodODE,
+	// MethodSDE) return an error when it is set, because a continuous
+	// engine integrates one constant rate per transition and would run the
+	// schedule flat.
 	Schedule map[string][]metamodel.RateSegment
 	// Portable selects the byte-exact SSA path shared with pflow-rs, pflow-xyz
 	// and pflow-jl: a fixed PRNG (SplitMix64 -> xoshiro256**) and an explicit
@@ -159,8 +163,39 @@ type Options struct {
 	// SimulateSDE have no firing events and never call it, so a hook set on
 	// those paths records nothing rather than something wrong. Under
 	// SimulateSchedule t is segment-local, restarting at zero at every
-	// schedule boundary.
+	// schedule boundary — unless ContinueStreams is set, when it is the time
+	// on the whole run's clock.
 	OnFire func(realization int, t float64, transition string, marking []int)
+
+	// ContinueStreams makes a scheduled SSA run (Options.Schedule or a
+	// model-declared Transition.Schedule) one random stream per realization
+	// for the whole horizon, instead of restarting realization r's sampler
+	// at Seed+r at every segment boundary. The default restart makes a
+	// realization replay the same draws segment after segment: on a Poisson
+	// source that inflates the spread across realizations, and on a queue it
+	// moves the mean. With it set:
+	//
+	//   - realization r draws from one stream, seeded once at Seed+r, across
+	//     every segment;
+	//   - the exponential race in progress at a boundary carries over rather
+	//     than being discarded: the unspent part of its unit-exponential
+	//     hazard is spent against the next segment's total propensity (the
+	//     random-time-change construction of a piecewise-constant intensity),
+	//     so a boundary at which no rate changes is invisible — a schedule of
+	//     k equal-rate segments fires the same transitions at the same times,
+	//     bit for bit, as the unscheduled run with the same seed;
+	//   - the run keeps one clock: OnFire's t is horizon time, and delayed
+	//     completions are held in it rather than re-based per segment;
+	//   - the scheduled Result carries Series.StdDev (when Realizations > 1),
+	//     the spread across realizations at each sample, as Simulate does.
+	//
+	// The zero value is the restarting behaviour, unchanged byte for byte:
+	// every scheduled golden replays identically and StdDev stays nil there.
+	// An unscheduled run is already one stream per realization and is
+	// unaffected. The Context, MaxSteps and MaxPlaceTokens bounds apply
+	// across segments exactly as without it. SSA-only: Forecast and
+	// SimulateSDE refuse schedules, and ignore it.
+	ContinueStreams bool
 
 	// The three fields below bound one call's work and memory. Each is
 	// opt-in: its zero value is exactly the behaviour before it existed, so
@@ -736,7 +771,7 @@ func simulate(m *metamodel.Model, marking map[string]int, opts Options, carry []
 // folds stage places back onto their carriers and stage firings onto their
 // original transition for every report: Series, Final, Metrics, Contended.
 func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, opts Options, carry [][]pending, lim *limits) (*Result, *runStats, [][]pending, error) {
-	return simulateFrom(orig, m2, exp, marking, nil, carry, opts, lim)
+	return simulateFrom(orig, m2, exp, marking, nil, carry, opts, lim, nil)
 }
 
 // simulateFrom is simulateExpanded with an optional per-realization start:
@@ -747,8 +782,11 @@ func simulateExpanded(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, 
 // segment left it; the queue each realization ends with is returned so the
 // next segment can do the same. lim is the call's shared guard (see limits),
 // nil when the caller set no bound; a cancelled context returns an error and
-// no Result.
-func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, starts [][]int, carry [][]pending, opts Options, lim *limits) (*Result, *runStats, [][]pending, error) {
+// no Result. st, non-nil only for a scheduled run under
+// Options.ContinueStreams, holds each realization's sampler and open draw
+// across segments and places the segment on the run's clock (see streams);
+// nil is the restarting behaviour, byte for byte.
+func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, marking map[string]int, starts [][]int, carry [][]pending, opts Options, lim *limits, st *streams) (*Result, *runStats, [][]pending, error) {
 	if err := lim.cancelled(); err != nil {
 		return nil, nil, nil, err
 	}
@@ -786,6 +824,20 @@ func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, mark
 	}
 
 	times := sampleTimes(opts)
+	t0 := 0.0
+	if st != nil {
+		if len(st.samplers) != opts.Realizations {
+			return nil, nil, nil, fmt.Errorf("stochastic: %d continued streams for a run of %d", len(st.samplers), opts.Realizations)
+		}
+		// The segment on the run's clock. The last point is the boundary
+		// itself, not from+span recomputed, so this segment's end and the
+		// next one's start are the same double.
+		t0 = st.from
+		for j := range times {
+			times[j] += st.from
+		}
+		times[len(times)-1] = st.to
+	}
 	firings := make([]float64, len(trs))
 
 	sums := make([][]float64, len(report))
@@ -822,16 +874,23 @@ func simulateFrom(orig, m2 *metamodel.Model, exp *metamodel.StageExpansion, mark
 		// Seed rule, both paths: base+r per realization, applied after the
 		// zero rule. The portable path reinterprets the int64 as uint64.
 		var s sampler
-		if opts.Portable {
+		if st != nil && st.samplers[r] != nil {
+			s = st.samplers[r] // the stream realization r has been drawing from
+		} else if opts.Portable {
 			s = &portableSampler{x: newXoshiro256(uint64(seed) + uint64(r))}
 		} else {
 			s = stdSampler{rand.New(rand.NewSource(seed + int64(r)))} //nolint:gosec // not cryptographic
+		}
+		var open *openDraw
+		if st != nil {
+			st.samplers[r] = s
+			open = &st.draws[r]
 		}
 		var carried []pending
 		if carry != nil {
 			carried = carry[r]
 		}
-		traj, rest, stop := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire, carried, lim)
+		traj, rest, stop := ssa(trs, places, start, times, s, counts, blk, ts, r, opts.OnFire, carried, lim, t0, open)
 		if stop.kind == stopCancelled {
 			return nil, nil, nil, lim.cancelled()
 		}
@@ -1444,6 +1503,60 @@ type pending struct {
 	tr int
 }
 
+// streams is Options.ContinueStreams' state for one scheduled call: realization
+// r's sampler, created at Seed+r in the first segment and drawn from in every
+// later one, and its open exponential race (see openDraw). from and to place
+// the current segment on the run's clock; SimulateSchedule sets them before
+// each segment.
+type streams struct {
+	samplers []sampler
+	draws    []openDraw
+	from, to float64
+}
+
+func newStreams(realizations int) *streams {
+	return &streams{samplers: make([]sampler, realizations), draws: make([]openDraw, realizations)}
+}
+
+// openDraw is an exponential race that has been drawn and not yet decided:
+// w is the unit-exponential hazard left to spend as of time at, against total
+// propensity total. The next exponential event is due at at + w/total — the
+// same expression, in the same two roundings, as the t + wait/total of a draw
+// made at at, which is what makes a boundary with unchanged rates invisible.
+// When the total in force changes (only possible at a segment start, since any
+// firing or completion closes the draw), what was spent since at is
+// subtracted and the draw re-anchored at the new total: the random-time-change
+// construction, exact in distribution for a piecewise-constant intensity.
+type openDraw struct {
+	ok    bool
+	at    float64
+	w     float64
+	total float64
+}
+
+// due returns when the open draw's event happens at the current total,
+// drawing a fresh unit exponential first if none is open. It draws exactly
+// when the restarting path's step would (only when total > 0) and nothing
+// else, so the stream's consumption is the unscheduled run's.
+func (d *openDraw) due(t, total float64, rng sampler) float64 {
+	if !d.ok {
+		if total <= 0 {
+			return math.Inf(1)
+		}
+		*d = openDraw{ok: true, at: t, w: rng.wait(), total: total}
+	} else if d.total != total {
+		d.w -= d.total * (t - d.at)
+		if d.w < 0 {
+			d.w = 0 // rounding at a boundary the draw had all but reached
+		}
+		d.at, d.total = t, total
+	}
+	if d.total <= 0 {
+		return math.Inf(1)
+	}
+	return d.at + d.w/d.total
+}
+
 // enabled reports whether every constraint — consuming inputs, non-consuming
 // gates and the marking guard — lets t start at marking. The exponential
 // path folds the input test into the propensity; delayed transitions have
@@ -1801,7 +1914,14 @@ func propensitiesAt(trs []transition, marking []int, places []string, out []floa
 // caller set no Context, MaxSteps or MaxPlaceTokens); none of its checks draws
 // from rng, so a run that finishes inside every bound is the run it was
 // without them.
-func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int), carried []pending, lim *limits) ([][]float64, []pending, ssaStop) {
+//
+// t0 and open are Options.ContinueStreams' (see streams): the realization
+// starts at t0 on the run's clock (times and carried are on it too), and open
+// is its exponential race carried in from the previous segment and out to the
+// next. With open nil and t0 zero this is the restarting path exactly: every
+// draw is fresh, and the queue left in flight is re-based to the next
+// segment's clock.
+func ssa(trs []transition, places []string, marking []int, times []float64, rng sampler, fired []int, blk *blockage, ts *timeStats, realization int, onFire func(int, float64, string, []int), carried []pending, lim *limits, t0 float64, open *openDraw) ([][]float64, []pending, ssaStop) {
 	nPlaces := len(marking)
 	queue := append([]pending(nil), carried...)
 	timed := false
@@ -1839,7 +1959,7 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 		traj[p] = make([]float64, len(times))
 	}
 
-	var t float64
+	t := t0
 	next := 0
 	record := func() {
 		for next < len(times) && times[next] <= t {
@@ -1892,6 +2012,14 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 		steps++
 		start(t)
 		total := propensitiesAt(trs, marking, places, propensities, blk)
+		// tNext is when the exponential race is decided: t + wait/total on
+		// the restarting path, the open draw's due time when it continues.
+		// due draws only when total > 0, as the restarting path does, and
+		// never before the dead-marking test below can end the step.
+		tNext := math.Inf(1)
+		if open != nil {
+			tNext = open.due(t, total, rng)
+		}
 		if total <= 0 && len(queue) == 0 {
 			// Dead marking: nothing can fire, and no amount of time changes
 			// that. The rest of the horizon is spent waiting for whatever is
@@ -1907,14 +2035,21 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 		// path's u <= 0 clamp lives in stdSampler); this is the same
 		// -log(u) / total as before, in the same two operations.
 		dt := math.Inf(1)
-		if total > 0 {
-			dt = rng.wait() / total
+		if open != nil {
+			dt = tNext - t
+		} else {
+			if total > 0 {
+				dt = rng.wait() / total
+			}
+			tNext = t + dt
 		}
 		// A completion due before the exponential draw pre-empts it. The
 		// draw is discarded, not deferred: the race is memoryless, so the
 		// residual after the completion is a fresh exponential over whatever
-		// the new marking enables, and that is drawn on the next step.
-		if len(queue) > 0 && queue[0].at <= t+dt {
+		// the new marking enables, and that is drawn on the next step. A
+		// completion past the horizon is not processed here, so an open
+		// draw stays open for the segment that processes it.
+		if len(queue) > 0 && queue[0].at <= tNext {
 			due := queue[0]
 			held := math.Min(due.at-t, tEnd-t)
 			blk.credit(held)
@@ -1940,6 +2075,9 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 				}
 			}
 			queue = queue[1:]
+			if open != nil {
+				open.ok = false
+			}
 			if fired != nil {
 				fired[due.tr]++
 			}
@@ -1957,10 +2095,15 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 		held := math.Min(dt, tEnd-t)
 		blk.credit(held)
 		ts.hold(marking, held)
-		t += dt
+		t = tNext
 		record()
 		if t > tEnd {
+			// Past the horizon. An open draw stays open: the next segment
+			// spends what is left of it instead of drawing afresh.
 			break
+		}
+		if open != nil {
+			open.ok = false
 		}
 
 		r := rng.uniform() * total
@@ -2007,9 +2150,12 @@ func ssa(trs []transition, places []string, marking []int, times []float64, rng 
 			traj[p][next] = float64(marking[p])
 		}
 	}
-	// What is still in flight leaves on the next segment's clock.
-	for i := range queue {
-		queue[i].at -= tEnd
+	// What is still in flight leaves on the next segment's clock — re-based
+	// to it on the restarting path, already on it when the run keeps one.
+	if open == nil {
+		for i := range queue {
+			queue[i].at -= tEnd
+		}
 	}
 	if stop.kind == stopNone && steps == maxSteps && t < tEnd && !dead {
 		stop.kind = stopStepLimit

@@ -5,6 +5,48 @@ project versions with `vMAJOR.MINOR.PATCH` tags and bumps minor (not patch)
 for a behavior change comparable in scope to this one — e.g. `v0.28.0` for
 stage-expansion and schedules landing in the engine.
 
+## Unreleased (next version: v0.33.0)
+
+One opt-in `stochastic.Options` field for scheduled SSA runs. Its zero value
+is exactly the old behaviour: every scheduled run replays byte-identical
+(`stochastic/testdata/scheduled/restart-streams.json`, recorded at v0.32.0,
+default and portable sampler), and unscheduled runs are unaffected either way.
+
+- **`Options.ContinueStreams bool`.** By default `SimulateSchedule` restarts
+  realization r's sampler at `Seed+r` on every schedule segment, so a
+  realization replays its first draws segment after segment — which inflates
+  the spread on a Poisson source (eight one-hour segments at 10/h: sd ~25
+  instead of sqrt(80) ~ 8.9) and moves the mean on a queue (found
+  downstream by sim.pflow.xyz: the café served 164.2 against 121.3 in 8 h).
+  With the flag:
+  - realization r keeps one stream, seeded once at `Seed+r`, for the whole
+    horizon;
+  - the exponential race open at a boundary is carried over, not discarded:
+    its unspent unit-exponential hazard is spent against the next segment's
+    total propensity (random time change — exact in distribution for a
+    piecewise-constant intensity, including across a zero-rate segment);
+  - the run keeps one clock, so `OnFire`'s `t` is horizon time and delayed
+    completions are not re-based per segment;
+  - the scheduled `Result` carries `Series.StdDev` when `Realizations > 1`.
+
+  A schedule whose boundaries change no rate is then invisible, bit for bit:
+  per realization, the same transitions fire at the same instants with the
+  same markings as the unscheduled run on the same seed, and `Final` is
+  identical (`TestContinuedSplitIsInvisible`, on delay-free, timed and
+  staged/guarded nets, both samplers). `Metrics.Throughput` and
+  `Metrics.Mean`/`P95` agree to rounding only, because they are summed per
+  segment. `Context`, `MaxSteps` and `MaxPlaceTokens` behave across
+  continued segments exactly as across restarted ones. ODE and SDE refuse
+  schedules and ignore the flag.
+
+- **`docs/solver-matrix.md` citations renumbered.** Every
+  `stochastic/stochastic.go:N` and `stochastic/schedule.go:N` citation was
+  re-checked against the code it describes (many already pointed at
+  unrelated lines before this change), and
+  `TestSolverMatrixCitationsAnchored` now pins a sample of them to the text
+  they cite, so an insertion above one fails `go test ./docs` instead of
+  leaving the page silently wrong.
+
 ## v0.32.0
 
 Three opt-in `stochastic.Options` fields bound one call's work and memory.
