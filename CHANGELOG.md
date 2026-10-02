@@ -39,6 +39,14 @@ default and portable sampler), and unscheduled runs are unaffected either way.
   continued segments exactly as across restarted ones. ODE and SDE refuse
   schedules and ignore the flag.
 
+- **`docs/solver-matrix.md` citations renumbered.** Every
+  `stochastic/stochastic.go:N` and `stochastic/schedule.go:N` citation was
+  re-checked against the code it describes (many already pointed at
+  unrelated lines before this change), and
+  `TestSolverMatrixCitationsAnchored` now pins a sample of them to the text
+  they cite, so an insertion above one fails `go test ./docs` instead of
+  leaving the page silently wrong.
+
 ## v0.32.0
 
 Three opt-in `stochastic.Options` fields bound one call's work and memory.

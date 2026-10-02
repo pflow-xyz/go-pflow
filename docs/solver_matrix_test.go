@@ -288,3 +288,96 @@ func indexRepo(t *testing.T, root string) treeIndex {
 	}
 	return idx
 }
+
+// citationAnchors pins what a sample of the matrix's citations must point at:
+// each cited range must contain its anchor text. Existence alone (the test
+// above) stayed green while a 90-line insertion into stochastic.go left every
+// later citation pointing at unrelated code — the MaxSteps row landed in the
+// middle of another field's doc comment, the Context row on a line about
+// sample times. The sample covers each region of the two files the matrix
+// cites most, so an insertion anywhere above one of them fails here and the
+// renumbering is done, not deferred. Renumbering a citation means updating
+// its entry: the table is keyed by the exact citation text.
+var citationAnchors = []struct{ cite, anchor string }{
+	{"stochastic/stochastic.go:22-28", "Known and accepted"},
+	{"stochastic/stochastic.go:84-111", "DefaultRate"},
+	{"stochastic/stochastic.go:122-130", "Seed makes an SSA or SDE run reproducible"},
+	{"stochastic/stochastic.go:140-149", "Schedule is a piecewise-constant rate override"},
+	{"stochastic/stochastic.go:157-168", "OnFire is called immediately after a transition fires"},
+	{"stochastic/stochastic.go:215-228", "MaxSteps is a budget on SSA steps"},
+	{"stochastic/stochastic.go:229-240", "MaxPlaceTokens caps any single place's token count"},
+	{"stochastic/stochastic.go:270", "func (o Options) checkLimits()"},
+	{"stochastic/stochastic.go:290", "func ctxErr("},
+	{"stochastic/stochastic.go:327", "func (s ssaStop) reason("},
+	{"stochastic/stochastic.go:372-381", "func (o Options) withDefaults("},
+	{"stochastic/stochastic.go:553", "func Forecast("},
+	{"stochastic/stochastic.go:554-556", "refuseSchedule(MethodODE, opts)"},
+	{"stochastic/stochastic.go:586-597", "m.Gating()"},
+	{"stochastic/stochastic.go:652-665", "func checkDivergence("},
+	{"stochastic/stochastic.go:672", "func Simulate("},
+	{"stochastic/stochastic.go:763", "m.ExpandStages()"},
+	{"stochastic/stochastic.go:793", "exp.TranslateRates(opts.Rates)"},
+	{"stochastic/stochastic.go:850-853", "seed = 1"},
+	{"stochastic/stochastic.go:874-883", "seed + int64(r)"},
+	{"stochastic/stochastic.go:894", "stopCancelled"},
+	{"stochastic/stochastic.go:945-957", "math.Sqrt(variance)"},
+	{"stochastic/stochastic.go:1059-1087", "func assumptionsFor("},
+	{"stochastic/stochastic.go:1143-1159", "func metricsOf("},
+	{"stochastic/stochastic.go:1334-1361", "func resample("},
+	{"stochastic/stochastic.go:1363-1386", "so.Dtmax = gridCap"},
+	{"stochastic/stochastic.go:1593-1597", "marking[h.place] >= h.weight"},
+	{"stochastic/stochastic.go:1729-1743", "func (t *transition) allows("},
+	{"stochastic/stochastic.go:1764", "has no token places to simulate"},
+	{"stochastic/stochastic.go:1867-1880", "combinations(m, in.weight)"},
+	{"stochastic/stochastic.go:2000", "lim.ctx.Err()"},
+	{"stochastic/stochastic.go:2005", "lim.used >= lim.budget"},
+	{"stochastic/stochastic.go:2023-2032", "Dead marking"},
+	{"stochastic/stochastic.go:2123", "capTokens > 0"},
+	{"stochastic/stochastic.go:2169-2182", "func combinations("},
+	{"stochastic/stochastic.go:2241", "ExponentialServiceAssumption"},
+	{"stochastic/schedule.go:26", "func SimulateSchedule("},
+	{"stochastic/schedule.go:42", "newLimits(opts)"},
+	{"stochastic/schedule.go:108", "Portable: opts.Portable"},
+	{"stochastic/schedule.go:163", "stats.reasons"},
+	{"stochastic/schedule.go:188-213", "func runBoundaries("},
+	{"stochastic/schedule.go:215-233", "func ratesAt("},
+}
+
+func TestSolverMatrixCitationsAnchored(t *testing.T) {
+	root := repoRoot(t)
+	body := readMatrix(t, root)
+	files := map[string][]string{}
+	for _, a := range citationAnchors {
+		if !strings.Contains(body, "`"+a.cite+"`") {
+			t.Errorf("%s no longer cites %s; update its entry in citationAnchors along with the page", matrixDoc, a.cite)
+			continue
+		}
+		m := citation.FindStringSubmatch(a.cite)
+		if m == nil || m[0] != a.cite {
+			t.Fatalf("citationAnchors entry %q is not a citation", a.cite)
+		}
+		path := m[1]
+		lines, ok := files[path]
+		if !ok {
+			b, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+			if err != nil {
+				t.Errorf("reading %s: %v", path, err)
+				continue
+			}
+			lines = strings.Split(string(b), "\n")
+			files[path] = lines
+		}
+		from, to := mustAtoi(t, m[2]), mustAtoi(t, m[2])
+		if m[3] != "" {
+			to = mustAtoi(t, m[3])
+		}
+		if from < 1 || to > len(lines) || to < from {
+			t.Errorf("%s: range out of bounds for a %d-line file", a.cite, len(lines))
+			continue
+		}
+		if !strings.Contains(strings.Join(lines[from-1:to], "\n"), a.anchor) {
+			t.Errorf("%s cites %s for %q, but those lines no longer contain it — the source moved; renumber the citation",
+				matrixDoc, a.cite, a.anchor)
+		}
+	}
+}

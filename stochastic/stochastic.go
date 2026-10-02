@@ -20,11 +20,12 @@
 // constant rate per transition.
 //
 // Known and accepted: the seed rule is seed+r per realization, so runs with
-// seeds S and S+1 share N-1 realizations, and every schedule segment reuses
-// the seed; checkDivergence's Reason prose ("raises a place to the power of
-// its arc weight") describes chemical mass action, not solver's rate law
-// (weight in stoichiometry only, as above); it was moved from petri-pilot
-// unchanged and is kept byte-for-byte for parity.
+// seeds S and S+1 share N-1 realizations, and by default every schedule
+// segment reuses the seed (Options.ContinueStreams opts out: one stream per
+// realization for the whole horizon); checkDivergence's Reason prose
+// ("raises a place to the power of its arc weight") describes chemical mass
+// action, not solver's rate law (weight in stoichiometry only, as above); it
+// was moved from petri-pilot unchanged and is kept byte-for-byte for parity.
 //
 // FitDiscrete and NegLogLikelihood (likelihood.go) are this package's
 // counterpart to learn.SolveWithSensitivities: where that fits an ODE's
@@ -137,11 +138,14 @@ type Options struct {
 	// MethodSSA.
 	Method Method
 	// Schedule is a piecewise-constant rate override per transition, run as
-	// consecutive segments sharing one seed by SimulateSchedule. A transition
-	// in both Rates and Schedule takes the schedule. SSA-only: Forecast and
-	// SimulateSDE (MethodODE, MethodSDE) return an error when it is set,
-	// because a continuous engine integrates one constant rate per transition
-	// and would run the schedule flat.
+	// consecutive segments by SimulateSchedule. By default every segment
+	// restarts realization r's sampler at Seed+r, so each segment replays
+	// r's first draws; ContinueStreams instead keeps one stream per
+	// realization across segments. A transition in both Rates and Schedule
+	// takes the schedule. SSA-only: Forecast and SimulateSDE (MethodODE,
+	// MethodSDE) return an error when it is set, because a continuous
+	// engine integrates one constant rate per transition and would run the
+	// schedule flat.
 	Schedule map[string][]metamodel.RateSegment
 	// Portable selects the byte-exact SSA path shared with pflow-rs, pflow-xyz
 	// and pflow-jl: a fixed PRNG (SplitMix64 -> xoshiro256**) and an explicit

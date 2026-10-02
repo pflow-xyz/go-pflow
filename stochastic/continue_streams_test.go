@@ -220,6 +220,17 @@ func TestContinuedSplitIsInvisible(t *testing.T) {
 				if mustJSON(t, w.Final) != mustJSON(t, s.Final) {
 					t.Errorf("%s: Final %v unsplit, %v split", name, w.Final, s.Final)
 				}
+				// The reported grid is one horizon clock: the continued path
+				// rebases each segment's grid itself, so it must match the
+				// restarting path's (which SimulateSchedule rebases instead).
+				ropts := sopts
+				ropts.ContinueStreams = false
+				ropts.OnFire = nil
+				rs, err := Simulate(c.m, nil, ropts)
+				if err != nil {
+					t.Fatal(err)
+				}
+				checkHorizonGrid(t, name, s.Times, rs.Times, c.horizon)
 				// Throughput is a per-segment mean summed over segments, and
 				// the time-weighted means sum the same holds in more pieces:
 				// both agree to rounding rather than bit for bit.
@@ -234,6 +245,39 @@ func TestContinuedSplitIsInvisible(t *testing.T) {
 					}
 				}
 			}
+		}
+	}
+}
+
+// checkHorizonGrid pins a continued scheduled run's combined Times: it starts
+// at zero, never goes backwards, ends exactly at the horizon, and is the same
+// grid the restarting path reports for the same schedule. Depleted and
+// Recovered instants are read off this grid, so a segment reported on its own
+// clock, or rebased twice, would misplace them.
+func checkHorizonGrid(t *testing.T, name string, got, restart []float64, horizon float64) {
+	t.Helper()
+	if len(got) == 0 {
+		t.Fatalf("%s: no Times", name)
+	}
+	if got[0] != 0 {
+		t.Errorf("%s: Times[0] = %v, want 0", name, got[0])
+	}
+	if last := got[len(got)-1]; last != horizon {
+		t.Errorf("%s: last time %v, want the horizon %v", name, last, horizon)
+	}
+	for i := 1; i < len(got); i++ {
+		if got[i] < got[i-1] {
+			t.Errorf("%s: Times goes backwards at %d: %v after %v", name, i, got[i], got[i-1])
+			break
+		}
+	}
+	if len(got) != len(restart) {
+		t.Fatalf("%s: %d times continued, %d restarting", name, len(got), len(restart))
+	}
+	for i := range got {
+		if d := math.Abs(got[i] - restart[i]); d > 1e-9*math.Max(1, horizon) {
+			t.Errorf("%s: Times[%d] = %v continued, %v restarting", name, i, got[i], restart[i])
+			break
 		}
 	}
 }
