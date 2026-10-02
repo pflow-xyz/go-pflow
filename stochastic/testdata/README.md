@@ -140,3 +140,24 @@ lives elsewhere.
 | File | sha256 |
 |---|---|
 | `cafe-service.json` | `e257b5870b1677c1e9e70751fd5337429fd55a101b4cc8ffcdeab70ebf271449` |
+
+### `scheduled/restart-streams.json` — the restarting path, pinned
+
+Six scheduled runs and their whole `Result`s, recorded at v0.32.0
+(`b14b754`, before `Options.ContinueStreams` existed) by a throwaway
+generator that called `stochastic.Simulate` and `json.Marshal`ed the
+result: the `cafe-service` showcase model (model-declared schedule, stages,
+read/inhibitor arcs, `vip_arrives: 0`; 8, 65, 8, 42), the staffed shop of
+`gating_test.go` under a three-segment `arrive` rush (8, 49, 6, 5), and the
+`timed` net of `portable/timed.json` under a three-segment `arrive` schedule
+(12, 61, 5, 9) — each on the default sampler and on `Portable: true`.
+`TestRestartingScheduleIsUnchanged` replays every one with
+`ContinueStreams` unset and asserts the marshalled `Result` is byte-identical
+and carries no `StdDev`. The `cafe-service-portable` numbers equal
+`cafe-service.json`'s double for double (only the later-reworded
+`assumptions` text differs there). A difference is a finding about the
+engine; this file is never regenerated to make a test pass.
+
+| File | sha256 |
+|---|---|
+| `restart-streams.json` | `f84096ac39e5b9a46d4aa04c372f13a99c8fda12bf7055de0872ef241e28455a` |

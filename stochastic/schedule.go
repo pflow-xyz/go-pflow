@@ -9,16 +9,20 @@ import (
 
 // SimulateSchedule runs the horizon in pieces, one per schedule boundary,
 // carrying each realization's own marking across. It is the SSA under
-// opts.Schedule and under a model-declared Transition.Schedule: every segment
-// restarts realization r's sampler at Seed+r, realization r continues from
-// the integer marking it reached, and the statistics are merged across
-// segments so one Metrics and one Contended are derived for the whole run.
+// opts.Schedule and under a model-declared Transition.Schedule: realization r
+// continues from the integer marking it reached, and the statistics are
+// merged across segments so one Metrics and one Contended are derived for the
+// whole run.
 //
 // Splitting the run is the honest way to do this with a Gillespie engine: SSA
 // draws a waiting time from the current total propensity, so a rate that
 // changes mid-draw would mean sampling from a distribution that no longer
-// applies. Restarting at each boundary keeps every draw consistent with the
-// rates in force when it was made.
+// applies. By default every segment restarts realization r's sampler at
+// Seed+r and discards the race in progress at the boundary — memoryless, so
+// each draw stays consistent with the rates in force, but each segment then
+// replays the same stream. Options.ContinueStreams keeps one stream per
+// realization instead and spends the unspent hazard of the race in progress
+// against the next segment's rates (see Options.ContinueStreams).
 func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) (*Result, error) {
 	// The caller's own rate and schedule tables, kept apart from the merged
 	// defaults: a scenario's constant rate or schedule for a transition beats
@@ -70,6 +74,14 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 	// blocked ledger stays expanded and is filtered at the end.
 	stats := &runStats{times: newTimeStats(len(report)), blocked: newBlockage(len(expandedPlaces))}
 	var caveats []string
+	// One stream per realization for the whole horizon, and the spread that
+	// only then means one thing across segments; nil keeps the restart.
+	var st *streams
+	var spread map[string][]float64
+	if opts.ContinueStreams {
+		st = newStreams(opts.Realizations)
+		spread = map[string][]float64{}
+	}
 	from := 0.0
 	for _, to := range bounds {
 		span := to - from
@@ -96,7 +108,10 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 			Portable: opts.Portable,
 			OnFire:   opts.OnFire,
 		}
-		res, segStats, segCarry, err := simulateFrom(m, m2, exp, marking, starts, carry, segment, lim)
+		if st != nil {
+			st.from, st.to = from, to
+		}
+		res, segStats, segCarry, err := simulateFrom(m, m2, exp, marking, starts, carry, segment, lim, st)
 		if err != nil {
 			return nil, err
 		}
@@ -105,10 +120,16 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 		carry = segCarry
 
 		for _, t := range res.Times {
-			combined.Times = append(combined.Times, from+t)
+			if st == nil { // a restarted segment's grid starts at zero
+				t += from
+			}
+			combined.Times = append(combined.Times, t)
 		}
 		for _, sr := range res.Series {
 			series[sr.Place] = append(series[sr.Place], sr.Values...)
+			if spread != nil && sr.StdDev != nil {
+				spread[sr.Place] = append(spread[sr.Place], sr.StdDev...)
+			}
 		}
 		if res.Metrics != nil {
 			for id, n := range res.Metrics.Throughput {
@@ -128,7 +149,11 @@ func SimulateSchedule(m *metamodel.Model, marking map[string]int, opts Options) 
 	}
 
 	for _, p := range sortedKeys(series) {
-		combined.Series = append(combined.Series, Series{Place: p, Values: series[p]})
+		var sd []float64
+		if sp := spread[p]; len(sp) == len(series[p]) {
+			sd = sp
+		}
+		combined.Series = append(combined.Series, Series{Place: p, Values: series[p], StdDev: sd})
 		combined.Final[p] = series[p][len(series[p])-1]
 	}
 	combined.Depleted = depletions(m, combined)
