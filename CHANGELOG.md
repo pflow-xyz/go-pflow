@@ -5,7 +5,7 @@ project versions with `vMAJOR.MINOR.PATCH` tags and bumps minor (not patch)
 for a behavior change comparable in scope to this one — e.g. `v0.28.0` for
 stage-expansion and schedules landing in the engine.
 
-## Unreleased (next version: v0.33.0)
+## v0.33.0
 
 One opt-in `stochastic.Options` field for scheduled SSA runs. Its zero value
 is exactly the old behaviour: every scheduled run replays byte-identical
