@@ -72,7 +72,8 @@ func (r *Runtime) DataMap(stateID string) map[string]any {
 }
 
 // Enabled returns true if an action can execute.
-// For TokenState inputs: checks token count >= 1
+// For TokenState inputs, following the shared firing rule (metamodel/firing.go):
+// a normal or read arc needs >= weight tokens; an inhibitor arc blocks at >= weight.
 // For DataState inputs: always enabled (data transformation doesn't consume)
 func (r *Runtime) Enabled(actionID string) bool {
 	a := r.Schema.ActionByID(actionID)
@@ -84,7 +85,12 @@ func (r *Runtime) Enabled(actionID string) bool {
 	for _, arc := range r.Schema.InputArcs(actionID) {
 		st := r.Schema.StateByID(arc.Source)
 		if st != nil && st.IsToken() {
-			if r.Tokens(arc.Source) < 1 {
+			have, w := r.Tokens(arc.Source), arc.EffectiveWeight()
+			if arc.Type == InhibitorArc {
+				if have >= w {
+					return false
+				}
+			} else if have < w {
 				return false
 			}
 		}
@@ -116,8 +122,10 @@ func (r *Runtime) Execute(actionID string) error {
 	for _, arc := range r.Schema.InputArcs(actionID) {
 		st := r.Schema.StateByID(arc.Source)
 		if st != nil && st.IsToken() {
-			// TokenState: decrement token count
-			r.Snapshot.AddTokens(arc.Source, -1)
+			// TokenState: consume weight tokens (read/inhibitor arcs move nothing)
+			if !arc.IsReadOnly() {
+				r.Snapshot.AddTokens(arc.Source, -arc.EffectiveWeight())
+			}
 		}
 		// DataState: no automatic consumption
 	}
@@ -126,8 +134,8 @@ func (r *Runtime) Execute(actionID string) error {
 	for _, arc := range r.Schema.OutputArcs(actionID) {
 		st := r.Schema.StateByID(arc.Target)
 		if st != nil && st.IsToken() {
-			// TokenState: increment token count
-			r.Snapshot.AddTokens(arc.Target, 1)
+			// TokenState: produce weight tokens
+			r.Snapshot.AddTokens(arc.Target, arc.EffectiveWeight())
 		}
 		// DataState: no automatic production
 	}
@@ -201,8 +209,10 @@ func (r *Runtime) applyArcs(actionID string, bindings Bindings) {
 		}
 
 		if st.IsToken() {
-			// TokenState: decrement count
-			r.Snapshot.AddTokens(arc.Source, -1)
+			// TokenState: consume weight tokens (read/inhibitor arcs move nothing)
+			if !arc.IsReadOnly() {
+				r.Snapshot.AddTokens(arc.Source, -arc.EffectiveWeight())
+			}
 		} else {
 			// DataState: subtract from map using arc keys
 			r.applyDataArc(arc.Source, arc, bindings, false)
@@ -217,8 +227,8 @@ func (r *Runtime) applyArcs(actionID string, bindings Bindings) {
 		}
 
 		if st.IsToken() {
-			// TokenState: increment count
-			r.Snapshot.AddTokens(arc.Target, 1)
+			// TokenState: produce weight tokens
+			r.Snapshot.AddTokens(arc.Target, arc.EffectiveWeight())
 		} else {
 			// DataState: add to map using arc keys
 			r.applyDataArc(arc.Target, arc, bindings, true)
