@@ -17,6 +17,7 @@ interrupted. Every other row runs to completion and exits.
 | [stoplight](stoplight/) | Smallest hand-built net: three light states, one cycle | [Ch 1: Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html) | `go run ./stoplight` |
 | [trafficlight](trafficlight/) | The same cycle plus a pedestrian crossing region | [Ch 1: Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html) | `go run ./trafficlight` |
 | [coffeeshop](coffeeshop/) | Actors, workflows, state machines, mining | [Ch 5: Resource Modeling](https://book.pflow.xyz/ch05-resource-modeling.html) | `cd coffeeshop/cmd && go run main.go` |
+| [custody_saga](custody_saga/) | Saga: reserve, sign, broadcast with compensations; shared accounts | [`saga`](../saga/README.md) | `go run ./custody_saga` |
 | [tictactoe](tictactoe/) | Minimax, ODE move evaluation | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) | `cd tictactoe/cmd && go run .` |
 | [nim](nim/) | Optimal strategy, Grundy numbers | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) | `cd nim && go run ./cmd` *(interactive)* |
 | [connect4](connect4/) | Pattern recognition, lookahead | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) | `cd connect4 && go run ./cmd` *(interactive)* |

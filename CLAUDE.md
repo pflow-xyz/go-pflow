@@ -113,6 +113,7 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | `verify` | Declarative property checking (proved/refuted/unknown + counterexample) |
 | `statemachine` | Statecharts with Petri net backend |
 | `workflow` | Task dependencies, resources, SLA tracking |
+| `saga` | Compensable steps (forward + undo) as a Petri net; accounts shareable with other subnets; `Stranded` finds half-done states that cannot finish |
 | `actor` | Actor model with message bus |
 | `visualization` | SVG rendering |
 | `eventlog` | Parse CSV/JSONL event logs |
@@ -218,6 +219,7 @@ correct stays provable after it composes into something larger.
 | `metamodel.NewQueue` | bounded/unbounded buffer | ResourceNet | `items + slots == N` |
 | `(*workflow.Workflow).ToMetaSubnet` | tasks, deps, resource pools | WorkflowNet | per-pool conservation |
 | `(*statemachine.Chart).ToMetaSubnet` | statechart | WorkflowNet | per-region `sum(states) == 1` |
+| `(*saga.Saga).ToMetaSubnet` | compensable steps + accounts | ResourceNet | one control token; per-step `pending+done+failed+compensated == 1`; account conservation (closed sagas only) |
 | `(*actor.ActorSystem).ToMetaBundle` | actors + bus | Untyped | — |
 | `(*metamodel.ResourcePool[R]).ToSubnet` | pool | ResourceNet | `available + in_use == N` |
 | `(*metamodel.StateMachine[S]).ToSubnet` | states | WorkflowNet | `state_mutex` |
@@ -350,6 +352,7 @@ letting it look safe.
 | Problem | Package |
 |---------|---------|
 | Business workflows | `workflow` |
+| Multi-step transaction with compensations / rollback | `saga` |
 | Event-driven states | `statemachine` |
 | Message-passing actors | `actor` |
 | Game AI / move evaluation | `hypothesis`, `cache` |

@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "saga",
+    srcs = [
+        "analyze.go",
+        "metasubnet.go",
+        "saga.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/saga",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metamodel",
+        "//reachability",
+    ],
+)
+
+go_test(
+    name = "saga_test",
+    srcs = [
+        "metasubnet_test.go",
+        "saga_test.go",
+    ],
+    embed = [":saga"],
+    deps = [
+        "//metamodel",
+        "//metamodel/metapetri",
+        "//reachability",
+        "//verify",
+    ],
+)
