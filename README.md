@@ -220,6 +220,7 @@ Where you will be working against the grain:
 | `eventlog`, `mining`, `monitoring` | Event log parsing, process discovery and conformance, real-time prediction and SLA alerts | [Ch 11: Process Mining](https://book.pflow.xyz/ch11-process-mining.html) |
 | `hypothesis` | Move evaluation for game AI | [Ch 6: Game Mechanics](https://book.pflow.xyz/ch06-game-mechanics.html) |
 | `statemachine`, `workflow`, `actor` | Statecharts, task dependencies and SLAs, message-passing actors — all on a Petri-net backend | [Ch 10: Complex State Machines](https://book.pflow.xyz/ch10-complex-state-machines.html) |
+| `saga` | Compensable steps (forward + undo) as a Petri net: reverse-order rollback, accounts shared with other subnets, no-stranded-state checks | [`saga/README.md`](saga/README.md) |
 | `tokenmodel` (+ `dsl`, `petri`, `subnet`, `windowing`, `dataflow`) | Token model schemas, S-expression DSL, Beam-style streaming pipelines | [Ch 4: Token Language](https://book.pflow.xyz/ch04-token-language.html) |
 | `codegen/solidity`, `templates` | Solidity generation from token models; common net patterns | [Ch 18: Code Generation](https://book.pflow.xyz/ch18-code-generation.html) |
 | `prover`, `zkcompile` | Groth16 proofs of state transitions with gnark; net → circuit compilation | [Ch 12: Zero-Knowledge Proofs](https://book.pflow.xyz/ch12-zero-knowledge-proofs.html) |
@@ -236,6 +237,7 @@ and a complexity progression.
 |---------|--------|--------------|
 | [basic](examples/basic/) | Token flow fundamentals | [Ch 1](https://book.pflow.xyz/ch01-why-petri-nets.html) |
 | [coffeeshop](examples/coffeeshop/) | Resource modeling, actors, workflows | [Ch 5](https://book.pflow.xyz/ch05-resource-modeling.html) |
+| [custody_saga](examples/custody_saga/) | Compensable steps, rollback, shared accounts | [`saga`](saga/README.md) |
 | [neural](examples/neural/), [dataset_comparison](examples/dataset_comparison/) | Parameter fitting, calibration | [Ch 3](https://book.pflow.xyz/ch03-discrete-to-continuous.html) |
 | [tictactoe](examples/tictactoe/), [connect4](examples/connect4/), [nim](examples/nim/) | Game AI, move evaluation | [Ch 6](https://book.pflow.xyz/ch06-game-mechanics.html) |
 | [sudoku](examples/sudoku/), [chess](examples/chess/), [knapsack](examples/knapsack/) | Constraint satisfaction, optimization | [Ch 7](https://book.pflow.xyz/ch07-constraint-satisfaction.html), [Ch 8](https://book.pflow.xyz/ch08-optimization.html) |

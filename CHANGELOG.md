@@ -5,6 +5,41 @@ project versions with `vMAJOR.MINOR.PATCH` tags and bumps minor (not patch)
 for a behavior change comparable in scope to this one — e.g. `v0.28.0` for
 stage-expansion and schedules landing in the engine.
 
+## Unreleased
+
+A new package, `saga`, and nothing else: no existing package, type or golden
+changes.
+
+- **`saga`: compensable steps as a Petri net.** A `Saga` is an ordered list of
+  steps, each a forward transition paired with a compensation, plus the accounts
+  the steps move tokens between. `ToMetaSubnet` emits a `metamodel.Subnet`
+  (`ResourceNet`), in the manner of `workflow` and `statemachine`.
+  - One control token walks forward through `next_<step>`, then is handed to a
+    downward-only `unwind_<step>` chain on failure, so compensation of steps
+    *k-1 … 1* in reverse is a property of the arcs. Per step, exactly one of
+    `pending` / `done` / `failed` / `compensated` is marked. The terminals
+    `completed` and `rolled_back` are exclusive because the control token is
+    one — a P-invariant, proved `structural` by `verify`.
+  - A final `commit` / `fail_commit` stage, so that compensation of the *last*
+    step is reachable (without it `undo_<last>` is a dead transition).
+  - Steps `Move(from, to, n)` between accounts as one weighted arc each way,
+    netted per account. `SharedAccount` exposes an `account:<id>` port to
+    `TokenLink` to another subnet; transition ports allow `EventLink` fusion.
+  - Every emitted `Constraint` is proved a real invariant of the emitted net
+    (`TestEveryEmittedConstraintIsATrueInvariant`). Local conservation is
+    emitted only for a closed saga.
+  - `saga.Stranded(graph, places...)`: reachable states from which none of the
+    given places can be marked.
+  - **Limit, tested:** a compensation reverses a step's moves, so it needs the
+    credited account to still hold them. A subnet that can spend that credit
+    strands the rollback (`TestCompensationStrandsWhenSomeoneElseSpendsTheCredit`).
+    Also: no coloured tokens in `metamodel`, so no per-instance identity;
+    compensations cannot fail; strictly linear. See `saga/README.md`.
+  - `examples/custody_saga`: reserve → sign → broadcast with release reserve /
+    void signature / cancel or replace, standalone and composed with a ledger
+    and a chain — where an unconstrained `confirm` strands a failed commit and
+    fusing it to `commit` does not.
+
 ## v0.33.0
 
 One opt-in `stochastic.Options` field for scheduled SSA runs. Its zero value

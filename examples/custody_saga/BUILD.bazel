@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "custody_saga_lib",
+    srcs = [
+        "custody.go",
+        "main.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/examples/custody_saga",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//metamodel",
+        "//metamodel/metapetri",
+        "//reachability",
+        "//saga",
+        "//verify",
+    ],
+)
+
+go_binary(
+    name = "custody_saga",
+    embed = [":custody_saga_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "custody_saga_test",
+    srcs = ["custody_test.go"],
+    embed = [":custody_saga_lib"],
+    deps = [
+        "//metamodel",
+        "//metamodel/metapetri",
+        "//reachability",
+        "//saga",
+        "//verify",
+    ],
+)
