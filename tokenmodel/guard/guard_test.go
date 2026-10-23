@@ -1,6 +1,7 @@
 package guard
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -92,7 +93,7 @@ func TestParser(t *testing.T) {
 func TestEvaluateBasic(t *testing.T) {
 	tests := []struct {
 		expr     string
-		bindings map[string]interface{}
+		bindings map[string]any
 		expected bool
 	}{
 		{"true", nil, true},
@@ -124,21 +125,21 @@ func TestEvaluateBasic(t *testing.T) {
 func TestEvaluateComparisons(t *testing.T) {
 	tests := []struct {
 		expr     string
-		bindings map[string]interface{}
+		bindings map[string]any
 		expected bool
 	}{
-		{"x > 0", map[string]interface{}{"x": int64(100)}, true},
-		{"x > 0", map[string]interface{}{"x": int64(0)}, false},
-		{"x >= 100", map[string]interface{}{"x": int64(100)}, true},
-		{"x >= 100", map[string]interface{}{"x": int64(99)}, false},
-		{"x < 100", map[string]interface{}{"x": int64(50)}, true},
-		{"x < 100", map[string]interface{}{"x": int64(100)}, false},
-		{"x <= 100", map[string]interface{}{"x": int64(100)}, true},
-		{"x <= 100", map[string]interface{}{"x": int64(101)}, false},
-		{"x == 100", map[string]interface{}{"x": int64(100)}, true},
-		{"x == 100", map[string]interface{}{"x": int64(99)}, false},
-		{"x != 100", map[string]interface{}{"x": int64(99)}, true},
-		{"x != 100", map[string]interface{}{"x": int64(100)}, false},
+		{"x > 0", map[string]any{"x": int64(100)}, true},
+		{"x > 0", map[string]any{"x": int64(0)}, false},
+		{"x >= 100", map[string]any{"x": int64(100)}, true},
+		{"x >= 100", map[string]any{"x": int64(99)}, false},
+		{"x < 100", map[string]any{"x": int64(50)}, true},
+		{"x < 100", map[string]any{"x": int64(100)}, false},
+		{"x <= 100", map[string]any{"x": int64(100)}, true},
+		{"x <= 100", map[string]any{"x": int64(101)}, false},
+		{"x == 100", map[string]any{"x": int64(100)}, true},
+		{"x == 100", map[string]any{"x": int64(99)}, false},
+		{"x != 100", map[string]any{"x": int64(99)}, true},
+		{"x != 100", map[string]any{"x": int64(100)}, false},
 	}
 
 	for _, tt := range tests {
@@ -156,15 +157,15 @@ func TestEvaluateComparisons(t *testing.T) {
 func TestEvaluateArithmetic(t *testing.T) {
 	tests := []struct {
 		expr     string
-		bindings map[string]interface{}
+		bindings map[string]any
 		expected bool
 	}{
-		{"a + b > 10", map[string]interface{}{"a": int64(5), "b": int64(6)}, true},
-		{"a + b > 10", map[string]interface{}{"a": int64(5), "b": int64(5)}, false},
-		{"a - b == 5", map[string]interface{}{"a": int64(10), "b": int64(5)}, true},
-		{"a * b == 50", map[string]interface{}{"a": int64(10), "b": int64(5)}, true},
-		{"a / b == 2", map[string]interface{}{"a": int64(10), "b": int64(5)}, true},
-		{"a % b == 1", map[string]interface{}{"a": int64(11), "b": int64(5)}, true},
+		{"a + b > 10", map[string]any{"a": int64(5), "b": int64(6)}, true},
+		{"a + b > 10", map[string]any{"a": int64(5), "b": int64(5)}, false},
+		{"a - b == 5", map[string]any{"a": int64(10), "b": int64(5)}, true},
+		{"a * b == 50", map[string]any{"a": int64(10), "b": int64(5)}, true},
+		{"a / b == 2", map[string]any{"a": int64(10), "b": int64(5)}, true},
+		{"a % b == 1", map[string]any{"a": int64(11), "b": int64(5)}, true},
 	}
 
 	for _, tt := range tests {
@@ -180,35 +181,28 @@ func TestEvaluateArithmetic(t *testing.T) {
 }
 
 func TestEvaluateStringAmounts(t *testing.T) {
-	// Test that string amounts work correctly (for JSON serialization of large numbers)
+	// A string is never a number: an amount that must stay exact past 2^53
+	// travels as a *uint256.Int, not as a decimal string (see
+	// TestUint256Exactness). Strings compare as strings and + joins them.
 	tests := []struct {
 		expr     string
-		bindings map[string]interface{}
-		expected bool
+		bindings map[string]any
+		want     string
 	}{
-		{"amount >= 100", map[string]interface{}{"amount": "1000"}, true},
-		{"amount >= 100", map[string]interface{}{"amount": "50"}, false},
-		{"a + b == 150", map[string]interface{}{"a": "100", "b": "50"}, true},
-		{"balance >= amount", map[string]interface{}{"balance": int64(1000), "amount": "500"}, true},
-		{
-			"balances[from] >= amount",
-			map[string]interface{}{
-				"balances": map[string]interface{}{"alice": int64(1000)},
-				"from":     "alice",
-				"amount":   "100",
-			},
-			true,
-		},
+		{"amount >= 100", map[string]any{"amount": "1000"}, "relational operands must be numeric"},
+		{"a + b == '10050'", map[string]any{"a": "100", "b": "50"}, "true"},
+		{"amount == 500", map[string]any{"amount": "500"}, "false"},
+		{"amount == '500'", map[string]any{"amount": "500"}, "true"},
 	}
 
 	for _, tt := range tests {
 		result, err := Evaluate(tt.expr, tt.bindings, nil)
+		got := fmt.Sprint(result)
 		if err != nil {
-			t.Errorf("expr %q: error: %v", tt.expr, err)
-			continue
+			got = err.Error()
 		}
-		if result != tt.expected {
-			t.Errorf("expr %q: expected %v, got %v", tt.expr, tt.expected, result)
+		if got != tt.want {
+			t.Errorf("expr %q: got %s, want %s", tt.expr, got, tt.want)
 		}
 	}
 }
@@ -216,13 +210,13 @@ func TestEvaluateStringAmounts(t *testing.T) {
 func TestEvaluateMapAccess(t *testing.T) {
 	tests := []struct {
 		expr     string
-		bindings map[string]interface{}
+		bindings map[string]any
 		expected bool
 	}{
 		{
 			"balances[from] >= amount",
-			map[string]interface{}{
-				"balances": map[string]interface{}{"alice": int64(1000)},
+			map[string]any{
+				"balances": map[string]any{"alice": int64(1000)},
 				"from":     "alice",
 				"amount":   int64(100),
 			},
@@ -230,8 +224,8 @@ func TestEvaluateMapAccess(t *testing.T) {
 		},
 		{
 			"balances[from] >= amount",
-			map[string]interface{}{
-				"balances": map[string]interface{}{"alice": int64(50)},
+			map[string]any{
+				"balances": map[string]any{"alice": int64(50)},
 				"from":     "alice",
 				"amount":   int64(100),
 			},
@@ -239,9 +233,9 @@ func TestEvaluateMapAccess(t *testing.T) {
 		},
 		{
 			"allowances[from][caller] >= amount",
-			map[string]interface{}{
-				"allowances": map[string]interface{}{
-					"alice": map[string]interface{}{"bob": int64(500)},
+			map[string]any{
+				"allowances": map[string]any{
+					"alice": map[string]any{"bob": int64(500)},
 				},
 				"from":   "alice",
 				"caller": "bob",
@@ -266,20 +260,20 @@ func TestEvaluateMapAccess(t *testing.T) {
 func TestEvaluateFieldAccess(t *testing.T) {
 	tests := []struct {
 		expr     string
-		bindings map[string]interface{}
+		bindings map[string]any
 		expected bool
 	}{
 		{
 			"schedule.revocable",
-			map[string]interface{}{
-				"schedule": map[string]interface{}{"revocable": true},
+			map[string]any{
+				"schedule": map[string]any{"revocable": true},
 			},
 			true,
 		},
 		{
 			"schedule.revocable && schedule.revokedAt == 0",
-			map[string]interface{}{
-				"schedule": map[string]interface{}{
+			map[string]any{
+				"schedule": map[string]any{
 					"revocable": true,
 					"revokedAt": int64(0),
 				},
@@ -303,19 +297,19 @@ func TestEvaluateFieldAccess(t *testing.T) {
 func TestEvaluateFunctionCalls(t *testing.T) {
 	tests := []struct {
 		expr     string
-		bindings map[string]interface{}
+		bindings map[string]any
 		expected bool
 	}{
 		{
 			"to != address(0)",
-			map[string]interface{}{
+			map[string]any{
 				"to": "0x1234567890123456789012345678901234567890",
 			},
 			true,
 		},
 		{
 			"to != address(0)",
-			map[string]interface{}{
+			map[string]any{
 				"to": "0x0000000000000000000000000000000000000000",
 			},
 			false,
@@ -338,14 +332,14 @@ func TestEvaluateComplexExpressions(t *testing.T) {
 	tests := []struct {
 		name     string
 		expr     string
-		bindings map[string]interface{}
+		bindings map[string]any
 		expected bool
 	}{
 		{
 			name: "ERC-20 transfer guard",
 			expr: "balances[from] >= amount && to != address(0)",
-			bindings: map[string]interface{}{
-				"balances": map[string]interface{}{"alice": int64(1000)},
+			bindings: map[string]any{
+				"balances": map[string]any{"alice": int64(1000)},
 				"from":     "alice",
 				"to":       "0x1234567890123456789012345678901234567890",
 				"amount":   int64(100),
@@ -355,9 +349,9 @@ func TestEvaluateComplexExpressions(t *testing.T) {
 		{
 			name: "ERC-721 ownership check",
 			expr: "owners[tokenId] == caller || approved[tokenId] == caller",
-			bindings: map[string]interface{}{
-				"owners":   map[string]interface{}{"1": "alice"},
-				"approved": map[string]interface{}{"1": "bob"},
+			bindings: map[string]any{
+				"owners":   map[string]any{"1": "alice"},
+				"approved": map[string]any{"1": "bob"},
 				"tokenId":  "1",
 				"caller":   "bob",
 			},
@@ -366,11 +360,11 @@ func TestEvaluateComplexExpressions(t *testing.T) {
 		{
 			name: "ERC-721 operator check",
 			expr: "owners[tokenId] == caller || approved[tokenId] == caller || operators[owner][caller]",
-			bindings: map[string]interface{}{
-				"owners":   map[string]interface{}{"1": "alice"},
-				"approved": map[string]interface{}{"1": ""},
-				"operators": map[string]interface{}{
-					"alice": map[string]interface{}{"bob": true},
+			bindings: map[string]any{
+				"owners":   map[string]any{"1": "alice"},
+				"approved": map[string]any{"1": ""},
+				"operators": map[string]any{
+					"alice": map[string]any{"bob": true},
 				},
 				"tokenId": "1",
 				"owner":   "alice",
@@ -398,7 +392,7 @@ func TestEvaluateShortCircuit(t *testing.T) {
 	// Test that && short-circuits on false
 	evalCount := 0
 	funcs := map[string]GuardFunc{
-		"track": func(args ...interface{}) (interface{}, error) {
+		"track": func(args ...any) (any, error) {
 			evalCount++
 			return true, nil
 		},
@@ -420,13 +414,13 @@ func TestEvaluateShortCircuit(t *testing.T) {
 func TestEvaluateErrors(t *testing.T) {
 	tests := []struct {
 		expr     string
-		bindings map[string]interface{}
+		bindings map[string]any
 		errMsg   string
 	}{
 		{"unknown_var", nil, "unknown identifier"},
 		{"unknown_func()", nil, "unknown function"},
-		{"10 / 0 > 0", map[string]interface{}{}, "division by zero"},
-		{"10 % 0 > 0", map[string]interface{}{}, "modulo by zero"},
+		{"10 / 0 > 0", map[string]any{}, "division by zero"},
+		{"10 % 0 > 0", map[string]any{}, "modulo by zero"},
 	}
 
 	for _, tt := range tests {
@@ -445,7 +439,7 @@ func TestCompile(t *testing.T) {
 		t.Fatalf("compile error: %v", err)
 	}
 
-	result1, err := EvalCompiled(compiled, map[string]interface{}{"x": int64(15)}, nil)
+	result1, err := EvalCompiled(compiled, map[string]any{"x": int64(15)}, nil)
 	if err != nil {
 		t.Fatalf("eval error: %v", err)
 	}
@@ -453,7 +447,7 @@ func TestCompile(t *testing.T) {
 		t.Errorf("expected true for x=15")
 	}
 
-	result2, err := EvalCompiled(compiled, map[string]interface{}{"x": int64(5)}, nil)
+	result2, err := EvalCompiled(compiled, map[string]any{"x": int64(5)}, nil)
 	if err != nil {
 		t.Fatalf("eval error: %v", err)
 	}
@@ -480,7 +474,7 @@ func TestMaxDepth(t *testing.T) {
 	}
 	expr += " > 0"
 
-	_, err := Evaluate(expr, map[string]interface{}{"a": int64(1)}, nil)
+	_, err := Evaluate(expr, map[string]any{"a": int64(1)}, nil)
 	if err == nil {
 		t.Errorf("expected error for deeply nested expression")
 	}
@@ -541,7 +535,7 @@ func TestAggregatesWithStringLiterals(t *testing.T) {
 
 	for _, tt := range tests {
 		// Add marking values as bindings for direct access
-		bindings := make(map[string]interface{})
+		bindings := make(map[string]any)
 		for k, v := range marking {
 			bindings[k] = int64(v)
 		}

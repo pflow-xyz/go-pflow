@@ -121,6 +121,7 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | `monitoring` | Real-time case tracking, SLA alerts |
 | `tokenmodel` | Token model schemas for state machines |
 | `tokenmodel/dsl` | S-expression and struct tag DSL |
+| `tokenmodel/guard` | Guard / invariant / objective expression language (also what sim.pflow.xyz evaluates). Numbers are float64: `7 / 2` is 3.5, decimal literals work, strings are never numbers, a `*uint256.Int` is accepted only when exact in float64 (≤ 2^53, else an error). `codegen/solidity` and `zkcompile` compute in integers, so they **refuse** `/`, `%` and decimal literals rather than disagree with the evaluator |
 | `tokenmodel/petri` | Petri net model, structural analysis, invariants |
 | `tokenmodel/subnet` | Compose `tokenmodel/petri` nets via port aliasing (place fusion only; see note below) |
 | `tokenmodel/windowing` | Event-time windows (fixed, sliding, sessions) |
@@ -204,8 +205,8 @@ flat, fmap, err := b.FlattenWithMap()   // one Model, plus how it was rewritten
   place holds at least the weight. `metapetri` encodes a read arc as that
   reversal, losslessly.
 - **`sum`/`count` match places by prefix**, so composed expressions must be
-  rewritten, never left alone. `RewritePlaceRefs` handles both guard dialects and
-  both quote styles.
+  rewritten, never left alone. `RewritePlaceRefs` handles both spellings of the
+  min/max aggregates (`minOf`/`min`) and both quote styles.
 
 ### Composable building blocks
 

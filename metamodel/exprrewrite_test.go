@@ -17,9 +17,8 @@ func TestPlaceRefs(t *testing.T) {
 		{"single quotes", `tokens('goal') >= 1`, []string{"goal"}},
 		{"mixed quotes", `sum('balances') == count("holders")`, []string{"balances", "holders"}},
 		{
-			// Every function name both guard dialects register: sim-pflow-xyz's
-			// pkg/dsl (sum/count/tokens/minOf/maxOf) and go-pflow's
-			// tokenmodel/guard (min/max).
+			// Every place-reading function tokenmodel/guard registers,
+			// both spellings of the min/max prefix aggregates included.
 			"all functions",
 			`tokens("a") + sum("b") + count("c") + minOf("d") + maxOf("e") + min("f") + max("g")`,
 			[]string{"a", "b", "c", "d", "e", "f", "g"},

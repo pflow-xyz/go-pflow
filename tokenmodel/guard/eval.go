@@ -2,30 +2,35 @@ package guard
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/holiman/uint256"
 )
 
 // GuardFunc is a function that can be called from guard expressions.
-type GuardFunc func(args ...interface{}) (interface{}, error)
+type GuardFunc func(args ...any) (any, error)
 
 // Context holds bindings and functions for guard evaluation.
 type Context struct {
-	Bindings map[string]interface{}
+	Bindings map[string]any
 	Funcs    map[string]GuardFunc
 }
 
 // NewContext creates a new evaluation context.
 func NewContext() *Context {
 	return &Context{
-		Bindings: make(map[string]interface{}),
+		Bindings: make(map[string]any),
 		Funcs:    make(map[string]GuardFunc),
 	}
 }
 
 // Eval evaluates an AST node in the given context.
-func Eval(node Node, ctx *Context) (interface{}, error) {
+//
+// Numbers are float64: `7 / 2` is 3.5, `%` truncates both sides to
+// integers, and a decimal literal means what it says. A string is never a
+// number, and `+` of two strings joins them. A *uint256.Int binding is a
+// number when float64 holds it exactly (at most 2^53) and an error
+// otherwise, never a rounded value; so is an int or int64 beyond +-2^53. A missing map key reads as 0.
+func Eval(node Node, ctx *Context) (any, error) {
 	if node == nil {
 		return nil, fmt.Errorf("nil node")
 	}
@@ -35,6 +40,9 @@ func Eval(node Node, ctx *Context) (interface{}, error) {
 		return n.Value, nil
 
 	case *NumberLit:
+		return n.Value, nil
+
+	case *FloatLit:
 		return n.Value, nil
 
 	case *StringLit:
@@ -135,7 +143,7 @@ func Eval(node Node, ctx *Context) (interface{}, error) {
 		if !ok {
 			return nil, fmt.Errorf("unknown function: %s", n.Func)
 		}
-		args := make([]interface{}, len(n.Args))
+		args := make([]any, len(n.Args))
 		for i, arg := range n.Args {
 			val, err := Eval(arg, ctx)
 			if err != nil {
@@ -150,7 +158,7 @@ func Eval(node Node, ctx *Context) (interface{}, error) {
 	}
 }
 
-func evalUnary(op string, operand interface{}) (interface{}, error) {
+func evalUnary(op string, operand any) (any, error) {
 	switch op {
 	case "!":
 		b, ok := toBool(operand)
@@ -159,7 +167,10 @@ func evalUnary(op string, operand interface{}) (interface{}, error) {
 		}
 		return !b, nil
 	case "-":
-		n, ok := toInt64(operand)
+		n, ok, err := toNumber(operand)
+		if err != nil {
+			return nil, err
+		}
 		if !ok {
 			return nil, fmt.Errorf("operand of unary - must be numeric")
 		}
@@ -169,33 +180,53 @@ func evalUnary(op string, operand interface{}) (interface{}, error) {
 	}
 }
 
-func evalBinary(op string, left, right interface{}) (interface{}, error) {
+func evalBinary(op string, left, right any) (any, error) {
 	switch op {
 	case "+", "-", "*", "/", "%":
 		return evalArithmetic(op, left, right)
 	case ">", "<", ">=", "<=":
 		return evalRelational(op, left, right)
 	case "==", "!=":
-		return evalEquality(op, left, right)
+		equal, err := compareValues(left, right)
+		if err != nil {
+			return nil, err
+		}
+		if op == "==" {
+			return equal, nil
+		}
+		return !equal, nil
 	default:
 		return nil, fmt.Errorf("unknown binary operator: %s", op)
 	}
 }
 
-func evalArithmetic(op string, left, right interface{}) (interface{}, error) {
-	// Try U256 arithmetic first if either operand is U256
-	if isU256(left) || isU256(right) {
-		l, lok := toU256(left)
-		r, rok := toU256(right)
-		if !lok || !rok {
-			return nil, fmt.Errorf("arithmetic operands must be numeric")
-		}
-		return evalArithmeticU256(op, l, r)
+// numbers reads both operands as numbers; ok is false when either is not one.
+func numbers(left, right any) (l, r float64, ok bool, err error) {
+	l, lok, err := toNumber(left)
+	if err != nil {
+		return 0, 0, false, err
 	}
+	r, rok, err := toNumber(right)
+	if err != nil {
+		return 0, 0, false, err
+	}
+	return l, r, lok && rok, nil
+}
 
-	l, lok := toInt64(left)
-	r, rok := toInt64(right)
-	if !lok || !rok {
+func evalArithmetic(op string, left, right any) (any, error) {
+	l, r, ok, err := numbers(left, right)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		// Try string concatenation for +
+		if op == "+" {
+			ls, lsok := left.(string)
+			rs, rsok := right.(string)
+			if lsok && rsok {
+				return ls + rs, nil
+			}
+		}
 		return nil, fmt.Errorf("arithmetic operands must be numeric")
 	}
 
@@ -212,58 +243,23 @@ func evalArithmetic(op string, left, right interface{}) (interface{}, error) {
 		}
 		return l / r, nil
 	case "%":
-		if r == 0 {
+		// The divisor is truncated before it is tested: `1 % 0.5` divides
+		// by int64(0.5) == 0, which used to panic rather than fail.
+		if int64(r) == 0 {
 			return nil, fmt.Errorf("modulo by zero")
 		}
-		return l % r, nil
+		return int64(l) % int64(r), nil
 	default:
 		return nil, fmt.Errorf("unknown arithmetic operator: %s", op)
 	}
 }
 
-func evalArithmeticU256(op string, left, right *uint256.Int) (interface{}, error) {
-	result := new(uint256.Int)
-	switch op {
-	case "+":
-		result.Add(left, right)
-		return result, nil
-	case "-":
-		result.Sub(left, right)
-		return result, nil
-	case "*":
-		result.Mul(left, right)
-		return result, nil
-	case "/":
-		if right.IsZero() {
-			return nil, fmt.Errorf("division by zero")
-		}
-		result.Div(left, right)
-		return result, nil
-	case "%":
-		if right.IsZero() {
-			return nil, fmt.Errorf("modulo by zero")
-		}
-		result.Mod(left, right)
-		return result, nil
-	default:
-		return nil, fmt.Errorf("unknown arithmetic operator: %s", op)
+func evalRelational(op string, left, right any) (any, error) {
+	l, r, ok, err := numbers(left, right)
+	if err != nil {
+		return nil, err
 	}
-}
-
-func evalRelational(op string, left, right interface{}) (interface{}, error) {
-	// Try U256 comparison if either operand is U256
-	if isU256(left) || isU256(right) {
-		l, lok := toU256(left)
-		r, rok := toU256(right)
-		if !lok || !rok {
-			return nil, fmt.Errorf("relational operands must be numeric")
-		}
-		return evalRelationalU256(op, l, r)
-	}
-
-	l, lok := toInt64(left)
-	r, rok := toInt64(right)
-	if !lok || !rok {
+	if !ok {
 		return nil, fmt.Errorf("relational operands must be numeric")
 	}
 
@@ -281,89 +277,53 @@ func evalRelational(op string, left, right interface{}) (interface{}, error) {
 	}
 }
 
-func evalRelationalU256(op string, left, right *uint256.Int) (interface{}, error) {
-	cmp := left.Cmp(right)
-	switch op {
-	case ">":
-		return cmp > 0, nil
-	case "<":
-		return cmp < 0, nil
-	case ">=":
-		return cmp >= 0, nil
-	case "<=":
-		return cmp <= 0, nil
-	default:
-		return nil, fmt.Errorf("unknown relational operator: %s", op)
+// compareValues compares by value: numerically when both sides are
+// numbers, then as booleans, then as strings, then as interfaces.
+func compareValues(left, right any) (bool, error) {
+	l, r, ok, err := numbers(left, right)
+	if err != nil {
+		return false, err
 	}
-}
-
-func evalEquality(op string, left, right interface{}) (interface{}, error) {
-	// Compare by value
-	equal := compareValues(left, right)
-	if op == "==" {
-		return equal, nil
-	}
-	return !equal, nil
-}
-
-func compareValues(left, right interface{}) bool {
-	// Try U256 comparison first if either is U256
-	if isU256(left) || isU256(right) {
-		l, lok := toU256(left)
-		r, rok := toU256(right)
-		if lok && rok {
-			return l.Cmp(r) == 0
-		}
+	if ok {
+		return l == r, nil
 	}
 
-	// Try numeric comparison
-	l, lok := toInt64(left)
-	r, rok := toInt64(right)
-	if lok && rok {
-		return l == r
-	}
-
-	// Try boolean comparison
 	lb, lok := toBool(left)
 	rb, rok := toBool(right)
 	if lok && rok {
-		return lb == rb
+		return lb == rb, nil
 	}
 
-	// Try string comparison
-	ls, lok := toString(left)
-	rs, rok := toString(right)
+	ls, lok := left.(string)
+	rs, rok := right.(string)
 	if lok && rok {
-		return ls == rs
+		return ls == rs, nil
 	}
 
 	// Fallback to interface comparison
-	return left == right
+	return left == right, nil
 }
 
-func evalIndex(obj, index interface{}) (interface{}, error) {
-	// Handle nil or zero value - return 0 (default value for missing nested keys)
+func evalIndex(obj, index any) (any, error) {
+	// Handle nil or zero value - return 0 (default value for missing keys)
 	if obj == nil {
-		return uint256.NewInt(0), nil
+		return int64(0), nil
 	}
+
 	// Handle numeric types that might come from missing nested map access
-	if _, ok := toInt64(obj); ok {
-		return uint256.NewInt(0), nil
-	}
-	// Handle U256 types (missing nested map access)
-	if _, ok := obj.(*uint256.Int); ok {
-		return uint256.NewInt(0), nil
+	if isNumber(obj) {
+		return int64(0), nil
 	}
 
 	switch o := obj.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		key, ok := toString(index)
 		if !ok {
 			return nil, fmt.Errorf("map index must be string")
 		}
 		val, exists := o[key]
 		if !exists {
-			return uint256.NewInt(0), nil // Default to 0 for missing keys
+			return int64(0), nil // Default to 0 for missing keys
 		}
 		return val, nil
 
@@ -378,6 +338,17 @@ func evalIndex(obj, index interface{}) (interface{}, error) {
 		}
 		return val, nil
 
+	case map[string]int:
+		key, ok := toString(index)
+		if !ok {
+			return nil, fmt.Errorf("map index must be string")
+		}
+		val, exists := o[key]
+		if !exists {
+			return int64(0), nil
+		}
+		return int64(val), nil
+
 	case map[string]*uint256.Int:
 		key, ok := toString(index)
 		if !ok {
@@ -385,7 +356,29 @@ func evalIndex(obj, index interface{}) (interface{}, error) {
 		}
 		val, exists := o[key]
 		if !exists {
-			return uint256.NewInt(0), nil
+			return int64(0), nil
+		}
+		return val, nil
+
+	case map[string]map[string]int64:
+		key, ok := toString(index)
+		if !ok {
+			return nil, fmt.Errorf("map index must be string")
+		}
+		val, exists := o[key]
+		if !exists {
+			return make(map[string]int64), nil // Return empty map for missing nested keys
+		}
+		return val, nil
+
+	case map[string]map[string]any:
+		key, ok := toString(index)
+		if !ok {
+			return nil, fmt.Errorf("map index must be string")
+		}
+		val, exists := o[key]
+		if !exists {
+			return make(map[string]any), nil
 		}
 		return val, nil
 
@@ -394,9 +387,9 @@ func evalIndex(obj, index interface{}) (interface{}, error) {
 	}
 }
 
-func evalField(obj interface{}, field string) (interface{}, error) {
+func evalField(obj any, field string) (any, error) {
 	switch o := obj.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		val, exists := o[field]
 		if !exists {
 			return nil, fmt.Errorf("field not found: %s", field)
@@ -408,86 +401,74 @@ func evalField(obj interface{}, field string) (interface{}, error) {
 	}
 }
 
-func toBool(v interface{}) (bool, bool) {
+// toBool treats a number as its truthiness: 0 is false, anything else true.
+func toBool(v any) (bool, bool) {
 	switch val := v.(type) {
 	case bool:
 		return val, true
 	case int64:
-		// Treat 0 as false, non-zero as true (Solidity semantics for maps)
 		return val != 0, true
 	case int:
 		return val != 0, true
+	case float64:
+		return val != 0, true
 	case *uint256.Int:
-		// Treat 0 as false, non-zero as true (Solidity semantics)
 		return !val.IsZero(), true
 	default:
 		return false, false
 	}
 }
 
-func toInt64(v interface{}) (int64, bool) {
+// maxExactUint256 is the largest integer float64 represents exactly with
+// every integer below it: 2^53.
+var maxExactUint256 = uint256.NewInt(1 << 53)
+
+// exactInt reads an integer as a float64 under the same rule as a uint256:
+// beyond +-2^53 float64 no longer holds every integer, so a value there is an
+// error rather than a rounded number.
+func exactInt(i int64) (float64, bool, error) {
+	if i > 1<<53 || i < -(1<<53) {
+		return 0, false, fmt.Errorf("integer value %d exceeds 2^53 and has no exact float64 form", i)
+	}
+	return float64(i), true, nil
+}
+
+// toNumber reads v as a float64. ok is false for a value that is not a
+// number (a string never is). A *uint256.Int is one only when float64
+// holds it exactly; a larger one is an error naming it, so a balance is
+// never compared or summed after rounding.
+func toNumber(v any) (n float64, ok bool, err error) {
 	switch val := v.(type) {
 	case int64:
-		return val, true
+		return exactInt(val)
 	case int:
-		return int64(val), true
+		return exactInt(int64(val))
 	case int32:
-		return int64(val), true
+		return float64(val), true, nil
 	case float64:
-		return int64(val), true
+		return val, true, nil
+	case float32:
+		return float64(val), true, nil
 	case *uint256.Int:
-		// Convert U256 to int64 (may overflow for large values)
-		if val.IsUint64() {
-			return int64(val.Uint64()), true
+		if val.Gt(maxExactUint256) {
+			return 0, false, fmt.Errorf("uint256 value %s exceeds 2^53 and has no exact float64 form", val.Dec())
 		}
-		return 0, false
-	case string:
-		// Support string amounts for large numbers (avoids JSON scientific notation)
-		n, err := strconv.ParseInt(val, 10, 64)
-		if err != nil {
-			return 0, false
-		}
-		return n, true
+		return float64(val.Uint64()), true, nil
 	default:
-		return 0, false
+		return 0, false, nil
 	}
 }
 
-// toU256 converts a value to *uint256.Int if possible.
-func toU256(v interface{}) (*uint256.Int, bool) {
-	switch val := v.(type) {
-	case *uint256.Int:
-		return val, true
-	case int64:
-		return uint256.NewInt(uint64(val)), true
-	case int:
-		return uint256.NewInt(uint64(val)), true
-	case int32:
-		return uint256.NewInt(uint64(val)), true
-	case uint64:
-		return uint256.NewInt(val), true
-	case float64:
-		return uint256.NewInt(uint64(val)), true
-	case string:
-		result := new(uint256.Int)
-		if err := result.SetFromDecimal(val); err != nil {
-			return nil, false
-		}
-		return result, true
-	default:
-		return nil, false
-	}
-}
-
-// isU256 checks if value is a U256 or large string that should be U256.
-func isU256(v interface{}) bool {
+// isNumber reports whether v is a number, an out-of-range uint256 included.
+func isNumber(v any) bool {
 	if _, ok := v.(*uint256.Int); ok {
 		return true
 	}
-	return false
+	_, ok, _ := toNumber(v)
+	return ok
 }
 
-func toString(v interface{}) (string, bool) {
+func toString(v any) (string, bool) {
 	switch val := v.(type) {
 	case string:
 		return val, true
@@ -497,6 +478,8 @@ func toString(v interface{}) (string, bool) {
 		return fmt.Sprintf("%d", val), true
 	case uint64:
 		return fmt.Sprintf("%d", val), true
+	case *uint256.Int:
+		return val.Dec(), true
 	case float64:
 		// Format as integer if it's a whole number
 		if val == float64(int64(val)) {

@@ -89,7 +89,7 @@ go-pflow has **no formal high-level/symmetric-net type system**: no sorts, no de
 |---|---|---|---|---|
 | 1 | Three-tier hierarchy (P/T-Net ⊂ SN ⊂ HLPNG) | Nested type restriction; each class a syntactic subset of the general HLPNG | ABSENT | No net-class hierarchy or conformance levels; `metamodel.Model` and `petri.PetriNet` are each one flat schema used for everything. |
 | 2 | Dot sort (trivial 1-element sort) | Encodes uncolored nets as degenerate HLPNGs | N/A | go-pflow's default scalar shapes *are* the uncolored case natively, not a declared restriction of a richer type. |
-| 3 | Boolean sort | Mandatory sort of any guard/condition term | PARTIAL | Guard results must be boolean (`tokenmodel/guard/eval.go:411-426`, `guard.go:82-88`), but no declared Boolean sort usable for a place or arc-expression type exists. |
+| 3 | Boolean sort | Mandatory sort of any guard/condition term | PARTIAL | Guard results must be boolean (`tokenmodel/guard/eval.go`'s `toBool`, `guard.go`'s `evalBool`), but no declared Boolean sort usable for a place or arc-expression type exists. |
 | 4 | Finite integer ranges | Sort spanning `1..n` | ABSENT | `Parameter.Min/Max` (`metamodel/parameters.go:32`) bounds a structural decision variable, not a token color's value range. |
 | 5 | Finite enumerations | User-named finite ordered set | PARTIAL | `PetriNet.Token []string` (`petri/net.go:116`) names a fixed list of colors — closest analogue — but it's a single flat list shared net-wide, no per-place sort, no order relation exposed to guards/arcs. |
 | 6 | Cyclic enumerations | Wraparound successor/predecessor | ABSENT | `Token` names are opaque vector-index labels only (`petri/colors.go:82-89`). |

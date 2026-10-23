@@ -94,6 +94,16 @@ func (n *NumberLit) String() string {
 	return strconv.FormatInt(n.Value, 10)
 }
 
+// FloatLit represents a floating-point literal.
+type FloatLit struct {
+	Value float64
+}
+
+func (f *FloatLit) node() {}
+func (f *FloatLit) String() string {
+	return strconv.FormatFloat(f.Value, 'g', -1, 64)
+}
+
 // StringLit represents a string literal.
 type StringLit struct {
 	Value string
@@ -158,6 +168,9 @@ func (p *Parser) Parse() (Node, error) {
 	node := p.parseExpression()
 	if len(p.errors) > 0 {
 		return nil, fmt.Errorf("%s", p.errors[0])
+	}
+	if p.current.Type == TokenIllegal {
+		return nil, fmt.Errorf("illegal character at position %d: %q", p.current.Pos, p.current.Literal)
 	}
 	if p.current.Type != TokenEOF {
 		return nil, fmt.Errorf("unexpected token at position %d: %q", p.current.Pos, p.current.Literal)
@@ -381,6 +394,16 @@ func (p *Parser) parsePrimary() Node {
 		return &Identifier{Name: name}
 
 	case TokenNumber:
+		// Check if it's a float
+		if containsDecimal(p.current.Literal) {
+			val, err := strconv.ParseFloat(p.current.Literal, 64)
+			if err != nil {
+				p.addError(fmt.Sprintf("invalid number: %s", p.current.Literal))
+				return nil
+			}
+			p.nextToken()
+			return &FloatLit{Value: val}
+		}
 		val, err := strconv.ParseInt(p.current.Literal, 10, 64)
 		if err != nil {
 			p.addError(fmt.Sprintf("invalid number: %s", p.current.Literal))
@@ -415,8 +438,21 @@ func (p *Parser) parsePrimary() Node {
 		p.nextToken()
 		return expr
 
+	case TokenIllegal:
+		p.addError(fmt.Sprintf("illegal character: %q", p.current.Literal))
+		return nil
+
 	default:
 		p.addError(fmt.Sprintf("unexpected token: %q", p.current.Literal))
 		return nil
 	}
+}
+
+func containsDecimal(s string) bool {
+	for _, c := range s {
+		if c == '.' {
+			return true
+		}
+	}
+	return false
 }

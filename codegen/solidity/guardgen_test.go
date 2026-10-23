@@ -46,6 +46,21 @@ func TestGuardTranslator(t *testing.T) {
 			guard:    "",
 			wantReqs: nil,
 		},
+		{
+			name:    "fractional literal has no uint256 form",
+			guard:   "balances[from] >= amount * 1.5",
+			wantErr: true,
+		},
+		{
+			name:    "division is float in guard, integer in Solidity",
+			guard:   "balances[from] / 2 >= amount",
+			wantErr: true,
+		},
+		{
+			name:    "remainder likewise",
+			guard:   "to != address(0) && amount % 2 == 0",
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

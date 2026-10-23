@@ -5,14 +5,14 @@ import "regexp"
 // placeRefRE matches an aggregate call whose sole argument is a quoted place
 // reference: tokens("p"), sum('balances'), count("q"), minOf("x"), min("x").
 //
-// Two guard dialects are in play and this covers both — sim-pflow-xyz's pkg/dsl
-// registers sum/count/tokens/minOf/maxOf, while go-pflow's tokenmodel/guard
-// registers min/max. Both quote styles appear in the wild (schema.go documents
+// tokenmodel/guard registers both spellings of the prefix aggregates —
+// minOf/maxOf (the spelling sim-pflow-xyz's guards use) and min/max — and
+// this covers both. Both quote styles appear in the wild (schema.go documents
 // tokens('goal') with single quotes; subnet.go:409 only ever matched double).
 //
 // Requiring a single quoted argument is what makes including min/max safe:
-// pkg/dsl also exposes min(a, b) over numbers, and that form has bare
-// identifiers, so it cannot match here.
+// min(a, b) and max(a, b) over numbers are the same names with two
+// arguments, so that form cannot match here.
 //
 // The two quote styles are separate alternatives rather than a backreference,
 // which RE2 does not support: group 2 is the double-quoted body, group 3 the
@@ -57,9 +57,9 @@ func PlaceRefs(expr string) []string {
 // Anything not in exact is prefixed instead.
 //
 // The fallback must never be "leave it alone", which is what subnet.go:415 does.
-// sum and count match places by *prefix* rather than by exact ID (see pkg/dsl
-// guard.go:421), so an un-prefixed sum("balances") matches zero places after
-// namespacing and silently evaluates to 0 — turning every composed conservation
+// sum and count match places by *prefix* rather than by exact ID (see
+// tokenmodel/guard's aggregate.go), so an un-prefixed sum("balances") matches
+// zero places after namespacing and silently evaluates to 0 — turning every composed conservation
 // invariant into one that passes vacuously. Prefixing is correct for the prefix
 // forms too, since namespacing is itself a prefix: "orders/balances" still
 // matches "orders/balances.alice".

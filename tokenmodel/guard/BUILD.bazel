@@ -6,6 +6,7 @@ go_library(
         "aggregate.go",
         "eval.go",
         "guard.go",
+        "inspect.go",
         "invariant.go",
         "lexer.go",
         "parser.go",
@@ -17,6 +18,12 @@ go_library(
 
 go_test(
     name = "guard_test",
-    srcs = ["guard_test.go"],
+    srcs = [
+        "guard_test.go",
+        "lexer_regression_test.go",
+        "numbers_test.go",
+        "sim_test.go",
+    ],
     embed = [":guard"],
+    deps = ["@com_github_holiman_uint256//:uint256"],
 )

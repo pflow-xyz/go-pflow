@@ -259,6 +259,22 @@ func TestGuardCompiler_BooleanNot(t *testing.T) {
 	}
 }
 
+// guard evaluates / and % over float64, so a circuit (field division,
+// euclidean remainder) would prove a different predicate; the compiler
+// refuses them, and decimal literals, rather than disagree silently.
+func TestGuardCompiler_RefusesFloatSemantics(t *testing.T) {
+	for expr, want := range map[string]string{
+		"balance / 2 >= amount":   "operator / is not supported",
+		"amount % 2 == 0":         "operator % is not supported",
+		"balance >= amount * 0.5": "fractional literal 0.5",
+	} {
+		_, err := NewGuardCompiler().Compile(expr)
+		if err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("Compile(%q) error = %v, want one containing %q", expr, err, want)
+		}
+	}
+}
+
 func TestGuardCompiler_EmptyGuard(t *testing.T) {
 	compiler := NewGuardCompiler()
 	result, err := compiler.Compile("")

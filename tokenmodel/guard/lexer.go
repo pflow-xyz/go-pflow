@@ -36,6 +36,15 @@ const (
 	TokenStar     // *
 	TokenSlash    // /
 	TokenPercent  // %
+	TokenLBrace   // {
+	TokenRBrace   // }
+	TokenColon    // :
+	TokenAssign   // =
+	// TokenIllegal is a character (or unterminated string) the grammar has
+	// no meaning for. It is deliberately not TokenEOF: an illegal byte that
+	// ended the stream would let the parser accept the prefix before it and
+	// silently drop the rest of the guard (`a > 0 & b > 0` enforced as `a > 0`).
+	TokenIllegal
 )
 
 // Token represents a single token from the lexer.
@@ -109,11 +118,20 @@ func (l *Lexer) NextToken() Token {
 	case ']':
 		tok = Token{Type: TokenRBracket, Literal: "]", Pos: pos}
 		l.readChar()
+	case '{':
+		tok = Token{Type: TokenLBrace, Literal: "{", Pos: pos}
+		l.readChar()
+	case '}':
+		tok = Token{Type: TokenRBrace, Literal: "}", Pos: pos}
+		l.readChar()
 	case '.':
 		tok = Token{Type: TokenDot, Literal: ".", Pos: pos}
 		l.readChar()
 	case ',':
 		tok = Token{Type: TokenComma, Literal: ",", Pos: pos}
+		l.readChar()
+	case ':':
+		tok = Token{Type: TokenColon, Literal: ":", Pos: pos}
 		l.readChar()
 	case '+':
 		tok = Token{Type: TokenPlus, Literal: "+", Pos: pos}
@@ -152,7 +170,7 @@ func (l *Lexer) NextToken() Token {
 			tok = Token{Type: TokenEQ, Literal: "==", Pos: pos}
 			l.readChar()
 		} else {
-			tok = Token{Type: TokenEOF, Literal: string(l.ch), Pos: pos}
+			tok = Token{Type: TokenAssign, Literal: "=", Pos: pos}
 			l.readChar()
 		}
 	case '!':
@@ -170,7 +188,7 @@ func (l *Lexer) NextToken() Token {
 			tok = Token{Type: TokenAnd, Literal: "&&", Pos: pos}
 			l.readChar()
 		} else {
-			tok = Token{Type: TokenEOF, Literal: string(l.ch), Pos: pos}
+			tok = Token{Type: TokenIllegal, Literal: string(l.ch), Pos: pos}
 			l.readChar()
 		}
 	case '|':
@@ -179,14 +197,18 @@ func (l *Lexer) NextToken() Token {
 			tok = Token{Type: TokenOr, Literal: "||", Pos: pos}
 			l.readChar()
 		} else {
-			tok = Token{Type: TokenEOF, Literal: string(l.ch), Pos: pos}
+			tok = Token{Type: TokenIllegal, Literal: string(l.ch), Pos: pos}
 			l.readChar()
 		}
 	case '"', '\'':
 		quote := l.ch
 		l.readChar() // consume opening quote
-		literal := l.readString(quote)
-		tok = Token{Type: TokenString, Literal: literal, Pos: pos}
+		literal, closed := l.readString(quote)
+		if closed {
+			tok = Token{Type: TokenString, Literal: literal, Pos: pos}
+		} else {
+			tok = Token{Type: TokenIllegal, Literal: string(quote) + literal, Pos: pos}
+		}
 	default:
 		if isLetter(l.ch) {
 			literal := l.readIdentifier()
@@ -196,7 +218,7 @@ func (l *Lexer) NextToken() Token {
 			literal := l.readNumber()
 			return Token{Type: TokenNumber, Literal: literal, Pos: pos}
 		} else {
-			tok = Token{Type: TokenEOF, Literal: string(l.ch), Pos: pos}
+			tok = Token{Type: TokenIllegal, Literal: string(l.ch), Pos: pos}
 			l.readChar()
 		}
 	}
@@ -217,10 +239,20 @@ func (l *Lexer) readNumber() string {
 	for isDigit(l.ch) {
 		l.readChar()
 	}
+	// Handle decimal numbers
+	if l.ch == '.' && isDigit(l.peekChar()) {
+		l.readChar()
+		for isDigit(l.ch) {
+			l.readChar()
+		}
+	}
 	return l.input[start:l.pos]
 }
 
-func (l *Lexer) readString(quote byte) string {
+// readString reads up to and including the closing quote. closed is false
+// when the input ended first — an unterminated literal, which the caller
+// reports as illegal rather than accepting as a string.
+func (l *Lexer) readString(quote byte) (literal string, closed bool) {
 	var result []byte
 	for l.ch != 0 && l.ch != quote {
 		if l.ch == '\\' && l.peekChar() == quote {
@@ -230,10 +262,11 @@ func (l *Lexer) readString(quote byte) string {
 		result = append(result, l.ch)
 		l.readChar()
 	}
-	if l.ch == quote {
-		l.readChar() // consume closing quote
+	if l.ch != quote {
+		return string(result), false
 	}
-	return string(result)
+	l.readChar() // consume closing quote
+	return string(result), true
 }
 
 func isLetter(ch byte) bool {

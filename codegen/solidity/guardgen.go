@@ -38,6 +38,9 @@ func (t *GuardTranslator) TranslateGuard(expr string) ([]string, error) {
 	if ast == nil {
 		return nil, nil
 	}
+	if err := untranslatable(ast); err != nil {
+		return nil, fmt.Errorf("guard %q: %w", expr, err)
+	}
 
 	// Split on && at the top level for separate require statements
 	clauses := t.splitAnd(ast)
@@ -222,6 +225,42 @@ func (t *GuardTranslator) walkNode(node guard.Node) {
 			t.Parameters[name] = inferParamType(name)
 		}
 	}
+}
+
+// untranslatable reports the first part of node that Solidity would compute
+// differently from guard, which evaluates over float64: a decimal literal
+// (a contract's uint256 has none) and / or % (integer division and
+// remainder in a contract, real division in guard). Translating either would
+// emit a require the evaluator and the contract disagree on.
+func untranslatable(node guard.Node) error {
+	switch n := node.(type) {
+	case *guard.FloatLit:
+		return fmt.Errorf("fractional literal %s has no Solidity integer equivalent", n)
+	case *guard.BinaryOp:
+		if n.Op == "/" || n.Op == "%" {
+			return fmt.Errorf("operator %s is not translated: guard divides as float64, Solidity as integers", n.Op)
+		}
+		if err := untranslatable(n.Left); err != nil {
+			return err
+		}
+		return untranslatable(n.Right)
+	case *guard.UnaryOp:
+		return untranslatable(n.Operand)
+	case *guard.IndexExpr:
+		if err := untranslatable(n.Object); err != nil {
+			return err
+		}
+		return untranslatable(n.Index)
+	case *guard.FieldExpr:
+		return untranslatable(n.Object)
+	case *guard.CallExpr:
+		for _, arg := range n.Args {
+			if err := untranslatable(arg); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // getRootIdentifier traverses nested index/field expressions to find the root identifier name.

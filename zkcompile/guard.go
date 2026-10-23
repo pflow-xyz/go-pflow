@@ -88,6 +88,9 @@ func (c *GuardCompiler) compileNode(node guard.Node) *Expr {
 			return ConstInt(1)
 		}
 		return ConstInt(0)
+	case *guard.FloatLit:
+		c.errors = append(c.errors, fmt.Errorf("fractional literal %s has no field-element equivalent", n))
+		return nil
 	default:
 		c.errors = append(c.errors, fmt.Errorf("unsupported node type: %T", node))
 		return nil
@@ -139,16 +142,11 @@ func (c *GuardCompiler) compileBinaryOp(op *guard.BinaryOp) *Expr {
 			return nil
 		}
 		return MulExpr(left, right)
-	case "/":
-		left := c.compileNode(op.Left)
-		right := c.compileNode(op.Right)
-		if left == nil || right == nil {
-			return nil
-		}
-		return DivExpr(left, right)
-	case "%":
-		// Modulo requires special handling in ZK (via euclidean division)
-		return c.compileMod(op)
+	case "/", "%":
+		// guard evaluates these over float64 (7 / 2 is 3.5); a circuit's
+		// field division and euclidean remainder would prove something else.
+		c.errors = append(c.errors, fmt.Errorf("operator %s is not supported in a circuit: guard divides as float64, a circuit cannot", op.Op))
+		return nil
 
 	default:
 		c.errors = append(c.errors, fmt.Errorf("unsupported operator: %s", op.Op))
@@ -309,48 +307,6 @@ func (c *GuardCompiler) compileNEQ(op *guard.BinaryOp) *Expr {
 	)
 
 	return ConstInt(1)
-}
-
-// compileMod: left % right
-// In ZK: prove left = quotient * right + remainder, 0 <= remainder < right
-func (c *GuardCompiler) compileMod(op *guard.BinaryOp) *Expr {
-	left := c.compileNode(op.Left)
-	right := c.compileNode(op.Right)
-
-	if left == nil || right == nil {
-		return nil
-	}
-
-	// Witnesses for quotient and remainder
-	quotient := c.witnesses.AddComputed("mod_q")
-	remainder := c.witnesses.AddComputed("mod_r")
-
-	qExpr := VarExpr(quotient.Name)
-	rExpr := VarExpr(remainder.Name)
-
-	// left = quotient * right + remainder
-	c.constraints = append(c.constraints,
-		EqualConstraint(left, AddExpr(MulExpr(qExpr, right), rExpr), "euclidean division"),
-	)
-
-	// 0 <= remainder (range check)
-	c.constraints = append(c.constraints,
-		RangeConstraint(rExpr, "remainder non-negative"),
-	)
-
-	// remainder < right  ⟹  right - remainder - 1 >= 0
-	diff := c.witnesses.AddComputed("mod_bound")
-	diffExpr := VarExpr(diff.Name)
-
-	c.constraints = append(c.constraints,
-		EqualConstraint(diffExpr, SubExpr(SubExpr(right, rExpr), ConstInt(1)), "remainder bound"),
-	)
-	c.constraints = append(c.constraints,
-		RangeConstraint(diffExpr, "remainder < divisor"),
-	)
-
-	// Return the remainder
-	return rExpr
 }
 
 // compileUnaryOp handles unary operations.
