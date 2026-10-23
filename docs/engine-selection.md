@@ -22,9 +22,7 @@ planned — while the committed copies in `pflow-rs`, `pflow-xyz` and
 `pflow-jl`'s `algebraic-petri` branch still lack the Capability matrix
 section and still say "planned". A re-sync of all three is pending; until
 that runs, treat this file as the source of truth and the vendored copies
-as stale. petri-pilot's MCP tool descriptions (`petri_ode`,
-`petri_stochastic`, `petri_sde`) link back to this file rather than
-re-stating it, so there is exactly one canonical place this prose lives.
+as stale.
 
 ## Capability matrix
 
@@ -139,12 +137,11 @@ combinatorics are still not multiplied into the ODE's rate.
 
 ## Rule 4: SDE, when it lands (G6)
 
-`petri_sde` exists today (petri-pilot, `pkg/mcp/sde.go`) and is a
-different thing from what "SDE" will mean once G6 ships: it layers
-geometric Brownian motion on user-chosen "volatile" places — exogenous
-price/demand uncertainty on top of the ODE, the right tool for a DeFi
-price process or an interest-rate model, and worth keeping as its own
-capability. The chemical Langevin SDE the roadmap's G6 plans is
+"SDE" here does not mean geometric Brownian motion layered on
+user-chosen "volatile" places — exogenous price/demand uncertainty on top
+of the ODE, the right tool for a DeFi price process or an interest-rate
+model, and a separate capability none of these engines provides. The
+chemical Langevin SDE the roadmap's G6 plans is
 *intrinsic* firing noise, derived from the same propensities SSA already
 uses — cheap enough to sweep like the ODE, with an honest variance band
 like SSA, wrong near zero the same way a continuous approximation of a
@@ -195,6 +192,6 @@ ordinary mass action, and every engine can run it.
 | large populations, no gating, you want the average | `Forecast` |
 | small counts, you want the actual distribution or "how often does X happen" | `Simulate` |
 | any input arc with weight > 1 | expect the two engines to disagree quantitatively; decide which rate law is the one your model actually means |
-| exogenous continuous uncertainty (price, demand) on top of the ODE | `petri_sde` (petri-pilot), today |
+| exogenous continuous uncertainty (price, demand) on top of the ODE | not provided by these engines (see Rule 4) |
 | intrinsic firing noise, cheap enough to sweep | not yet shipped — G6, see ROADMAP.md |
 | a `delay` (deterministic firing duration) | `Simulate` (portable too); the continuous engines refuse — declare `stages` if it must stay continuous |

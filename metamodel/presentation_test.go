@@ -8,7 +8,7 @@ import (
 
 // A model with no presentation must marshal byte-identically to what it
 // marshalled before the field existed — ids are content addresses
-// downstream, and petri-pilot hash-pins generated apps against these bytes.
+// downstream, and consumers pin against these bytes.
 func TestPresentationIsHashSafe(t *testing.T) {
 	m := &Model{Name: "n", Places: []Place{{ID: "p"}}, Transitions: []Transition{{ID: "t"}}, Arcs: []Arc{{From: "p", To: "t"}}}
 	b, err := json.Marshal(m)

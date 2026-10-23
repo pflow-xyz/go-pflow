@@ -5,7 +5,7 @@ import "regexp"
 // placeRefRE matches an aggregate call whose sole argument is a quoted place
 // reference: tokens("p"), sum('balances'), count("q"), minOf("x"), min("x").
 //
-// Two guard dialects are in play and this covers both — petri-pilot's pkg/dsl
+// Two guard dialects are in play and this covers both — sim-pflow-xyz's pkg/dsl
 // registers sum/count/tokens/minOf/maxOf, while go-pflow's tokenmodel/guard
 // registers min/max. Both quote styles appear in the wild (schema.go documents
 // tokens('goal') with single quotes; subnet.go:409 only ever matched double).

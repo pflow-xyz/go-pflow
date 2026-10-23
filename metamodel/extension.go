@@ -13,7 +13,7 @@ import (
 // to a Petri net model. Extensions are validated against the model and can
 // provide additional metadata for code generation.
 type ModelExtension interface {
-	// Name returns the unique name of this extension (e.g., "petri-pilot/entities").
+	// Name returns the unique name of this extension (e.g., "<package>/entities").
 	Name() string
 
 	// Validate checks if the extension is compatible with the given model.

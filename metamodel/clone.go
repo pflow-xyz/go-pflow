@@ -288,8 +288,8 @@ func cloneFloatMap(in map[string]float64) map[string]float64 {
 // NormalizeKinds stamps an explicit Kind on every place.
 //
 // An unset Kind is ambiguous across the ecosystem: this package reads "" as
-// token (Place.IsToken, schema.go:119) while petri-pilot's local fork reads it
-// as data (pkg/metamodel/schema.go:52). A model that crosses that boundary
+// token (Place.IsToken, schema.go:119) while sim-pflow-xyz's local fork reads it
+// as data (its pkg/metamodel). A model that crosses that boundary
 // unannotated has every place silently reinterpreted, and the symptom — guards
 // that never fire, tokens that are never consumed — shows up far from the cause.
 // Flattened models are stamped so the ambiguity cannot propagate.

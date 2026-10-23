@@ -40,9 +40,9 @@ byte-exact contract exists, the
 - an AI/ML library. It implements structural, dynamical computation based on
   Petri nets and differential equations. `learn` fits mechanistic models, not
   opaque ones; see [Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html);
-- an MCP server. MCP orchestration — the `petri_*` tools an agent calls — lives
-  in [petri-pilot](https://github.com/pflow-xyz/petri-pilot), which imports
-  this library;
+- an MCP server. MCP orchestration — the tools an agent calls — lives in
+  [sim.pflow.xyz](https://sim.pflow.xyz) (`sim_*` tools at
+  `https://sim.pflow.xyz/mcp`), which imports this library;
 - a service. Nothing here listens on a port by default;
 - the editor. [pflow.xyz](https://pflow.xyz) is the editor; this repo parses
   what it saves.
@@ -71,13 +71,13 @@ flowchart LR
         M["mining / eventlog<br/>discovery, conformance"]
     end
     subgraph surfaces [Surfaces]
-        PILOT["petri-pilot<br/>MCP tools"]
+        SIM["sim.pflow.xyz<br/>MCP sim_* tools"]
         PORTS["pflow-xyz JS, pflow-jl, pflow-rs<br/>held to shared goldens"]
     end
     MM --> ODE & SSA & SDE
     ODE & SSA --> FIT
     MM --> R & V & M
-    engines & learn & analysis --> PILOT
+    engines & learn & analysis --> SIM
     MM -. "cross-language goldens" .-> PORTS
 ```
 
@@ -116,8 +116,7 @@ go run ./examples/cafe
 ```
 
 It walks one model through the whole stack — declare, observe, fit, ODE / SSA /
-SDE, compare the engines, sensitivities, verify — and ends at the same model
-the petri-pilot MCP tools serve. It reuses the café fixtures from the
+SDE, compare the engines, sensitivities, verify. It reuses the café fixtures from the
 [pflow showcase](https://github.com/pflow-xyz/pflow-xyz/tree/main/examples/showcase)
 rather than inventing a toy. Which engine to believe on which question is
 [docs/engine-selection.md](docs/engine-selection.md); the capability table is
@@ -293,6 +292,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 - [book.pflow.xyz](https://book.pflow.xyz) — technical book
 - [pflow.xyz](https://pflow.xyz) — visual editor and JavaScript engine
-- [petri-pilot](https://github.com/pflow-xyz/petri-pilot) — MCP server and code generator over this library
+- [sim.pflow.xyz](https://sim.pflow.xyz) — describe a process, get a model you can run and check; MCP server (`sim_*` tools) over this library
 - [pflow-jl](https://github.com/pflow-xyz/pflow-jl), [pflow-rs](https://github.com/pflow-xyz/pflow-rs) — Julia and Rust ports
 - [RESEARCH_PAPER_OUTLINE.md](RESEARCH_PAPER_OUTLINE.md) — research paper draft

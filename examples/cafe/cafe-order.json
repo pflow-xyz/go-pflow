@@ -1,7 +1,7 @@
 {
   "name": "cafe-order",
   "version": "1.0.0",
-  "description": "Variation III — one café order as an event-sourced workflow, the shape petri-pilot generates applications from. Token places only, so every codegen target applies: the full Go application, the single-file cores (go-core, rust, python, javascript) in all four forms, gnark ZK circuits, and the Lean proof form. Transitions name the events they emit, events carry typed fields, roles gate transitions through access rules, and one constraint states that an order is always in exactly one state.",
+  "description": "Variation III — one café order as an event-sourced workflow, the shape application generators read. Token places only, so every codegen target applies: the full Go application, the single-file cores (go-core, rust, python, javascript) in all four forms, gnark ZK circuits, and the Lean proof form. Transitions name the events they emit, events carry typed fields, roles gate transitions through access rules, and one constraint states that an order is always in exactly one state.",
   "places": [
     { "id": "new",       "description": "order placed, not yet paid",          "initial": 1, "x": 80,   "y": 200 },
     { "id": "paid",      "description": "payment taken",                       "initial": 0, "x": 280,  "y": 200 },

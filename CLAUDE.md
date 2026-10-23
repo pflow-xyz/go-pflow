@@ -57,7 +57,7 @@ Layout:
 
 ### Shared remote cache (`bazel.stackdump.com`)
 
-go-pflow and its Bazel-ported consumers (beats-bitwrap-io, bitwrap-io, petri-pilot) share a remote
+go-pflow and its Bazel-ported consumers (beats-bitwrap-io, bitwrap-io, sim-pflow-xyz) share a remote
 cache — build an artifact once, reuse it on any machine. Cross-repo reuse only works when the
 **pins match graph-wide**: rules_go and the Go SDK both feed the action key, so every repo is on the
 same line — `rules_go 0.61.1 / gazelle 0.51.3 / Go SDK 1.26.0` (1.26.0 is the floor beats requires
@@ -136,7 +136,7 @@ There are two composition implementations. They are not interchangeable.
 | Preserves | arc weights, inhibitor arcs, bindings, events, constraints, simulation | places, transitions, arcs, guards |
 | Link kinds | token, data, **event (transition fusion)**, guard | place fusion only |
 | Typed | net types + legality matrix | no |
-| Used by | application generation (petri-pilot) | `dataflow`, `actor`, `statemachine`, `workflow` |
+| Used by | application generation (sim-pflow-xyz) | `dataflow`, `actor`, `statemachine`, `workflow` |
 
 **Use `metamodel.Bundle` for anything that generates code or gets verified.**
 `tokenmodel/petri.Model` has no arc weights and no bindings, so composing through
@@ -401,7 +401,7 @@ product a rate engine forms.
 
 - `IsKinetic()` defaults an unset flag to true, so every model written before
   the field marshals and executes byte-identically. That is deliberate:
-  petri-pilot hash-pins fourteen generated apps against the marshalled model.
+  model ids are the sha256 of the marshalled model, so any drift changes every id.
 - It is **not** `IsReadOnly`. A read or inhibitor arc moves nothing; a
   non-kinetic arc moves everything it always did. Widening `IsReadOnly` to
   cover it would stop the model paying for what it uses.
@@ -423,7 +423,7 @@ Data places take no part: their arcs carry `Keys`/`Value` bindings, not counts.
 An unknown transition is **not** enabled — a typo should not look like a working
 model.
 
-Five implementations across this repo and petri-pilot used to disagree. Two
+Five implementations across this repo and its consumers used to disagree. Two
 dropped read and inhibitor arcs; two *consumed* them, turning a read arc into a
 drain and an inhibitor into a source feeding the transition it blocks. Nothing
 compared them, so nothing failed. Reach for `Enabled`/`Fire` rather than writing

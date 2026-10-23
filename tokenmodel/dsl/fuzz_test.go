@@ -3,7 +3,7 @@ package dsl
 import "testing"
 
 // FuzzParseSchema hammers the S-expression schema parser. Model text arrives
-// from LLMs and humans via petri-pilot's MCP tools (any model string starting
+// from LLMs and humans via MCP tools (any model string starting
 // with '(' takes this path), so malformed input must produce an error, never a
 // panic or a hang.
 func FuzzParseSchema(f *testing.F) {

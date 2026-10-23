@@ -1,7 +1,7 @@
 // Command cafe is go-pflow's canonical end-to-end example: one café model,
 // the same one the pflow ecosystem showcase uses, taken through the whole
 // stack in a single run — declare, observe, fit, ODE / SSA / SDE, compare,
-// sensitivities, verify, and the MCP calls that expose the same model.
+// sensitivities and verify.
 //
 //	go run ./examples/cafe                # from the repository root
 //	go run ./examples/cafe -out /tmp/cafe # results as JSON under -out
@@ -183,7 +183,6 @@ func Run(w io.Writer, opts Options) (*Report, error) {
 		{"compare", p.compare},
 		{"sensitivities", p.sensitivities},
 		{"verify", p.verify},
-		{"mcp", p.mcp},
 	}
 	for i, s := range steps {
 		fmt.Fprintf(w, "\n== %d. %s\n", i+1, s.name)
@@ -787,56 +786,6 @@ func printVerdicts(w io.Writer, rep *verify.Report) {
 			fmt.Fprintf(w, "           witness: %s → %s\n", strings.Join(v.Counterexample.Trace, " → "), formatMarking(v.Counterexample.Marking))
 		}
 	}
-}
-
-// ---------------------------------------------------------------------------
-// 8. mcp
-
-func (p *pipeline) mcp() error {
-	fitted := make(map[string]float64, len(p.fitted))
-	for name, k := range p.fitted {
-		fitted[name] = round(k, 4)
-	}
-	fixed := map[string]float64{}
-	bounds := map[string][2]float64{}
-	for name, r := range p.trueRates {
-		if _, hidden := hiddenRates[name]; hidden {
-			bounds[name] = [2]float64{r / 10, r * 10}
-		} else {
-			fixed[name] = r
-		}
-	}
-	orderProps := []string{
-		"new + paid + brewing + ready + picked_up + cancelled + refunded == 1", "conserves",
-		"mutex:picked_up,refunded", "unreachable:picked_up=1,refunded=1", "reachable:refunded=1",
-		"bounded", "terminating", "deadlock-free",
-	}
-	calls := []struct {
-		tool string
-		args map[string]any
-	}{
-		{"petri_analyze", map[string]any{"model": "<" + kineticsFile + ">", "full": true}},
-		{"petri_stochastic", map[string]any{"model": "<" + kineticsFile + ">", "rates": fitted, "tspan": fmt.Sprintf("[0, %g]", Horizon),
-			"realizations": 50, "samples": Samples, "seed": p.opts.Seed}},
-		{"petri_fit", map[string]any{"model": "<" + kineticsFile + ">", "observations": "<observations.json>", "parameters": bounds,
-			"fixed_rates": fixed, "method": "adam", "max_iter": FitIterations}},
-		{"petri_verify", map[string]any{"model": "<" + orderFile + ">", "properties": orderProps}},
-		{"petri_verify", map[string]any{"model": "<" + themeFile + ">", "properties": []string{"barista_free + brewing == 1", "mutex:barista_free,brewing"}}},
-	}
-	fmt.Fprintln(p.w, "the same files reach petri-pilot's MCP server (https://pilot.pflow.xyz/mcp, or `petri-pilot mcp` on stdio) as these calls.")
-	fmt.Fprintln(p.w, "<file> stands for the file's contents passed as the string argument; observations.json is step 2's output. Documentation only — nothing here touches the network.")
-	out := make([]map[string]any, 0, len(calls))
-	for _, c := range calls {
-		args, err := marshalJSON(c.args, "")
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(p.w, "  %-16s %s", c.tool, args) // Encode ends the line
-		out = append(out, map[string]any{"tool": c.tool, "arguments": c.args})
-	}
-	fmt.Fprintln(p.w, "  notes: petri_stochastic caps realizations at 50; petri_fit is bounded Nelder-Mead or Adam in k (not ln k) and defaults to the midpoint of each bound;")
-	fmt.Fprintln(p.w, "  the pilot unfolds cafe.jsonld through parser.ModelFromJSON itself, and a base name in a property sums over its colors.")
-	return p.writeJSON("mcp.json", out)
 }
 
 // ---------------------------------------------------------------------------

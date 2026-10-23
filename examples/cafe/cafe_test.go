@@ -142,7 +142,7 @@ func TestCafeEndToEnd(t *testing.T) {
 	}
 
 	// Files under -out.
-	for _, name := range []string{"observations.json", "fit.json", "engines.json", "compare.json", "sensitivities.json", "verify.json", "mcp.json", "report.json"} {
+	for _, name := range []string{"observations.json", "fit.json", "engines.json", "compare.json", "sensitivities.json", "verify.json", "report.json"} {
 		if _, err := os.Stat(filepath.Join(outDir, name)); err != nil {
 			t.Errorf("missing output %s: %v", name, err)
 		}

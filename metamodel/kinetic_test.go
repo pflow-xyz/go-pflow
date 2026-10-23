@@ -49,8 +49,8 @@ func TestAbsentKineticFlagMeansKinetic(t *testing.T) {
 	}
 }
 
-// An older model must marshal byte-identically, because petri-pilot hash-pins
-// generated apps against the marshalled model. omitempty on a nil pointer is
+// An older model must marshal byte-identically, because model ids are the
+// sha256 of the marshalled model. omitempty on a nil pointer is
 // what buys that, so it is worth asserting rather than assuming.
 func TestArcWithoutKineticMarshalsWithoutTheField(t *testing.T) {
 	b, err := json.Marshal(Arc{From: "p", To: "t", Weight: 2})

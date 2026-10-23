@@ -7,5 +7,5 @@
   "leave": 0.5,
   "restock": 0.2
  },
- "_comment": "cafe-kinetics.json declared rates, gathered in one place. petri_ode / petri_stochastic / petri_sde read the model's rate fields since petri-pilot ae425b5 and take this only as an override; an older build defaulted every rate to 1.0 and needed it"
+ "_comment": "cafe-kinetics.json declared rates, gathered in one place. engines read the model's own rate fields and take this only as an override; it documents the rates for readers (showcase README, rough edge 1)"
 }

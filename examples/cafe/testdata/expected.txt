@@ -107,14 +107,3 @@ cafe-order.json via metapetri.Convert + metapetri.Verify: 7 states explored, 7 p
 cafe.jsonld (unfolded theme): 2 proved / 0 refuted / 0 unknown; the conversion recorded 10 notes, none lossy
   proved   structural  one barista: free or brewing
   proved   structural  never free and brewing at once
-
-== 8. mcp
-the same files reach petri-pilot's MCP server (https://pilot.pflow.xyz/mcp, or `petri-pilot mcp` on stdio) as these calls.
-<file> stands for the file's contents passed as the string argument; observations.json is step 2's output. Documentation only — nothing here touches the network.
-  petri_analyze    {"full":true,"model":"<cafe-kinetics.json>"}
-  petri_stochastic {"model":"<cafe-kinetics.json>","rates":{"arrive":6.015,"brew_espresso":0.01,"brew_latte":0.002,"leave":0.4967,"restock":0.1989,"serve":3},"realizations":50,"samples":25,"seed":42,"tspan":"[0, 24]"}
-  petri_fit        {"fixed_rates":{"brew_espresso":0.01,"brew_latte":0.002,"serve":3},"max_iter":400,"method":"adam","model":"<cafe-kinetics.json>","observations":"<observations.json>","parameters":{"arrive":[0.6,60],"leave":[0.05,5],"restock":[0.02,2]}}
-  petri_verify     {"model":"<cafe-order.json>","properties":["new + paid + brewing + ready + picked_up + cancelled + refunded == 1","conserves","mutex:picked_up,refunded","unreachable:picked_up=1,refunded=1","reachable:refunded=1","bounded","terminating","deadlock-free"]}
-  petri_verify     {"model":"<cafe.jsonld>","properties":["barista_free + brewing == 1","mutex:barista_free,brewing"]}
-  notes: petri_stochastic caps realizations at 50; petri_fit is bounded Nelder-Mead or Adam in k (not ln k) and defaults to the midpoint of each bound;
-  the pilot unfolds cafe.jsonld through parser.ModelFromJSON itself, and a base name in a property sums over its colors.

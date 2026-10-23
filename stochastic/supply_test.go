@@ -41,8 +41,7 @@ func TestAStateVariableIsNotSomethingToBuy(t *testing.T) {
 	}
 
 	// The café must not move: its pool serves work from outside the invariant,
-	// so it stays a capacity finding. The café bundle lives in petri-pilot,
-	// where its own supply_test.go keeps that check; the same shape is here in
+	// so it stays a capacity finding. The same shape is here in
 	// miniature, a pool that only serves work arriving from outside it.
 	shopKinds := ClassifySupply(staffedShop(2))
 	if got := shopKinds["available"]; got != SupplyConserved {

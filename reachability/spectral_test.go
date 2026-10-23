@@ -52,8 +52,8 @@ func TestEigenvectorCentralityHubDominates(t *testing.T) {
 }
 
 // TestEigenvectorCentralitySymmetry: structurally identical elements must get
-// identical centrality — this is the property petri-pilot's symmetry-group
-// detection ultimately rests on.
+// identical centrality — this is the property symmetry-group detection
+// ultimately rests on.
 func TestEigenvectorCentralitySymmetry(t *testing.T) {
 	net := starNet(3) // leaves a, b, c are interchangeable
 	res := EigenvectorCentrality(net, 500, 1e-12)

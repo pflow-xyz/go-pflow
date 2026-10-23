@@ -299,11 +299,11 @@ func (m *LegacyModel) MigrateToModern() (*PetriNet[TokenState[string]], []ModelE
 	net := m.ToGenericTokenNet()
 	var extensions []ModelExtension
 
-	// Note: Extension types are defined in external packages (like petri-pilot).
+	// Note: Extension types are defined in external packages (downstream consumers).
 	// This returns empty extensions - actual migration requires the external
 	// extension types to be registered and used.
 	//
-	// Example migration in petri-pilot:
+	// Example migration in a consumer:
 	//   legacy := metamodel.WrapLegacy(model)
 	//   net := legacy.ToGenericTokenNet()
 	//   entities := extensions.NewEntityExtension()

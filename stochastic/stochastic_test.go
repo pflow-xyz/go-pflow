@@ -11,7 +11,7 @@ import (
 )
 
 // fixture loads a single-net model from testdata/, a byte copy of the
-// petri-pilot services/ file of the same name.
+// sim-pflow-xyz services/ file of the same name.
 func fixture(t *testing.T, name string) *metamodel.Model {
 	t.Helper()
 	b, err := os.ReadFile(filepath.Join("testdata", name))

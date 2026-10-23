@@ -28,8 +28,8 @@ The model is the **same café the pflow ecosystem showcase uses**
 a one-barista shop where customers arrive, drinks draw beans, milk and cups
 from a pantry, and a delivery restocks it. The showcase tells that story once
 per tool family; this example takes go-pflow's own packages through it in
-order — declare, observe, fit, ODE / SSA / SDE, compare, sensitivities, verify,
-and the MCP calls that expose the same files. Nothing here is a new toy.
+order — declare, observe, fit, ODE / SSA / SDE, compare, sensitivities and
+verify. Nothing here is a new toy.
 
 ## The files
 
@@ -40,9 +40,9 @@ table is the contract; `sha256sum` here and there must agree.
 |---|---|---|
 | `cafe-kinetics.json` | Variation I: the café as mass-action kinetics, metamodel shape, no gates. What every continuous and stochastic engine reads. | `01de8a308e7e40ee21bafade2873bad14bad3cb5ca3eacd8bc5c248983297eff` |
 | `cafe.jsonld` | The theme: the colored pflow.xyz editor shape (four token colors in one pantry, read arcs, weighted inhibitor, per-color capacity, CID as `@id`). | `e31d581d04c97b25310c38f4546be05873cdaacc6110e7a0178c31df145e2d5b` |
-| `cafe-order.json` | Variation III: the token-only order workflow the verifier proves things about. | `396de361e619f9ffe6692e72140ea85ef6ad588dcf3a938c6f4463b9c2e780ea` |
+| `cafe-order.json` | Variation III: the token-only order workflow the verifier proves things about. | `2dd5ff08b4f65c1ad939a727a203417403c118c7c67ce8143382cf6434f92dcc` |
 | `fixtures/observations.json` | The showcase's `petri_ode` samples of `cafe-kinetics.json` at the declared rates — step 2 checks this ODE against them. | `b183bd55e088fba98466023082ccdc77df142f3a0a0f9d3fc009b1151b307dfb` |
-| `fixtures/rates.json` | The declared rates gathered in one place, for readers. | `5699d84cb8b3d62d48d13239b3a3142bf98dcf59273f849b6e52a16d592cc658` |
+| `fixtures/rates.json` | The declared rates gathered in one place, for readers. | `decfd08a5adfed8f97f1be504252b3197eaf0e11420ce2f39137d1f37473f638` |
 | `fixtures/ssa-go-seed42.json` | The portable SSA final marking the showcase's `gocheck` wrote (seed 42, horizon 8, 5 samples, 1 realization) — the cross-language byte-exact hook; step 4 must reproduce it. | `4b30793ceef406f1fc715d0b0a4439e5f9ecb201bff189219f85b626649e6021` |
 
 `testdata/expected.txt` is the golden transcript of `go run ./examples/cafe`
@@ -182,21 +182,12 @@ to four figures. The elasticities single out **restock (+0.97)** and
   mutex proved structurally; the conversion's 10 notes (capacities, read arcs,
   inhibitor weight) are all lossless, so the verdicts stand undegraded.
 
-### 8. mcp — the same files, over MCP
-
-Printed as documentation, never called: the `petri_analyze`, `petri_stochastic`,
-`petri_fit` and `petri_verify` calls that expose the same model through
-petri-pilot's server (`https://pilot.pflow.xyz/mcp`, or `petri-pilot mcp` on
-stdio), with `<file>` standing for the file's contents and `observations.json`
-being step 2's output. The pilot unfolds `cafe.jsonld` itself through the same
-`parser.ModelFromJSON`, and a base name in a property sums over its colors.
-
 ## Outputs
 
 With `-out`, one JSON file per step: `observations.json`, `fit.json`,
 `engines.json` (full ODE/SSA/SDE trajectories and the parity result),
 `compare.json`, `sensitivities.json`, `verify.json` (both reports with
-verdicts and witnesses), `mcp.json` and `report.json` (everything the test
+verdicts and witnesses) and `report.json` (everything the test
 asserts on).
 
 ## What the test pins

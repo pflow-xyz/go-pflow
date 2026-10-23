@@ -17,7 +17,7 @@ func TestPlaceRefs(t *testing.T) {
 		{"single quotes", `tokens('goal') >= 1`, []string{"goal"}},
 		{"mixed quotes", `sum('balances') == count("holders")`, []string{"balances", "holders"}},
 		{
-			// Every function name both guard dialects register: petri-pilot's
+			// Every function name both guard dialects register: sim-pflow-xyz's
 			// pkg/dsl (sum/count/tokens/minOf/maxOf) and go-pflow's
 			// tokenmodel/guard (min/max).
 			"all functions",

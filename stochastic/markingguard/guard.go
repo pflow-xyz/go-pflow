@@ -5,7 +5,7 @@
 //
 // It lives in its own package rather than in stochastic because
 // tokenmodel/guard pulls in uint256; a caller that injects its own guard
-// language (petri-pilot injects pkg/dsl) should not pay for this one.
+// language should not pay for this one.
 //
 //	res, err := stochastic.Simulate(m, nil, stochastic.Options{Guard: markingguard.Eval})
 //

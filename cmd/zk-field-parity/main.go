@@ -3,11 +3,11 @@
 //
 // Why this exists (F4 — the asm↔purego breach):
 //
-// Bazel builds petri-pilot hermetically with `-tags purego`, selecting
+// A hermetic Bazel build can use `-tags purego`, selecting
 // gnark-crypto's pure-Go field arithmetic, because the amd64/arm64 assembly
 // uses relative cross-package `#include` directives that don't resolve in
-// Bazel's sandbox. `make build` / `go build` — the binary actually shipped to
-// pilot.pflow.xyz and the one that produces the on-chain Groth16 verifiers —
+// Bazel's sandbox. `make build` / `go build` — the binaries actually shipped
+// and the one that produces the on-chain Groth16 verifiers —
 // use the asm fast path instead. The .bazelrc comment asserts the two are
 // "bit-identical, just slower"; nothing tested that claim.
 //

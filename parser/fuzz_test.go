@@ -5,7 +5,7 @@ import (
 )
 
 // FuzzFromJSON hammers the model parser with arbitrary bytes. This is the
-// library's main untrusted input surface: petri-pilot's MCP tools and the
+// library's main untrusted input surface: MCP tools and the
 // pflow CLI both feed it model JSON authored by an LLM or a human, so it must
 // reject garbage with an error — never panic — and anything it accepts must
 // survive a serialize/re-parse round trip.

@@ -37,9 +37,8 @@ type ArcRef struct {
 	Type   ArcType
 
 	// Kinetic mirrors Arc.IsKinetic, already defaulted. It is carried here
-	// because ArcRef is the whole of what a rate engine sees — petri-pilot's
-	// two stochastic simulators build their propensity terms from Inputs and
-	// never touch Model.Arcs, so a flag that stopped at the Arc struct would
+	// because ArcRef is the whole of what a rate engine sees — a simulator
+	// that builds its propensity terms from Inputs never touches Model.Arcs, so a flag that stopped at the Arc struct would
 	// be invisible to the only code that could act on it.
 	//
 	// On Outputs and Tests it is whatever the arc declared, but it means

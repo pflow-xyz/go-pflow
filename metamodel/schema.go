@@ -231,8 +231,8 @@ type Place struct {
 	//
 	// omitempty with a nil map, so a model written before this field existed
 	// marshals byte-for-byte as it did. That is load-bearing: model ids are
-	// the sha256 of this canonical JSON, and petri-pilot hash-pins generated
-	// apps against it.
+	// the sha256 of this canonical JSON, and downstream consumers pin
+	// against it.
 	Tags map[string]string `json:"tags,omitempty"`
 
 	// Visualization position (optional, for diagram layout)
@@ -414,8 +414,8 @@ type Transition struct {
 	//
 	// omitempty with a nil map, so a model written before this field existed
 	// marshals byte-for-byte as it did. That is load-bearing: model ids are
-	// the sha256 of this canonical JSON, and petri-pilot hash-pins generated
-	// apps against it.
+	// the sha256 of this canonical JSON, and downstream consumers pin
+	// against it.
 	Tags map[string]string `json:"tags,omitempty"`
 
 	// Deprecated fields (backward compatibility)
@@ -509,8 +509,8 @@ type Arc struct {
 	// the shop prefers. A non-kinetic arc is a prerequisite, not an accelerant.
 	//
 	// It is a *bool because ABSENT MEANS TRUE. Every model written before this
-	// field existed must serialise and execute byte-identically — petri-pilot
-	// hash-pins fourteen generated apps against the marshalled model — and a
+	// field existed must serialise and execute byte-identically — model ids are
+	// the sha256 of the marshalled model — and a
 	// plain bool with omitempty would spell "kinetic" as the non-default.
 	//
 	// The asymmetry against IsReadOnly is deliberate and load-bearing: a read

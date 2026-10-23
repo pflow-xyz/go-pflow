@@ -162,7 +162,7 @@ func TestSolveDispatches(t *testing.T) {
 // segment of a scheduled run. Each segment compiles the model afresh, so
 // dropping Guard from the per-segment Options would caveat every guard and
 // fire serve where the application would refuse — on both the direct
-// SimulateSchedule entry and the Solve dispatch that petri-pilot's Run uses.
+// SimulateSchedule entry and the Solve dispatch.
 func TestMarkingGuardIsEnforcedUnderSchedule(t *testing.T) {
 	m := &metamodel.Model{
 		Name: "guarded",

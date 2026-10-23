@@ -3,7 +3,8 @@
 ## Who this library is for
 
 go-pflow's primary user is **an AI agent building models on someone's behalf** —
-concretely, Claude driving the [petri-pilot MCP server](../../petri-pilot/). Humans
+concretely, Claude driving an MCP server built on it, such as
+[sim.pflow.xyz](https://sim.pflow.xyz). Humans
 consume the results; the agent consumes the API.
 
 That framing changes what the library must be good at. A human modeler builds

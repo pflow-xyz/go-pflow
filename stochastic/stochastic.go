@@ -25,7 +25,8 @@
 // realization for the whole horizon); checkDivergence's Reason prose
 // ("raises a place to the power of its arc weight") describes chemical mass
 // action, not solver's rate law (weight in stoichiometry only, as above); it
-// was moved from petri-pilot unchanged and is kept byte-for-byte for parity.
+// was moved here unchanged from the pre-move engine and is kept byte-for-byte
+// for parity (parity_test.go).
 //
 // FitDiscrete and NegLogLikelihood (likelihood.go) are this package's
 // counterpart to learn.SolveWithSensitivities: where that fits an ODE's
@@ -150,8 +151,8 @@ type Options struct {
 	// Portable selects the byte-exact SSA path shared with pflow-rs, pflow-xyz
 	// and pflow-jl: a fixed PRNG (SplitMix64 -> xoshiro256**) and an explicit
 	// logarithm in place of math/rand and math.Log, per ssa-spec.md. The zero
-	// value is today's default path, unchanged; the goldens petri-pilot
-	// depends on are produced by that path and stay so. SSA and SDE share the
+	// value is today's default path, unchanged; the parity goldens in
+	// testdata/ are produced by that path and stay so. SSA and SDE share the
 	// PRNG choice; Forecast draws nothing and ignores it, harmlessly.
 	Portable bool
 	// OnFire is called immediately after a transition fires, once per
@@ -2232,7 +2233,7 @@ func toNet(m *metamodel.Model, marking metamodel.Marking) (*petri.PetriNet, []st
 // remove this one; only a different engine could.
 //
 // Added by the exported SSA entry points — Simulate and SimulateSchedule —
-// rather than by a caller such as petri-pilot's scenario Run, so that it reaches
+// rather than by a caller such as a scenario runner, so that it reaches
 // every caller of the engine and not only the ones who came through a Scenario. It was in Run first, which meant a
 // generated app or an MCP tool calling Simulate directly got an answer with the
 // assumption silently dropped, while the console next to it showed it. The

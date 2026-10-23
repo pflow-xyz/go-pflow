@@ -2,7 +2,7 @@
 # zk-parity-check.sh — falsifiable check that gnark-crypto's purego and asm
 # field backends agree (F4).
 #
-# Bazel builds petri-pilot with `-tags purego` (pure-Go field arithmetic), but
+# A Bazel build with `-tags purego` (pure-Go field arithmetic), but
 # `make build` ships the amd64/arm64 assembly fast path. The .bazelrc asserts
 # they are bit-identical. This builds cmd/zk-field-parity both ways and diffs
 # the deterministic digests it emits. Identical output => the backends agree on

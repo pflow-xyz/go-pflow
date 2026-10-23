@@ -16,9 +16,8 @@ import (
 // cheap enough to sweep like Forecast, with a real variance band like
 // Simulate. MethodSDE is declared in solve.go, beside MethodSSA/MethodODE.
 //
-// This is not petri-pilot's existing petri_sde tool (pkg/mcp/sde.go, which
-// layers exogenous geometric Brownian motion on user-chosen places on top of
-// the ODE). This is intrinsic firing noise, derived from the net's own
+// This is not exogenous geometric Brownian motion layered on user-chosen
+// places on top of the ODE (what the retired petri_sde MCP tool did). This is intrinsic firing noise, derived from the net's own
 // propensities, with nothing for a caller to choose.
 
 // sdeInternalSubsteps is how many Euler-Maruyama steps run between each

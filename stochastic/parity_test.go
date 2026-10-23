@@ -9,9 +9,9 @@ import (
 	"github.com/pflow-xyz/go-pflow/metamodel"
 )
 
-// The parity goldens in testdata/ were produced by the PRE-MOVE petri-pilot
+// The parity goldens in testdata/ were produced by the PRE-MOVE sim-pflow-xyz
 // engine (pkg/runtime/sim.Simulate before the SSA was promoted here), by
-// pkg/runtime/sim/internal/paritygolden at petri-pilot commit
+// pkg/runtime/sim/internal/paritygolden at sim-pflow-xyz commit
 //
 //	67538d70c977fa7d6de9e0ac1f247da900b64600
 //
