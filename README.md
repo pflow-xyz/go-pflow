@@ -284,6 +284,12 @@ See [CHANGELOG.md](CHANGELOG.md) for breaking changes since the last tag.
   pflow-xyz in JS, and by pflow-jl on `algebraic-petri`; pflow-rs has no
   editor-shape parser yet
 
+## Contributing
+
+We don't merge outside code, so pull requests won't be merged as-is.
+Feature requests and bug reports are welcome: please open an
+[issue](https://github.com/pflow-xyz/go-pflow/issues).
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
