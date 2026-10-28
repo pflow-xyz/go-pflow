@@ -2,6 +2,8 @@ package solver
 
 import (
 	"math"
+
+	"github.com/pflow-xyz/go-pflow/crmath"
 )
 
 // EquilibriumOptions configures equilibrium detection during solving.
@@ -116,7 +118,7 @@ func SolveUntilEquilibrium(prob *Problem, solver *Solver, opts *Options, eqOpts 
 		K[0] = f(tcur, ucur)
 
 		for stage := 1; stage < len(solver.C); stage++ {
-			tstage := tcur + solver.C[stage]*dtcur
+			tstage := tcur + float64(solver.C[stage]*dtcur)
 			ustage := CopyState(ucur)
 			for _, key := range stateLabels {
 				for j := 0; j < stage; j++ {
@@ -124,7 +126,7 @@ func SolveUntilEquilibrium(prob *Problem, solver *Solver, opts *Options, eqOpts 
 					if len(solver.A) > stage && len(solver.A[stage]) > j {
 						aj = solver.A[stage][j]
 					}
-					ustage[key] += dtcur * aj * K[j][key]
+					ustage[key] += float64(dtcur * aj * K[j][key])
 				}
 			}
 			K[stage] = f(tstage, ustage)
@@ -134,7 +136,7 @@ func SolveUntilEquilibrium(prob *Problem, solver *Solver, opts *Options, eqOpts 
 		unext := CopyState(ucur)
 		for _, key := range stateLabels {
 			for j := 0; j < len(solver.B); j++ {
-				unext[key] += dtcur * solver.B[j] * K[j][key]
+				unext[key] += float64(dtcur * solver.B[j] * K[j][key])
 			}
 		}
 
@@ -144,9 +146,9 @@ func SolveUntilEquilibrium(prob *Problem, solver *Solver, opts *Options, eqOpts 
 			for _, key := range stateLabels {
 				errest := 0.0
 				for j := 0; j < len(solver.Bhat); j++ {
-					errest += dtcur * solver.Bhat[j] * K[j][key]
+					errest += float64(dtcur * solver.Bhat[j] * K[j][key])
 				}
-				scale := abstol + reltol*math.Max(math.Abs(ucur[key]), math.Abs(unext[key]))
+				scale := abstol + float64(reltol*math.Max(math.Abs(ucur[key]), math.Abs(unext[key])))
 				if scale == 0 {
 					scale = abstol
 				}
@@ -190,13 +192,13 @@ func SolveUntilEquilibrium(prob *Problem, solver *Solver, opts *Options, eqOpts 
 
 			// Adapt step size for next iteration
 			if adaptive && err > 0 {
-				factor := 0.9 * math.Pow(1.0/err, 1.0/float64(solver.Order+1))
+				factor := 0.9 * crmath.Pow(1.0/err, 1.0/float64(solver.Order+1))
 				factor = math.Min(factor, 5.0)
 				dtcur = math.Min(dtmax, math.Max(dtmin, dtcur*factor))
 			}
 		} else {
 			// Reject step and reduce step size
-			factor := 0.9 * math.Pow(1.0/err, 1.0/float64(solver.Order+1))
+			factor := 0.9 * crmath.Pow(1.0/err, 1.0/float64(solver.Order+1))
 			factor = math.Max(factor, 0.1)
 			dtcur = math.Max(dtmin, dtcur*factor)
 		}

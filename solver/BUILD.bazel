@@ -12,7 +12,10 @@ go_library(
     ],
     importpath = "github.com/pflow-xyz/go-pflow/solver",
     visibility = ["//visibility:public"],
-    deps = ["//petri"],
+    deps = [
+        "//crmath",
+        "//petri",
+    ],
 )
 
 go_test(

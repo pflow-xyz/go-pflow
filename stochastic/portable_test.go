@@ -161,8 +161,18 @@ func TestFrexp(t *testing.T) {
 // "fixed" to match the assembly; the SSA never reaches this range anyway
 // (u = 1 - x1 >= 2^-53).
 func TestPlogMatchesMathLog(t *testing.T) {
-	if runtime.GOARCH == "s390x" {
+	switch runtime.GOARCH {
+	case "s390x":
 		t.Skip("s390x has its own math.Log; plog is the portable one regardless")
+	case "arm64", "ppc64", "ppc64le", "riscv64", "loong64":
+		// These backends fuse x*y+z into one rounding, and math.Log's pure-Go
+		// body is written without the float64(...) wrappers plog carries, so
+		// the runtime's log is a different (fused) function there: it
+		// disagrees with plog in the last bit on about one input in four on
+		// darwin/arm64. plog is the unfused fdlibm function, the one
+		// pflow-rs, pflow-xyz and amd64 Go compute; the vectors below still
+		// pin it on every architecture (TestPlogVectors).
+		t.Skipf("%s fuses multiply-adds inside math.Log; plog is the portable one regardless", runtime.GOARCH)
 	}
 	for _, c := range plogVectors {
 		if a, b := math.Float64bits(plog(c.x)), math.Float64bits(math.Log(c.x)); a != b {

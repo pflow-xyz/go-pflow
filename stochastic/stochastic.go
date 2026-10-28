@@ -1219,7 +1219,7 @@ func (ts *timeStats) hold(marking []int, dt float64) {
 	}
 	ts.total += dt
 	for i, v := range marking {
-		ts.integral[i] += float64(v) * dt
+		ts.integral[i] += float64(float64(v) * dt)
 		d := ts.dwell[i]
 		if v >= len(d) {
 			// Doubled so a place that climbs one token at a time — a queue
@@ -1355,7 +1355,7 @@ func resample(srcT, srcV, dstT []float64) []float64 {
 				continue
 			}
 			f := (t - srcT[j]) / span
-			out[i] = srcV[j] + f*(srcV[j+1]-srcV[j])
+			out[i] = srcV[j] + float64(f*(srcV[j+1]-srcV[j]))
 		}
 	}
 	return out
@@ -1546,7 +1546,7 @@ func (d *openDraw) due(t, total float64, rng sampler) float64 {
 		}
 		*d = openDraw{ok: true, at: t, w: rng.wait(), total: total}
 	} else if d.total != total {
-		d.w -= d.total * (t - d.at)
+		d.w -= float64(d.total * (t - d.at))
 		if d.w < 0 {
 			d.w = 0 // rounding at a boundary the draw had all but reached
 		}

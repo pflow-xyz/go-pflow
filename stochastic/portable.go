@@ -68,9 +68,11 @@ func (s *portableSampler) normal() float64 {
 		return s.spare
 	}
 	for {
-		u1 := 2*s.x.uniform() - 1
-		u2 := 2*s.x.uniform() - 1
-		sq := u1*u1 + u2*u2
+		// Each product is wrapped so that arm64 cannot fuse it into the
+		// add (it did: normal()[2] came out 5 ulps off there).
+		u1 := float64(2*s.x.uniform()) - 1
+		u2 := float64(2*s.x.uniform()) - 1
+		sq := float64(u1*u1) + float64(u2*u2)
 		if sq > 0 && sq < 1 {
 			mul := math.Sqrt(-2 * plog(sq) / sq)
 			s.spare = u2 * mul

@@ -49,7 +49,7 @@ func ImplicitEuler(prob *Problem, opts *Options) *Solution {
 		unext := CopyState(ucur)
 		du := f(tcur, ucur)
 		for _, key := range stateLabels {
-			unext[key] += dtcur * du[key]
+			unext[key] += float64(dtcur * du[key])
 		}
 
 		// Fixed-point iteration
@@ -57,7 +57,7 @@ func ImplicitEuler(prob *Problem, opts *Options) *Solution {
 			unew := CopyState(ucur)
 			dunext := f(tnext, unext)
 			for _, key := range stateLabels {
-				unew[key] += dtcur * dunext[key]
+				unew[key] += float64(dtcur * dunext[key])
 			}
 
 			// Check convergence
@@ -195,14 +195,14 @@ func TRBDF2(prob *Problem, opts *Options) *Solution {
 		}
 
 		// Stage 1: Trapezoidal rule from t to t + gamma*dt
-		tgamma := tcur + gamma*dtcur
+		tgamma := tcur + float64(gamma*dtcur)
 		ugamma := CopyState(ucur)
 
 		du0 := f(tcur, ucur)
 
 		// Initial guess using forward Euler
 		for _, key := range stateLabels {
-			ugamma[key] += gamma * dtcur * du0[key]
+			ugamma[key] += float64(gamma * dtcur * du0[key])
 		}
 
 		// Fixed-point iteration for trapezoidal step
@@ -211,7 +211,7 @@ func TRBDF2(prob *Problem, opts *Options) *Solution {
 			unew := CopyState(ucur)
 			for _, key := range stateLabels {
 				// Trapezoidal: u_gamma = u_n + (gamma*dt/2) * (f_n + f_gamma)
-				unew[key] += 0.5 * gamma * dtcur * (du0[key] + dugamma[key])
+				unew[key] += float64(0.5 * gamma * dtcur * (du0[key] + dugamma[key]))
 			}
 
 			maxDiff := 0.0
@@ -235,7 +235,7 @@ func TRBDF2(prob *Problem, opts *Options) *Solution {
 		// Initial guess
 		dugamma := f(tgamma, ugamma)
 		for _, key := range stateLabels {
-			unext[key] += (1 - gamma) * dtcur * dugamma[key]
+			unext[key] += float64((1 - gamma) * dtcur * dugamma[key])
 		}
 
 		// BDF2 coefficients for the second stage
@@ -250,7 +250,7 @@ func TRBDF2(prob *Problem, opts *Options) *Solution {
 			dunext := f(tnext, unext)
 			unew := make(map[string]float64)
 			for _, key := range stateLabels {
-				unew[key] = w1*ugamma[key] + w0*ucur[key] + wf*dtcur*dunext[key]
+				unew[key] = float64(w1*ugamma[key]) + float64(w0*ucur[key]) + float64(wf*dtcur*dunext[key])
 			}
 
 			maxDiff := 0.0

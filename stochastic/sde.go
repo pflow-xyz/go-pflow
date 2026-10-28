@@ -139,8 +139,8 @@ func sdePath(ctx context.Context, trs []sdeTransition, x0 []float64, times []flo
 						if d == 0 {
 							continue
 						}
-						drift[p] += d * a * dt
-						x[p] += d * noise
+						drift[p] += float64(d * a * dt)
+						x[p] += float64(d * noise)
 					}
 				}
 				for p := range x {

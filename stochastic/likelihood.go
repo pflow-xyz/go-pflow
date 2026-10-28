@@ -138,10 +138,10 @@ func NegLogLikelihood(m *metamodel.Model, rates map[string]float64, fit []string
 			comb := combFactors(trs, places, marking)
 			var a0 float64
 			for i := range trs {
-				a0 += trs[i].rate * comb[i]
+				a0 += float64(trs[i].rate * comb[i])
 			}
 			for _, fi := range fitIdx {
-				integral[fi] += dt * comb[fi]
+				integral[fi] += float64(dt * comb[fi])
 			}
 
 			achosen := trs[j].rate * comb[j]
@@ -149,7 +149,7 @@ func NegLogLikelihood(m *metamodel.Model, rates map[string]float64, fit []string
 				return 0, nil, fmt.Errorf("stochastic: NegLogLikelihood: path %d event %d fires %q, which is not enabled at the marking it follows",
 					pi, ei, ev.Transition)
 			}
-			loss += -math.Log(achosen) + a0*dt
+			loss += -math.Log(achosen) + float64(a0*dt)
 			counts[j]++
 
 			next := make([]int, len(places))
@@ -182,12 +182,12 @@ func NegLogLikelihood(m *metamodel.Model, rates map[string]float64, fit []string
 			comb := combFactors(trs, places, marking)
 			var a0 float64
 			for i := range trs {
-				a0 += trs[i].rate * comb[i]
+				a0 += float64(trs[i].rate * comb[i])
 			}
 			for _, fi := range fitIdx {
-				integral[fi] += dt * comb[fi]
+				integral[fi] += float64(dt * comb[fi])
 			}
-			loss += a0 * dt
+			loss += float64(a0 * dt)
 		}
 	}
 

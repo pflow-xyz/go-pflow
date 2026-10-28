@@ -1,6 +1,6 @@
 # Makefile for go-pflow
 
-.PHONY: help build test test-coverage clean install fmt fmt-check vet lint ssa-goldens scheduled-goldens examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all
+.PHONY: help build test test-coverage clean install fmt fmt-check vet lint ssa-goldens scheduled-goldens examples run-basic run-neural run-monitoring run-visualization run-coffeeshop run-coffeeshop-sim run-coffeeshop-sla run-coffeeshop-inventory run-coffeeshop-happy rebuild-all-svg check all fma-check
 
 # Default target
 help:
@@ -36,9 +36,13 @@ build:
 	go build -o bin/pflow ./cmd/pflow
 
 # Run all tests
-test:
+test: fma-check
 	@echo "Running tests..."
 	go test ./... -v
+
+# The byte-exact core must compile to no fused multiply-add (scripts/fma-check.sh).
+fma-check:
+	@./scripts/fma-check.sh
 
 # Run tests with coverage
 test-coverage:

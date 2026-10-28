@@ -5,6 +5,7 @@ package solver
 import (
 	"math"
 
+	"github.com/pflow-xyz/go-pflow/crmath"
 	"github.com/pflow-xyz/go-pflow/petri"
 )
 
@@ -157,12 +158,12 @@ func buildODEFunction(net *petri.PetriNet, rates map[string]float64) ODEFunc {
 					if arc.Target == transLabel {
 						// Input arc - consume tokens
 						if _, ok := net.Places[arc.Source]; ok {
-							du[arc.Source] -= flux * weight
+							du[arc.Source] -= float64(flux * weight)
 						}
 					} else if arc.Source == transLabel {
 						// Output arc - produce tokens
 						if _, ok := net.Places[arc.Target]; ok {
-							du[arc.Target] += flux * weight
+							du[arc.Target] += float64(flux * weight)
 						}
 					}
 				}
@@ -234,10 +235,10 @@ func buildVecODEFunction(net *petri.PetriNet, rates map[string]float64, stateInd
 
 			if flux > 0 {
 				for _, inp := range tr.inputs {
-					du[inp.idx] -= flux * inp.weight
+					du[inp.idx] -= float64(flux * inp.weight)
 				}
 				for _, out := range tr.outputs {
-					du[out.idx] += flux * out.weight
+					du[out.idx] += float64(flux * out.weight)
 				}
 			}
 		}
@@ -568,7 +569,7 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 		k[0] = f(tcur, ucur)
 
 		for stage := 1; stage < numStages; stage++ {
-			tstage := tcur + solver.C[stage]*dtcur
+			tstage := tcur + float64(solver.C[stage]*dtcur)
 			ustage := append([]float64(nil), ucur...)
 			for j := 0; j < stage; j++ {
 				aj := 0.0
@@ -578,7 +579,7 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 				if aj != 0 {
 					scale := dtcur * aj
 					for i := 0; i < n; i++ {
-						ustage[i] += scale * k[j][i]
+						ustage[i] += float64(scale * k[j][i])
 					}
 				}
 			}
@@ -591,7 +592,7 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 			if solver.B[j] != 0 {
 				scale := dtcur * solver.B[j]
 				for i := 0; i < n; i++ {
-					unext[i] += scale * k[j][i]
+					unext[i] += float64(scale * k[j][i])
 				}
 			}
 		}
@@ -602,11 +603,11 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 			for i := 0; i < n; i++ {
 				errest := 0.0
 				for j := 0; j < len(solver.Bhat); j++ {
-					errest += dtcur * solver.Bhat[j] * k[j][i]
+					errest += float64(dtcur * solver.Bhat[j] * k[j][i])
 				}
 				uc := ucur[i]
 				un := unext[i]
-				scale := abstol + reltol*math.Max(math.Abs(uc), math.Abs(un))
+				scale := abstol + float64(reltol*math.Max(math.Abs(uc), math.Abs(un)))
 				if scale == 0 {
 					scale = abstol
 				}
@@ -628,13 +629,13 @@ func Solve(prob *Problem, solver *Solver, opts *Options) *Solution {
 
 			// Adapt step size for next iteration
 			if adaptive && err > 0 {
-				factor := 0.9 * math.Pow(1.0/err, 1.0/float64(solver.Order+1))
+				factor := 0.9 * crmath.Pow(1.0/err, 1.0/float64(solver.Order+1))
 				factor = math.Min(factor, 5.0)
 				dtcur = math.Min(dtmax, math.Max(dtmin, dtcur*factor))
 			}
 		} else {
 			// Reject step and reduce step size
-			factor := 0.9 * math.Pow(1.0/err, 1.0/float64(solver.Order+1))
+			factor := 0.9 * crmath.Pow(1.0/err, 1.0/float64(solver.Order+1))
 			factor = math.Max(factor, 0.1)
 			dtcur = math.Max(dtmin, dtcur*factor)
 		}

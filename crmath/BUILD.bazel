@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "crmath",
+    srcs = ["pow.go"],
+    importpath = "github.com/pflow-xyz/go-pflow/crmath",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "crmath_test",
+    srcs = ["pow_test.go"],
+    # keep: the shared corpus, a copy of pflow-rs' tests/fixtures/crmath/pow.txt.
+    data = ["testdata/pow.txt"],
+    embed = [":crmath"],
+)
