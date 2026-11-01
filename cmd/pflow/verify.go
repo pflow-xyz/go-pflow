@@ -34,7 +34,8 @@ proved, refuted, or unknown — refutations carry a replayable firing sequence.
 Property forms:
   deadlock-free              no reachable marking is a deadlock
   bounded                    no place accumulates tokens without limit
-  live                       every transition can fire from some marking
+  live                       every transition can fire from some marking (L1)
+  l4-live                    every transition stays fireable from every marking
   terminating                every execution eventually stops
   conserves                  total token count never changes
   reachable:<marking>        some reachable marking matches, e.g. reachable:done=1
@@ -125,6 +126,8 @@ func parseProperty(spec string) (verify.Property, error) {
 		return verify.Property{Kind: verify.KindBounded, Name: spec}, nil
 	case "live", "liveness":
 		return verify.Property{Kind: verify.KindLive, Name: spec}, nil
+	case "l4-live", "l4":
+		return verify.Property{Kind: verify.KindL4Live, Name: spec}, nil
 	case "terminating", "terminates":
 		return verify.Property{Kind: verify.KindTerminating, Name: spec}, nil
 	case "conserves", "conservation":

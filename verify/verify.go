@@ -104,6 +104,8 @@ func (v *Verifier) CheckOne(p Property) Verdict {
 		return v.checkBounded(p)
 	case KindLive:
 		return v.checkLive(p)
+	case KindL4Live:
+		return v.checkL4Live(p)
 	case KindTerminating:
 		return v.checkTerminating(p)
 	case KindReachable:
@@ -273,6 +275,41 @@ func (v *Verifier) checkLive(p Property) Verdict {
 	return Verdict{
 		Property: p, Status: Proved, Method: MethodExhaustive,
 		Detail: fmt.Sprintf("all %d transitions can fire from some reachable state", len(v.net.Transitions)),
+	}
+}
+
+func (v *Verifier) checkL4Live(p Property) Verdict {
+	r := v.analyze()
+	l := r.Liveness
+
+	if l.Live == reachability.VerdictFalse {
+		w := l.Witness
+		where := "this marking is reached"
+		if w.RegionSize > 1 {
+			where = fmt.Sprintf("the net enters this closed region of %d markings", w.RegionSize)
+		}
+		return Verdict{
+			Property: p, Status: Refuted, Method: methodFor(r),
+			Detail: fmt.Sprintf("not L4-live: %s", strings.Join(l.NotLive, ", ")),
+			Counterexample: &Counterexample{
+				Trace:       w.Trace,
+				Marking:     w.Marking.Copy(),
+				Explanation: fmt.Sprintf("%s can never fire again once %s", strings.Join(w.NeverFires, ", "), where),
+			},
+		}
+	}
+
+	if r.Truncated {
+		return Verdict{
+			Property: p, Status: Unknown, Method: MethodPartial,
+			Detail: fmt.Sprintf("no transition ruled out in the %d states explored, but the state space was truncated", r.StateCount),
+		}
+	}
+
+	return Verdict{
+		Property: p, Status: Proved, Method: MethodExhaustive,
+		Detail:   fmt.Sprintf("all %d transitions stay fireable from all %d reachable states", len(v.net.Transitions), r.StateCount),
+		Evidence: fmt.Sprintf("every transition fires in each of the %d terminal strongly connected component(s)", l.TerminalComponents),
 	}
 }
 

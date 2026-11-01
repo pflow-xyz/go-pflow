@@ -172,6 +172,7 @@ func TestParseProperty(t *testing.T) {
 		{"deadlock-free", "deadlock-free"},
 		{"bounded", "bounded"},
 		{"live", "live"},
+		{"l4-live", "l4-live"},
 		{"terminating", "terminating"},
 		{"conserves", "conserves"},
 		{"reachable:done=1", "reachable"},

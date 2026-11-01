@@ -521,7 +521,10 @@ changes := stateutil.Diff(before, after)
 ```go
 analyzer := reachability.NewAnalyzer(net).WithMaxStates(10000)
 result := analyzer.Analyze()
-// result.Bounded, result.HasCycle, result.Live, result.Deadlocks
+// result.Bounded, result.HasCycle, result.Deadlocks, result.DeadMarkings
+// result.Live is L4 (terminal SCCs), result.QuasiLive is L1 (fires somewhere).
+// result.Liveness: true/false/unknown for DeadlockFree, Live, QuasiLive, plus a
+// replayable Witness. Truncated searches never answer true.
 
 // Finite proof of unboundedness (Karp-Miller covering witness)
 if w := analyzer.FindUnboundedWitness(); w != nil {
