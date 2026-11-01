@@ -1,6 +1,8 @@
 package reachability
 
 import (
+	"sort"
+
 	"github.com/pflow-xyz/go-pflow/petri"
 )
 
@@ -116,7 +118,8 @@ func (g *Graph) StatesList() []*State {
 	return g.stateList
 }
 
-// findEnabled returns transitions enabled in the given marking.
+// findEnabled returns transitions enabled in the given marking, sorted, so the
+// search order and any witness it yields do not depend on map iteration.
 func (g *Graph) findEnabled(marking Marking) []string {
 	var enabled []string
 	for transName := range g.Net.Transitions {
@@ -124,6 +127,7 @@ func (g *Graph) findEnabled(marking Marking) []string {
 			enabled = append(enabled, transName)
 		}
 	}
+	sort.Strings(enabled)
 	return enabled
 }
 

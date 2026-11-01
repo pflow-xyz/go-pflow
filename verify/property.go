@@ -37,7 +37,9 @@ type Kind string
 
 const (
 	// KindDeadlockFree asserts no reachable marking is a deadlock (a
-	// non-final state with no enabled transition).
+	// non-final state with no enabled transition). It uses
+	// reachability.Result.HasDeadlock, so a marking that drained to empty counts
+	// as finished; reachability.Liveness.DeadlockFree counts it as dead.
 	KindDeadlockFree Kind = "deadlock-free"
 
 	// KindBounded asserts no place can accumulate tokens without limit.
@@ -53,6 +55,13 @@ const (
 	// transitions along one path and still wedge on another. Check
 	// KindDeadlockFree separately; the two answer different questions.
 	KindLive Kind = "live"
+
+	// KindL4Live asserts that from every reachable marking, every transition
+	// can eventually fire: the textbook liveness, computed from the terminal
+	// strongly connected components of the reachability graph. A refutation
+	// carries a replayable trace to where a transition can never fire again.
+	// Same name and meaning as pflow-rs's Kind::L4Live.
+	KindL4Live Kind = "l4-live"
 
 	// KindTerminating asserts every execution eventually stops — equivalently,
 	// the reachability graph is acyclic.

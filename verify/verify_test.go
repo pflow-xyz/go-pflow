@@ -1,6 +1,7 @@
 package verify
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -551,5 +552,48 @@ func TestTargetPlaceNotInNetIsUnknown(t *testing.T) {
 		if !strings.Contains(verdict.Detail, "typo") {
 			t.Errorf("%s detail should name the missing place: %s", kind, verdict.Detail)
 		}
+	}
+}
+
+func TestL4Live(t *testing.T) {
+	// Two philosophers, each taking their left fork first: every transition
+	// fires somewhere, and both holding a fork is a dead marking.
+	net := petri.Build().
+		Place("fork1", 1).Place("fork2", 1).
+		Place("p1_thinking", 1).Place("p1_has_left", 0).Place("p1_eating", 0).
+		Place("p2_thinking", 1).Place("p2_has_left", 0).Place("p2_eating", 0).
+		Transition("p1_take_left").Transition("p1_take_right").Transition("p1_release").
+		Transition("p2_take_left").Transition("p2_take_right").Transition("p2_release").
+		Arc("p1_thinking", "p1_take_left", 1).Arc("fork1", "p1_take_left", 1).Arc("p1_take_left", "p1_has_left", 1).
+		Arc("p1_has_left", "p1_take_right", 1).Arc("fork2", "p1_take_right", 1).Arc("p1_take_right", "p1_eating", 1).
+		Arc("p1_eating", "p1_release", 1).Arc("p1_release", "p1_thinking", 1).Arc("p1_release", "fork1", 1).Arc("p1_release", "fork2", 1).
+		Arc("p2_thinking", "p2_take_left", 1).Arc("fork2", "p2_take_left", 1).Arc("p2_take_left", "p2_has_left", 1).
+		Arc("p2_has_left", "p2_take_right", 1).Arc("fork1", "p2_take_right", 1).Arc("p2_take_right", "p2_eating", 1).
+		Arc("p2_eating", "p2_release", 1).Arc("p2_release", "p2_thinking", 1).Arc("p2_release", "fork1", 1).Arc("p2_release", "fork2", 1).
+		Done()
+
+	if got := New(net).CheckOne(Property{Kind: KindLive}); got.Status != Proved {
+		t.Errorf("live (L1) = %s, want proved: %s", got.Status, got.Detail)
+	}
+	got := New(net).CheckOne(Property{Kind: KindL4Live})
+	if got.Status != Refuted || got.Counterexample == nil {
+		t.Fatalf("l4-live = %s (%s), want refuted with a counterexample", got.Status, got.Detail)
+	}
+	if want := []string{"p1_take_left", "p2_take_left"}; !reflect.DeepEqual(got.Counterexample.Trace, want) {
+		t.Errorf("trace = %v, want %v", got.Counterexample.Trace, want)
+	}
+
+	// A ring is live, and proved.
+	ring := petri.Build().
+		Place("a", 1).Place("b", 0).Transition("ab").Transition("ba").
+		Arc("a", "ab", 1).Arc("ab", "b", 1).Arc("b", "ba", 1).Arc("ba", "a", 1).
+		Done()
+	if got := New(ring).CheckOne(Property{Kind: KindL4Live}); got.Status != Proved {
+		t.Errorf("ring: l4-live = %s, want proved: %s", got.Status, got.Detail)
+	}
+
+	// Stopped early by its bound, it cannot claim anything.
+	if got := New(ring).WithMaxStates(1).CheckOne(Property{Kind: KindL4Live}); got.Status != Unknown {
+		t.Errorf("truncated ring: l4-live = %s, want unknown: %s", got.Status, got.Detail)
 	}
 }

@@ -60,6 +60,16 @@ var soundnessTable = []soundness{
 		why: "liveness is existential: a witness only counts if the sequence that produced it is one the model can run",
 	},
 	{
+		kind: verify.KindL4Live,
+		// "From every marking, every transition" alternates quantifiers. Extra
+		// behaviour can both add a marking that wedges and add the firing that
+		// unwedges one, and removing behaviour does the same in reverse, so
+		// neither verdict moves across an approximation.
+		provedUnderOver: false, provedUnderUnder: false,
+		refutedUnderOver: false, refutedUnderUnder: false,
+		why: "L4 alternates quantifiers over markings and firings, so neither verdict survives",
+	},
+	{
 		kind: verify.KindReachable,
 		// Same shape as liveness, and for the same reason: a path to the
 		// target marking is a witness, and a witness is only worth what the

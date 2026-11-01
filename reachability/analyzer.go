@@ -64,18 +64,32 @@ func (a *Analyzer) WithMaxTokens(max int) *Analyzer {
 
 // Result contains the results of reachability analysis.
 type Result struct {
-	Graph       *Graph
-	StateCount  int
-	EdgeCount   int
-	Bounded     bool
-	MaxTokens   map[string]int
-	MaxDepth    int
+	Graph      *Graph
+	StateCount int
+	EdgeCount  int
+	Bounded    bool
+	MaxTokens  map[string]int
+	MaxDepth   int
+	// HasDeadlock and Deadlocks are a heuristic for "stuck, not finished": they
+	// skip a marking that drained to empty. DeadMarkings and Liveness use the
+	// standard definition, under which any marking with nothing enabled is dead.
 	HasDeadlock bool
 	Deadlocks   []*State
-	HasCycle    bool
-	Cycles      [][]string // Transition sequences forming cycles
-	Live        bool       // All transitions can eventually fire
-	DeadTrans   []string   // Transitions that can never fire
+	// DeadMarkings holds every explored marking with no enabled transition,
+	// nearest first.
+	DeadMarkings []*State
+	HasCycle     bool
+	Cycles       [][]string // Transition sequences forming cycles
+	// Live is L4 liveness: from every reachable marking, every transition can
+	// eventually fire. Set by Analyze; true only when the search was complete.
+	// It used to mean what QuasiLive means now.
+	Live bool
+	// QuasiLive is L1: every transition fires in some reachable marking. A net
+	// can be quasi-live and still deadlock.
+	QuasiLive bool
+	// Liveness holds the three-valued verdicts and the witness. Set by Analyze.
+	Liveness    *Liveness
+	DeadTrans   []string // Transitions that can never fire
 	Truncated   bool
 	TruncateMsg string
 
@@ -205,6 +219,8 @@ func (a *Analyzer) BuildGraph() *Result {
 		result.ExplorationStats.ExplorationRatio = 1.0
 	}
 
+	result.DeadMarkings = graph.TerminalStates()
+
 	// Mark deadlock states - a deadlock is a terminal state that isn't a "proper" end state
 	// For now, we consider any terminal state as a potential deadlock unless it's the
 	// natural end (all tokens consumed) AND we started with tokens
@@ -298,7 +314,8 @@ func (a *Analyzer) detectCycles(graph *Graph) (bool, [][]string) {
 	return len(cycles) > 0, cycles
 }
 
-// analyzeLiveness checks which transitions can fire from some reachable state.
+// analyzeLiveness works out which transitions fire from some reachable state,
+// and the verdicts in Result.Liveness.
 func (a *Analyzer) analyzeLiveness(graph *Graph, result *Result) {
 	// Collect all transitions that fire at least once
 	firedTrans := make(map[string]bool)
@@ -324,14 +341,17 @@ func (a *Analyzer) analyzeLiveness(graph *Graph, result *Result) {
 		// Full state space explored - unfired transitions are truly dead
 		result.DeadTrans = unfiredTrans
 		result.ConfirmedDead = unfiredTrans
-		result.Live = len(unfiredTrans) == 0
+		result.QuasiLive = len(unfiredTrans) == 0
 	} else {
 		// Truncated analysis - unfired transitions are only potentially dead
 		result.PotentiallyDead = unfiredTrans
 		// Keep DeadTrans empty or run targeted search
 		result.DeadTrans = nil
-		result.Live = false // Can't confirm liveness with truncated analysis
+		result.QuasiLive = false // Can't confirm it with truncated analysis
 	}
+
+	result.Liveness = analyzeL4(graph, result, unfiredTrans)
+	result.Live = result.Liveness.Live == VerdictTrue
 }
 
 // IsReachable checks if a target marking is reachable from the initial marking.
@@ -556,8 +576,10 @@ func (a *Analyzer) AnalyzeWithVerification() *Result {
 			result.PotentiallyDead = stillPotential
 		}
 
-		// Update liveness
-		result.Live = len(result.ConfirmedDead) == 0 && len(result.PotentiallyDead) == 0
+		// A targeted search firing every transition shows L1, each with its own
+		// firing sequence. It says nothing of L4, which needs every marking, and
+		// Result.Liveness still describes the truncated graph.
+		result.QuasiLive = len(result.ConfirmedDead) == 0 && len(result.PotentiallyDead) == 0
 	}
 
 	return result
