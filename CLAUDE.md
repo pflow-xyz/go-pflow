@@ -113,6 +113,7 @@ the Go sources. The job needs two repo secrets — `BAZEL_REMOTE_CACHE_USERNAME`
 | `verify` | Declarative property checking (proved/refuted/unknown + counterexample) |
 | `statemachine` | Statecharts with Petri net backend |
 | `workflow` | Task dependencies, resources, SLA tracking |
+| `composite` | Four tools over `metamodel.Bundle`, ported from pflow-rs (their reference; golden in `composite/testdata/`): `bundle_net` (the flattened composite as the editor's JSON-LD net, so fire/simulate/reachability/invariants/verify/cid read it; refuses guards and data places), `bundle_prove` (per-link glue verdicts by ablation, part laws lifted and classified preserved/extended/changed, bounded/deadlock-free/quasi-live claims never proved by an unfinished search, a `CompositionProof` record), `bundle_check_proof` (re-checks a record by arithmetic and replay, from any implementation) and `bundle_parts` (a 13-part catalog and a way to build a composition from it). `composite.Call(tool, args)` runs one; `Net`/`Prove`/`CheckProof`/`Parts` are the typed forms. `Sealer` is the CID hook (default: a small URDNA2015 port); pflow-xyz sets it to its json-gold `internal/seal` |
 | `saga` | Compensable steps (forward + undo) as a Petri net; accounts shareable with other subnets; `Stranded` finds half-done states that cannot finish |
 | `actor` | Actor model with message bus |
 | `visualization` | SVG rendering |

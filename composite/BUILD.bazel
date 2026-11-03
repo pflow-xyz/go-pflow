@@ -1,0 +1,39 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "composite",
+    srcs = [
+        "check.go",
+        "cid.go",
+        "composite.go",
+        "flat.go",
+        "links.go",
+        "net.go",
+        "parts.go",
+        "prove.go",
+        "read.go",
+        "search.go",
+    ],
+    importpath = "github.com/pflow-xyz/go-pflow/composite",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//metamodel",
+        "//metamodel/metapetri",
+        "//reachability",
+        "//saga",
+    ],
+)
+
+go_test(
+    name = "composite_test",
+    srcs = [
+        "behaviour_test.go",
+        "golden_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":composite"],
+    deps = [
+        "//metamodel",
+        "//parser",
+    ],
+)
