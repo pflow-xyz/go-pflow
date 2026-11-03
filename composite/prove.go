@@ -547,6 +547,9 @@ func Prove(b *metamodel.Bundle, o Opts) (map[string]any, error) {
 	linkViews := []any{}
 	ablate := o.Ablate && len(b.Links) <= maxAblated
 	for i, l := range b.Links {
+		if o.Context != nil && o.Context.Err() != nil {
+			return nil, fmt.Errorf("%s: gave up: %v", tool, o.Context.Err())
+		}
 		others := withoutLink(b, i)
 		sv := validateLink(others, l)
 		glue := []any{}

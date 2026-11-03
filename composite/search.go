@@ -5,6 +5,7 @@ package composite
 // arcs and inhibitors across losslessly).
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -46,6 +47,11 @@ type Opts struct {
 	MaxStates int
 	MaxTokens int
 	Ablate    bool
+
+	// Context, when set, is checked between searches: a proof of many links
+	// stops at the next one once it is cancelled (one search is not
+	// interruptible). It is not part of the record.
+	Context context.Context
 }
 
 const (

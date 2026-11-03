@@ -1,6 +1,7 @@
 package composite
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -12,6 +13,11 @@ import (
 // or replay on the flat net, and the engine's own answers are recomputed and
 // compared. The record may come from any implementation of the tool.
 func CheckProof(b *metamodel.Bundle, rec map[string]any) (map[string]any, error) {
+	return CheckProofContext(context.Background(), b, rec)
+}
+
+// CheckProofContext is CheckProof that stops between searches once ctx is done.
+func CheckProofContext(ctx context.Context, b *metamodel.Bundle, rec map[string]any) (map[string]any, error) {
 	const tool = "pflow_bundle_check_proof"
 	rec, err := normalize(rec)
 	if err != nil {
@@ -41,6 +47,7 @@ func CheckProof(b *metamodel.Bundle, rec map[string]any) (map[string]any, error)
 			opts.Ablate = v
 		}
 	}
+	opts.Context = ctx
 	f, err := Flatten(b)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %v", tool, err)
