@@ -7,6 +7,16 @@ stage-expansion and schedules landing in the engine.
 
 ## Unreleased
 
+- **`composite`: four composition tools ported from pflow-rs** (`bundle_net`,
+  `bundle_prove`, `bundle_check_proof`, `bundle_parts`), a new package that
+  changes no existing one. A flattened bundle was not an ordinary pflow.xyz net,
+  so the net tools could not read a composite; `bundle_net` writes it in the
+  editor's JSON-LD, `bundle_prove` judges what each link does to the nets it
+  joins and emits a `CompositionProof` record, `bundle_check_proof` re-checks
+  one (pflow-rs's and this package's records check each other), and
+  `bundle_parts` is a 13-part catalog. Held to `composite/testdata/composite.json`
+  (see its README).
+
 A new package, `saga`, and nothing else: no existing package, type or golden
 changes.
 
