@@ -40,9 +40,11 @@ byte-exact contract exists, the
 - an AI/ML library. It implements structural, dynamical computation based on
   Petri nets and differential equations. `learn` fits mechanistic models, not
   opaque ones; see [Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html);
-- an MCP server. MCP orchestration — the tools an agent calls — lives in
+- an MCP server. The tools an agent calls live in two servers that import
+  this library: [pflow.xyz/mcp](https://pflow.xyz/mcp.html) (`pflow_*` tools; its
+  source is public, in pflow-xyz's `cmd/webserver`) and
   [sim.pflow.xyz](https://sim.pflow.xyz) (`sim_*` tools at
-  `https://sim.pflow.xyz/mcp`), which imports this library;
+  `https://sim.pflow.xyz/mcp`; a hosted service whose source is not public);
 - a service. Nothing here listens on a port by default;
 - the editor. [pflow.xyz](https://pflow.xyz) is the editor; this repo parses
   what it saves.
@@ -97,9 +99,10 @@ copies as `parity/editor-shape/` and replays them in CI from
 `public/petri-shape_test.ts`; pflow-jl keeps the same bytes as
 `test/testdata/editor-shape/` and replays them from `test/test_editor_shape.jl`,
 but on its `algebraic-petri` branch — not yet on its default branch, `main`.
-pflow-rs has no editor-shape parser yet; it replays the SSA goldens, plus (a
-separate contract) go-pflow's ODE parity corpus and the generated-learn
-goldens.
+pflow-rs keeps the same bytes under `crates/pflow-parser/tests/fixtures/editor-shape/`
+and replays them from `crates/pflow-parser/tests/parity.rs`; it also replays the SSA
+goldens, plus (a separate contract) go-pflow's ODE parity corpus and the
+generated-learn goldens.
 
 ## Installation
 
@@ -281,8 +284,36 @@ See [CHANGELOG.md](CHANGELOG.md) for breaking changes since the last tag.
   in JS and by pflow-rs in Rust; pflow-jl replays them on its `algebraic-petri`
   branch, not yet on its default branch
 - Editor-shape parse goldens (`parser/testdata/editor-shape/`) are replayed by
-  pflow-xyz in JS, and by pflow-jl on `algebraic-petri`; pflow-rs has no
-  editor-shape parser yet
+  pflow-xyz in JS, by pflow-rs (`pflow-parser`), and by pflow-jl on
+  `algebraic-petri`
+
+## Check it yourself
+
+go-pflow, the editor that writes the nets and the ports that replay its goldens
+are public, MIT-licensed repositories, so a result computed with go-pflow can be
+re-run rather than trusted. What can be re-run, and with what:
+
+- **A net's CID.** A pflow.xyz net is named by
+  CIDv1(dag-json, sha2-256, base58btc) over its `@id`-stripped,
+  URDNA2015-canonicalised N-Quads. `composite.SealNet` computes it with no
+  JSON-LD library, and pflow-xyz's tests hold it equal to pflow-xyz's
+  `internal/seal` and to pflow-rs. pflow-xyz's `public/seal-cid.mjs` (browser) and
+  pflow-rs's `canonical_cid` are held to pflow-xyz's `parity/golden.json`. Anyone
+  holding the net can recompute its CID and compare.
+- **A seeded stochastic run.** Under `stochastic.Options{Portable: true}` the
+  same net and seed give the same doubles in Go, JS and Rust. `make ssa-goldens`
+  regenerates `stochastic/testdata/portable/`; the other repos replay those bytes
+  (see Compatibility).
+- **How an editor document is read.** `parser/testdata/editor-shape/`, replayed
+  in JS and Rust.
+- **A verdict.** Verification returns proved, refuted or unknown, with its
+  method; a refutation carries a trace that replays with the firing rule, and an
+  `unknown` says the search was partial (see [Model correctness](docs/MODEL-CORRECTNESS.md)).
+
+The `cmd/*-goldens` programs write every golden set from this repo, so the
+expected values are themselves reproducible from source. What this does not
+cover: sim.pflow.xyz's calibrations and fidelity labels, which run in a service
+whose source is not public.
 
 ## Contributing
 
