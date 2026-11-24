@@ -205,6 +205,18 @@ func (v *Verifier) checkBounded(p Property) Verdict {
 		}
 	}
 
+	// A declared capacity is a bound too: the firing rule never produces a
+	// place past it. Before this, capacities played no part in the verdict, so
+	// a net bounded only by its capacities (the coffee-shop example) came back
+	// unknown whenever its state space exceeded the search limit.
+	if detail, ok := v.capacityCover(); ok {
+		return Verdict{
+			Property: p, Status: Proved, Method: MethodStructural,
+			Detail:   detail,
+			Evidence: v.describeBasis(),
+		}
+	}
+
 	// Look for a positive proof of *un*boundedness before falling back to
 	// enumeration. A covering witness is finite, so this decides unbounded
 	// nets quickly instead of exhausting the state limit and returning
@@ -238,6 +250,70 @@ func (v *Verifier) checkBounded(p Property) Verdict {
 		Property: p, Status: Proved, Method: MethodExhaustive,
 		Detail: fmt.Sprintf("bounded across all %d reachable states from this initial marking", r.StateCount),
 	}
+}
+
+// capacityCover reports whether every place has a bound that holds for any
+// initial marking, and names them. A place is bounded when it has
+//
+//   - a declared capacity c > 0: reachability's firing rule refuses any
+//     firing that would produce it past c, and nothing but production adds
+//     tokens, so it never holds more than max(c, its initial count);
+//   - a positive coefficient in a semi-positive P-invariant y: y*M is
+//     constant, so M(p) <= y*M0 / y(p);
+//   - no transition that adds to it (every entry of its incidence row is
+//     <= 0), so it never exceeds its initial count.
+//
+// Capacity follows reachability's reading: the per-color components summed
+// (on the color-unfolded net each place has one), 0 or unset is unbounded.
+func (v *Verifier) capacityCover() (string, bool) {
+	basis := v.pInvariantBasis()
+	covered := make(map[string]bool, len(basis.Labels))
+	for _, vec := range basis.Basis {
+		for i, c := range vec {
+			if c > 0 {
+				covered[basis.Labels[i]] = true
+			}
+		}
+	}
+	matrix, places, _ := v.invariantAnalyzer().IncidenceMatrix()
+	gains := make(map[string]bool, len(places))
+	for i, name := range places {
+		for _, c := range matrix[i] {
+			if c > 0 {
+				gains[name] = true
+				break
+			}
+		}
+	}
+
+	var byCap, byInv, byNone []string
+	for _, name := range places {
+		capSum := 0
+		for _, c := range v.net.Places[name].Capacity {
+			capSum += int(c)
+		}
+		switch {
+		case capSum > 0:
+			byCap = append(byCap, fmt.Sprintf("%s <= %d", name, max(capSum, v.initial.Get(name))))
+		case covered[name]:
+			byInv = append(byInv, name)
+		case !gains[name]:
+			byNone = append(byNone, name)
+		default:
+			return "", false
+		}
+	}
+	if len(byCap) == 0 {
+		return "", false // the P-invariant cover alone is the case above
+	}
+	parts := []string{"by declared capacity: " + strings.Join(byCap, ", ")}
+	if len(byInv) > 0 {
+		parts = append(parts, "by a P-invariant: "+strings.Join(byInv, ", "))
+	}
+	if len(byNone) > 0 {
+		parts = append(parts, "no transition adds to: "+strings.Join(byNone, ", "))
+	}
+	return "every place is bounded for any initial marking (" + strings.Join(parts, "; ") + ")", true
 }
 
 func (v *Verifier) checkLive(p Property) Verdict {

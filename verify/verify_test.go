@@ -229,6 +229,78 @@ func TestBoundedRefuted(t *testing.T) {
 	}
 }
 
+// Regression: bounded ignored declared capacities. A source transition
+// feeding a capacity-5000 place has 5001 reachable states and no P-invariant,
+// so with a 100-state limit the verdict was unknown (truncated) although the
+// capacity alone bounds the place. The coffee-shop landing example (every
+// place capped, three colors) was unknown at 2000 states the same way.
+func TestBoundedByCapacity(t *testing.T) {
+	net := petri.Build().
+		PlaceWithCapacity("stock", 0, 5000).
+		Place("ready", 1).
+		Transition("make").
+		Arc("make", "stock", 1).
+		InhibitorArc("ready", "make", 2). // moves nothing: no incidence
+		Done()
+
+	verdict := New(net).WithMaxStates(100).CheckOne(Property{Kind: KindBounded})
+	if verdict.Status != Proved {
+		t.Fatalf("status = %s, want proved (%s)", verdict.Status, verdict.Detail)
+	}
+	if verdict.Method != MethodStructural {
+		t.Errorf("method = %s, want structural", verdict.Method)
+	}
+	if !strings.Contains(verdict.Detail, "stock <= 5000") {
+		t.Errorf("detail %q should name the capacity bound", verdict.Detail)
+	}
+}
+
+// Per-color capacities: on the unfolded net each color has its own bound,
+// and a color with capacity 0 (unbounded) needs another reason.
+func TestBoundedByCapacityColored(t *testing.T) {
+	net := petri.Build().
+		Place("src", 0).
+		Transition("make").
+		Done()
+	net.Token = []string{"red", "blue"}
+	net.Places["src"].Initial = []float64{0, 0}
+	net.Places["src"].Capacity = []float64{50, 0}
+	net.AddArc("make", "src", 1, false)
+	net.Arcs[len(net.Arcs)-1].Weight = []float64{1, 0}
+
+	verdict := New(net).WithMaxStates(10).CheckOne(Property{Kind: KindBounded})
+	if verdict.Status != Proved {
+		t.Fatalf("status = %s, want proved (%s)", verdict.Status, verdict.Detail)
+	}
+
+	// The blue component is uncapped; producing blue makes it unbounded.
+	net.Arcs[len(net.Arcs)-1].Weight = []float64{1, 1}
+	verdict = New(net).WithMaxStates(10).CheckOne(Property{Kind: KindBounded})
+	if verdict.Status == Proved {
+		t.Fatalf("uncapped color fed by a source: status = proved, want not proved (%s)", verdict.Detail)
+	}
+}
+
+// A capacity on one place must not prove a neighbour it does not bound.
+func TestBoundedCapacityDoesNotCoverOtherPlaces(t *testing.T) {
+	net := petri.Build().
+		PlaceWithCapacity("capped", 0, 3).
+		Place("open", 0).
+		Transition("make").
+		Arc("make", "capped", 1).
+		Transition("grow").
+		Arc("grow", "open", 1).
+		Done()
+
+	verdict := New(net).WithMaxStates(500).CheckOne(Property{Kind: KindBounded})
+	if verdict.Status != Refuted {
+		t.Fatalf("status = %s, want refuted (%s)", verdict.Status, verdict.Detail)
+	}
+	if !strings.Contains(verdict.Detail, "open") {
+		t.Errorf("detail %q should name the unbounded place", verdict.Detail)
+	}
+}
+
 func TestLive(t *testing.T) {
 	verdict := New(mutexNet()).CheckOne(Property{Kind: KindLive})
 	if verdict.Status != Proved {
