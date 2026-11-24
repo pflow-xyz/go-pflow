@@ -1,7 +1,14 @@
 # go-pflow
 
-A Petri-net dynamical modeling engine in Go. You declare one model — places,
-transitions, arcs, rates — and go-pflow runs it under three simulation
+The engine behind [pflow.xyz](https://pflow.xyz), where you understand a system
+by modeling it with Claude: Claude builds the model with you, explains it as you
+go, and reports results from data. Every view the person sees there (the
+outcome, the model, the math, the notation, a simulation) is computed from one
+net, by this library on the server and by its parity-tested ports in the browser,
+so the views cannot disagree.
+
+go-pflow itself is a Petri-net dynamical modeling engine in Go. You declare one
+model — places, transitions, arcs, rates — and go-pflow runs it under three simulation
 semantics from that single declaration: a deterministic mass-action **ODE**
 relaxation, an exact **SSA** jump process (Gillespie), and a chemical-Langevin
 **SDE** with the net's own intrinsic firing noise. Around the engines sit
@@ -40,11 +47,10 @@ byte-exact contract exists, the
 - an AI/ML library. It implements structural, dynamical computation based on
   Petri nets and differential equations. `learn` fits mechanistic models, not
   opaque ones; see [Why Petri Nets?](https://book.pflow.xyz/ch01-why-petri-nets.html);
-- an MCP server. The tools an agent calls live in two servers that import
-  this library: [pflow.xyz/mcp](https://pflow.xyz/mcp.html) (`pflow_*` tools; its
-  source is public, in pflow-xyz's `cmd/webserver`) and
-  [sim.pflow.xyz](https://sim.pflow.xyz) (`sim_*` tools at
-  `https://sim.pflow.xyz/mcp`; a hosted service whose source is not public);
+- an MCP server. The tools an agent calls live in
+  [pflow.xyz/mcp](https://pflow.xyz/mcp.html) (`pflow_*` tools, including the
+  teaching tools that drive a linked editor page; its source is public, in
+  pflow-xyz's `cmd/webserver`), which imports this library;
 - a service. Nothing here listens on a port by default;
 - the editor. [pflow.xyz](https://pflow.xyz) is the editor; this repo parses
   what it saves.
@@ -73,13 +79,13 @@ flowchart LR
         M["mining / eventlog<br/>discovery, conformance"]
     end
     subgraph surfaces [Surfaces]
-        SIM["sim.pflow.xyz<br/>MCP sim_* tools"]
+        MCP["pflow.xyz/mcp<br/>MCP pflow_* tools"]
         PORTS["pflow-xyz JS, pflow-jl, pflow-rs<br/>held to shared goldens"]
     end
     MM --> ODE & SSA & SDE
     ODE & SSA --> FIT
     MM --> R & V & M
-    engines & learn & analysis --> SIM
+    engines & learn & analysis --> MCP
     MM -. "cross-language goldens" .-> PORTS
 ```
 
@@ -311,9 +317,7 @@ re-run rather than trusted. What can be re-run, and with what:
   `unknown` says the search was partial (see [Model correctness](docs/MODEL-CORRECTNESS.md)).
 
 The `cmd/*-goldens` programs write every golden set from this repo, so the
-expected values are themselves reproducible from source. What this does not
-cover: sim.pflow.xyz's calibrations and fidelity labels, which run in a service
-whose source is not public.
+expected values are themselves reproducible from source.
 
 ## Contributing
 
@@ -328,7 +332,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Related
 
 - [book.pflow.xyz](https://book.pflow.xyz) — technical book
-- [pflow.xyz](https://pflow.xyz) — visual editor and JavaScript engine
-- [sim.pflow.xyz](https://sim.pflow.xyz) — describe a process, get a model you can run and check; MCP server (`sim_*` tools) over this library
+- [pflow.xyz](https://pflow.xyz) — the editor, its JavaScript engine and the IDE preview (`?shell=1`)
+- [pflow.xyz/mcp](https://pflow.xyz/mcp.html) — the Claude connector (`pflow_*` tools) over this library
 - [pflow-jl](https://github.com/pflow-xyz/pflow-jl), [pflow-rs](https://github.com/pflow-xyz/pflow-rs) — Julia and Rust ports
 - [RESEARCH_PAPER_OUTLINE.md](RESEARCH_PAPER_OUTLINE.md) — research paper draft
