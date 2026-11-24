@@ -362,44 +362,6 @@ func canonicalize(quads []quad) ([]quad, error) {
 	return out, nil
 }
 
-// SealVersion is the sealing contract this file implements. Version 2
-// (2026-11-24) changed one thing: in a list term, a null that comes before a
-// value is sealed as the IRI NullIRI instead of being dropped. JSON-LD drops
-// every null in a list, so under version 1 [null,3] and [3] sealed to the
-// same CID although they are different nets (capacity [null,3] is colour 0
-// unbounded and colour 1 capped at 3; [3] caps colour 0). Trailing nulls are
-// still dropped: a null and an absent entry read the same (unbounded
-// capacity, 0 tokens, weight 0), so [3,null] and [3] are one net and keep one
-// CID. Only a document with a null before a value in a list term gets a new
-// CID; pflow-xyz's internal/seal is the reference and holds the list of
-// affected stored CIDs (none when the change was made).
-const SealVersion = 2
-
-// NullIRI stands for a null that a list term must keep (SealVersion 2).
-const NullIRI = pflowVocab + "null"
-
-// nullItem marks a kept null in a list between sealListItems and list.
-var nullItem any = &struct{ null bool }{true}
-
-// sealListItems applies SealVersion 2's list rule: drop trailing nulls, keep
-// the others as nullItem.
-func sealListItems(items []any) []any {
-	last := -1
-	for i, x := range items {
-		if x != nil {
-			last = i
-		}
-	}
-	kept := make([]any, 0, last+1)
-	for _, x := range items[:last+1] {
-		if x == nil {
-			x = nullItem
-		}
-		kept = append(kept, x)
-	}
-	return kept
-}
-
 // ---- the expander for the one shape a pflow net has
 
 type expander struct {
@@ -455,11 +417,8 @@ func (e *expander) list(items []any) (term, error) {
 		cells[i] = e.fresh()
 	}
 	for i, item := range items {
-		var obj term
-		var err error
-		if item == nullItem {
-			obj = iri(NullIRI)
-		} else if obj, err = e.value(item); err != nil {
+		obj, err := e.value(item)
+		if err != nil {
 			return term{}, err
 		}
 		e.quads = append(e.quads, quad{cells[i], iri(rdfFirst), obj})
@@ -500,7 +459,12 @@ func (e *expander) object(subject term, obj map[string]any) error {
 			} else {
 				items = []any{v}
 			}
-			kept := sealListItems(items)
+			var kept []any
+			for _, x := range items {
+				if x != nil {
+					kept = append(kept, x)
+				}
+			}
 			lt, err := e.list(kept)
 			if err != nil {
 				return err
