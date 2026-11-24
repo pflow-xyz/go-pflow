@@ -28,6 +28,7 @@ go_test(
     name = "composite_test",
     srcs = [
         "behaviour_test.go",
+        "cid_null_test.go",
         "golden_test.go",
     ],
     data = glob(["testdata/**"]),
